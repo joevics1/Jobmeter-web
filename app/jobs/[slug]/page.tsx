@@ -4,6 +4,8 @@ import { mapJobToSchema } from '@/lib/mapJobToSchema';
 import JobClient from './JobClient';
 import { Metadata } from 'next';
 
+export const revalidate = 3600; // 1 hour - individual jobs rarely change
+
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
   const supabase = createClient();
   

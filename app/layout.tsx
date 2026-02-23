@@ -8,6 +8,7 @@ import NotificationManager from '@/components/NotificationManager';
 const inter = Inter({ subsets: ['latin'] });
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.jobmeter.app';
+const ogImageUrl = `${siteUrl}/og-image.png`;
 const siteName = 'JobMeter';
 const defaultTitle = 'JobMeter - Find Your Dream Job';
 const defaultDescription = 'AI-powered job discovery and matching platform. Get personalized job recommendations, match scores, and apply to jobs that fit your skills and preferences.';
@@ -54,7 +55,8 @@ export const metadata: Metadata = {
     description: defaultDescription,
     images: [
       {
-        url: `${siteUrl}/og-image.png`,
+        url: ogImageUrl,
+        secureUrl: ogImageUrl,
         width: 1200,
         height: 630,
         alt: 'JobMeter - AI-powered job discovery platform',
@@ -65,8 +67,9 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: defaultTitle,
     description: defaultDescription,
-    images: [`${siteUrl}/og-image.png`],
+    images: [ogImageUrl],
     creator: '@jobmeterapp',
+    site: '@jobmeterapp',
   },
   icons: {
     icon: [

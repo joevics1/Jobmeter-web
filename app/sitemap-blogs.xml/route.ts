@@ -17,27 +17,39 @@ export async function GET() {
 
     const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-    // Fetch Companies only (blogs moved to sitemap-blogs.xml)
-    const { data: companies, error: companyError } = await supabase
-      .from('companies')
+    // Fetch Blog Posts
+    const { data: posts, error: postError } = await supabase
+      .from('posts')
       .select('slug, updated_at')
       .eq('is_published', true);
 
-    if (companies) {
-      companies.forEach((company) => {
+    if (posts) {
+      posts.forEach((post) => {
         routes.push({
-          url: `${siteUrl}/company/${company.slug}`,
-          lastModified: company.updated_at ? new Date(company.updated_at) : new Date(),
+          url: `${siteUrl}/blog/${post.slug}`,
+          lastModified: post.updated_at ? new Date(post.updated_at) : new Date(),
           changeFrequency: 'daily',
-          priority: 0.6,
+          priority: 0.7,
         });
       });
     }
 
-    console.log(`📄 Content sitemap: ${routes.length} companies`);
+    console.log(`📄 Blogs sitemap: ${routes.length} posts`);
   } catch (error) {
-    console.error('Error generating content sitemap:', error);
+    console.error('Error generating blogs sitemap:', error);
     return new Response('Error generating sitemap', { status: 500 });
+  }
+
+  if (routes.length === 0) {
+    const emptySitemap = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+</urlset>`;
+    return new Response(emptySitemap, {
+      headers: {
+        'Content-Type': 'application/xml',
+        'Cache-Control': 'public, max-age=3600, s-maxage=3600',
+      },
+    });
   }
 
   const sitemap = `<?xml version="1.0" encoding="UTF-8"?>

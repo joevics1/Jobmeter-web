@@ -8,7 +8,7 @@ import JobCard from '@/components/jobs/JobCard';
 import { JobUI } from '@/components/jobs/JobCard';
 import MatchBreakdownModal from '@/components/jobs/MatchBreakdownModal';
 import { MatchBreakdownModalData } from '@/components/jobs/MatchBreakdownModal';
-import { ChevronDown, Briefcase, GraduationCap, Search, Filter, X, Laptop, Home, Globe, Rocket, Award, ChevronRight } from 'lucide-react';
+import { ChevronDown, Briefcase, Rocket, Search, Filter, X } from 'lucide-react';
 import { scoreJob, JobRow, UserOnboardingData } from '@/lib/matching/matchEngine';
 import { matchCacheService } from '@/lib/matching/matchCache';
 
@@ -19,7 +19,7 @@ const STORAGE_KEYS = {
 
 const JOBS_PER_PAGE = 20;
 
-export default function InternshipFinderPage() {
+export default function EntryLevelFinderPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   
@@ -43,35 +43,6 @@ export default function InternshipFinderPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalJobs, setTotalJobs] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
-  const [rolesExpanded, setRolesExpanded] = useState(false);
-
-  const categories = [
-    { id: 'remote', label: 'Remote', icon: Laptop, url: '/tools/remote-jobs-finder' },
-    { id: 'nysc', label: 'NYSC', icon: Award, url: '/tools/nysc-finder' },
-    { id: 'accommodation', label: 'Accommodation', icon: Home, url: '/tools/accommodation-finder' },
-    { id: 'visa', label: 'Visa', icon: Globe, url: '/tools/visa-finder' },
-    { id: 'trainee', label: 'Graduate/Trainee', icon: GraduationCap, url: '/tools/graduate-trainee-finder' },
-    { id: 'entry', label: 'Entry Level', icon: Rocket, url: '/tools/entry-level-finder' },
-    { id: 'internship', label: 'Internship', icon: Briefcase, url: '/tools/internship-finder' },
-  ];
-
-  const popularRoles = [
-    'Software Engineer', 'Frontend Developer', 'Backend Developer', 'Full Stack Developer',
-    'Mobile App Developer', 'Data Analyst', 'Data Scientist', 'DevOps Engineer',
-    'Cybersecurity Analyst', 'IT Support Specialist', 'Product Manager', 'Project Manager',
-    'Business Analyst', 'UI/UX Designer', 'Graphic Designer', 'Digital Marketer',
-    'Social Media Manager', 'Content Writer', 'SEO Specialist', 'Sales Executive',
-    'Marketing Executive', 'Customer Service Representative', 'Administrative Officer',
-    'Human Resources Officer', 'Recruiter', 'Accountant', 'Financial Analyst',
-    'Auditor', 'Operations Manager', 'Supply Chain Officer', 'Procurement Officer',
-    'Logistics Coordinator', 'Store Manager', 'Retail Sales Associate', 'Banking Officer',
-    'Credit Analyst', 'Risk Analyst', 'Healthcare Assistant', 'Registered Nurse',
-    'Pharmacist', 'Medical Laboratory Scientist', 'Civil Engineer', 'Mechanical Engineer',
-    'Electrical Engineer', 'Architect', 'Quality Assurance Officer', 'Teacher',
-    'Lecturer', 'Research Assistant', 'Graduate Trainee', 'Intern'
-  ];
-
-  const visibleRoles = rolesExpanded ? popularRoles : popularRoles.slice(0, 14);
 
   const sectors = [
     'Technology', 'Marketing', 'Sales', 'Design', 'Finance', 
@@ -120,8 +91,8 @@ export default function InternshipFinderPage() {
   }, [searchParams]);
 
   useEffect(() => {
-    fetchInternshipJobs();
-  }, [currentPage, filters, user, userOnboardingData, searchQuery]);
+    fetchEntryLevelJobs();
+  }, [currentPage, filters, user, userOnboardingData]);
 
   const checkAuth = async () => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -158,7 +129,7 @@ export default function InternshipFinderPage() {
     }
   };
 
-  const fetchInternshipJobs = async () => {
+  const fetchEntryLevelJobs = async () => {
     try {
       setLoading(true);
       
@@ -170,7 +141,7 @@ export default function InternshipFinderPage() {
         .from('jobs')
         .select('*', { count: 'exact', head: true })
         .eq('status', 'active')
-        .eq('role_category', 'intern')
+        .eq('experience_level', 'entry-level')
         .gte('created_at', thirtyDaysAgoISO);
 
       if (searchQuery) {
@@ -194,11 +165,15 @@ export default function InternshipFinderPage() {
       setTotalJobs(total);
       setTotalPages(total > 0 ? Math.ceil(total / JOBS_PER_PAGE) : 1);
 
+      if (searchQuery.trim()) {
+        saveSearchHistory(searchQuery.trim(), total);
+      }
+
       let query = supabase
         .from('jobs')
         .select('*')
         .eq('status', 'active')
-        .eq('role_category', 'intern')
+        .eq('experience_level', 'entry-level')
         .gte('created_at', thirtyDaysAgoISO)
         .order('created_at', { ascending: false })
         .range((currentPage - 1) * JOBS_PER_PAGE, currentPage * JOBS_PER_PAGE - 1);
@@ -235,7 +210,7 @@ export default function InternshipFinderPage() {
 
       setJobs(processedJobs);
     } catch (error) {
-      console.error('Error fetching internship jobs:', error);
+      console.error('Error fetching entry level jobs:', error);
       setJobs([]);
     } finally {
       setLoading(false);
@@ -421,6 +396,21 @@ export default function InternshipFinderPage() {
     e.preventDefault();
     setCurrentPage(1);
     updateURL();
+    if (searchQuery.trim()) {
+      saveSearchHistory(searchQuery.trim(), 0);
+    }
+  };
+
+  const saveSearchHistory = async (query: string, resultsCount: number) => {
+    try {
+      await supabase.from('search_history').insert({
+        user_id: user?.id || null,
+        search_query: query,
+        results_count: resultsCount,
+      });
+    } catch (error) {
+      console.error('Error saving search history:', error);
+    }
   };
 
   const updateURL = () => {
@@ -429,7 +419,7 @@ export default function InternshipFinderPage() {
     if (filters.sector.length > 0) params.set('sector', filters.sector.join(','));
     if (filters.location.length > 0) params.set('location', filters.location.join(','));
     if (currentPage > 1) params.set('page', currentPage.toString());
-    router.push(`/tools/internship-finder?${params.toString()}`);
+    router.push(`/tools/entry-level-finder?${params.toString()}`);
   };
 
   const handleFilterChange = (filterType: 'sector' | 'location', value: string) => {
@@ -447,7 +437,7 @@ export default function InternshipFinderPage() {
     setFilters({ sector: [], location: [] });
     setSearchQuery('');
     setCurrentPage(1);
-    router.push('/tools/internship-finder');
+    router.push('/tools/entry-level-finder');
   };
 
   const sortedJobs = [...jobs].sort((a, b) => {
@@ -473,13 +463,13 @@ export default function InternshipFinderPage() {
             ← Back to Tools
           </a>
           <div className="flex items-center gap-3 mb-2">
-            <GraduationCap size={32} />
+            <Rocket size={32} />
             <h1 className="text-2xl font-bold" style={{ color: theme.colors.text.light }}>
-              Internship Finder
+              Entry Level Jobs
             </h1>
           </div>
           <p className="text-sm" style={{ color: theme.colors.text.light }}>
-            Find internship opportunities to kickstart your career
+            Find entry-level jobs for beginners and those starting their career
           </p>
         </div>
       </div>
@@ -495,7 +485,7 @@ export default function InternshipFinderPage() {
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search internship jobs (job title, company)..."
+                  placeholder="Search entry-level jobs..."
                   className="w-full pl-10 pr-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
@@ -517,52 +507,6 @@ export default function InternshipFinderPage() {
               </button>
             </div>
           </form>
-
-          {/* Category Filters */}
-          <div className="flex flex-wrap gap-2 mb-3">
-            {categories.map(cat => {
-              const Icon = cat.icon;
-              return (
-                <a
-                  key={cat.id}
-                  href={cat.url}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors"
-                >
-                  <Icon size={12} />
-                  {cat.label}
-                </a>
-              );
-            })}
-          </div>
-
-          {/* Role Quick Filters */}
-          <div className="flex flex-wrap gap-1.5">
-            {visibleRoles.map(role => (
-              <button
-                key={role}
-                onClick={() => { setSearchQuery(role); setCurrentPage(1); updateURL(); }}
-                className="px-2.5 py-1 rounded-full text-xs bg-gray-50 text-gray-600 hover:bg-blue-50 hover:text-blue-700 border border-gray-200 hover:border-blue-200 transition-colors"
-              >
-                {role}
-              </button>
-            ))}
-            {!rolesExpanded && (
-              <button
-                onClick={() => setRolesExpanded(true)}
-                className="px-2.5 py-1 rounded-full text-xs text-blue-600 hover:text-blue-800 font-medium"
-              >
-                +{popularRoles.length - 14} more
-              </button>
-            )}
-            {rolesExpanded && (
-              <button
-                onClick={() => setRolesExpanded(false)}
-                className="px-2.5 py-1 rounded-full text-xs text-gray-500 hover:text-gray-700"
-              >
-                Show less
-              </button>
-            )}
-          </div>
 
           {/* Filters Panel */}
           {filtersOpen && (
@@ -623,7 +567,7 @@ export default function InternshipFinderPage() {
         {/* Results Summary */}
         <div className="flex items-center justify-between mb-4">
           <p className="text-sm text-gray-600">
-            {loading ? 'Loading...' : `${totalJobs.toLocaleString()} internship jobs found`}
+            {loading ? 'Loading...' : `${totalJobs.toLocaleString()} entry-level jobs found`}
             {hasFilters && ` (filtered)`}
           </p>
           <div className="flex items-center gap-3">
@@ -643,16 +587,16 @@ export default function InternshipFinderPage() {
           <div className="divide-y" style={{ borderColor: theme.colors.border.DEFAULT }}>
             {loading ? (
               <div className="flex items-center justify-center py-12">
-                <p style={{ color: theme.colors.text.secondary }}>Loading internship opportunities...</p>
+                <p style={{ color: theme.colors.text.secondary }}>Loading entry-level jobs...</p>
               </div>
             ) : sortedJobs.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12 px-6">
-                <Briefcase size={48} className="text-gray-400 mb-4" />
+                <Rocket size={48} className="text-gray-400 mb-4" />
                 <p className="text-base font-medium mb-2" style={{ color: theme.colors.text.primary }}>
-                  No internship jobs found
+                  No entry-level jobs found
                 </p>
                 <p className="text-sm text-center" style={{ color: theme.colors.text.secondary }}>
-                  {hasFilters ? 'Try adjusting your filters' : 'Check back later for new internship opportunities'}
+                  {hasFilters ? 'Try adjusting your filters' : 'Check back later for new entry-level opportunities'}
                 </p>
                 {hasFilters && (
                   <button

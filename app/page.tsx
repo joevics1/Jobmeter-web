@@ -1,3 +1,5 @@
+export const revalidate = 86400; // 24 hours - homepage rarely changes
+
 import { createClient } from '@/lib/supabase/server';
 import HomePage from '@/components/home/HomePage';
 import { OrganizationSchema, WebSiteSchema, BreadcrumbListSchema } from '@/components/seo/StructuredData';

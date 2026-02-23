@@ -31,6 +31,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     {
       url: `${siteUrl}/sitemap-content.xml`,
       lastModified: new Date(),
+      changeFrequency: 'daily',
+      priority: 0.8,
+    },
+    {
+      url: `${siteUrl}/sitemap-blogs.xml`,
+      lastModified: new Date(),
+      changeFrequency: 'daily',
+      priority: 0.7,
+    },
+    {
+      url: `${siteUrl}/sitemap-tools.xml`,
+      lastModified: new Date(),
       changeFrequency: 'weekly',
       priority: 0.8,
     },
@@ -79,3 +91,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     return baseSitemaps;
   }
 }
+
+export const revalidate = 3600;

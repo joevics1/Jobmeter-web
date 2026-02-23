@@ -10,7 +10,7 @@ import { JobUI } from '@/components/jobs/JobCard';
 import MatchBreakdownModal from '@/components/jobs/MatchBreakdownModal';
 import { MatchBreakdownModalData } from '@/components/jobs/MatchBreakdownModal';
 import JobFilters from '@/components/jobs/JobFilters';
-import { ChevronDown, LogIn, Search, X, Filter, SlidersHorizontal, ArrowUpDown, RefreshCw } from 'lucide-react';
+import { ChevronDown, LogIn, Search, X, Filter, SlidersHorizontal, ArrowUpDown, RefreshCw, Laptop, Home, Globe, Rocket, GraduationCap, Briefcase, Award, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import AuthModal from '@/components/AuthModal';
 import { scoreJob, JobRow, UserOnboardingData } from '@/lib/matching/matchEngine';
@@ -57,6 +57,8 @@ export default function JobList() {
   const [coverLetterModalOpen, setCoverLetterModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [rolesExpanded, setRolesExpanded] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(false);
   const [filters, setFilters] = useState({
     search: '',
     location: [] as string[],
@@ -65,6 +67,34 @@ export default function JobList() {
     salaryRange: undefined as { min: number; max: number } | undefined,
     remote: false,
   });
+
+  const categories = [
+    { id: 'remote', label: 'Remote', icon: Laptop, url: '/tools/remote-jobs-finder' },
+    { id: 'nysc', label: 'NYSC', icon: Award, url: '/tools/nysc-finder' },
+    { id: 'accommodation', label: 'Accommodation', icon: Home, url: '/tools/accommodation-finder' },
+    { id: 'visa', label: 'Visa', icon: Globe, url: '/tools/visa-finder' },
+    { id: 'trainee', label: 'Graduate/Trainee', icon: GraduationCap, url: '/tools/graduate-trainee-finder' },
+    { id: 'entry', label: 'Entry Level', icon: Rocket, url: '/tools/entry-level-finder' },
+    { id: 'internship', label: 'Internship', icon: Briefcase, url: '/tools/internship-finder' },
+  ];
+
+  const popularRoles = [
+    'Accountant', 'Digital Marketer', 'Social Media Manager', 'Data Analyst', 'Developer',
+    'Software Engineer', 'Frontend Developer', 'Backend Developer', 'Full Stack Developer',
+    'Mobile App Developer', 'Data Scientist', 'DevOps Engineer', 'Cybersecurity Analyst',
+    'IT Support Specialist', 'Product Manager', 'Project Manager', 'Business Analyst',
+    'UI/UX Designer', 'Graphic Designer', 'Content Writer', 'SEO Specialist', 'Sales Executive',
+    'Marketing Executive', 'Customer Service Representative', 'Administrative Officer',
+    'Human Resources Officer', 'Recruiter', 'Financial Analyst', 'Auditor', 'Operations Manager',
+    'Supply Chain Officer', 'Procurement Officer', 'Logistics Coordinator', 'Store Manager',
+    'Retail Sales Associate', 'Banking Officer', 'Credit Analyst', 'Risk Analyst',
+    'Healthcare Assistant', 'Registered Nurse', 'Pharmacist', 'Medical Laboratory Scientist',
+    'Civil Engineer', 'Mechanical Engineer', 'Electrical Engineer', 'Architect',
+    'Quality Assurance Officer', 'Teacher', 'Lecturer', 'Research Assistant', 'Graduate Trainee', 'Intern'
+  ];
+
+  // Show all roles but control visibility with CSS for hydration safety
+  const visibleRoles = rolesExpanded ? popularRoles : popularRoles;
 
   const checkAuth = async () => {
     try {
@@ -104,6 +134,14 @@ export default function JobList() {
     });
 
     return () => subscription.unsubscribe();
+  }, []);
+
+  // Track desktop/mobile
+  useEffect(() => {
+    const checkDesktop = () => setIsDesktop(window.innerWidth >= 768);
+    checkDesktop();
+    window.addEventListener('resize', checkDesktop);
+    return () => window.removeEventListener('resize', checkDesktop);
   }, []);
 
   // Initialize search query and filters from URL parameters
@@ -978,96 +1016,107 @@ export default function JobList() {
                 </button>
               )}
             </div>
-            
-            {/* Enhanced Filter and Sort Controls */}
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              {/* Quick Filters & Advanced Filters Button */}
-              <div className="flex items-center gap-3 flex-wrap">
-                {/* Quick Filter Chips */}
-                <div className="flex items-center gap-2 flex-wrap">
 
-                  
-                  {filters.remote && (
-                    <span 
-                      className="px-3 py-1.5 text-xs font-medium bg-purple-100 text-purple-700 rounded-full border border-purple-200"
-                      style={{ backgroundColor: '#9333EA15', color: '#9333EA' }}
-                    >
-                      Remote
-                    </span>
-                  )}
-                  
-                  {filters.employmentType && filters.employmentType.length > 0 && (
-                    <span 
-                      className="px-3 py-1.5 text-xs font-medium bg-blue-100 text-blue-700 rounded-full border border-blue-200"
-                      style={{ backgroundColor: theme.colors.primary.DEFAULT + '15', color: theme.colors.primary.DEFAULT }}
-                    >
-                      {filters.employmentType[0]}
-                    </span>
-                  )}
-                  
-                  {filters.location && filters.location.length > 0 && (
-                    <span 
-                      className="px-3 py-1.5 text-xs font-medium bg-teal-100 text-teal-700 rounded-full border border-teal-200"
-                      style={{ backgroundColor: '#14B8A615', color: '#0D9488' }}
-                    >
-                      {filters.location[0]}
-                    </span>
-                  )}
-                  
-                  {filters.sector && filters.sector.length > 0 && (
-                    <span 
-                      className="px-3 py-1.5 text-xs font-medium bg-orange-100 text-orange-700 rounded-full border border-orange-200"
-                      style={{ backgroundColor: '#F9731615', color: '#EA580C' }}
-                    >
-                      {filters.sector[0]}
-                    </span>
-                  )}
-                </div>
+            {/* Filter and Sort - Same line on mobile */}
+            <div className="flex flex-row items-center gap-2">
+              {/* Advanced Filters Button */}
+              <button
+                onClick={() => setFiltersOpen(true)}
+                className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-all"
+                style={{
+                  backgroundColor: hasActiveFilters() ? theme.colors.primary.DEFAULT + '10' : theme.colors.background.DEFAULT,
+                  borderColor: hasActiveFilters() ? theme.colors.primary.DEFAULT : theme.colors.border.DEFAULT,
+                }}
+              >
+                <SlidersHorizontal size={16} />
+                <span className="font-medium text-sm">Filters</span>
+                {hasActiveFilters() && (
+                  <span className="px-1.5 py-0.5 text-xs bg-blue-500 text-white rounded-full">
+                    {getActiveFilterCount()}
+                  </span>
+                )}
+              </button>
 
-                {/* Advanced Filters Button */}
+              {/* Sort Button - Styled like Filter */}
+              <div className="flex-1 sm:flex-none relative">
                 <button
-                  onClick={() => setFiltersOpen(true)}
-                  className="flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-all"
+                  onClick={() => {
+                    const newSortBy = sortBy === 'latest' ? 'salary' : sortBy === 'salary' ? 'match' : 'latest';
+                    setSortBy(newSortBy);
+                    const params = new URLSearchParams(searchParams.toString());
+                    params.set('sort', newSortBy);
+                    const queryString = params.toString();
+                    const newUrl = queryString ? `${pathname}?${queryString}` : pathname;
+                    router.replace(newUrl);
+                  }}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-all"
                   style={{
-                    backgroundColor: hasActiveFilters() ? theme.colors.primary.DEFAULT + '10' : theme.colors.background.DEFAULT,
-                    borderColor: hasActiveFilters() ? theme.colors.primary.DEFAULT : theme.colors.border.DEFAULT,
+                    backgroundColor: theme.colors.background.DEFAULT,
+                    borderColor: theme.colors.border.DEFAULT,
                   }}
                 >
-                  <SlidersHorizontal size={16} />
-                  <span className="font-medium text-sm">Filters</span>
-                  {hasActiveFilters() && (
-                    <span className="px-1.5 py-0.5 text-xs bg-blue-500 text-white rounded-full">
-                      {getActiveFilterCount()}
-                    </span>
-                  )}
+                  <ArrowUpDown size={16} />
+                  <span className="font-medium text-sm">
+                    {sortBy === 'latest' ? 'Newest' : sortBy === 'salary' ? 'Salary' : 'Match'}
+                  </span>
                 </button>
               </div>
-              
-              {/* Sort Control */}
-              <div className="flex items-center gap-2">
-                {/* Sort Badge */}
-                <div className="relative">
-                  <button
-                    onClick={() => {
-                      const newSortBy = sortBy === 'latest' ? 'salary' : 'latest';
-                      setSortBy(newSortBy);
-                      
-                      const params = new URLSearchParams(searchParams.toString());
-                      params.set('sort', newSortBy);
-                      
-                      const queryString = params.toString();
-                      const newUrl = queryString ? `${pathname}?${queryString}` : pathname;
-                      router.replace(newUrl);
-                    }}
-                    className="px-3 py-1.5 text-xs font-medium bg-gray-100 text-gray-700 rounded-full border border-gray-200 hover:bg-gray-200 transition-colors flex items-center gap-1"
-                  >
-                    <ArrowUpDown size={12} />
-                    {sortBy === 'latest' ? 'Most Recent' : 'Highest Salary'}
-                  </button>
-                </div>
-              </div>
             </div>
-            
+
+            {/* Category Filters - Horizontal scroll on mobile, centered on desktop */}
+            <div className="flex gap-2 overflow-x-auto pb-2 md:flex-wrap md:overflow-visible md:justify-center scrollbar-hide">
+              {categories.map(cat => {
+                const Icon = cat.icon;
+                return (
+                  <a
+                    key={cat.id}
+                    href={cat.url}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors whitespace-nowrap"
+                  >
+                    <Icon size={12} />
+                    {cat.label}
+                  </a>
+                );
+              })}
+            </div>
+
+            {/* Role Quick Filters */}
+            <div className={`flex flex-wrap gap-1.5 ${!rolesExpanded ? 'max-h-20 md:max-h-none overflow-hidden' : ''}`}>
+              {visibleRoles.map(role => (
+                <button
+                  key={role}
+                  onClick={() => {
+                    setFilters(prev => ({ ...prev, search: role }));
+                    setSearchQuery(role);
+                    const params = new URLSearchParams(searchParams.toString());
+                    params.set('search', role);
+                    const queryString = params.toString();
+                    const newUrl = queryString ? `${pathname}?${queryString}` : pathname;
+                    router.replace(newUrl);
+                  }}
+                  className="px-2.5 py-1 rounded-full text-xs bg-gray-50 text-gray-600 hover:bg-blue-50 hover:text-blue-700 border border-gray-200 hover:border-blue-200 transition-colors"
+                >
+                  {role}
+                </button>
+              ))}
+              {!rolesExpanded && (
+                <button
+                  onClick={() => setRolesExpanded(true)}
+                  className="px-2.5 py-1 rounded-full text-xs text-blue-600 hover:text-blue-800 font-medium"
+                >
+                  +{popularRoles.length - 6} more
+                </button>
+              )}
+              {rolesExpanded && (
+                <button
+                  onClick={() => setRolesExpanded(false)}
+                  className="px-2.5 py-1 rounded-full text-xs text-gray-500 hover:text-gray-700"
+                >
+                  Show less
+                </button>
+              )}
+            </div>
+
             {/* Results Count and Clear Filters */}
             <div className="flex items-center justify-between">
               {!latestJobsLoading && hasActiveFilters() && (

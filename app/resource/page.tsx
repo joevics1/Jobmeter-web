@@ -10,7 +10,11 @@ import {
   ArrowRight,
   Laptop,
   GraduationCap,
-  Home
+  Home,
+  Globe,
+  Rocket,
+  ClipboardList,
+  Award
 } from 'lucide-react';
 import { theme } from '@/lib/theme';
 
@@ -61,8 +65,16 @@ export default function ResourcePage() {
           title: 'Internship Finder',
           description: 'Find internship opportunities to kickstart your career',
           icon: GraduationCap,
-          color: '#8B5CF6',
+          color: '#2563EB',
           route: '/tools/internship-finder',
+        },
+        {
+          id: 'nysc-finder',
+          title: 'NYSC Jobs',
+          description: 'Find job opportunities for NYSC corpers',
+          icon: Award,
+          color: '#10B981',
+          route: '/tools/nysc-finder',
         },
         {
           id: 'accommodation-finder',
@@ -71,6 +83,38 @@ export default function ResourcePage() {
           icon: Home,
           color: '#14B8A6',
           route: '/tools/accommodation-finder',
+        },
+        {
+          id: 'visa-finder',
+          title: 'Jobs with Visa Sponsorship',
+          description: 'Find jobs that offer visa sponsorship and work permits',
+          icon: Globe,
+          color: '#3B82F6',
+          route: '/tools/visa-finder',
+        },
+        {
+          id: 'graduate-trainee-finder',
+          title: 'Graduate & Trainee Jobs',
+          description: 'Find graduate programs and trainee positions for fresh graduates',
+          icon: GraduationCap,
+          color: '#2563EB',
+          route: '/tools/graduate-trainee-finder',
+        },
+        {
+          id: 'entry-level-finder',
+          title: 'Entry Level Jobs',
+          description: 'Find entry-level jobs for beginners starting their career',
+          icon: Rocket,
+          color: '#2563EB',
+          route: '/tools/entry-level-finder',
+        },
+        {
+          id: 'quiz',
+          title: 'Quiz Platform',
+          description: 'Practice aptitude tests and theory questions',
+          icon: ClipboardList,
+          color: '#2563EB',
+          route: '/tools/quiz',
         },
   ];
 

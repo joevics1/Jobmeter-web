@@ -66,7 +66,7 @@ function getCategories(posts: BlogPost[]): string[] {
   return Array.from(new Set(categories));
 }
 
-export const revalidate = 1800; // Revalidate every 30 minutes
+export const revalidate = 86400; // 24 hours - blog changes daily
 
 export default async function BlogPage() {
   const posts = await getBlogPosts();

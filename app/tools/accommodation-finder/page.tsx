@@ -165,6 +165,10 @@ export default function AccommodationFinderPage() {
       setTotalJobs(total);
       setTotalPages(total > 0 ? Math.ceil(total / JOBS_PER_PAGE) : 1);
 
+      if (searchQuery.trim()) {
+        saveSearchHistory(searchQuery.trim(), total);
+      }
+
       let query = supabase
         .from('jobs')
         .select('*')
@@ -392,6 +396,21 @@ export default function AccommodationFinderPage() {
     e.preventDefault();
     setCurrentPage(1);
     updateURL();
+    if (searchQuery.trim()) {
+      saveSearchHistory(searchQuery.trim(), 0);
+    }
+  };
+
+  const saveSearchHistory = async (query: string, resultsCount: number) => {
+    try {
+      await supabase.from('search_history').insert({
+        user_id: user?.id || null,
+        search_query: query,
+        results_count: resultsCount,
+      });
+    } catch (error) {
+      console.error('Error saving search history:', error);
+    }
   };
 
   const updateURL = () => {

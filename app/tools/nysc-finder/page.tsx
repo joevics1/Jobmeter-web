@@ -8,7 +8,7 @@ import JobCard from '@/components/jobs/JobCard';
 import { JobUI } from '@/components/jobs/JobCard';
 import MatchBreakdownModal from '@/components/jobs/MatchBreakdownModal';
 import { MatchBreakdownModalData } from '@/components/jobs/MatchBreakdownModal';
-import { ChevronDown, Briefcase, GraduationCap, Search, Filter, X, Laptop, Home, Globe, Rocket, Award, ChevronRight } from 'lucide-react';
+import { ChevronDown, Briefcase, Award, Search, Filter, X, Laptop, Home, Globe, Rocket, GraduationCap, ChevronRight } from 'lucide-react';
 import { scoreJob, JobRow, UserOnboardingData } from '@/lib/matching/matchEngine';
 import { matchCacheService } from '@/lib/matching/matchCache';
 
@@ -19,7 +19,7 @@ const STORAGE_KEYS = {
 
 const JOBS_PER_PAGE = 20;
 
-export default function InternshipFinderPage() {
+export default function NYSCFinderPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   
@@ -120,7 +120,7 @@ export default function InternshipFinderPage() {
   }, [searchParams]);
 
   useEffect(() => {
-    fetchInternshipJobs();
+    fetchNYSCJobs();
   }, [currentPage, filters, user, userOnboardingData, searchQuery]);
 
   const checkAuth = async () => {
@@ -158,7 +158,7 @@ export default function InternshipFinderPage() {
     }
   };
 
-  const fetchInternshipJobs = async () => {
+  const fetchNYSCJobs = async () => {
     try {
       setLoading(true);
       
@@ -170,7 +170,7 @@ export default function InternshipFinderPage() {
         .from('jobs')
         .select('*', { count: 'exact', head: true })
         .eq('status', 'active')
-        .eq('role_category', 'intern')
+        .eq('role_category', 'nysc')
         .gte('created_at', thirtyDaysAgoISO);
 
       if (searchQuery) {
@@ -198,7 +198,7 @@ export default function InternshipFinderPage() {
         .from('jobs')
         .select('*')
         .eq('status', 'active')
-        .eq('role_category', 'intern')
+        .eq('role_category', 'nysc')
         .gte('created_at', thirtyDaysAgoISO)
         .order('created_at', { ascending: false })
         .range((currentPage - 1) * JOBS_PER_PAGE, currentPage * JOBS_PER_PAGE - 1);
@@ -235,7 +235,7 @@ export default function InternshipFinderPage() {
 
       setJobs(processedJobs);
     } catch (error) {
-      console.error('Error fetching internship jobs:', error);
+      console.error('Error fetching NYSC jobs:', error);
       setJobs([]);
     } finally {
       setLoading(false);
@@ -429,7 +429,7 @@ export default function InternshipFinderPage() {
     if (filters.sector.length > 0) params.set('sector', filters.sector.join(','));
     if (filters.location.length > 0) params.set('location', filters.location.join(','));
     if (currentPage > 1) params.set('page', currentPage.toString());
-    router.push(`/tools/internship-finder?${params.toString()}`);
+    router.push(`/tools/nysc-finder?${params.toString()}`);
   };
 
   const handleFilterChange = (filterType: 'sector' | 'location', value: string) => {
@@ -447,7 +447,7 @@ export default function InternshipFinderPage() {
     setFilters({ sector: [], location: [] });
     setSearchQuery('');
     setCurrentPage(1);
-    router.push('/tools/internship-finder');
+    router.push('/tools/nysc-finder');
   };
 
   const sortedJobs = [...jobs].sort((a, b) => {
@@ -473,13 +473,13 @@ export default function InternshipFinderPage() {
             ← Back to Tools
           </a>
           <div className="flex items-center gap-3 mb-2">
-            <GraduationCap size={32} />
+            <Award size={32} />
             <h1 className="text-2xl font-bold" style={{ color: theme.colors.text.light }}>
-              Internship Finder
+              NYSC Jobs
             </h1>
           </div>
           <p className="text-sm" style={{ color: theme.colors.text.light }}>
-            Find internship opportunities to kickstart your career
+            Find job opportunities for NYSC corpers
           </p>
         </div>
       </div>
@@ -495,7 +495,7 @@ export default function InternshipFinderPage() {
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search internship jobs (job title, company)..."
+                  placeholder="Search NYSC jobs (job title, company)..."
                   className="w-full pl-10 pr-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
@@ -623,7 +623,7 @@ export default function InternshipFinderPage() {
         {/* Results Summary */}
         <div className="flex items-center justify-between mb-4">
           <p className="text-sm text-gray-600">
-            {loading ? 'Loading...' : `${totalJobs.toLocaleString()} internship jobs found`}
+            {loading ? 'Loading...' : `${totalJobs.toLocaleString()} NYSC jobs found`}
             {hasFilters && ` (filtered)`}
           </p>
           <div className="flex items-center gap-3">
@@ -643,16 +643,16 @@ export default function InternshipFinderPage() {
           <div className="divide-y" style={{ borderColor: theme.colors.border.DEFAULT }}>
             {loading ? (
               <div className="flex items-center justify-center py-12">
-                <p style={{ color: theme.colors.text.secondary }}>Loading internship opportunities...</p>
+                <p style={{ color: theme.colors.text.secondary }}>Loading NYSC job opportunities...</p>
               </div>
             ) : sortedJobs.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12 px-6">
                 <Briefcase size={48} className="text-gray-400 mb-4" />
                 <p className="text-base font-medium mb-2" style={{ color: theme.colors.text.primary }}>
-                  No internship jobs found
+                  No NYSC jobs found
                 </p>
                 <p className="text-sm text-center" style={{ color: theme.colors.text.secondary }}>
-                  {hasFilters ? 'Try adjusting your filters' : 'Check back later for new internship opportunities'}
+                  {hasFilters ? 'Try adjusting your filters' : 'Check back later for new NYSC job opportunities'}
                 </p>
                 {hasFilters && (
                   <button
