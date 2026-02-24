@@ -185,6 +185,10 @@ export default function CompanyQuizClient({ company }: { company: string }) {
             Answer all questions, then submit to see results with explanations.
           </p>
         </div>
+
+        <p className="text-xs text-gray-500 text-center mt-4">
+         <b>Disclaimer:</b> This quiz is for educational purposes only. JobMeter has no affiliation to {company}.
+        </p>
       </div>
     </div>
   );

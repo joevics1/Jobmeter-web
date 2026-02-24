@@ -81,6 +81,10 @@ export default function QuizPage() {
             ))}
           </div>
         )}
+
+        <p className="text-xs text-gray-500 text-center mt-6">
+          <b>Disclaimer:</b> This quiz is for educational purposes only. JobMeter has no affiliation to any company.
+        </p>
       </div>
     </div>
   );

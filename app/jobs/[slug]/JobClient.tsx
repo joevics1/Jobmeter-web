@@ -398,46 +398,48 @@ export default function JobClient({ job, relatedJobs }: { job: any; relatedJobs?
                   })()}
                 </p>
 
-                {/* Quick Links */}
-                <div className="flex flex-wrap gap-2 mb-6">
-                  <a
-                    href={`/jobs?posted=today`}
-                    className="px-3 py-1.5 rounded-full text-sm font-medium transition-colors"
-                    style={{ backgroundColor: `${theme.colors.primary.DEFAULT}15`, color: theme.colors.primary.DEFAULT }}
-                  >
-                    Today&apos;s jobs
-                  </a>
-                  
-                  {job.category && (
+                {/* Quick Links - Only show for non-expired jobs */}
+                {!(job.status === 'expired' || (job.deadline && new Date(job.deadline) < new Date())) && (
+                  <div className="flex flex-wrap gap-2 mb-6">
                     <a
-                      href={`/resources/${job.category}`}
+                      href={`/jobs?posted=today`}
                       className="px-3 py-1.5 rounded-full text-sm font-medium transition-colors"
                       style={{ backgroundColor: `${theme.colors.primary.DEFAULT}15`, color: theme.colors.primary.DEFAULT }}
                     >
-                      {job.category.replace(/-/g, ' ')}
+                      Today&apos;s jobs
                     </a>
-                  )}
-                  
-                  {typeof job.location === 'object' && job.location?.state && !job.location?.remote && (
-                    <a
-                      href={`/jobs/state/${job.location.state.toLowerCase().replace(/\s+/g, '-')}`}
-                      className="px-3 py-1.5 rounded-full text-sm font-medium transition-colors"
-                      style={{ backgroundColor: `${theme.colors.primary.DEFAULT}15`, color: theme.colors.primary.DEFAULT }}
-                    >
-                      {job.location.state} jobs
-                    </a>
-                  )}
-                  
-                  {typeof job.location === 'object' && job.location?.remote && (
-                    <a
-                      href="/jobs/remote"
-                      className="px-3 py-1.5 rounded-full text-sm font-medium transition-colors"
-                      style={{ backgroundColor: `${theme.colors.primary.DEFAULT}15`, color: theme.colors.primary.DEFAULT }}
-                    >
-                      Remote jobs
-                    </a>
-                  )}
-                </div>
+                    
+                    {job.category && (
+                      <a
+                        href={`/resources/${job.category}`}
+                        className="px-3 py-1.5 rounded-full text-sm font-medium transition-colors"
+                        style={{ backgroundColor: `${theme.colors.primary.DEFAULT}15`, color: theme.colors.primary.DEFAULT }}
+                      >
+                        {job.category.replace(/-/g, ' ')}
+                      </a>
+                    )}
+                    
+                    {typeof job.location === 'object' && job.location?.state && !job.location?.remote && (
+                      <a
+                        href={`/jobs/state/${job.location.state.toLowerCase().replace(/\s+/g, '-')}`}
+                        className="px-3 py-1.5 rounded-full text-sm font-medium transition-colors"
+                        style={{ backgroundColor: `${theme.colors.primary.DEFAULT}15`, color: theme.colors.primary.DEFAULT }}
+                      >
+                        {job.location.state} jobs
+                      </a>
+                    )}
+                    
+                    {typeof job.location === 'object' && job.location?.remote && (
+                      <a
+                        href="/jobs/remote"
+                        className="px-3 py-1.5 rounded-full text-sm font-medium transition-colors"
+                        style={{ backgroundColor: `${theme.colors.primary.DEFAULT}15`, color: theme.colors.primary.DEFAULT }}
+                      >
+                        Remote jobs
+                      </a>
+                    )}
+                  </div>
+                )}
 
                 {/* Job Expiry Warning - Big Red Banner */}
                 {(job.status === 'expired' || (job.deadline && new Date(job.deadline) < new Date())) && (
@@ -471,7 +473,7 @@ export default function JobClient({ job, relatedJobs }: { job: any; relatedJobs?
                     {/* Find Similar Jobs - White Background */}
                     {similarJobs && similarJobs.length > 0 && (
                       <div className="p-4 bg-white border border-gray-200 rounded-lg rounded-t-none">
-                        <p className="text-sm font-semibold text-gray-900 mb-3">
+                        <p className="text-lg font-bold text-gray-900 mb-3">
                           Find similar jobs instead:
                         </p>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -479,12 +481,12 @@ export default function JobClient({ job, relatedJobs }: { job: any; relatedJobs?
                             <a
                               key={similarJob.id}
                               href={`/jobs/${similarJob.slug || similarJob.id}`}
-                              className="block p-3 bg-gray-50 hover:bg-blue-50 rounded-lg transition-colors"
+                              className="block p-3 bg-white hover:bg-blue-50 rounded-lg transition-colors"
                             >
-                              <p className="text-sm font-medium text-gray-900 line-clamp-1">
+                              <p className="text-base font-medium text-blue-600 line-clamp-1">
                                 {similarJob.title}
                               </p>
-                              <p className="text-xs text-blue-600 mt-0.5">
+                              <p className="text-xs text-gray-900 mt-0.5">
                                 {typeof similarJob.company === 'string' ? similarJob.company : similarJob.company?.name || 'Company'}
                               </p>
                             </a>
@@ -529,6 +531,47 @@ export default function JobClient({ job, relatedJobs }: { job: any; relatedJobs?
                             <Share2 size={16} />
                             Share
                           </button>
+                        </div>
+
+                        {/* Quick Links */}
+                        <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-gray-200">
+                          <a
+                            href={`/jobs?posted=today`}
+                            className="px-3 py-1.5 rounded-full text-sm font-medium transition-colors"
+                            style={{ backgroundColor: `${theme.colors.primary.DEFAULT}15`, color: theme.colors.primary.DEFAULT }}
+                          >
+                            Today&apos;s jobs
+                          </a>
+                          
+                          {job.category && (
+                            <a
+                              href={`/resources/${job.category}`}
+                              className="px-3 py-1.5 rounded-full text-sm font-medium transition-colors"
+                              style={{ backgroundColor: `${theme.colors.primary.DEFAULT}15`, color: theme.colors.primary.DEFAULT }}
+                            >
+                              {job.category.replace(/-/g, ' ')}
+                            </a>
+                          )}
+                          
+                          {typeof job.location === 'object' && job.location?.state && !job.location?.remote && (
+                            <a
+                              href={`/jobs/state/${job.location.state.toLowerCase().replace(/\s+/g, '-')}`}
+                              className="px-3 py-1.5 rounded-full text-sm font-medium transition-colors"
+                              style={{ backgroundColor: `${theme.colors.primary.DEFAULT}15`, color: theme.colors.primary.DEFAULT }}
+                            >
+                              {job.location.state} jobs
+                            </a>
+                          )}
+                          
+                          {typeof job.location === 'object' && job.location?.remote && (
+                            <a
+                              href="/jobs/remote"
+                              className="px-3 py-1.5 rounded-full text-sm font-medium transition-colors"
+                              style={{ backgroundColor: `${theme.colors.primary.DEFAULT}15`, color: theme.colors.primary.DEFAULT }}
+                            >
+                              Remote jobs
+                            </a>
+                          )}
                         </div>
                       </div>
                     )}
@@ -739,8 +782,8 @@ export default function JobClient({ job, relatedJobs }: { job: any; relatedJobs?
                 return null;
               })()}
 
-              {/* How to Apply */}
-              {(job.application?.email || job.application_email || job.application?.phone || job.application_phone || job.application?.link || job.application?.url || job.application_url) && (
+              {/* How to Apply - Hide when job is expired */}
+              {!(job.status === 'expired' || (job.deadline && new Date(job.deadline) < new Date())) && (job.application?.email || job.application_email || job.application?.phone || job.application_phone || job.application?.link || job.application?.url || job.application_url) && (
                 <div id="how-to-apply" className="bg-white rounded-xl shadow-sm p-6">
                   <h2 className="text-xl font-semibold mb-4 text-gray-900">How to Apply</h2>
                   
@@ -948,8 +991,8 @@ export default function JobClient({ job, relatedJobs }: { job: any; relatedJobs?
                 </div>
               )}
 
-              {/* Application Link */}
-              {(job.application_url || (job.application && (job.application.url || job.application.link))) && (
+              {/* Application Link - Hide when job is expired */}
+              {!(job.status === 'expired' || (job.deadline && new Date(job.deadline) < new Date())) && (job.application_url || (job.application && (job.application.url || job.application.link))) && (
                 <div className="bg-white rounded-xl shadow-sm p-6">
                   <a
                     href={job.application_url || job.application?.url || job.application?.link}

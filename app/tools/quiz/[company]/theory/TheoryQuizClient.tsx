@@ -30,6 +30,7 @@ export default function TheoryQuizClient({ company }: { company: string }) {
   const [submitting, setSubmitting] = useState(false);
   const [showResults, setShowResults] = useState(false);
   const [results, setResults] = useState<GradingResult[]>([]);
+  const [currentIndex, setCurrentIndex] = useState(0);
   const [debug, setDebug] = useState('');
 
   useEffect(() => {
@@ -205,12 +206,31 @@ export default function TheoryQuizClient({ company }: { company: string }) {
           <button onClick={() => { setAnswers({}); setShowResults(false); setResults([]); fetchQuestions(); }} className="w-full py-3 rounded-lg font-medium text-sm" style={{ backgroundColor: theme.colors.primary.DEFAULT, color: '#fff' }}>
             Try Again
           </button>
+
+          <p className="text-xs text-gray-500 text-center mt-4">
+            This quiz is for educational purposes only. JobMeter has no affiliation to {company}.
+          </p>
         </div>
       </div>
     );
   }
 
   const answeredCount = Object.keys(answers).length;
+  const currentQuestion = questions[currentIndex];
+
+  const handleNext = () => {
+    if (currentIndex < questions.length - 1) {
+      setCurrentIndex(currentIndex + 1);
+    }
+  };
+
+  const handlePrev = () => {
+    if (currentIndex > 0) {
+      setCurrentIndex(currentIndex - 1);
+    }
+  };
+
+  const isCurrentAnswered = !!answers[currentQuestion?.id]?.trim();
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: theme.colors.background.muted }}>
@@ -232,29 +252,48 @@ export default function TheoryQuizClient({ company }: { company: string }) {
         </div>
 
         <div className="space-y-4">
-          {questions.map((q, idx) => (
-            <div key={q.id} className="bg-white rounded-lg p-4" style={{ border: `1px solid ${theme.colors.border.DEFAULT}` }}>
-              <p className="text-sm font-medium text-gray-900 mb-3">Q{idx + 1}. {q.question_text}</p>
+          <div className="bg-white rounded-lg p-4" style={{ border: `1px solid ${theme.colors.border.DEFAULT}` }}>
+            <p className="text-sm font-medium text-gray-900 mb-3">Q{currentIndex + 1}. {currentQuestion.question_text}</p>
 
-              <textarea
-                value={answers[q.id] || ''}
-                onChange={(e) => handleAnswerChange(q.id, e.target.value)}
-                placeholder="Type your answer..."
-                rows={4}
-                className="w-full p-3 border rounded-lg text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-          ))}
+            <textarea
+              value={answers[currentQuestion.id] || ''}
+              onChange={(e) => handleAnswerChange(currentQuestion.id, e.target.value)}
+              placeholder="Type your answer..."
+              rows={6}
+              className="w-full p-3 border rounded-lg text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
         </div>
 
-        <button
-          onClick={handleSubmit}
-          disabled={submitting || answeredCount < questions.length}
-          className="w-full mt-4 py-3 rounded-lg font-medium text-sm disabled:opacity-50"
-          style={{ backgroundColor: theme.colors.primary.DEFAULT, color: '#fff' }}
-        >
-          {submitting ? 'Grading with AI...' : `Submit (${answeredCount}/${questions.length})`}
-        </button>
+        <div className="flex gap-3 mt-4">
+          <button
+            onClick={handlePrev}
+            disabled={currentIndex === 0}
+            className="flex-1 py-3 rounded-lg font-medium text-sm disabled:opacity-50 bg-gray-200 text-gray-700"
+          >
+            Previous
+          </button>
+          
+          {currentIndex === questions.length - 1 ? (
+            <button
+              onClick={handleSubmit}
+              disabled={submitting || answeredCount < questions.length}
+              className="flex-1 py-3 rounded-lg font-medium text-sm disabled:opacity-50"
+              style={{ backgroundColor: theme.colors.primary.DEFAULT, color: '#fff' }}
+            >
+              {submitting ? 'Grading with AI...' : `Submit (${answeredCount}/${questions.length})`}
+            </button>
+          ) : (
+            <button
+              onClick={handleNext}
+              disabled={!isCurrentAnswered}
+              className="flex-1 py-3 rounded-lg font-medium text-sm disabled:opacity-50"
+              style={{ backgroundColor: theme.colors.primary.DEFAULT, color: '#fff' }}
+            >
+              Next
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );

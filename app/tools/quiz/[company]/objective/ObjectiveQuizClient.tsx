@@ -31,6 +31,7 @@ export default function ObjectiveQuizClient({ company }: { company: string }) {
   const [submitting, setSubmitting] = useState(false);
   const [showResults, setShowResults] = useState(false);
   const [score, setScore] = useState({ correct: 0, total: 0 });
+  const [currentIndex, setCurrentIndex] = useState(0);
   const [debug, setDebug] = useState('');
 
   useEffect(() => {
@@ -181,12 +182,31 @@ export default function ObjectiveQuizClient({ company }: { company: string }) {
           <button onClick={restartQuiz} className="w-full py-3 rounded-lg font-medium text-sm" style={{ backgroundColor: theme.colors.primary.DEFAULT, color: '#fff' }}>
             Try Again
           </button>
+
+          <p className="text-xs text-gray-500 text-center mt-4">
+            This quiz is for educational purposes only. JobMeter has no affiliation to {company}.
+          </p>
         </div>
       </div>
     );
   }
 
   const answeredCount = Object.keys(answers).length;
+  const currentQuestion = questions[currentIndex];
+
+  const handleNext = () => {
+    if (currentIndex < questions.length - 1) {
+      setCurrentIndex(currentIndex + 1);
+    }
+  };
+
+  const handlePrev = () => {
+    if (currentIndex > 0) {
+      setCurrentIndex(currentIndex - 1);
+    }
+  };
+
+  const isCurrentAnswered = !!answers[currentQuestion?.id];
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: theme.colors.background.muted }}>
@@ -208,44 +228,63 @@ export default function ObjectiveQuizClient({ company }: { company: string }) {
         </div>
 
         <div className="space-y-4">
-          {questions.map((q, idx) => (
-            <div key={q.id} className="bg-white rounded-lg p-4" style={{ border: `1px solid ${theme.colors.border.DEFAULT}` }}>
-              <p className="text-sm font-medium text-gray-900 mb-3">Q{idx + 1}. {q.question_text}</p>
+          <div className="bg-white rounded-lg p-4" style={{ border: `1px solid ${theme.colors.border.DEFAULT}` }}>
+            <p className="text-sm font-medium text-gray-900 mb-3">Q{currentIndex + 1}. {currentQuestion.question_text}</p>
 
-              <div className="space-y-2">
-                {['A', 'B', 'C', 'D', 'E'].map(opt => {
-                  const key = `option_${opt.toLowerCase()}` as keyof ObjectiveQuestion;
-                  const text = q[key] as string;
-                  if (!text) return null;
+            <div className="space-y-2">
+              {['A', 'B', 'C', 'D', 'E'].map(opt => {
+                const key = `option_${opt.toLowerCase()}` as keyof ObjectiveQuestion;
+                const text = currentQuestion[key] as string;
+                if (!text) return null;
 
-                  const isSelected = answers[q.id] === opt;
+                const isSelected = answers[currentQuestion.id] === opt;
 
-                  return (
-                    <button
-                      key={opt}
-                      onClick={() => handleAnswerSelect(q.id, opt)}
-                      className={`w-full p-2.5 rounded-lg border text-left text-sm flex items-center gap-2 ${isSelected ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}
-                    >
-                      <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs ${isSelected ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-600'}`}>
-                        {opt}
-                      </span>
-                      <span className="text-gray-700">{text}</span>
-                    </button>
-                  );
-                })}
-              </div>
+                return (
+                  <button
+                    key={opt}
+                    onClick={() => handleAnswerSelect(currentQuestion.id, opt)}
+                    className={`w-full p-2.5 rounded-lg border text-left text-sm flex items-center gap-2 ${isSelected ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}
+                  >
+                    <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs ${isSelected ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-600'}`}>
+                      {opt}
+                    </span>
+                    <span className="text-gray-700">{text}</span>
+                  </button>
+                );
+              })}
             </div>
-          ))}
+          </div>
         </div>
 
-        <button
-          onClick={handleSubmit}
-          disabled={submitting || answeredCount < questions.length}
-          className="w-full mt-4 py-3 rounded-lg font-medium text-sm disabled:opacity-50"
-          style={{ backgroundColor: theme.colors.primary.DEFAULT, color: '#fff' }}
-        >
-          {submitting ? 'Submitting...' : `Submit (${answeredCount}/${questions.length})`}
-        </button>
+        <div className="flex gap-3 mt-4">
+          <button
+            onClick={handlePrev}
+            disabled={currentIndex === 0}
+            className="flex-1 py-3 rounded-lg font-medium text-sm disabled:opacity-50 bg-gray-200 text-gray-700"
+          >
+            Previous
+          </button>
+          
+          {currentIndex === questions.length - 1 ? (
+            <button
+              onClick={handleSubmit}
+              disabled={submitting || answeredCount < questions.length}
+              className="flex-1 py-3 rounded-lg font-medium text-sm disabled:opacity-50"
+              style={{ backgroundColor: theme.colors.primary.DEFAULT, color: '#fff' }}
+            >
+              {submitting ? 'Submitting...' : `Submit (${answeredCount}/${questions.length})`}
+            </button>
+          ) : (
+            <button
+              onClick={handleNext}
+              disabled={!isCurrentAnswered}
+              className="flex-1 py-3 rounded-lg font-medium text-sm disabled:opacity-50"
+              style={{ backgroundColor: theme.colors.primary.DEFAULT, color: '#fff' }}
+            >
+              Next
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );
