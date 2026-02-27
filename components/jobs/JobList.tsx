@@ -31,8 +31,8 @@ const CACHE_DURATION = 3 * 60 * 60 * 1000; // 3 hours
 
 export default function JobList() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   
   // ✅ NEW: Tab state
   const [activeTab, setActiveTab] = useState<'latest' | 'matches'>('latest');
@@ -73,7 +73,7 @@ export default function JobList() {
   const [detectedCountry, setDetectedCountry] = useState<string | null>(null);
 
   const categories = [
-    { id: 'remote', label: 'Remote', icon: Laptop, url: '/tools/remote-jobs-finder' },
+    { id: 'remote', label: 'Remote', icon: Laptop, url: '/jobs?remote=true' },
     { id: 'nysc', label: 'NYSC', icon: Award, url: '/tools/nysc-finder' },
     { id: 'accommodation', label: 'Accommodation', icon: Home, url: '/tools/accommodation-finder' },
     { id: 'visa', label: 'Visa', icon: Globe, url: '/tools/visa-finder' },
@@ -1094,11 +1094,6 @@ export default function JobList() {
             {/* Enhanced Search Bar */}
             <div className="relative group">
               <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl opacity-0 group-focus-within:opacity-30 transition-opacity blur"></div>
-              <Search 
-                size={22} 
-                className="absolute left-5 top-1/2 -translate-y-1/2 pointer-events-none transition-colors group-focus-within:text-blue-500 z-10"
-                style={{ color: theme.colors.primary.DEFAULT }}
-              />
               <input
                 type="text"
                 placeholder="Search by job title, company, or keywords..."
@@ -1122,12 +1117,17 @@ export default function JobList() {
                 }}
                 onFocus={() => setShowSuggestions(filters.search.length > 0)}
                 onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-                className="relative w-full pl-14 pr-14 py-5 rounded-xl border-2 outline-none focus:ring-0 focus:border-blue-500 transition-all text-base font-medium shadow-lg hover:shadow-xl z-10 placeholder:text-gray-400"
+                className="relative w-full pl-6 pr-14 py-5 rounded-xl border-2 outline-none focus:ring-0 focus:border-blue-500 transition-all text-base font-medium shadow-lg hover:shadow-xl z-10 placeholder:text-gray-400"
                 style={{
                   backgroundColor: theme.colors.background.DEFAULT,
                   borderColor: theme.colors.primary.DEFAULT,
                   color: theme.colors.text.primary,
                 }}
+              />
+              <Search 
+                size={20} 
+                className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none"
+                style={{ color: theme.colors.text.secondary }}
               />
               {/* Autocomplete Suggestions */}
               {showSuggestions && filteredSuggestions.length > 0 && (
@@ -1355,7 +1355,12 @@ export default function JobList() {
 
             {/* Category Filters - Horizontal scroll on mobile, centered on desktop */}
             <div className="flex gap-2 overflow-x-auto pb-2 md:flex-wrap md:overflow-visible md:justify-center scrollbar-hide">
-              {categories.map(cat => {
+              {categories.filter(cat => {
+                if (cat.id === 'nysc' || cat.id === 'accommodation') {
+                  return detectedCountry === 'NG';
+                }
+                return true;
+              }).map(cat => {
                 const Icon = cat.icon;
                 return (
                   <a
@@ -1368,43 +1373,6 @@ export default function JobList() {
                   </a>
                 );
               })}
-            </div>
-
-            {/* Role Quick Filters */}
-            <div className="flex flex-wrap gap-1.5 justify-center">
-              {(rolesExpanded ? popularRoles : popularRoles.slice(0, 6)).map(role => (
-                <button
-                  key={role}
-                  onClick={() => {
-                    setFilters(prev => ({ ...prev, search: role }));
-                    setSearchQuery(role);
-                    const params = new URLSearchParams(searchParams.toString());
-                    params.set('search', role);
-                    const queryString = params.toString();
-                    const newUrl = queryString ? `${pathname}?${queryString}` : pathname;
-                    router.replace(newUrl);
-                  }}
-                  className="px-2.5 py-1 rounded-full text-xs bg-gray-100 text-gray-700 border border-gray-200 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200 transition-colors"
-                >
-                  {role}
-                </button>
-              ))}
-              {!rolesExpanded && (
-                <button
-                  onClick={() => setRolesExpanded(true)}
-                  className="px-2.5 py-1 rounded-full text-xs text-blue-600 hover:text-blue-800 font-medium"
-                >
-                  +{popularRoles.length - 6} more
-                </button>
-              )}
-              {rolesExpanded && (
-                <button
-                  onClick={() => setRolesExpanded(false)}
-                  className="px-2.5 py-1 rounded-full text-xs text-gray-500 hover:text-gray-700"
-                >
-                  Show less
-                </button>
-              )}
             </div>
 
             {/* Results Count and Clear Filters */}

@@ -1,6 +1,6 @@
 import JobList from '@/components/jobs/JobList';
 
-export const revalidate = 600; // 10 minutes - job list changes most
+export const revalidate = 1800; // 30 minutes - cache job list
 
 export default function JobsPage() {
   return <JobList />;

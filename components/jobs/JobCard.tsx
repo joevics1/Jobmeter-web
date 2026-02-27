@@ -2,8 +2,100 @@
 
 import React, { useMemo } from 'react';
 import Link from 'next/link';
-import { MapPin, Bookmark, BookmarkCheck, FileCheck, Trash2, Calendar, ExternalLink, Briefcase, Building2 } from 'lucide-react';
+import { MapPin, Bookmark, BookmarkCheck, FileCheck, Trash2, Calendar, ExternalLink, Briefcase, Building2, Laptop, GraduationCap, Globe, Home, Rocket, Award, Heart, Stethoscope, ShoppingCart, Factory, Truck, Banknote, PenTool, Palette, Music, Camera, Utensils, FlaskConical, Cpu, BarChart3 } from 'lucide-react';
 import { theme } from '@/lib/theme';
+
+const sectorIcons: Record<string, React.ElementType> = {
+  technology: Laptop,
+  it: Laptop,
+  tech: Laptop,
+  software: Laptop,
+  engineering: Cpu,
+  finance: Banknote,
+  banking: Banknote,
+  accounting: Banknote,
+  healthcare: Stethoscope,
+  health: Stethoscope,
+  medical: Stethoscope,
+  education: GraduationCap,
+  teaching: GraduationCap,
+  retail: ShoppingCart,
+  sales: ShoppingCart,
+  marketing: BarChart3,
+  media: Camera,
+  entertainment: Music,
+  hospitality: Utensils,
+  food: Utensils,
+  manufacturing: Factory,
+  production: Factory,
+  logistics: Truck,
+  transport: Truck,
+  construction: Building2,
+  realestate: Home,
+  'real estate': Home,
+  design: Palette,
+  art: Palette,
+  writing: PenTool,
+  administration: PenTool,
+  science: FlaskConical,
+  research: FlaskConical,
+  startup: Rocket,
+  'non-profit': Heart,
+  nonprofit: Heart,
+  charity: Heart,
+  government: Building2,
+  public: Building2,
+  legal: PenTool,
+  law: PenTool,
+  hr: Heart,
+  'human resources': Heart,
+};
+
+const sectorColors: Record<string, string> = {
+  technology: '#3B82F6',
+  it: '#3B82F6',
+  tech: '#3B82F6',
+  software: '#3B82F6',
+  engineering: '#8B5CF6',
+  finance: '#10B981',
+  banking: '#10B981',
+  accounting: '#10B981',
+  healthcare: '#EF4444',
+  health: '#EF4444',
+  medical: '#EF4444',
+  education: '#F59E0B',
+  teaching: '#F59E0B',
+  retail: '#EC4899',
+  sales: '#EC4899',
+  marketing: '#06B6D4',
+  media: '#8B5CF6',
+  entertainment: '#8B5CF6',
+  hospitality: '#F97316',
+  food: '#F97316',
+  manufacturing: '#6B7280',
+  production: '#6B7280',
+  logistics: '#84CC16',
+  transport: '#84CC16',
+  construction: '#F59E0B',
+  realestate: '#10B981',
+  'real estate': '#10B981',
+  design: '#EC4899',
+  art: '#EC4899',
+  writing: '#6366F1',
+  administration: '#6366F1',
+  science: '#14B8A6',
+  research: '#14B8A6',
+  startup: '#F97316',
+  'non-profit': '#EF4444',
+  nonprofit: '#EF4444',
+  charity: '#EF4444',
+  government: '#4B5563',
+  public: '#4B5563',
+  legal: '#1F2937',
+  law: '#1F2937',
+  hr: '#DC2626',
+  'human resources': '#DC2626',
+};
 
 export interface JobUI {
   id: string;
@@ -60,6 +152,19 @@ export default function JobCard({
   // Check if job was posted today - use same logic as postedDate display
   const isNewJob = job.postedDate === 'Today';
 
+  const getSectorInfo = (sector?: string) => {
+    if (!sector) return { Icon: Building2, color: '#9CA3AF' };
+    const normalizedSector = sector.toLowerCase().trim();
+    for (const [key, Icon] of Object.entries(sectorIcons)) {
+      if (normalizedSector.includes(key) || key.includes(normalizedSector)) {
+        return { Icon, color: sectorColors[key] || '#9CA3AF' };
+      }
+    }
+    return { Icon: Building2, color: '#9CA3AF' };
+  };
+
+  const { Icon: SectorIcon, color: sectorColor } = getSectorInfo(job.sector);
+
   const handleSave = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -98,8 +203,12 @@ export default function JobCard({
         {/* Header Section */}
         <div className="flex items-start gap-4">
           {/* Company Logo */}
-          <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
-            <Building2 size={20} className="text-gray-400" />
+          <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
+            {job.companyLogo ? (
+              <img src={job.companyLogo} alt={job.company} className="w-full h-full object-cover" />
+            ) : (
+              <SectorIcon size={20} style={{ color: sectorColor }} />
+            )}
           </div>
           
           {/* Job Info */}
@@ -221,7 +330,7 @@ export default function JobCard({
           <div className="flex items-center gap-2">
             {/* New Badge - shown before Apply button */}
             {isNewJob && (
-              <span className="bg-blue-500 text-white text-xs font-bold px-2 py-1.5 rounded">
+              <span className="bg-orange-500 text-white text-xs font-bold px-2 py-1.5 rounded">
                 New
               </span>
             )}
