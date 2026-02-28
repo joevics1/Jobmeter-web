@@ -3,6 +3,10 @@ import { MetadataRoute } from 'next';
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.jobmeter.app';
 
+/**
+ * Location sitemap - generates state and town pages
+ * Place at: app/sitemap-locations/route.ts
+ */
 export async function GET() {
   const routes: MetadataRoute.Sitemap = [];
 
@@ -17,56 +21,66 @@ export async function GET() {
 
     const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-    // Fetch unique states from jobs
+    // Fetch all job locations. Range overrides Supabase's default 1000-row cap.
     const { data: jobs, error } = await supabase
       .from('jobs')
       .select('location')
-      .eq('status', 'active');
+      .range(0, 9999);
 
     if (error) {
-      console.error('Error fetching jobs for locations:', error);
-      return new Response('Error fetching jobs', { status: 500 });
+      console.error('Error fetching jobs for locations:', JSON.stringify(error));
+      return new Response(`Error fetching jobs: ${error.message}`, { status: 500 });
     }
 
-    if (jobs && jobs.length > 0) {
+    if (!jobs || jobs.length === 0) {
+      console.warn('No jobs found for location sitemap');
+    } else {
       const states = new Set<string>();
       const stateTowns: { [key: string]: Set<string> } = {};
 
-      jobs.forEach(job => {
-        if (job.location) {
+      for (const job of jobs) {
+        try {
+          // Skip null/undefined locations
+          if (!job.location) continue;
+
           let state = '';
           let town = '';
-          
+
           if (typeof job.location === 'string') {
-            // Parse string location format
-            const parts = job.location.split(',').map(p => p.trim());
+            // Handle "City, State" string format
+            const parts = job.location.split(',').map((p: string) => p.trim());
             if (parts.length >= 2) {
               town = parts[0];
               state = parts[1];
             } else if (parts.length === 1) {
               state = parts[0];
             }
-          } else if (job.location && typeof job.location === 'object') {
-            // Handle object location format
-            state = job.location.state || '';
-            town = job.location.city || '';
+          } else if (typeof job.location === 'object' && job.location !== null) {
+            // Handle { state, city } object format
+            state = String(job.location.state || '').trim();
+            town = String(job.location.city || job.location.town || '').trim();
           }
 
-          if (state) {
-            states.add(state);
-            if (!stateTowns[state]) {
-              stateTowns[state] = new Set();
-            }
-            if (town) {
-              stateTowns[state].add(town);
-            }
-          }
+          state = state.trim();
+          town = town.trim();
+
+          if (!state) continue;
+
+          states.add(state);
+          if (!stateTowns[state]) stateTowns[state] = new Set();
+          if (town) stateTowns[state].add(town);
+
+        } catch (parseErr) {
+          // Skip individual bad location entries without crashing the whole sitemap
+          console.warn('Skipping unparseable location:', job.location, parseErr);
+          continue;
         }
-      });
+      }
 
       // Add state pages
       states.forEach(state => {
         const formattedState = state.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+        if (!formattedState) return;
         routes.push({
           url: `${siteUrl}/jobs/state/${formattedState}`,
           lastModified: new Date(),
@@ -78,8 +92,11 @@ export async function GET() {
       // Add town pages
       Object.keys(stateTowns).forEach(state => {
         const formattedState = state.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+        if (!formattedState) return;
+
         stateTowns[state].forEach(town => {
           const formattedTown = town.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+          if (!formattedTown) return;
           routes.push({
             url: `${siteUrl}/jobs/state/${formattedState}/${formattedTown}`,
             lastModified: new Date(),
@@ -89,11 +106,13 @@ export async function GET() {
         });
       });
 
-      console.log(`📄 Location sitemap: ${states.size} states, ${Object.values(stateTowns).reduce((acc, towns) => acc + towns.size, 0)} towns`);
+      const totalTowns = Object.values(stateTowns).reduce((acc, t) => acc + t.size, 0);
+      console.log(`📄 Location sitemap: ${states.size} states, ${totalTowns} towns`);
     }
+
   } catch (error) {
     console.error('Error generating location sitemap:', error);
-    return new Response('Error generating sitemap', { status: 500 });
+    return new Response(`Error generating sitemap: ${error instanceof Error ? error.message : String(error)}`, { status: 500 });
   }
 
   const sitemap = `<?xml version="1.0" encoding="UTF-8"?>

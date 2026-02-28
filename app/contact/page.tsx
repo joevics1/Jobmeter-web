@@ -61,7 +61,6 @@ export default function ContactPage() {
     setErrorMessage('');
 
     try {
-      // Insert support request into database using exact schema
       const { data, error } = await supabase
         .from('support_requests')
         .insert({
@@ -69,13 +68,19 @@ export default function ContactPage() {
           email: values.email,
           subject: values.subject,
           message: values.message,
-          status: 'pending', // Default status as per schema
+          status: 'pending',
         })
         .select();
 
       if (error) {
         console.error('Supabase error:', error);
-        throw error;
+        if (error.message.includes('row-level security') || error.code === '42501') {
+          setErrorMessage('Unable to submit right now. Please email us directly at support@jobmeter.com');
+        } else {
+          throw error;
+        }
+        setSubmitStatus('error');
+        return;
       }
 
       console.log('Support request created:', data);

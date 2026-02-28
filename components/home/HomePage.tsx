@@ -30,6 +30,10 @@ const AuthModal = dynamic(() => import('@/components/AuthModal'), {
   ssr: false, // Don't render on server
   loading: () => null
 });
+const RecruiterAuthModal = dynamic(() => import('@/components/RecruiterAuthModal'), {
+  ssr: false,
+  loading: () => null
+});
 
 import { scoreJob, JobRow, UserOnboardingData } from '@/lib/matching/matchEngine';
 import { matchCacheService } from '@/lib/matching/matchCache';
@@ -160,6 +164,7 @@ export default function HomePage({ jobs: initialJobs, blogPosts, companies = [] 
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<'seekers' | 'recruiters'>('seekers');
   const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [recruiterModalOpen, setRecruiterModalOpen] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [userOnboardingData, setUserOnboardingData] = useState<UserOnboardingData | null>(null);
   const [processedJobs, setProcessedJobs] = useState<JobWithMatch[]>([]);
@@ -312,11 +317,17 @@ export default function HomePage({ jobs: initialJobs, blogPosts, companies = [] 
     setMatchingInProgress(false);
   };
 
-  const handleCTAClick = (type: 'seeker' | 'recruiter') => {
+  const handleCTAClick = async (type: 'seeker' | 'recruiter') => {
     if (type === 'seeker') {
       router.push('/jobs');
     } else {
-      router.push('/submit');
+      // For recruiters, check if logged in
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        setRecruiterModalOpen(true);
+      } else {
+        router.push('/submit');
+      }
     }
   };
 
@@ -827,6 +838,7 @@ export default function HomePage({ jobs: initialJobs, blogPosts, companies = [] 
 
         {/* OPTIMIZATION: Lazy-loaded Auth Modal (only loads when needed) */}
         {authModalOpen && <AuthModal open={authModalOpen} onOpenChange={setAuthModalOpen} />}
+        {recruiterModalOpen && <RecruiterAuthModal open={recruiterModalOpen} onOpenChange={setRecruiterModalOpen} />}
       </div>
     </>
   );

@@ -3,6 +3,10 @@ import { MetadataRoute } from 'next';
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.jobmeter.app';
 
+/**
+ * Blog sitemap
+ * Place at: app/sitemap-blogs/route.ts
+ */
 export async function GET() {
   const routes: MetadataRoute.Sitemap = [];
 
@@ -17,17 +21,23 @@ export async function GET() {
 
     const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-    // Fetch Blog Posts
-    const { data: posts, error: postError } = await supabase
-      .from('posts')
+    // ✅ Table is `blogs`, not `posts`. Filter by is_published = true.
+    const { data: blogs, error: blogError } = await supabase
+      .from('blogs')
       .select('slug, updated_at')
       .eq('is_published', true);
 
-    if (posts) {
-      posts.forEach((post) => {
+    if (blogError) {
+      console.error('Error fetching blogs:', JSON.stringify(blogError));
+      return new Response(`Error fetching blogs: ${blogError.message}`, { status: 500 });
+    }
+
+    if (blogs && blogs.length > 0) {
+      blogs.forEach((blog) => {
+        if (!blog.slug) return;
         routes.push({
-          url: `${siteUrl}/blog/${post.slug}`,
-          lastModified: post.updated_at ? new Date(post.updated_at) : new Date(),
+          url: `${siteUrl}/blog/${blog.slug}`,
+          lastModified: blog.updated_at ? new Date(blog.updated_at) : new Date(),
           changeFrequency: 'daily',
           priority: 0.7,
         });
@@ -38,18 +48,6 @@ export async function GET() {
   } catch (error) {
     console.error('Error generating blogs sitemap:', error);
     return new Response('Error generating sitemap', { status: 500 });
-  }
-
-  if (routes.length === 0) {
-    const emptySitemap = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-</urlset>`;
-    return new Response(emptySitemap, {
-      headers: {
-        'Content-Type': 'application/xml',
-        'Cache-Control': 'public, max-age=3600, s-maxage=3600',
-      },
-    });
   }
 
   const sitemap = `<?xml version="1.0" encoding="UTF-8"?>

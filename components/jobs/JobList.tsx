@@ -296,6 +296,29 @@ export default function JobList() {
     
     // Only fetch if on latest tab and no data loaded yet
     if (activeTab === 'latest' && latestJobs.length === 0) {
+      const cachedLatestJobsKey = 'latest_jobs_cache';
+      const cachedLatestTimestampKey = 'latest_jobs_cache_timestamp';
+      
+      try {
+        const cachedLatestJobs = localStorage.getItem(cachedLatestJobsKey);
+        const cachedTimestamp = localStorage.getItem(cachedLatestTimestampKey);
+        
+        if (cachedLatestJobs && cachedTimestamp) {
+          const timestamp = parseInt(cachedTimestamp, 10);
+          const now = Date.now();
+          const isCacheValid = now - timestamp < CACHE_DURATION;
+          
+          if (isCacheValid) {
+            const parsedJobs = JSON.parse(cachedLatestJobs);
+            setLatestJobs(parsedJobs);
+            console.log(`Loaded ${parsedJobs.length} latest jobs from cache`);
+            return;
+          }
+        }
+      } catch (error) {
+        console.error('Error checking latest jobs cache:', error);
+      }
+      
       fetchLatestJobs();
     }
   }, [authChecked, activeTab]);
@@ -649,6 +672,14 @@ export default function JobList() {
       // Set all jobs at once
       setLatestJobs(uiJobs);
       setCurrentPage(1);
+      
+      // Cache the latest jobs
+      try {
+        localStorage.setItem('latest_jobs_cache', JSON.stringify(uiJobs));
+        localStorage.setItem('latest_jobs_cache_timestamp', Date.now().toString());
+      } catch (cacheError) {
+        console.error('Error caching latest jobs:', cacheError);
+      }
     } catch (error) {
       console.error('Error fetching latest jobs:', error);
     } finally {
@@ -752,6 +783,8 @@ export default function JobList() {
       localStorage.removeItem('jobs_cache');
       localStorage.removeItem('jobs_cache_timestamp');
       localStorage.removeItem('jobs_cache_user_id');
+      localStorage.removeItem('latest_jobs_cache');
+      localStorage.removeItem('latest_jobs_cache_timestamp');
       
       // Clear match cache if user is logged in
       if (user) {
@@ -1195,7 +1228,7 @@ export default function JobList() {
               {/* Country Quick Filter */}
               <div className="flex-1 sm:flex-none relative">
                 <select
-                  value={filters.country || (localStorage.getItem('user_changed_country') === 'true' ? filters.country : (detectedCountry || ''))}
+                  value={filters.country || detectedCountry || ''}
                   onChange={(e) => {
                     const newCountry = e.target.value;
                     if (newCountry === 'Global') {

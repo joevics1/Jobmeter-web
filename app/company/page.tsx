@@ -2,10 +2,33 @@ import { Metadata } from 'next';
 import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
 import Image from 'next/image';
+import { redirect } from 'next/navigation';
 import { Building2, MapPin, Users, ArrowRight, CheckCircle, ArrowLeft } from 'lucide-react';
 
-export const metadata: Metadata = {
-  title: 'Top Companies Hiring in Nigeria | Company Directory | JobMeter',
+interface Props {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}
+
+export async function generateMetadata({ searchParams }: Props): Promise<Metadata> {
+  const params = await searchParams;
+  const companyName = params.name;
+  
+  if (companyName && typeof companyName === 'string') {
+    // Redirect to proper company page
+    const { data: company } = await supabase
+      .from('companies')
+      .select('slug')
+      .ilike('name', companyName)
+      .eq('is_published', true)
+      .single();
+    
+    if (company) {
+      redirect(`/company/${company.slug}`);
+    }
+  }
+
+  return {
+    title: 'Top Companies Hiring in Nigeria | Company Directory | JobMeter',
   description: 'Explore top companies hiring in Nigeria. Discover company culture, benefits, open positions, and career opportunities from leading employers.',
   keywords: ['companies hiring nigeria', 'top employers', 'company directory', 'career opportunities', 'company profiles'],
   openGraph: {
@@ -75,7 +98,24 @@ function groupByIndustry(companies: Company[]) {
 
 export const revalidate = 86400; // 24 hours - company list rarely changes
 
-export default async function CompanyDirectoryPage() {
+export default async function CompanyDirectoryPage({ searchParams }: Props) {
+  const params = await searchParams;
+  const companyName = params.name;
+  
+  // Handle ?name= redirect
+  if (companyName && typeof companyName === 'string') {
+    const { data: company } = await supabase
+      .from('companies')
+      .select('slug')
+      .ilike('name', companyName)
+      .eq('is_published', true)
+      .single();
+    
+    if (company) {
+      redirect(`/company/${company.slug}`);
+    }
+  }
+  
   const companies = await getCompanies();
   const groupedCompanies = groupByIndustry(companies);
 

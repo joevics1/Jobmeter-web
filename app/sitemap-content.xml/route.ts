@@ -3,6 +3,10 @@ import { MetadataRoute } from 'next';
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.jobmeter.app';
 
+/**
+ * Content sitemap - published companies only
+ * Place at: app/sitemap-content/route.ts
+ */
 export async function GET() {
   const routes: MetadataRoute.Sitemap = [];
 
@@ -17,14 +21,23 @@ export async function GET() {
 
     const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-    // Fetch Companies only (blogs moved to sitemap-blogs.xml)
+    // ✅ Only fetch published companies
     const { data: companies, error: companyError } = await supabase
       .from('companies')
       .select('slug, updated_at')
       .eq('is_published', true);
 
-    if (companies) {
+    // ✅ FIX: Check error before using data
+    if (companyError) {
+      console.error('Error fetching companies:', companyError);
+      return new Response('Error fetching companies', { status: 500 });
+    }
+
+    if (companies && companies.length > 0) {
       companies.forEach((company) => {
+        // ✅ FIX: Skip companies with missing slugs to avoid malformed URLs
+        if (!company.slug) return;
+
         routes.push({
           url: `${siteUrl}/company/${company.slug}`,
           lastModified: company.updated_at ? new Date(company.updated_at) : new Date(),

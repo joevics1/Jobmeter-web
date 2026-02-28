@@ -59,26 +59,29 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
     const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-    // Get total count of active jobs
+    // ✅ Count ALL jobs (active + expired) — expired pages stay indexed for SEO
     const { count, error } = await supabase
       .from('jobs')
-      .select('*', { count: 'exact', head: true })
-      .eq('status', 'active');
+      .select('*', { count: 'exact', head: true });
 
-    if (error || !count) {
-      console.error('Error counting jobs:', error);
+    if (error) {
+      console.error('Error counting jobs:', JSON.stringify(error));
       return baseSitemaps;
     }
 
-    // Calculate number of sitemap partitions needed
+    // ✅ Treat null/0 count as valid — return base sitemaps with a warning, not a crash
+    if (!count || count === 0) {
+      console.warn('No jobs found — skipping job sitemaps');
+      return baseSitemaps;
+    }
+
     const numberOfSitemaps = Math.ceil(count / JOBS_PER_SITEMAP);
     console.log(`📊 Total jobs: ${count}, Creating ${numberOfSitemaps} job sitemaps`);
 
-    // Generate sitemap entries - CORRECTED URL STRUCTURE
     const jobSitemaps: MetadataRoute.Sitemap = Array.from(
       { length: numberOfSitemaps },
       (_, i) => ({
-        url: `${siteUrl}/sitemap-jobs/${i + 1}.xml`,  // Changed from sitemap-jobs-${i+1}.xml
+        url: `${siteUrl}/sitemap-jobs/${i + 1}.xml`,
         lastModified: new Date(),
         changeFrequency: 'hourly',
         priority: 1,
@@ -87,7 +90,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
     return [...baseSitemaps, ...jobSitemaps];
   } catch (error) {
-    console.error('Error generating job sitemaps list:', error);
+    console.error('Error generating sitemap index:', error);
     return baseSitemaps;
   }
 }

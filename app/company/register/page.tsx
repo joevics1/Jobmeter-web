@@ -1,16 +1,20 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Building2, ArrowLeft, CheckCircle, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 
 export default function CompanyRegisterPage() {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [user, setUser] = useState<any>(null);
+  const [showMore, setShowMore] = useState(false);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -23,7 +27,23 @@ export default function CompanyRegisterPage() {
     email: '',
     phone: '',
     linkedin_url: '',
+    founded_year: '',
+    twitter_url: '',
+    facebook_url: '',
+    instagram_url: '',
   });
+
+  useEffect(() => {
+    const checkUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        router.push('/auth/login?redirect=/company/register');
+        return;
+      }
+      setUser(user);
+    };
+    checkUser();
+  }, [router]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setFormData({
@@ -69,11 +89,16 @@ export default function CompanyRegisterPage() {
         description: formData.description,
         industry: formData.industry || null,
         company_size: formData.company_size || null,
+        founded_year: formData.founded_year ? parseInt(formData.founded_year) : null,
         headquarters_location: formData.headquarters_location || null,
         website_url: formData.website_url || null,
         email: formData.email || null,
         phone: formData.phone || null,
         linkedin_url: formData.linkedin_url || null,
+        twitter_url: formData.twitter_url || null,
+        facebook_url: formData.facebook_url || null,
+        instagram_url: formData.instagram_url || null,
+        user_id: user?.id,
         meta_title: `${formData.name} Careers & Jobs in Nigeria | JobMeter`,
         meta_description: formData.tagline || `Join ${formData.name}. Explore career opportunities and company culture.`,
         h1_title: `Careers at ${formData.name}`,
@@ -82,14 +107,14 @@ export default function CompanyRegisterPage() {
           `${formData.name.toLowerCase()} jobs`,
           formData.industry ? `${formData.industry.toLowerCase()} jobs` : null,
         ].filter(Boolean),
-        is_published: false, // Admin will approve
+        is_published: false,
         is_verified: false,
       };
 
       const { data, error: insertError } = await supabase
         .from('companies')
         .insert([companyData])
-        .select()
+        .select('id, name, slug')
         .single();
 
       if (insertError) {
@@ -98,14 +123,14 @@ export default function CompanyRegisterPage() {
 
       setSuccess(true);
       
-      // Redirect after 3 seconds
+      // Redirect after 2 seconds to submit page
       setTimeout(() => {
-        router.push('/company');
-      }, 3000);
+        router.push('/submit');
+      }, 2000);
 
     } catch (err: any) {
       console.error('Error submitting company:', err);
-      setError(err.message || 'Failed to submit company registration. Please try again.');
+      setError(err.message || 'Failed to submit company. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -116,16 +141,10 @@ export default function CompanyRegisterPage() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
         <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center">
           <CheckCircle size={64} className="mx-auto text-green-600 mb-4" />
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Registration Submitted!</h2>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Company Registered!</h2>
           <p className="text-gray-600 mb-6">
-            Thank you for registering your company. Our team will review your submission and get back to you soon.
+            Your company has been registered. Redirecting you to post jobs...
           </p>
-          <Link
-            href="/company"
-            className="inline-block px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
-          >
-            Browse Companies
-          </Link>
         </div>
       </div>
     );
@@ -134,246 +153,240 @@ export default function CompanyRegisterPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="text-white" style={{ backgroundColor: '#2563EB' }}>
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div style={{ backgroundColor: '#2563EB' }} className="text-white pt-12 pb-8 px-6">
+        <div className="max-w-3xl mx-auto">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-2 text-white/80 hover:text-white mb-6"
+          >
+            <ArrowLeft size={20} />
+            Back
+          </Link>
           <div className="flex items-center gap-3 mb-4">
             <Building2 size={32} />
-            <h1 className="text-4xl font-bold">Register Your Company</h1>
+            <h1 className="text-3xl font-bold">Register Your Company</h1>
           </div>
-          <p className="text-lg text-white">
-            Join our directory and connect with talented job seekers across Nigeria.
+          <p className="text-lg text-white/90">
+            Add your company to start posting jobs and reaching thousands of candidates.
           </p>
         </div>
       </div>
 
-      {/* Breadcrumb */}
-      <div className="bg-white border-b border-gray-200">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <nav className="flex items-center gap-2 text-sm text-gray-600">
-            <Link href="/" className="hover:text-blue-600">Home</Link>
-            <span>/</span>
-            <Link href="/company" className="hover:text-blue-600">Companies</Link>
-            <span>/</span>
-            <span className="text-gray-900 font-medium">Register</span>
-          </nav>
-        </div>
-      </div>
-
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Back Button */}
-        <Link
-          href="/company"
-          className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 mb-6 font-medium"
-        >
-          <ArrowLeft size={20} />
-          Back to Companies
-        </Link>
-
-        {/* Registration Form */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">Company Information</h2>
-
+      <div className="max-w-3xl mx-auto px-6 py-8">
+        <form onSubmit={handleSubmit} className="space-y-6">
           {error && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
-              <AlertCircle size={20} className="text-red-600 flex-shrink-0 mt-0.5" />
+            <div className="p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
+              <AlertCircle size={20} className="text-red-600 mt-0.5" />
               <p className="text-sm text-red-800">{error}</p>
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Company Name */}
-            <div>
-              <label htmlFor="name" className="block text-sm font-medium text-gray-900 mb-2">
-                Company Name *
-              </label>
-              <input
-                type="text"
-                id="name"
-                name="name"
-                required
-                value={formData.name}
-                onChange={handleChange}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent"
-                placeholder="e.g., Jumia Nigeria"
-              />
+          {/* Basic Info */}
+          <div className="bg-white rounded-xl p-6 shadow-sm">
+            <h2 className="text-lg font-bold mb-4 text-gray-900">Basic Information</h2>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-900 mb-1">Company Name *</label>
+                <Input
+                  name="name"
+                  placeholder="e.g., Acme Corporation"
+                  value={formData.name}
+                  onChange={handleChange}
+                  required
+                  className="w-full"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-900 mb-1">Industry</label>
+                <select
+                  name="industry"
+                  value={formData.industry}
+                  onChange={handleChange}
+                  className="w-full h-10 rounded-md border border-gray-300 px-3 py-2 text-sm"
+                >
+                  <option value="">Select</option>
+                  <option value="Technology">Technology</option>
+                  <option value="E-commerce">E-commerce</option>
+                  <option value="Finance & Banking">Finance & Banking</option>
+                  <option value="Healthcare">Healthcare</option>
+                  <option value="Education">Education</option>
+                  <option value="Manufacturing">Manufacturing</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
             </div>
 
-            {/* Tagline */}
-            <div>
-              <label htmlFor="tagline" className="block text-sm font-medium text-gray-900 mb-2">
-                Tagline
-              </label>
-              <input
-                type="text"
-                id="tagline"
+            <div className="mt-4">
+              <label className="block text-sm font-medium text-gray-900 mb-1">Tagline</label>
+              <Input
                 name="tagline"
+                placeholder="e.g., Building the future of tech in Africa"
                 value={formData.tagline}
                 onChange={handleChange}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent"
-                placeholder="e.g., Africa's Leading E-commerce Platform"
+                className="w-full"
               />
             </div>
 
-            {/* Description */}
-            <div>
-              <label htmlFor="description" className="block text-sm font-medium text-gray-900 mb-2">
-                Company Description *
-              </label>
-              <textarea
-                id="description"
+            <div className="mt-4">
+              <label className="block text-sm font-medium text-gray-900 mb-1">Description *</label>
+              <Textarea
                 name="description"
-                required
-                rows={6}
+                placeholder="Tell us about your company..."
                 value={formData.description}
                 onChange={handleChange}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent"
-                placeholder="Tell us about your company, mission, and what makes you unique..."
+                required
+                className="w-full"
+                rows={4}
               />
             </div>
 
-            {/* Industry */}
-            <div>
-              <label htmlFor="industry" className="block text-sm font-medium text-gray-900 mb-2">
-                Industry
-              </label>
-              <select
-                id="industry"
-                name="industry"
-                value={formData.industry}
-                onChange={handleChange}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent"
-              >
-                <option value="">Select Industry</option>
-                <option value="Technology">Technology</option>
-                <option value="E-commerce">E-commerce</option>
-                <option value="Finance & Banking">Finance & Banking</option>
-                <option value="Healthcare">Healthcare</option>
-                <option value="Education">Education</option>
-                <option value="Manufacturing">Manufacturing</option>
-                <option value="Telecommunications">Telecommunications</option>
-                <option value="Consulting">Consulting</option>
-                <option value="Retail">Retail</option>
-                <option value="Energy & Oil">Energy & Oil</option>
-                <option value="Other">Other</option>
-              </select>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-900 mb-1">Company Size</label>
+                <select
+                  name="company_size"
+                  value={formData.company_size}
+                  onChange={handleChange}
+                  className="w-full h-10 rounded-md border border-gray-300 px-3 py-2 text-sm"
+                >
+                  <option value="">Select</option>
+                  <option value="1-10">1-10</option>
+                  <option value="11-50">11-50</option>
+                  <option value="51-200">51-200</option>
+                  <option value="201-500">201-500</option>
+                  <option value="500+">500+</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-900 mb-1">Website</label>
+                <Input
+                  name="website_url"
+                  placeholder="https://example.com"
+                  value={formData.website_url}
+                  onChange={handleChange}
+                  className="w-full"
+                />
+              </div>
             </div>
+          </div>
 
-            {/* Company Size */}
-            <div>
-              <label htmlFor="company_size" className="block text-sm font-medium text-gray-900 mb-2">
-                Company Size
-              </label>
-              <select
-                id="company_size"
-                name="company_size"
-                value={formData.company_size}
-                onChange={handleChange}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent"
-              >
-                <option value="">Select Size</option>
-                <option value="1-10">1-10 employees</option>
-                <option value="11-50">11-50 employees</option>
-                <option value="51-200">51-200 employees</option>
-                <option value="201-500">201-500 employees</option>
-                <option value="500+">500+ employees</option>
-              </select>
+          {/* Contact Info */}
+          <div className="bg-white rounded-xl p-6 shadow-sm">
+            <h2 className="text-lg font-bold mb-4 text-gray-900">Contact Information</h2>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-900 mb-1">Company Email</label>
+                <Input
+                  name="email"
+                  type="email"
+                  placeholder="hr@company.com"
+                  value={formData.email}
+                  onChange={handleChange}
+                  className="w-full"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-900 mb-1">Phone</label>
+                <Input
+                  name="phone"
+                  placeholder="+234..."
+                  value={formData.phone}
+                  onChange={handleChange}
+                  className="w-full"
+                />
+              </div>
             </div>
+          </div>
 
-            {/* Location */}
-            <div>
-              <label htmlFor="headquarters_location" className="block text-sm font-medium text-gray-900 mb-2">
-                Headquarters Location
-              </label>
-              <input
-                type="text"
-                id="headquarters_location"
-                name="headquarters_location"
-                value={formData.headquarters_location}
-                onChange={handleChange}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent"
-                placeholder="e.g., Lagos, Nigeria"
-              />
-            </div>
+          {/* Show More Toggle */}
+          <button
+            type="button"
+            onClick={() => setShowMore(!showMore)}
+            className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+          >
+            {showMore ? 'Show Less' : 'Show More'}
+          </button>
 
-            {/* Website */}
-            <div>
-              <label htmlFor="website_url" className="block text-sm font-medium text-gray-900 mb-2">
-                Website URL
-              </label>
-              <input
-                type="url"
-                id="website_url"
-                name="website_url"
-                value={formData.website_url}
-                onChange={handleChange}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent"
-                placeholder="https://example.com"
-              />
+          {showMore && (
+            <div className="bg-white rounded-xl p-6 shadow-sm">
+              <h2 className="text-lg font-bold mb-4 text-gray-900">Additional Information</h2>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-900 mb-1">Founded Year</label>
+                  <Input
+                    name="founded_year"
+                    type="number"
+                    placeholder="e.g., 2010"
+                    value={formData.founded_year}
+                    onChange={handleChange}
+                    className="w-full"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-900 mb-1">Headquarters</label>
+                  <Input
+                    name="headquarters_location"
+                    placeholder="e.g., Lagos, Nigeria"
+                    value={formData.headquarters_location}
+                    onChange={handleChange}
+                    className="w-full"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-900 mb-1">LinkedIn URL</label>
+                  <Input
+                    name="linkedin_url"
+                    placeholder="https://linkedin.com/company/..."
+                    value={formData.linkedin_url}
+                    onChange={handleChange}
+                    className="w-full"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-900 mb-1">Twitter</label>
+                  <Input
+                    name="twitter_url"
+                    placeholder="https://twitter.com/..."
+                    value={formData.twitter_url}
+                    onChange={handleChange}
+                    className="w-full"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-900 mb-1">Facebook</label>
+                  <Input
+                    name="facebook_url"
+                    placeholder="https://facebook.com/..."
+                    value={formData.facebook_url}
+                    onChange={handleChange}
+                    className="w-full"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-900 mb-1">Instagram</label>
+                  <Input
+                    name="instagram_url"
+                    placeholder="https://instagram.com/..."
+                    value={formData.instagram_url}
+                    onChange={handleChange}
+                    className="w-full"
+                  />
+                </div>
+              </div>
             </div>
+          )}
 
-            {/* Email */}
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-900 mb-2">
-                Contact Email
-              </label>
-              <input
-                type="email"
-                id="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent"
-                placeholder="careers@company.com"
-              />
-            </div>
-
-            {/* Phone */}
-            <div>
-              <label htmlFor="phone" className="block text-sm font-medium text-gray-900 mb-2">
-                Contact Phone
-              </label>
-              <input
-                type="tel"
-                id="phone"
-                name="phone"
-                value={formData.phone}
-                onChange={handleChange}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent"
-                placeholder="+234 XXX XXX XXXX"
-              />
-            </div>
-
-            {/* LinkedIn */}
-            <div>
-              <label htmlFor="linkedin_url" className="block text-sm font-medium text-gray-900 mb-2">
-                LinkedIn Profile
-              </label>
-              <input
-                type="url"
-                id="linkedin_url"
-                name="linkedin_url"
-                value={formData.linkedin_url}
-                onChange={handleChange}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent"
-                placeholder="https://linkedin.com/company/..."
-              />
-            </div>
-
-            {/* Submit Button */}
-            <div className="pt-6 border-t border-gray-200">
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="w-full px-6 py-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-bold text-lg disabled:bg-gray-400 disabled:cursor-not-allowed"
-              >
-                {isSubmitting ? 'Submitting...' : 'Submit Registration'}
-              </button>
-              <p className="mt-4 text-sm text-gray-600 text-center">
-                Your company profile will be reviewed before being published. We'll contact you via email.
-              </p>
-            </div>
-          </form>
-        </div>
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="w-full py-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 font-bold text-lg"
+          >
+            {isSubmitting ? 'Registering...' : 'Register Company'}
+          </button>
+        </form>
       </div>
     </div>
   );
