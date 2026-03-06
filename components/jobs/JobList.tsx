@@ -1153,6 +1153,7 @@ export default function JobList({ initialCountry, initialRoleCategory, initialJo
       remote: false,
       country: '',
       roleCategory: '',
+      jobType: '',
     };
     setFilters(clearedFilters);
     setSearchQuery('');
