@@ -258,12 +258,13 @@ export default function JobList({ initialCountry, initialRoleCategory, initialJo
           localStorage.setItem('has_visited_jobs', 'true');
         }
       } else {
-        // Returning visit - load saved country
+        // Returning visit - load saved preference
         const savedCountry = localStorage.getItem('user_country');
-        if (savedCountry) {
+        if (savedCountry && savedCountry !== 'Global') {
           setDetectedCountry(savedCountry);
           setFilters(prev => ({ ...prev, country: savedCountry }));
         }
+        // Global = no filter, show all jobs
       }
     };
     
@@ -696,6 +697,10 @@ export default function JobList({ initialCountry, initialRoleCategory, initialJo
       setLatestJobsLoading(true);
 
       // Build API params
+      // ✅ NO country filter passed to API on /jobs — all jobs are fetched and cached once.
+      // Country filtering happens client-side via filters.country.
+      // initialCountry (country pages like /jobs/nigeria), initialState, initialTown
+      // still go to API since they have their own separate Vercel cache entries.
       const params = new URLSearchParams();
       if (initialCountry) params.set('country', initialCountry);
       if (initialJobType)  params.set('jobType', initialJobType);
@@ -1294,26 +1299,20 @@ export default function JobList({ initialCountry, initialRoleCategory, initialJo
               {/* Country Quick Filter */}
               <div className="flex-1 sm:flex-none relative">
                 <select
-                  value={filters.country || detectedCountry || ''}
+                  value={filters.country || ''}
                   onChange={(e) => {
                     const newCountry = e.target.value;
-                    if (newCountry === 'Global') {
+                    if (newCountry === 'Global' || !newCountry) {
+                      // Global = show all jobs — clear country filter
                       setFilters(prev => ({ ...prev, country: '', location: [] }));
                       localStorage.setItem('user_country', 'Global');
                       localStorage.setItem('user_changed_country', 'true');
-                    } else if (newCountry) {
+                    } else {
                       setFilters(prev => ({ ...prev, country: newCountry, location: newCountry === 'Nigeria' ? prev.location : [] }));
                       localStorage.setItem('user_country', newCountry);
                       localStorage.setItem('user_changed_country', 'true');
                     }
-                    const params = new URLSearchParams(searchParams.toString());
-                    if (newCountry && newCountry !== 'Global') {
-                      params.set('country', newCountry);
-                    } else {
-                      params.delete('country');
-                    }
-                    const newUrl = params.toString() ? `${pathname}?${params.toString()}` : pathname;
-                    router.replace(newUrl);
+                    // No re-fetch needed — filtering is client-side on cached jobs
                   }}
                   className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-all cursor-pointer"
                   style={{
@@ -1529,8 +1528,9 @@ export default function JobList({ initialCountry, initialRoleCategory, initialJo
           filters={filters}
           onFiltersChange={(newFilters: any) => {
             // Track user manual country change
-            if (newFilters.country && newFilters.country !== filters.country) {
-              localStorage.setItem('user_country', newFilters.country);
+            if (newFilters.country !== undefined && newFilters.country !== filters.country) {
+              const countryVal = newFilters.country || 'Global';
+              localStorage.setItem('user_country', countryVal);
               localStorage.setItem('user_changed_country', 'true');
             }
             
