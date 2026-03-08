@@ -94,11 +94,11 @@ export default async function StateJobsPage({ params }: { params: PageParams }) 
   ];
 
   const towns: Array<{ name: string; slug: string; is_active: boolean }> = page.towns || [];
-  const relatedStates: Array<{ name: string; country: string; country_slug: string }> = page.related_states || [];
+  const relatedStates: Array<{ name: string; slug: string; country_slug: string }> = page.related_states || [];
   const topRoles: Array<{ role: string; avg_salary: string; demand: string }> = page.top_roles || [];
   const majorEmployers: Array<{ name: string; sector: string; area?: string }> = page.major_employers || [];
   const faqs: Array<{ question: string; answer: string }> = page.faqs || [];
-  const blogLinks: Array<{ title: string; country: string; published_at?: string }> = page.blog_links || [];
+  const blogLinks: Array<{ title: string; slug: string; published_at?: string }> = page.blog_links || [];
   const salaryRanges = page.salary_ranges || {};
   const costOfLiving = page.cost_of_living || {};
 
