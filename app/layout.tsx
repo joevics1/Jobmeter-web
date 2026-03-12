@@ -111,9 +111,15 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link rel="preconnect" href="https://qyuzuooxenyjqnjplrya.supabase.co" />
-        
 
-        
+        {/* Google AdSense */}
+        <script
+          async
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1119289641389825"
+          crossOrigin="anonymous"
+        />
+
+        {/* Google Analytics */}
         <script async src="https://www.googletagmanager.com/gtag/js?id=G-315B0S5RGE"></script>
         <script dangerouslySetInnerHTML={{
           __html: `
