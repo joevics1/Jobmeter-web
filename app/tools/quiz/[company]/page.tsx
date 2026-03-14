@@ -1,51 +1,46 @@
 // 📁 app/tools/quiz/[company]/page.tsx
+// Pre-rendered at build time for every company in COMPANIES.
+// Zero Supabase calls on user visit — questions only fetched when user starts a quiz.
+
 import { Metadata } from 'next';
-import { quizSupabase } from '@/lib/quizSupabase';
+import { notFound } from 'next/navigation';
 import CompanyQuizClient from './CompanyQuizClient';
+import { COMPANIES, companyToSlug, slugToCompany } from '@/lib/quizCompanies';
 
 interface Props {
   params: Promise<{ company: string }>;
 }
 
-export const revalidate = 604800; // Revalidate every week
-
-async function getCompanyData(companyName: string) {
-  const { data } = await quizSupabase
-    .from('quiz_companies')
-    .select('*')
-    .ilike('name', companyName)
-    .single();
-
-  return data;
+// Pre-render every company page at build time
+export async function generateStaticParams() {
+  return COMPANIES.map((company) => ({
+    company: companyToSlug(company),
+  }));
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { company: companySlug } = await params;
-  const company = companySlug.replace(/-/g, ' ').toUpperCase();
-
-  const companyData = await getCompanyData(company);
-  const description =
-    companyData?.description ||
-    `Practice ${company} aptitude test questions online. Free objective and theory questions with instant results. Prepare for ${company} recruitment.`;
+  const { company: slug } = await params;
+  const company = slugToCompany(slug);
+  if (!company) return {};
 
   return {
-    title: `${company} Aptitude Test Quiz | Practice Online`,
-    description,
+    title: `${company} | Practice Questions & Answers`,
+    description: `Practice ${company} aptitude test questions online. Free objective questions with instant results. Premium: 50 questions + AI-graded theory. Prepare for ${company.split(' ')[0]} recruitment.`,
     keywords: [
-      `${company} aptitude test`,
-      `${company} quiz`,
-      `${company} recruitment test`,
-      'aptitude test practice',
-      'job interview preparation',
+      `${company.split(' ')[0]} aptitude test`,
+      `${company.split(' ')[0]} recruitment test`,
+      `${company} practice questions`,
+      'aptitude test Nigeria',
+      'recruitment assessment practice',
     ],
   };
 }
 
 export default async function CompanyQuizPage({ params }: Props) {
-  const { company: companySlug } = await params;
-  const company = companySlug.replace(/-/g, ' ').toUpperCase();
+  const { company: slug } = await params;
+  const company = slugToCompany(slug);
 
-  const companyData = await getCompanyData(company);
+  if (!company) notFound();
 
-  return <CompanyQuizClient company={company} companyData={companyData} />;
+  return <CompanyQuizClient company={company} />;
 }

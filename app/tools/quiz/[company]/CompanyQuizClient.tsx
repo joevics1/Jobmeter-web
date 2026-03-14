@@ -45,6 +45,8 @@ export default function CompanyQuizClient({
   const [useTimer, setUseTimer] = useState(false);
   const [questionCount, setQuestionCount] = useState<20 | 50>(20);
 
+  const [showAllSections, setShowAllSections] = useState(false);
+
   // Modal states
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -210,28 +212,43 @@ export default function CompanyQuizClient({
         <div className="max-w-4xl mx-auto px-4 py-6">
           <h2 className="text-base font-semibold text-gray-800 mb-1">Choose a Section</h2>
           <p className="text-xs text-gray-500 mb-4">
-            Select a specific section or take a mixed general quiz.
+            Tap a section below to begin your quiz. Not sure? Start with <strong>General (Mixed)</strong> for questions across all sections.
           </p>
 
+          {/* General — always shown first, styled to stand out */}
+          <button
+            onClick={() => handleSectionSelect('general')}
+            className="w-full mb-3 px-4 py-3.5 rounded-xl text-sm font-semibold text-white flex items-center justify-between"
+            style={{ backgroundColor: theme.colors.primary.DEFAULT }}
+          >
+            <span>⚡ General (Mixed) — Recommended</span>
+            <span className="text-white/70 text-xs">Tap to start →</span>
+          </button>
+
+          {/* Section list */}
           <div className="flex flex-wrap gap-2">
-            <button
-              onClick={() => handleSectionSelect('general')}
-              className="px-4 py-2.5 rounded-lg text-sm font-medium text-white"
-              style={{ backgroundColor: theme.colors.primary.DEFAULT }}
-            >
-              General (Mixed)
-            </button>
-            {sections.map((section) => (
+            {(showAllSections ? sections : sections.slice(0, 5)).map((section) => (
               <button
                 key={section}
                 onClick={() => handleSectionSelect(section)}
-                className="px-4 py-2.5 rounded-lg text-sm font-medium bg-white text-gray-700 hover:bg-gray-50"
+                className="px-4 py-2.5 rounded-lg text-sm font-medium bg-white text-gray-700 hover:bg-gray-50 active:bg-gray-100"
                 style={{ border: `1px solid ${theme.colors.border.DEFAULT}` }}
               >
                 {section}
               </button>
             ))}
           </div>
+
+          {/* See all / collapse */}
+          {sections.length > 5 && (
+            <button
+              onClick={() => setShowAllSections(prev => !prev)}
+              className="mt-3 text-xs font-medium underline underline-offset-2"
+              style={{ color: theme.colors.primary.DEFAULT }}
+            >
+              {showAllSections ? `▴ Show less` : `▾ See all ${sections.length} sections`}
+            </button>
+          )}
         </div>
       </div>
     );

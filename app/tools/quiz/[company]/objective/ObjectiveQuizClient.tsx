@@ -1,4 +1,5 @@
 "use client";
+// 📁 app/tools/quiz/[company]/objective/ObjectiveQuizClient.tsx
 
 import React, { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -32,6 +33,7 @@ export default function ObjectiveQuizClient({ company }: { company: string }) {
   const [submitting, setSubmitting] = useState(false);
   const [showResults, setShowResults] = useState(false);
   const [score, setScore] = useState({ correct: 0, total: 0 });
+  const [expandedExplanations, setExpandedExplanations] = useState<{ [key: string]: boolean }>({});
   const [currentIndex, setCurrentIndex] = useState(0);
   const [debug, setDebug] = useState('');
   const [useTimer, setUseTimer] = useState(false);
@@ -252,7 +254,29 @@ export default function ObjectiveQuizClient({ company }: { company: string }) {
                       <p className="text-xs text-gray-500">Correct: <span className="text-green-600">{q.correct_answer}</span></p>
                     )}
                     {q.explanation && (
-                      <p className="text-xs text-gray-500 mt-1">{q.explanation}</p>
+                      <div className="mt-2">
+                        {!expandedExplanations[q.id] ? (
+                          <button
+                            onClick={() => setExpandedExplanations(prev => ({ ...prev, [q.id]: true }))}
+                            className="text-xs font-medium text-blue-600 hover:text-blue-800"
+                          >
+                            Show explanation ▾
+                          </button>
+                        ) : (
+                          <div className="bg-gray-50 rounded-lg p-3 mt-1">
+                            <div className="flex items-center justify-between mb-1.5">
+                              <span className="text-xs font-semibold text-gray-700">Explanation</span>
+                              <button
+                                onClick={() => setExpandedExplanations(prev => ({ ...prev, [q.id]: false }))}
+                                className="text-xs text-gray-400 hover:text-gray-600"
+                              >
+                                Hide ▴
+                              </button>
+                            </div>
+                            <p className="text-xs text-gray-600 leading-relaxed">{q.explanation}</p>
+                          </div>
+                        )}
+                      </div>
                     )}
                   </div>
                 </div>
