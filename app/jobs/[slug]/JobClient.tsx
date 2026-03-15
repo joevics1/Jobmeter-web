@@ -659,8 +659,8 @@ export default function JobClient({ job, relatedJobs }: { job: any; relatedJobs?
               </div>
 
               {/* ── AD #1: Responsive banner after job header ── */}
-              <div className="w-full overflow-hidden rounded-lg">
-                <AdUnit slot={AD_SLOTS.BANNER_TOP} format="auto" />
+              <div className="w-full rounded-lg">
+                <AdUnit key={AD_SLOTS.BANNER_TOP} slot={AD_SLOTS.BANNER_TOP} format="auto" />
               </div>
 
               {/* About Company */}
@@ -687,8 +687,8 @@ export default function JobClient({ job, relatedJobs }: { job: any; relatedJobs?
 
               {/* ── AD #2: In-article after description ── */}
               {/* minHeight ensures the fluid ad container is never 0px tall */}
-              <div className="w-full overflow-hidden rounded-lg" style={{ minHeight: '100px' }}>
-                <AdUnit slot={AD_SLOTS.IN_ARTICLE} format="fluid" layout="in-article" />
+              <div className="w-full rounded-lg" style={{ minHeight: '100px' }}>
+                <AdUnit key={AD_SLOTS.IN_ARTICLE} slot={AD_SLOTS.IN_ARTICLE} format="fluid" layout="in-article" />
               </div>
 
               {/* Required Skills */}
@@ -1022,8 +1022,8 @@ export default function JobClient({ job, relatedJobs }: { job: any; relatedJobs?
               )}
 
               {/* ── AD #3: Banner at the end of main content ── */}
-              <div className="w-full overflow-hidden rounded-lg">
-                <AdUnit slot={AD_SLOTS.BANNER_BOTTOM} format="auto" />
+              <div className="w-full rounded-lg">
+                <AdUnit key={AD_SLOTS.BANNER_BOTTOM} slot={AD_SLOTS.BANNER_BOTTOM} format="auto" />
               </div>
 
             </div>
@@ -1071,8 +1071,8 @@ export default function JobClient({ job, relatedJobs }: { job: any; relatedJobs?
               )}
 
               {/* ── Sidebar AD ── */}
-              <div className="hidden lg:block w-full overflow-hidden rounded-lg">
-                <AdUnit slot={AD_SLOTS.SIDEBAR} format="auto" />
+              <div className="hidden lg:block w-full rounded-lg">
+                <AdUnit key={AD_SLOTS.SIDEBAR} slot={AD_SLOTS.SIDEBAR} format="auto" />
               </div>
 
               {/* Similar Jobs */}
@@ -1151,6 +1151,7 @@ export default function JobClient({ job, relatedJobs }: { job: any; relatedJobs?
           }}
         >
           <AdUnit
+            key={AD_SLOTS.ANCHOR_MOBILE}
             slot={AD_SLOTS.ANCHOR_MOBILE}
             format="auto"
             style={{
