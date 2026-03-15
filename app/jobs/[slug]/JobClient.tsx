@@ -29,21 +29,7 @@ import { theme } from '@/lib/theme';
 import UpgradeModal from '@/components/jobs/UpgradeModal';
 import { useToast } from '@/hooks/use-toast';
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion';
-import AdUnit from '@/components/ads/AdUnit';
 
-// ─── Ad slot IDs ───────────────────────────────────────────────────────────────
-// Each placement MUST use a unique slot ID. Reusing the same slot on one page
-// causes AdSense to silently drop all but the first push({}) call.
-const AD_SLOTS = {
-  BANNER_TOP:    '6866736453',   // jobpage-banner-top      — after job header card
-  IN_ARTICLE:    '5553654784',   // jobpage-inarticle        — after job description
-  BANNER_BOTTOM: '4240573110',   // jobpage-banner-bottom    — end of main content
-  SIDEBAR:       '9189647463',   // jobpage-sidebar          — right column
-  ANCHOR_MOBILE: '3349195672',   // jobpage-anchor-mobile    — sticky bottom bar
-} as const;
-// NOTE: AD #3 and AD #4 in the original code both reused IN_ARTICLE — they have
-// been removed. Only one in-article ad is rendered per page (AD #2 below).
-// ───────────────────────────────────────────────────────────────────────────────
 
 const STORAGE_KEYS = {
   SAVED_JOBS: 'saved_jobs',
@@ -374,11 +360,6 @@ export default function JobClient({ job, relatedJobs }: { job: any; relatedJobs?
 
   return (
     <>
-      {/*
-        pb-[58px] on mobile reserves space so the sticky anchor bar (50px + 8px gap)
-        never overlaps the Apply button or bottom content.
-        lg:pb-0 removes it on desktop where the anchor bar is hidden.
-      */}
       <div className="min-h-screen bg-gray-50">
 
         {/* Fixed 2-row header */}
@@ -658,11 +639,6 @@ export default function JobClient({ job, relatedJobs }: { job: any; relatedJobs?
                 )}
               </div>
 
-              {/* ── AD #1: Responsive banner after job header ── */}
-              <div className="w-full rounded-lg my-6">
-                <AdUnit key={AD_SLOTS.BANNER_TOP} slot={AD_SLOTS.BANNER_TOP} format="auto" />
-              </div>
-
               {/* About Company */}
               {job.about_company && (
                 <div className="bg-white rounded-xl shadow-sm p-6">
@@ -684,11 +660,6 @@ export default function JobClient({ job, relatedJobs }: { job: any; relatedJobs?
                   />
                 </div>
               )}
-
-              {/* ── AD #2: In-article after description ── */}
-              <div className="w-full rounded-lg my-6" style={{ minHeight: '100px' }}>
-                <AdUnit key={AD_SLOTS.IN_ARTICLE} slot={AD_SLOTS.IN_ARTICLE} format="fluid" layout="in-article" />
-              </div>
 
               {/* Required Skills */}
               {((job.skills_required && Array.isArray(job.skills_required) && job.skills_required.length > 0) ||
@@ -1020,10 +991,6 @@ export default function JobClient({ job, relatedJobs }: { job: any; relatedJobs?
                 </div>
               )}
 
-              {/* ── AD #3: Banner at the end of main content ── */}
-              <div className="w-full rounded-lg my-6">
-                <AdUnit key={AD_SLOTS.BANNER_BOTTOM} slot={AD_SLOTS.BANNER_BOTTOM} format="auto" />
-              </div>
 
             </div>
 
@@ -1068,11 +1035,6 @@ export default function JobClient({ job, relatedJobs }: { job: any; relatedJobs?
                   </div>
                 </div>
               )}
-
-              {/* ── Sidebar AD ── */}
-              <div className="hidden lg:block w-full rounded-lg my-6">
-                <AdUnit key={AD_SLOTS.SIDEBAR} slot={AD_SLOTS.SIDEBAR} format="auto" />
-              </div>
 
               {/* Similar Jobs */}
               {similarJobs && similarJobs.length > 0 && (
@@ -1128,8 +1090,6 @@ export default function JobClient({ job, relatedJobs }: { job: any; relatedJobs?
           </div>
         </div>
       </div>
-
-      {/* ANCHOR AD DISABLED — high CTR risk, re-enable after CTR normalises below 2% */}
 
       {/* Upgrade Modal */}
       {upgradeErrorType && (

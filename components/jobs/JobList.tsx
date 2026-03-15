@@ -17,7 +17,7 @@ import { scoreJob, JobRow, UserOnboardingData } from '@/lib/matching/matchEngine
 import { matchCacheService } from '@/lib/matching/matchCache';
 import CreateCVModal from '@/components/cv/CreateCVModal';
 import CreateCoverLetterModal from '@/components/cv/CreateCoverLetterModal';
-import AdUnit from '@/components/ads/AdUnit';
+
 
 import { OrganizationSchema, WebSiteSchema } from '@/components/seo/StructuredData';
 
@@ -31,12 +31,7 @@ const JOBS_PER_PAGE_DISPLAY = 50; // Jobs per page for display
 const CACHE_DURATION = 60 * 60 * 1000; // 1 hour
 
 // ─── Ad slot IDs ───────────────────────────────────────────────────────────────
-const AD_SLOTS = {
-  BANNER: '8152297343',          // jobpilot-banner-responsive  (top + above pagination)
-  IN_FEED: '2040985457',         // jobpilot-infeed-native      (every 5 jobs)
-  IN_FEED_LAYOUT_KEY: '-g4-2b+f-5v+o7',
-} as const;
-// ───────────────────────────────────────────────────────────────────────────────
+
 
 interface JobListProps {
   initialCountry?: string;
@@ -1431,13 +1426,6 @@ export default function JobList({ initialCountry, initialRoleCategory, initialJo
                   {paginatedJobs.map((job, index) => (
                     <React.Fragment key={job.id}>
 
-                      {/* ── AD #1: Banner before the very first job card ── */}
-                      {index === 0 && (
-                        <div className="mb-4 w-full overflow-hidden rounded-lg">
-                          <AdUnit slot={AD_SLOTS.BANNER} format="auto" />
-                        </div>
-                      )}
-
                       <JobCard
                         job={job}
                         savedJobs={savedJobs}
@@ -1448,18 +1436,6 @@ export default function JobList({ initialCountry, initialRoleCategory, initialJo
                         showMatch={false}
                       />
 
-                      {/* ── AD #2+: In-feed native after every 5th job card ── 
-                          Skips the very last job so the ad never appears at the bottom
-                          of an empty-feeling page. */}
-                      {(index + 1) % 5 === 0 && index !== paginatedJobs.length - 1 && (
-                        <div className="my-3 w-full overflow-hidden rounded-lg">
-                          <AdUnit
-                            slot={AD_SLOTS.IN_FEED}
-                            format="fluid"
-                            layoutKey={AD_SLOTS.IN_FEED_LAYOUT_KEY}
-                          />
-                        </div>
-                      )}
 
                     </React.Fragment>
                   ))}
@@ -1472,12 +1448,6 @@ export default function JobList({ initialCountry, initialRoleCategory, initialJo
                 </>
               )}
 
-              {/* ── AD #4: Banner above pagination ── */}
-              {totalPages > 1 && !latestJobsLoading && sortedJobs.length > 0 && (
-                <div className="mt-6 mb-2 w-full overflow-hidden rounded-lg">
-                  <AdUnit slot={AD_SLOTS.BANNER} format="auto" />
-                </div>
-              )}
 
               {/* Pagination Controls */}
               {totalPages > 1 && !latestJobsLoading && (
