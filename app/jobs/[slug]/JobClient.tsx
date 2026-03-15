@@ -32,13 +32,17 @@ import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/
 import AdUnit from '@/components/ads/AdUnit';
 
 // ─── Ad slot IDs ───────────────────────────────────────────────────────────────
+// Each placement MUST use a unique slot ID. Reusing the same slot on one page
+// causes AdSense to silently drop all but the first push({}) call.
 const AD_SLOTS = {
-  BANNER_TOP:    '6866736453',   // jobpage-banner-top
-  IN_ARTICLE:    '5553654784',   // jobpage-inarticle
-  BANNER_BOTTOM: '4240573110',   // jobpage-banner-bottom
-  SIDEBAR:       '9189647463',   // jobpage-sidebar
-  ANCHOR_MOBILE: '3349195672',   // jobpage-anchor-mobile
+  BANNER_TOP:    '6866736453',   // jobpage-banner-top      — after job header card
+  IN_ARTICLE:    '5553654784',   // jobpage-inarticle        — after job description
+  BANNER_BOTTOM: '4240573110',   // jobpage-banner-bottom    — end of main content
+  SIDEBAR:       '9189647463',   // jobpage-sidebar          — right column
+  ANCHOR_MOBILE: '3349195672',   // jobpage-anchor-mobile    — sticky bottom bar
 } as const;
+// NOTE: AD #3 and AD #4 in the original code both reused IN_ARTICLE — they have
+// been removed. Only one in-article ad is rendered per page (AD #2 below).
 // ───────────────────────────────────────────────────────────────────────────────
 
 const STORAGE_KEYS = {
@@ -370,7 +374,13 @@ export default function JobClient({ job, relatedJobs }: { job: any; relatedJobs?
 
   return (
     <>
-      <div className="min-h-screen bg-gray-50 pb-16 lg:pb-0">
+      {/*
+        pb-[58px] on mobile reserves space so the sticky anchor bar (50px + 8px gap)
+        never overlaps the Apply button or bottom content.
+        lg:pb-0 removes it on desktop where the anchor bar is hidden.
+      */}
+      <div className="min-h-screen bg-gray-50 pb-[58px] lg:pb-0">
+
         {/* Fixed 2-row header */}
         <div
           className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200 shadow-sm transition-transform duration-300"
@@ -675,8 +685,9 @@ export default function JobClient({ job, relatedJobs }: { job: any; relatedJobs?
                 </div>
               )}
 
-              {/* ── AD #2: In-article after description, before requirements ── */}
-              <div className="w-full overflow-hidden rounded-lg">
+              {/* ── AD #2: In-article after description ── */}
+              {/* minHeight ensures the fluid ad container is never 0px tall */}
+              <div className="w-full overflow-hidden rounded-lg" style={{ minHeight: '100px' }}>
                 <AdUnit slot={AD_SLOTS.IN_ARTICLE} format="fluid" layout="in-article" />
               </div>
 
@@ -760,11 +771,6 @@ export default function JobClient({ job, relatedJobs }: { job: any; relatedJobs?
                 }
                 return null;
               })()}
-
-              {/* ── AD #3: In-article just before "How to Apply" — highest intent slot ── */}
-              <div className="w-full overflow-hidden rounded-lg">
-                <AdUnit slot={AD_SLOTS.IN_ARTICLE} format="fluid" layout="in-article" />
-              </div>
 
               {/* How to Apply */}
               {isExpired ? (
@@ -931,11 +937,6 @@ export default function JobClient({ job, relatedJobs }: { job: any; relatedJobs?
                 </div>
               </div>
 
-              {/* ── AD #4: In-article after communities ── */}
-              <div className="w-full overflow-hidden rounded-lg">
-                <AdUnit slot={AD_SLOTS.IN_ARTICLE} format="fluid" layout="in-article" />
-              </div>
-
               {/* Additional Info Accordion */}
               {((job.about_role && job.about_role.trim()) ||
                 (job.who_apply && job.who_apply.trim()) ||
@@ -1020,7 +1021,7 @@ export default function JobClient({ job, relatedJobs }: { job: any; relatedJobs?
                 </div>
               )}
 
-              {/* ── AD #5: Banner at the end of main content ── */}
+              {/* ── AD #3: Banner at the end of main content ── */}
               <div className="w-full overflow-hidden rounded-lg">
                 <AdUnit slot={AD_SLOTS.BANNER_BOTTOM} format="auto" />
               </div>
@@ -1069,7 +1070,7 @@ export default function JobClient({ job, relatedJobs }: { job: any; relatedJobs?
                 </div>
               )}
 
-              {/* ── Sidebar AD: 300×250 between company jobs and similar jobs ── */}
+              {/* ── Sidebar AD ── */}
               <div className="hidden lg:block w-full overflow-hidden rounded-lg">
                 <AdUnit slot={AD_SLOTS.SIDEBAR} format="auto" />
               </div>
@@ -1129,16 +1130,36 @@ export default function JobClient({ job, relatedJobs }: { job: any; relatedJobs?
         </div>
       </div>
 
-      {/* ── Anchor Ad — mobile only, sticky bottom bar ── */}
+      {/*
+        ── Anchor Ad — mobile only, sticky bottom bar ──
+        Hard-clamped to 50px. The inner transform shifts the ad up by 50%
+        of its own rendered height so it stays centred inside the bar.
+        overflow:hidden on both layers kills any bleed.
+      */}
       <div
-        className="fixed bottom-0 left-0 right-0 z-40 flex justify-center items-center bg-white border-t border-gray-200 lg:hidden"
+        className="fixed bottom-0 left-0 right-0 z-40 lg:hidden bg-white border-t border-gray-100"
         style={{ height: '50px', overflow: 'hidden' }}
       >
-        <div style={{ width: '100%', maxHeight: '50px', overflow: 'hidden', lineHeight: 0 }}>
+        <div
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            height: '50px',
+            overflow: 'hidden',
+          }}
+        >
           <AdUnit
             slot={AD_SLOTS.ANCHOR_MOBILE}
             format="auto"
-            style={{ display: 'block', width: '100%', height: '50px', maxHeight: '50px' }}
+            style={{
+              display: 'block',
+              width: '100%',
+              height: '50px',
+              maxHeight: '50px',
+              overflow: 'hidden',
+            }}
           />
         </div>
       </div>
