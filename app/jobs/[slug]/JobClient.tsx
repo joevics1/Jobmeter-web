@@ -33,9 +33,11 @@ import AdUnit from '@/components/ads/AdUnit';
 
 // ─── Ad slot IDs ───────────────────────────────────────────────────────────────
 const AD_SLOTS = {
-  BANNER: '8152297343',      // jobpilot-banner-responsive
-  IN_ARTICLE: '6958270213',  // jobpilot-inarticle
-  SIDEBAR: '8096457028',     // jobpilot-sidebar-rectangle
+  BANNER_TOP:    '6866736453',   // jobpage-banner-top
+  IN_ARTICLE:    '5553654784',   // jobpage-inarticle
+  BANNER_BOTTOM: '4240573110',   // jobpage-banner-bottom
+  SIDEBAR:       '9189647463',   // jobpage-sidebar
+  ANCHOR_MOBILE: '3349195672',   // jobpage-anchor-mobile
 } as const;
 // ───────────────────────────────────────────────────────────────────────────────
 
@@ -648,7 +650,7 @@ export default function JobClient({ job, relatedJobs }: { job: any; relatedJobs?
 
               {/* ── AD #1: Responsive banner after job header ── */}
               <div className="w-full overflow-hidden rounded-lg">
-                <AdUnit slot={AD_SLOTS.BANNER} format="auto" />
+                <AdUnit slot={AD_SLOTS.BANNER_TOP} format="auto" />
               </div>
 
               {/* About Company */}
@@ -1020,7 +1022,7 @@ export default function JobClient({ job, relatedJobs }: { job: any; relatedJobs?
 
               {/* ── AD #5: Banner at the end of main content ── */}
               <div className="w-full overflow-hidden rounded-lg">
-                <AdUnit slot={AD_SLOTS.BANNER} format="auto" />
+                <AdUnit slot={AD_SLOTS.BANNER_BOTTOM} format="auto" />
               </div>
 
             </div>
@@ -1128,12 +1130,17 @@ export default function JobClient({ job, relatedJobs }: { job: any; relatedJobs?
       </div>
 
       {/* ── Anchor Ad — mobile only, sticky bottom bar ── */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 flex justify-center items-center bg-white border-t border-gray-200 lg:hidden" style={{ minHeight: '50px' }}>
-        <AdUnit
-          slot={AD_SLOTS.BANNER}
-          format="auto"
-          style={{ width: '320px', height: '50px', display: 'block' }}
-        />
+      <div
+        className="fixed bottom-0 left-0 right-0 z-40 flex justify-center items-center bg-white border-t border-gray-200 lg:hidden"
+        style={{ height: '50px', overflow: 'hidden' }}
+      >
+        <div style={{ width: '100%', maxHeight: '50px', overflow: 'hidden', lineHeight: 0 }}>
+          <AdUnit
+            slot={AD_SLOTS.ANCHOR_MOBILE}
+            format="auto"
+            style={{ display: 'block', width: '100%', height: '50px', maxHeight: '50px' }}
+          />
+        </div>
       </div>
 
       {/* Upgrade Modal */}
