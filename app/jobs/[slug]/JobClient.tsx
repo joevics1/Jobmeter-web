@@ -35,10 +35,12 @@ import AdUnit from '@/components/ads/AdUnit';
 // Each placement MUST use a unique slot ID. Reusing the same slot on one page
 // causes AdSense to silently drop all but the first push({}) call.
 const AD_SLOTS = {
-  BANNER_TOP:    '6866736453',   // jobpage-banner-top     — after job header card
-  IN_ARTICLE:    '5553654784',   // jobpage-inarticle      — after job description
-  BANNER_BOTTOM: '4240573110',   // jobpage-banner-bottom  — end of main content
-  SIDEBAR:       '9189647463',   // jobpage-sidebar        — right column
+  BANNER_TOP:    '6866736453',   // jobpage-banner-top      — after job header card
+  IN_ARTICLE:    '5553654784',   // jobpage-inarticle       — after job description
+  BANNER_BOTTOM: '4240573110',   // jobpage-banner-bottom   — end of main content
+  SIDEBAR:       '9189647463',   // jobpage-sidebar         — right column
+  ANCHOR_MOBILE: '3349195672',   // jobpage-anchor-mobile   — sticky bottom bar
+  MULTIPLEX:     '3568104363',   // jobpage-multiplex       — autorelaxed, after similar jobs
 } as const;
 // ───────────────────────────────────────────────────────────────────────────────
 
@@ -80,18 +82,20 @@ export default function JobClient({ job, relatedJobs }: { job: any; relatedJobs?
       const companyName = getCompanyName();
       if (!companyName || companyName === 'Unknown Company') return;
 
-      const res = await fetch('/api/jobs');
-      if (!res.ok) return;
-      const { jobs: allJobs } = await res.json();
+      const { data, error } = await supabase
+        .from('jobs')
+        .select('id, title, company, location, category, sector, slug')
+        .eq('company', companyName)
+        .neq('id', jobId)
+        .eq('is_published', true)
+        .limit(5);
 
-      const companyJobs = (allJobs || [])
-        .filter((j: any) => {
-          const jCompany = typeof j.company === 'string' ? j.company : j.company?.name || '';
-          return jCompany === companyName && j.id !== jobId;
-        })
-        .slice(0, 5);
+      if (error) {
+        console.error('Error loading company jobs:', error);
+        return;
+      }
 
-      setCompanyJobs(companyJobs);
+      setCompanyJobs(data || []);
     } catch (error) {
       console.error('Error loading company jobs:', error);
     }
@@ -186,41 +190,60 @@ export default function JobClient({ job, relatedJobs }: { job: any; relatedJobs?
   const loadSimilarJobs = async () => {
     try {
       if (!userCountry) return;
-
+      
       const jobLocation = typeof job.location === 'object' ? job.location : null;
       const jobCountry = jobLocation?.country || 'Nigeria';
       const filterCountry = userCountry || jobCountry;
 
-      const res = await fetch('/api/jobs');
-      if (!res.ok) return;
-      const { jobs: allJobs } = await res.json();
+      let query = supabase
+        .from('jobs')
+        .select('id, title, company, location, category, sector, slug')
+        .neq('id', jobId)
+        .eq('is_published', true)
+        .limit(15);
 
-      const pool = (allJobs || []).filter((j: any) => j.id !== jobId);
-
-      // ── Priority 1: same category + same country / remote ─────────────────
-      let filteredJobs = pool.filter((j: any) => {
-        const jLoc = typeof j.location === 'object' ? j.location : null;
-        const jCountry = (jLoc?.country || '').toLowerCase();
-        const jRemote = jLoc?.remote || false;
-        const matchesLocation = jCountry === filterCountry.toLowerCase() || jRemote;
-        const matchesCategory = !job.category || j.category === job.category;
-        return matchesCategory && matchesLocation;
-      });
-
-      // ── Priority 2: top up with same sector if under 10 ──────────────────
-      if (filteredJobs.length < 10 && job.sector) {
-        const existingIds = new Set(filteredJobs.map((j: any) => j.id));
-        const sectorJobs = pool.filter((j: any) => {
-          if (existingIds.has(j.id)) return false;
-          const jLoc = typeof j.location === 'object' ? j.location : null;
-          const jCountry = (jLoc?.country || '').toLowerCase();
-          const jRemote = jLoc?.remote || false;
-          return j.sector === job.sector && (jCountry === filterCountry.toLowerCase() || jRemote);
-        });
-        filteredJobs = [...filteredJobs, ...sectorJobs].slice(0, 10);
+      if (job.category) {
+        query = query.eq('category', job.category);
       }
 
-      setSimilarJobs(filteredJobs.slice(0, 10));
+      const { data: categoryJobs, error: categoryError } = await query;
+
+      if (categoryError) {
+        console.error('Error loading similar jobs:', categoryError);
+        return;
+      }
+
+      let filteredJobs = (categoryJobs || []).filter(j => {
+        const jLoc = typeof j.location === 'object' ? j.location : null;
+        const jCountry = jLoc?.country || '';
+        const jRemote = jLoc?.remote || false;
+        return jCountry.toLowerCase() === filterCountry.toLowerCase() || jRemote;
+      });
+
+      if (filteredJobs.length < 10 && job.sector) {
+        const remainingCount = 10 - filteredJobs.length;
+        const existingIds = filteredJobs.map(j => j.id);
+
+        const { data: sectorJobs } = await supabase
+          .from('jobs')
+          .select('id, title, company, location, category, sector, slug')
+          .eq('sector', job.sector)
+          .neq('id', jobId)
+          .not('id', 'in', `(${existingIds.join(',')})`)
+          .eq('is_published', true)
+          .limit(remainingCount);
+
+        const finalSectorJobs = (sectorJobs || []).filter(j => {
+          const jLoc = typeof j.location === 'object' ? j.location : null;
+          const jCountry = jLoc?.country || '';
+          const jRemote = jLoc?.remote || false;
+          return jCountry.toLowerCase() === filterCountry.toLowerCase() || jRemote;
+        });
+
+        setSimilarJobs([...filteredJobs, ...finalSectorJobs]);
+      } else {
+        setSimilarJobs(filteredJobs.slice(0, 10));
+      }
     } catch (error) {
       console.error('Error loading similar jobs:', error);
     }
@@ -1004,43 +1027,6 @@ export default function JobClient({ job, relatedJobs }: { job: any; relatedJobs?
             ═══════════════════════════════════════════════ */}
             <div className="lg:col-span-1 space-y-6">
 
-              {/* More Jobs from Same Company */}
-              {companyJobs && companyJobs.length > 0 && (
-                <div className="bg-white rounded-xl shadow-sm overflow-hidden sticky top-24">
-                  <div className="px-5 py-4 text-white font-semibold text-lg" style={{ backgroundColor: theme.colors.primary.DEFAULT }}>
-                    More jobs from {getCompanyName()}
-                  </div>
-                  <div className="px-5 py-4">
-                    <div className="space-y-4">
-                      {companyJobs.map((companyJob) => (
-                        <a key={companyJob.id} href={`/jobs/${companyJob.slug || companyJob.id}`} className="block group">
-                          <div className="flex items-start gap-3 pb-4 border-b border-gray-100 last:border-0 last:pb-0 hover:bg-gray-50 -mx-2 px-2 py-2 rounded-lg transition-colors">
-                            <div className="flex-shrink-0 w-1.5 h-1.5 rounded-full mt-2 group-hover:scale-150 transition-transform" style={{ backgroundColor: theme.colors.primary.DEFAULT }}></div>
-                            <div className="flex-1 min-w-0">
-                              <h3 className="text-sm font-semibold text-gray-900 group-hover:underline line-clamp-2 mb-1">{companyJob.title}</h3>
-                              <div className="flex flex-wrap items-center gap-2 text-xs text-gray-500">
-                                {companyJob.category && (
-                                  <span className="flex items-center gap-1">
-                                    <Briefcase size={12} />
-                                    {companyJob.category.replace(/-/g, ' ')}
-                                  </span>
-                                )}
-                                {getSimilarJobLocation(companyJob) && (
-                                  <span className="flex items-center gap-1">
-                                    <MapPin size={12} />
-                                    {getSimilarJobLocation(companyJob)}
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        </a>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              )}
-
               {/* ── Sidebar AD ── */}
               <div className="hidden lg:block w-full rounded-lg">
                 <AdUnit key={AD_SLOTS.SIDEBAR} slot={AD_SLOTS.SIDEBAR} format="auto" />
@@ -1096,8 +1082,48 @@ export default function JobClient({ job, relatedJobs }: { job: any; relatedJobs?
                 </div>
               )}
 
+              {/* ── Multiplex Ad — autorelaxed, after similar jobs ── */}
+              <div className="w-full rounded-lg">
+                <AdUnit key={AD_SLOTS.MULTIPLEX} slot={AD_SLOTS.MULTIPLEX} format="autorelaxed" />
+              </div>
+
             </div>
           </div>
+        </div>
+      </div>
+
+      {/*
+        ── Anchor Ad — mobile only, sticky bottom bar ──
+        Hard-clamped to 50px. The inner transform shifts the ad up by 50%
+        of its own rendered height so it stays centred inside the bar.
+        overflow:hidden on both layers kills any bleed.
+      */}
+      <div
+        className="fixed bottom-0 left-0 right-0 z-40 lg:hidden bg-white border-t border-gray-100"
+        style={{ height: '50px', overflow: 'hidden' }}
+      >
+        <div
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            height: '50px',
+            overflow: 'hidden',
+          }}
+        >
+          <AdUnit
+            key={AD_SLOTS.ANCHOR_MOBILE}
+            slot={AD_SLOTS.ANCHOR_MOBILE}
+            format="auto"
+            style={{
+              display: 'block',
+              width: '100%',
+              height: '50px',
+              maxHeight: '50px',
+              overflow: 'hidden',
+            }}
+          />
         </div>
       </div>
 

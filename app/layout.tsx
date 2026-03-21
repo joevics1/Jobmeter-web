@@ -1,4 +1,12 @@
 import './globals.css';
+
+// Default revalidation for all routes — cache indefinitely at Vercel edge.
+// This is a job site; most pages are static or near-static.
+// Pages that need periodic refresh override this with their own:
+//   export const revalidate = 1800  ← job listing (/jobs)
+//   export const revalidate = 3600  ← location/state pages
+// Everything else (job detail, country pages, tools, blog) stays cached until redeployment.
+export const revalidate = false;
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import RootLayoutClient from './RootLayoutClient';

@@ -28,6 +28,43 @@ const nextConfig = {
     ],
   },
 
+  async headers() {
+    return [
+      {
+        // Cache job detail pages at Vercel edge for 24 hours.
+        // revalidate = false alone doesn't force edge caching in Next.js 13 App Router
+        // because of the RSC Vary headers — this override is required.
+        source: '/jobs/:slug',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, s-maxage=86400, stale-while-revalidate=86400',
+          },
+        ],
+      },
+      {
+        // Cache country/location pages at edge for 24 hours
+        source: '/jobs/Location/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, s-maxage=86400, stale-while-revalidate=86400',
+          },
+        ],
+      },
+      {
+        // Cache resource/category pages at edge for 24 hours
+        source: '/resources/:slug',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, s-maxage=86400, stale-while-revalidate=86400',
+          },
+        ],
+      },
+    ];
+  },
+
   // Fix 404 bot loops seen in Vercel logs
   async redirects() {
     return [
