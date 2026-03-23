@@ -33,7 +33,6 @@ interface CategoryJobListProps {
   location: string | null;
   jobType?: string;
   roleCategory?: string;
-  // Pre-fetched server-side so Googlebot sees real jobs in the HTML
   initialJobs?: RawJobRow[];
 }
 
@@ -75,16 +74,18 @@ function transformJobToUI(job: RawJobRow): JobUI {
     company: companyStr,
     location: locationStr,
     salary: salaryStr,
+
+    // Disabled match logic completely
     match: 0,
     calculatedTotal: 0,
-    type: job.type || job.employment_type || '',
     breakdown: null,
+
+    type: job.type || job.employment_type || '',
     postedDate: job.posted_date || job.created_at || undefined,
   };
 }
 
 export default function CategoryJobList({ initialJobs = [] }: CategoryJobListProps) {
-  // Seeded synchronously from server data — no loading state, no useEffect fetch
   const [jobs] = useState<JobUI[]>(() => initialJobs.map(transformJobToUI));
 
   const [savedJobs, setSavedJobs] = useState<string[]>(() => {
@@ -92,7 +93,9 @@ export default function CategoryJobList({ initialJobs = [] }: CategoryJobListPro
     try {
       const saved = localStorage.getItem(STORAGE_KEYS.SAVED_JOBS);
       return saved ? JSON.parse(saved) : [];
-    } catch { return []; }
+    } catch {
+      return [];
+    }
   });
 
   const [appliedJobs, setAppliedJobs] = useState<string[]>(() => {
@@ -100,10 +103,10 @@ export default function CategoryJobList({ initialJobs = [] }: CategoryJobListPro
     try {
       const applied = localStorage.getItem(STORAGE_KEYS.APPLIED_JOBS);
       return applied ? JSON.parse(applied) : [];
-    } catch { return []; }
+    } catch {
+      return [];
+    }
   });
-
-  const [sortBy, setSortBy] = useState<'date'>('date');
 
   const handleSave = (jobId: string) => {
     const newSaved = savedJobs.includes(jobId)
@@ -111,6 +114,7 @@ export default function CategoryJobList({ initialJobs = [] }: CategoryJobListPro
       : [...savedJobs, jobId];
 
     setSavedJobs(newSaved);
+
     if (typeof window !== 'undefined') {
       localStorage.setItem(STORAGE_KEYS.SAVED_JOBS, JSON.stringify(newSaved));
     }
@@ -122,14 +126,17 @@ export default function CategoryJobList({ initialJobs = [] }: CategoryJobListPro
       : [...appliedJobs, jobId];
 
     setAppliedJobs(newApplied);
+
     if (typeof window !== 'undefined') {
       localStorage.setItem(STORAGE_KEYS.APPLIED_JOBS, JSON.stringify(newApplied));
 
       if (!appliedJobs.includes(jobId)) {
         const saved = localStorage.getItem(STORAGE_KEYS.SAVED_JOBS);
+
         if (saved) {
           try {
             const savedArray: string[] = JSON.parse(saved);
+
             if (savedArray.includes(jobId)) {
               const updatedSaved = savedArray.filter(id => id !== jobId);
               localStorage.setItem(STORAGE_KEYS.SAVED_JOBS, JSON.stringify(updatedSaved));
@@ -144,8 +151,8 @@ export default function CategoryJobList({ initialJobs = [] }: CategoryJobListPro
   };
 
   const sortedJobs = [...jobs].sort((a, b) => {
-    const dateA = new Date(a.postedDate || 0).getTime();
-    const dateB = new Date(b.postedDate || 0).getTime();
+    const dateA = a.postedDate ? new Date(a.postedDate).getTime() : 0;
+    const dateB = b.postedDate ? new Date(b.postedDate).getTime() : 0;
     return dateB - dateA;
   });
 
@@ -162,17 +169,6 @@ export default function CategoryJobList({ initialJobs = [] }: CategoryJobListPro
             Latest Jobs ({jobs.length})
           </h2>
         </div>
-
-        <div className="flex items-center gap-3">
-          <select
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value as 'date')}
-            className="text-sm border border-gray-300 rounded-md px-3 py-1.5 outline-none cursor-pointer"
-            style={{ color: theme.colors.text.primary }}
-          >
-            <option value="date">Newest First</option>
-          </select>
-        </div>
       </div>
 
       {/* Job List */}
@@ -180,16 +176,10 @@ export default function CategoryJobList({ initialJobs = [] }: CategoryJobListPro
         {sortedJobs.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 px-6">
             <Briefcase size={48} className="text-gray-400 mb-4" />
-            <p
-              className="text-base font-medium mb-2"
-              style={{ color: theme.colors.text.primary }}
-            >
+            <p className="text-base font-medium mb-2" style={{ color: theme.colors.text.primary }}>
               No jobs found
             </p>
-            <p
-              className="text-sm text-center"
-              style={{ color: theme.colors.text.secondary }}
-            >
+            <p className="text-sm text-center" style={{ color: theme.colors.text.secondary }}>
               Check back later for new opportunities in this category
             </p>
           </div>
@@ -202,7 +192,6 @@ export default function CategoryJobList({ initialJobs = [] }: CategoryJobListPro
                 appliedJobs={appliedJobs}
                 onSave={handleSave}
                 onApply={handleApply}
-                hideMatchScore
               />
             </React.Fragment>
           ))
