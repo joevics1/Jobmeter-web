@@ -61,6 +61,15 @@ async function incrementViewCount(slug: string) {
   }
 }
 
+function splitContentAtMidpoint(content: string): [string, string] {
+  const mid = Math.floor(content.length / 2);
+  const breakIndex = content.indexOf('\n\n', mid);
+  if (breakIndex === -1) {
+    return [content, ''];
+  }
+  return [content.slice(0, breakIndex + 2), content.slice(breakIndex + 2)];
+}
+
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
   const post = await getBlogPost(params.slug);
 
@@ -126,7 +135,6 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
     notFound();
   }
 
-  // Increment view count (non-blocking)
   incrementViewCount(params.slug);
 
   const formatDate = (dateString: string) => {
@@ -138,9 +146,11 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
     });
   };
 
+  const [contentTop, contentBottom] = splitContentAtMidpoint(post.content);
+  const hasMidContent = contentBottom.trim().length > 0;
+
   return (
     <>
-      {/* Structured Data */}
       <ArticleSchema
         headline={post.h1_title}
         description={post.meta_description}
@@ -183,7 +193,7 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
             Back to Blog
           </Link>
 
-          {/* Article Header */}
+          {/* Article */}
           <article className="bg-white rounded-lg overflow-hidden">
             {/* Featured Image */}
             {post.featured_image_url && (
@@ -198,7 +208,6 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
               </div>
             )}
 
-            {/* Content */}
             <div className="p-6 lg:p-8">
               {/* Title */}
               <h1 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
@@ -235,10 +244,28 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
                 </div>
               </div>
 
-              <AdUnit slot="4198231153" format="auto" />
+              {/* 1. Top Ad */}
+              <div className="mb-8 min-h-[280px] flex items-center justify-center bg-gray-50 rounded">
+                <AdUnit slot="4198231153" format="auto" />
+              </div>
 
-              {/* Article Content */}
-              <BlogMarkdownRenderer content={post.content} />
+              {/* Article Content — top half */}
+              <BlogMarkdownRenderer content={hasMidContent ? contentTop : post.content} />
+
+              {/* 2. Mid-article Ad */}
+              {hasMidContent && (
+                <>
+                  <div className="my-10 min-h-[300px] flex items-center justify-center bg-gray-50 rounded">
+                    <AdUnit slot="4690286797" format="fluid" layout="in-article" />
+                  </div>
+                  <BlogMarkdownRenderer content={contentBottom} />
+                </>
+              )}
+
+              {/* 3. Ad Before FAQs (moved from bottom) */}
+              <div className="my-10 min-h-[280px] flex items-center justify-center bg-gray-50 rounded">
+                <AdUnit slot="9751041788" format="auto" />
+              </div>
 
               {/* FAQs Section */}
               {post.faqs && Array.isArray(post.faqs) && post.faqs.length > 0 && (
@@ -272,25 +299,28 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
             </div>
           </article>
 
-          <AdUnit slot="4690286797" format="fluid" layout="in-article" />
-
           {/* Related Posts */}
           {post.related_posts && post.related_posts.length > 0 && (
             <div className="mt-12">
               <h2 className="text-2xl font-bold text-gray-900 mb-6">Related Articles</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* You can fetch and display related posts here */}
                 <p className="text-gray-600">Related posts coming soon...</p>
               </div>
             </div>
           )}
         </div>
 
-        <AdUnit slot="9751041788" format="auto" />
-
-        <div className="fixed bottom-0 left-0 right-0 z-40 lg:hidden bg-white border-t border-gray-100" style={{ height: '50px', overflow: 'hidden' }}>
-          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '50px', overflow: 'hidden' }}>
-            <AdUnit slot="3349195672" format="auto" style={{ display: 'block', width: '100%', height: '50px', maxHeight: '50px', overflow: 'hidden' }} />
+        {/* Sticky Mobile Anchor Ad (remains at bottom on mobile) */}
+        <div
+          className="fixed bottom-0 left-0 right-0 z-40 lg:hidden bg-white border-t border-gray-100"
+          style={{ height: '60px', overflow: 'hidden' }}
+        >
+          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '60px', overflow: 'hidden' }}>
+            <AdUnit
+              slot="3349195672"
+              format="auto"
+              style={{ display: 'block', width: '100%', height: '60px', maxHeight: '60px', overflow: 'hidden' }}
+            />
           </div>
         </div>
       </div>

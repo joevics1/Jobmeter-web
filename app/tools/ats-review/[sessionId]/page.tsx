@@ -5,7 +5,6 @@ import { useParams, useRouter } from 'next/navigation';
 import { ArrowLeft, Star, TrendingUp, Target, CheckCircle, XCircle, AlertCircle, FileCheck, Briefcase, ChevronDown, ChevronUp } from 'lucide-react';
 import Link from 'next/link';
 import { theme } from '@/lib/theme';
-import AdUnit from '@/components/ads/AdUnit';
 
 type ScoreBreakdownKey = 
   | 'keywordMatch'
@@ -163,8 +162,6 @@ export default function ATSReviewSessionPage() {
         </div>
       </div>
 
-      <AdUnit slot="4198231153" format="auto" />
-
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Overall Score Card - Mobile Friendly */}
@@ -297,8 +294,6 @@ export default function ATSReviewSessionPage() {
           </div>
         )}
 
-        <AdUnit slot="4690286797" format="fluid" layout="in-article" />
-
         {/* Final Recommendations */}
         {analysisResult.finalRecommendations && analysisResult.finalRecommendations.length > 0 && (
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
@@ -316,14 +311,6 @@ export default function ATSReviewSessionPage() {
             </ul>
           </div>
         )}
-      </div>
-
-      <AdUnit slot="9751041788" format="auto" />
-
-      <div className="fixed bottom-0 left-0 right-0 z-40 lg:hidden bg-white border-t border-gray-100" style={{ height: '50px', overflow: 'hidden' }}>
-        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '50px', overflow: 'hidden' }}>
-          <AdUnit slot="3349195672" format="auto" style={{ display: 'block', width: '100%', height: '50px', maxHeight: '50px', overflow: 'hidden' }} />
-        </div>
       </div>
     </div>
   );

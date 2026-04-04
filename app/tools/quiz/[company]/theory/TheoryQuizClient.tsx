@@ -1,5 +1,4 @@
 "use client";
-// 📁 app/tools/quiz/[company]/theory/TheoryQuizClient.tsx
 
 import React, { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
@@ -74,7 +73,6 @@ export default function TheoryQuizClient({ company }: { company: string }) {
 
   const fetchQuestions = async () => {
     try {
-      // ✅ Fixed: use quizSupabase (not bare `supabase`)
       const { data, error } = await quizSupabase
         .from('theory_questions')
         .select('*')
@@ -104,12 +102,24 @@ export default function TheoryQuizClient({ company }: { company: string }) {
       const data = await response.json();
 
       if (!response.ok || data.error) {
-        return { score: 0, passed: false, feedback: data.error || 'Unable to grade. Please try again.' };
+        return { 
+          score: 0, 
+          passed: false, 
+          feedback: data.error || 'Unable to grade. Please try again.' 
+        };
       }
 
-      return { score: data.score, passed: data.score >= 75, feedback: data.feedback };
+      return { 
+        score: data.score, 
+        passed: data.score >= 75, 
+        feedback: data.feedback 
+      };
     } catch {
-      return { score: 0, passed: false, feedback: 'Unable to grade. Please check your connection.' };
+      return { 
+        score: 0, 
+        passed: false, 
+        feedback: 'Unable to grade. Please check your connection.' 
+      };
     }
   };
 
@@ -177,7 +187,7 @@ export default function TheoryQuizClient({ company }: { company: string }) {
     );
   }
 
-  // ── Results ──
+  // ── Results Screen ──
   if (showResults) {
     const passed = results.filter((r) => r.passed).length;
     const percentage = Math.round((passed / results.length) * 100);
@@ -195,49 +205,54 @@ export default function TheoryQuizClient({ company }: { company: string }) {
         </div>
 
         <div className="max-w-4xl mx-auto px-4 py-6">
-          <div className="bg-white rounded-xl p-6 text-center mb-4" style={{ border: `1px solid ${theme.colors.border.DEFAULT}` }}>
+          {/* Ad at the top of Results */}
+          <div className="mb-6">
+            <AdUnit slot="4198231153" format="auto" />
+          </div>
+
+          <div className="bg-white rounded-xl p-6 text-center mb-6" style={{ border: `1px solid ${theme.colors.border.DEFAULT}` }}>
             <div
-              className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-2"
+              className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-3"
               style={{ backgroundColor: percentage >= 75 ? '#10B98120' : '#EF444420' }}
             >
-              <span className="text-2xl font-bold" style={{ color: percentage >= 75 ? theme.colors.success : theme.colors.error }}>
+              <span className="text-4xl font-bold" style={{ color: percentage >= 75 ? '#10B981' : '#EF4444' }}>
                 {percentage}%
               </span>
             </div>
-            <p className="text-gray-600 text-sm">{passed}/{results.length} passed (75% threshold per question)</p>
-            {useTimer && <p className="text-gray-500 text-sm mt-1">Time spent: {formatTime(timeSpent)}</p>}
+            <p className="text-lg font-semibold text-gray-900">{passed}/{results.length} passed</p>
+            {useTimer && <p className="text-gray-500 mt-1">Time spent: {formatTime(timeSpent)}</p>}
           </div>
 
-          <div className="space-y-3 mb-4">
+          <div className="space-y-4 mb-8">
             {results.map((result, idx) => {
               const q = questions[idx];
               return (
-                <div key={q.id} className="bg-white rounded-lg p-3" style={{ border: `1px solid ${theme.colors.border.DEFAULT}` }}>
-                  <div className="flex items-start gap-2 mb-2">
+                <div key={q.id} className="bg-white rounded-xl p-5" style={{ border: `1px solid ${theme.colors.border.DEFAULT}` }}>
+                  <div className="flex items-start gap-3 mb-3">
                     {result.passed ? (
-                      <CheckCircle size={18} className="text-green-500 flex-shrink-0 mt-0.5" />
+                      <CheckCircle size={20} className="text-green-500 flex-shrink-0 mt-0.5" />
                     ) : (
-                      <XCircle size={18} className="text-red-500 flex-shrink-0 mt-0.5" />
+                      <XCircle size={20} className="text-red-500 flex-shrink-0 mt-0.5" />
                     )}
-                    <div>
+                    <div className="flex-1">
                       <p className="text-sm font-medium text-gray-900">Question {idx + 1}</p>
-                      <p className="text-xs text-gray-500">{q.question_text}</p>
+                      <p className="text-xs text-gray-500 mt-1">{q.question_text}</p>
                     </div>
                   </div>
 
-                  <div className="ml-6 bg-gray-50 rounded p-2 mb-2">
+                  <div className="bg-gray-50 rounded-xl p-4 mb-4">
                     <p className="text-xs text-gray-600 italic">"{answers[q.id]}"</p>
                   </div>
 
-                  <div className="ml-6 flex items-center gap-2 mb-2">
-                    <span className="text-xs font-semibold" style={{ color: result.passed ? theme.colors.success : theme.colors.error }}>
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="text-sm font-semibold" style={{ color: result.passed ? '#10B981' : '#EF4444' }}>
                       {result.score}%
                     </span>
-                    <span className="text-xs text-gray-400">({result.passed ? 'Passed' : 'Below threshold'})</span>
+                    <span className="text-xs text-gray-500">({result.passed ? 'Passed' : 'Needs improvement'})</span>
                   </div>
 
-                  <div className="ml-6 bg-blue-50 rounded p-2">
-                    <p className="text-xs text-gray-700">{result.feedback}</p>
+                  <div className="bg-blue-50 rounded-xl p-4 text-xs text-gray-700 leading-relaxed">
+                    {result.feedback}
                   </div>
                 </div>
               );
@@ -246,26 +261,22 @@ export default function TheoryQuizClient({ company }: { company: string }) {
 
           <button
             onClick={restartQuiz}
-            className="w-full py-3 rounded-lg font-semibold text-sm"
-            style={{ backgroundColor: theme.colors.primary.DEFAULT, color: '#fff' }}
+            className="w-full py-3.5 rounded-xl font-semibold text-white text-sm"
+            style={{ backgroundColor: theme.colors.primary.DEFAULT }}
           >
             Try Again
           </button>
 
-          <div className="mt-5 rounded-xl p-4" style={{ backgroundColor: '#F0F9FF', border: '1px solid #BAE6FD' }}>
-            <p className="text-xs text-sky-900 leading-relaxed">
-              <strong>Note:</strong> These are original practice questions crafted to match the
-              style and difficulty of <strong>{company}</strong>'s assessments. They are not
-              sourced from any official exam. JobMeter is an independent platform with no
-              affiliation to {company} or any organisation featured here.
-            </p>
+          <div className="mt-6 rounded-xl p-4 text-xs text-sky-900 leading-relaxed" 
+               style={{ backgroundColor: '#F0F9FF', border: '1px solid #BAE6FD' }}>
+            <strong>Note:</strong> These are original practice questions crafted to match the style and difficulty of <strong>{company}</strong>'s assessments. They are not sourced from any official exam. JobMeter is an independent platform with no affiliation to {company}.
           </div>
         </div>
       </div>
     );
   }
 
-  // ── Quiz ──
+  // ── Quiz Screen ──
   const answeredCount = Object.keys(answers).length;
   const currentQuestion = questions[currentIndex];
   const isCurrentAnswered = !!answers[currentQuestion?.id]?.trim();
@@ -289,22 +300,17 @@ export default function TheoryQuizClient({ company }: { company: string }) {
           </Link>
           <span className="text-white text-sm font-medium">{answeredCount}/{questions.length} answered</span>
           {useTimer && timerStarted && (
-            <span className="text-white text-sm font-medium bg-white/20 px-2 py-1 rounded">
+            <span className="text-white text-sm font-medium bg-white/20 px-3 py-1 rounded">
               {formatTime(timeSpent)}
             </span>
           )}
         </div>
       </div>
 
-      {/* ── [AD: below exit bar] — above first question, mobile only ─── */}
-      <div className="lg:hidden px-4 py-2">
-        <AdUnit slot="4198231153" format="auto" />
-      </div>
-
-      <div className="max-w-4xl mx-auto px-4 py-4">
+      <div className="max-w-4xl mx-auto px-4 py-6">
         {/* Progress bar */}
-        <div className="mb-4">
-          <div className="h-1.5 bg-gray-200 rounded-full">
+        <div className="mb-5">
+          <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
             <div
               className="h-full rounded-full transition-all"
               style={{
@@ -316,16 +322,16 @@ export default function TheoryQuizClient({ company }: { company: string }) {
         </div>
 
         {/* Question card */}
-        <div className="bg-white rounded-xl p-4 mb-4" style={{ border: `1px solid ${theme.colors.border.DEFAULT}` }}>
+        <div className="bg-white rounded-2xl p-5 mb-6" style={{ border: `1px solid ${theme.colors.border.DEFAULT}` }}>
           <p className="text-xs text-gray-400 mb-1">Question {currentIndex + 1} of {questions.length}</p>
-          <p className="text-sm font-semibold text-gray-900 mb-4">{currentQuestion.question_text}</p>
+          <p className="text-sm font-semibold text-gray-900 leading-relaxed mb-5">{currentQuestion.question_text}</p>
 
           <textarea
             value={answers[currentQuestion.id] || ''}
             onChange={(e) => handleAnswerChange(currentQuestion.id, e.target.value)}
-            placeholder="Type your answer here..."
-            rows={7}
-            className="w-full p-3 border rounded-lg text-sm resize-none focus:outline-none focus:ring-2"
+            placeholder="Type your detailed answer here..."
+            rows={8}
+            className="w-full p-4 border rounded-xl text-sm resize-y min-h-[180px] focus:outline-none focus:ring-2"
             style={{ borderColor: theme.colors.border.DEFAULT }}
           />
         </div>
@@ -335,7 +341,7 @@ export default function TheoryQuizClient({ company }: { company: string }) {
           <button
             onClick={handlePrev}
             disabled={currentIndex === 0}
-            className="flex-1 py-3 rounded-lg font-medium text-sm disabled:opacity-40 bg-gray-200 text-gray-700"
+            className="flex-1 py-3.5 rounded-xl font-medium text-sm disabled:opacity-50 bg-gray-100 text-gray-700"
           >
             Previous
           </button>
@@ -344,22 +350,27 @@ export default function TheoryQuizClient({ company }: { company: string }) {
             <button
               onClick={handleSubmit}
               disabled={submitting || answeredCount < questions.length}
-              className="flex-1 py-3 rounded-lg font-semibold text-sm disabled:opacity-40"
-              style={{ backgroundColor: theme.colors.primary.DEFAULT, color: '#fff' }}
+              className="flex-1 py-3.5 rounded-xl font-semibold text-sm disabled:opacity-50 text-white"
+              style={{ backgroundColor: theme.colors.primary.DEFAULT }}
             >
-              {submitting ? 'Grading...' : `Submit (${answeredCount}/${questions.length})`}
+              {submitting ? 'Grading with AI...' : `Submit & Get AI Feedback`}
             </button>
           ) : (
             <button
               onClick={handleNext}
               disabled={!isCurrentAnswered}
-              className="flex-1 py-3 rounded-lg font-semibold text-sm disabled:opacity-40"
-              style={{ backgroundColor: theme.colors.primary.DEFAULT, color: '#fff' }}
+              className="flex-1 py-3.5 rounded-xl font-semibold text-sm disabled:opacity-50 text-white"
+              style={{ backgroundColor: theme.colors.primary.DEFAULT }}
             >
               Next
             </button>
           )}
         </div>
+      </div>
+
+      {/* Single Ad at the bottom under the quiz */}
+      <div className="px-4 pb-10 max-w-4xl mx-auto">
+        <AdUnit slot="9751041788" format="auto" />
       </div>
     </div>
   );

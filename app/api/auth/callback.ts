@@ -26,8 +26,27 @@ export async function GET(request: NextRequest) {
         },
       }
     )
-    await supabase.auth.exchangeCodeForSession(code)
+
+    const { data: { user } } = await supabase.auth.exchangeCodeForSession(code)
+
+    if (user) {
+      // Check if user has completed onboarding
+      const { data: onboarding } = await supabase
+        .from('onboarding_data')
+        .select('user_id')
+        .eq('user_id', user.id)
+        .single()
+
+      if (!onboarding) {
+        // No onboarding data — send to onboarding (CV required)
+        return NextResponse.redirect(new URL('/onboarding', requestUrl.origin))
+      }
+
+      // Onboarding complete — send to jobs
+      return NextResponse.redirect(new URL('/jobs', requestUrl.origin))
+    }
   }
 
-  return NextResponse.redirect(new URL('/submit', requestUrl.origin))
+  // Fallback
+  return NextResponse.redirect(new URL('/onboarding', requestUrl.origin))
 }

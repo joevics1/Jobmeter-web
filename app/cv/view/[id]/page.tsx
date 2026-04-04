@@ -14,7 +14,6 @@ import { CVData } from '@/lib/types/cv';
 import { StructuredCoverLetter } from '@/lib/types/coverLetter';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
-import AdUnit from '@/components/ads/AdUnit';
 
 interface CVDocument {
   id: string;
@@ -80,8 +79,10 @@ export default function CVViewPage() {
     try {
       let html = '';
       if (doc.type === 'cv') {
+        // Use 'view' mode for responsive templates in viewer
         html = renderCVTemplate(templateId, doc.structuredData as CVData, 'view');
       } else if (doc.type === 'cover-letter') {
+        // Use 'view' mode for responsive templates in viewer
         html = renderCoverLetterTemplate(templateId, doc.structuredData as StructuredCoverLetter, 'view');
       }
       setRenderedHTML(html);
@@ -92,6 +93,7 @@ export default function CVViewPage() {
 
   const handleTemplateSwitch = (newTemplateId: string) => {
     setCurrentTemplateId(newTemplateId);
+    // The useEffect will re-render with the new template
   };
 
   const handleEdit = () => {
@@ -107,10 +109,12 @@ export default function CVViewPage() {
         const docs = JSON.parse(existingDocs);
         const docIndex = docs.findIndex((doc: any) => doc.id === documentId);
         if (docIndex !== -1) {
+          // Update structured data and re-render with current template
           docs[docIndex].structuredData = editedData;
           docs[docIndex].templateId = currentTemplateId;
           docs[docIndex].updatedAt = new Date().toISOString();
           
+          // Re-render content with current template
           let html = '';
           if (document.type === 'cv') {
             html = renderCVTemplate(currentTemplateId, editedData as CVData, 'view');
@@ -134,95 +138,145 @@ export default function CVViewPage() {
     setIsEditMode(false);
     setEditedData(null);
   };
+// Replace the handleDownload function in your page.tsx with this updated version
+// Fixed to capture full content height properly
 
-  const handleDownload = async () => {
-    if (!document) {
-      alert('Document content is not available. Please try again.');
-      return;
-    }
+const handleDownload = async () => {
+  if (!document) {
+    alert('Document content is not available. Please try again.');
+    return;
+  }
   
-    if (typeof window === 'undefined' || !window.document?.body) {
-      console.error('Browser environment is not available');
-      return;
+  // Guard: Ensure we're in a browser environment
+  if (typeof window === 'undefined' || !window.document?.body) {
+    console.error('Browser environment is not available');
+    return;
+  }
+
+  const doc = window.document;
+  const docBody = doc.body;
+
+  setIsGeneratingPDF(true);
+  try {
+    // Render PDF-optimized template (mode = 'pdf')
+    let pdfHTML = '';
+    if (document.type === 'cv') {
+      pdfHTML = renderCVTemplate(currentTemplateId, document.structuredData as CVData, 'pdf');
+    } else {
+      pdfHTML = renderCoverLetterTemplate(currentTemplateId, document.structuredData as StructuredCoverLetter, 'pdf');
     }
 
-    const doc = window.document;
-    const docBody = doc.body;
+    // Create a temporary container for PDF generation
+    const printableContent = doc.createElement('div');
+    printableContent.id = 'printable-content';
+    printableContent.style.position = 'absolute';
+    printableContent.style.left = '0';
+    printableContent.style.top = '0';
+    printableContent.style.zIndex = '-9999'; // Hide behind everything
+    printableContent.style.width = '210mm'; // A4 width
+    printableContent.style.minHeight = '297mm'; // A4 height minimum
+    printableContent.style.backgroundColor = 'white';
+    printableContent.style.overflow = 'visible'; // Don't clip content
+    
+    // Set the PDF-optimized HTML
+    printableContent.innerHTML = pdfHTML;
+    docBody.appendChild(printableContent);
 
-    setIsGeneratingPDF(true);
-    try {
-      let pdfHTML = '';
-      if (document.type === 'cv') {
-        pdfHTML = renderCVTemplate(currentTemplateId, document.structuredData as CVData, 'pdf');
-      } else {
-        pdfHTML = renderCoverLetterTemplate(currentTemplateId, document.structuredData as StructuredCoverLetter, 'pdf');
-      }
+    // Wait for content to fully render and fonts to load
+    await new Promise(resolve => setTimeout(resolve, 800));
 
-      const printableContent = doc.createElement('div');
-      printableContent.id = 'printable-content';
-      printableContent.style.position = 'absolute';
-      printableContent.style.left = '0';
-      printableContent.style.top = '0';
-      printableContent.style.zIndex = '-9999';
-      printableContent.style.width = '210mm';
-      printableContent.style.minHeight = '297mm';
-      printableContent.style.backgroundColor = 'white';
-      printableContent.style.overflow = 'visible';
+    // Get the actual rendered height
+    const actualHeight = printableContent.scrollHeight;
+    const actualWidth = printableContent.scrollWidth;
+
+    console.log('Capturing content with dimensions:', { 
+      width: actualWidth, 
+      height: actualHeight,
+      widthMM: '210mm'
+    });
+
+    // Capture the canvas with high quality - use actual dimensions
+    const canvas = await html2canvas(printableContent, {
+      scale: 3, // High resolution for crisp text
+      logging: false,
+      useCORS: true,
+      allowTaint: true,
+      width: actualWidth,
+      height: actualHeight,
+      windowWidth: actualWidth,
+      windowHeight: actualHeight,
+      backgroundColor: '#ffffff',
+      scrollY: -window.scrollY,
+      scrollX: -window.scrollX,
+    });
+
+    console.log('Canvas captured:', {
+      width: canvas.width,
+      height: canvas.height
+    });
+
+    // A4 dimensions in mm
+    const A4_WIDTH_MM = 210;
+    const A4_HEIGHT_MM = 297;
+
+    // Calculate canvas dimensions in mm (maintaining aspect ratio)
+    const canvasWidthMM = A4_WIDTH_MM;
+    const canvasHeightMM = (canvas.height * A4_WIDTH_MM) / canvas.width;
+
+    console.log('Calculated dimensions in mm:', {
+      canvasWidthMM,
+      canvasHeightMM,
+      needsScaling: canvasHeightMM > A4_HEIGHT_MM
+    });
+
+    // Initialize PDF
+    const pdf = new jsPDF('p', 'mm', 'a4');
+    const imgData = canvas.toDataURL('image/jpeg', 1.0);
+
+    // Determine if we need to scale down to fit 1 page
+    if (canvasHeightMM > A4_HEIGHT_MM) {
+      // Content is too tall - scale everything proportionally to fit A4 height
+      const scaleFactor = A4_HEIGHT_MM / canvasHeightMM;
+      const finalHeight = A4_HEIGHT_MM;
+      const finalWidth = A4_WIDTH_MM * scaleFactor;
       
-      printableContent.innerHTML = pdfHTML;
-      docBody.appendChild(printableContent);
-
-      await new Promise(resolve => setTimeout(resolve, 800));
-
-      const actualHeight = printableContent.scrollHeight;
-      const actualWidth = printableContent.scrollWidth;
-
-      const canvas = await html2canvas(printableContent, {
-        scale: 3,
-        logging: false,
-        useCORS: true,
-        allowTaint: true,
-        width: actualWidth,
-        height: actualHeight,
-        windowWidth: actualWidth,
-        windowHeight: actualHeight,
-        backgroundColor: '#ffffff',
-        scrollY: -window.scrollY,
-        scrollX: -window.scrollX,
+      // Center horizontally if width was reduced
+      const xOffset = (A4_WIDTH_MM - finalWidth) / 2;
+      
+      console.log('Scaling down to fit:', {
+        scaleFactor,
+        finalWidth,
+        finalHeight,
+        xOffset
       });
-
-      const A4_WIDTH_MM = 210;
-      const A4_HEIGHT_MM = 297;
-      const canvasWidthMM = A4_WIDTH_MM;
-      const canvasHeightMM = (canvas.height * A4_WIDTH_MM) / canvas.width;
-
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      const imgData = canvas.toDataURL('image/jpeg', 1.0);
-
-      if (canvasHeightMM > A4_HEIGHT_MM) {
-        const scaleFactor = A4_HEIGHT_MM / canvasHeightMM;
-        const finalHeight = A4_HEIGHT_MM;
-        const finalWidth = A4_WIDTH_MM * scaleFactor;
-        const xOffset = (A4_WIDTH_MM - finalWidth) / 2;
-        
-        pdf.addImage(imgData, 'JPEG', xOffset, 0, finalWidth, finalHeight);
-      } else {
-        const yOffset = (A4_HEIGHT_MM - canvasHeightMM) / 2;
-        pdf.addImage(imgData, 'JPEG', 0, yOffset, A4_WIDTH_MM, canvasHeightMM);
-      }
-
-      pdf.save(`${document.name || 'document'}.pdf`);
-
-      if (docBody.contains(printableContent)) {
-        docBody.removeChild(printableContent);
-      }
-    } catch (error) {
-      console.error('Error generating PDF:', error);
-      alert('Failed to generate PDF. Please try again.');
-    } finally {
-      setIsGeneratingPDF(false);
+      
+      pdf.addImage(imgData, 'JPEG', xOffset, 0, finalWidth, finalHeight);
+    } else {
+      // Content fits within 1 page - center it vertically
+      const yOffset = (A4_HEIGHT_MM - canvasHeightMM) / 2;
+      
+      console.log('Centering content:', {
+        canvasHeightMM,
+        yOffset
+      });
+      
+      pdf.addImage(imgData, 'JPEG', 0, yOffset, A4_WIDTH_MM, canvasHeightMM);
     }
-  };
+
+    // Save the PDF (guaranteed 1 page)
+    pdf.save(`${document.name || 'document'}.pdf`);
+
+    // Clean up temporary element
+    if (docBody.contains(printableContent)) {
+      docBody.removeChild(printableContent);
+    }
+  } catch (error) {
+    console.error('Error generating PDF:', error);
+    alert('Failed to generate PDF. Please try again.');
+  } finally {
+    setIsGeneratingPDF(false);
+  }
+};
 
   const handleFieldChange = (path: string[], value: any) => {
     if (!editedData) return;
@@ -230,6 +284,7 @@ export default function CVViewPage() {
     const newData = { ...editedData };
     let current: any = newData;
     
+    // Navigate to the parent object
     for (let i = 0; i < path.length - 1; i++) {
       if (!current[path[i]]) {
         current[path[i]] = {};
@@ -237,6 +292,7 @@ export default function CVViewPage() {
       current = current[path[i]];
     }
     
+    // Set the value
     current[path[path.length - 1]] = value;
     setEditedData(newData);
   };
@@ -247,10 +303,12 @@ export default function CVViewPage() {
     const newData = { ...editedData };
     let current: any = newData;
     
+    // Navigate to the parent array
     for (let i = 0; i < path.length; i++) {
       current = current[path[i]];
     }
     
+    // Update the item
     if (current && Array.isArray(current) && current[index]) {
       current[index] = { ...current[index], [field]: value };
       setEditedData(newData);
@@ -263,10 +321,12 @@ export default function CVViewPage() {
     const newData = { ...editedData };
     let current: any = newData;
     
+    // Navigate to the parent array
     for (let i = 0; i < path.length; i++) {
       current = current[path[i]];
     }
     
+    // Remove the item
     if (current && Array.isArray(current)) {
       current.splice(index, 1);
       setEditedData(newData);
@@ -412,15 +472,6 @@ export default function CVViewPage() {
           </div>
         )}
       </div>
-
-      {/* Ad Units - Fixed position */}
-      <AdUnit slot="9751041788" format="auto" />
-
-      <div className="fixed bottom-0 left-0 right-0 z-40 lg:hidden bg-white border-t border-gray-100" style={{ height: '50px', overflow: 'hidden' }}>
-        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '50px', overflow: 'hidden' }}>
-          <AdUnit slot="3349195672" format="auto" style={{ display: 'block', width: '100%', height: '50px', maxHeight: '50px', overflow: 'hidden' }} />
-        </div>
-      </div>
     </div>
   );
 }
@@ -470,7 +521,7 @@ function hasPersonalDetailsContent(personalDetails: any): boolean {
          hasContent(personalDetails.portfolio);
 }
 
-// CV Edit Form
+// CV Edit Form - shows only fields that have content
 function CVEditForm({ 
   data, 
   onFieldChange, 
@@ -494,57 +545,410 @@ function CVEditForm({
           {hasContent(data.personalDetails?.name) && (
             <div>
               <label className="block text-sm font-medium mb-1">Name</label>
-              <input type="text" value={data.personalDetails?.name ?? ''} onChange={(e) => onFieldChange(['personalDetails', 'name'], e.target.value)} className="w-full p-2 border rounded" />
+              <input
+                type="text"
+                value={data.personalDetails?.name ?? ''}
+                onChange={(e) => onFieldChange(['personalDetails', 'name'], e.target.value)}
+                className="w-full p-2 border rounded"
+              />
             </div>
           )}
           {hasContent(data.personalDetails?.title) && (
             <div>
               <label className="block text-sm font-medium mb-1">Title</label>
-              <input type="text" value={data.personalDetails?.title ?? ''} onChange={(e) => onFieldChange(['personalDetails', 'title'], e.target.value)} className="w-full p-2 border rounded" />
+              <input
+                type="text"
+                value={data.personalDetails?.title ?? ''}
+                onChange={(e) => onFieldChange(['personalDetails', 'title'], e.target.value)}
+                className="w-full p-2 border rounded"
+              />
             </div>
           )}
           {hasContent(data.personalDetails?.email) && (
             <div>
               <label className="block text-sm font-medium mb-1">Email</label>
-              <input type="email" value={data.personalDetails?.email ?? ''} onChange={(e) => onFieldChange(['personalDetails', 'email'], e.target.value)} className="w-full p-2 border rounded" />
+              <input
+                type="email"
+                value={data.personalDetails?.email ?? ''}
+                onChange={(e) => onFieldChange(['personalDetails', 'email'], e.target.value)}
+                className="w-full p-2 border rounded"
+              />
             </div>
           )}
           {hasContent(data.personalDetails?.phone) && (
             <div>
               <label className="block text-sm font-medium mb-1">Phone</label>
-              <input type="tel" value={data.personalDetails?.phone ?? ''} onChange={(e) => onFieldChange(['personalDetails', 'phone'], e.target.value)} className="w-full p-2 border rounded" />
+              <input
+                type="tel"
+                value={data.personalDetails?.phone ?? ''}
+                onChange={(e) => onFieldChange(['personalDetails', 'phone'], e.target.value)}
+                className="w-full p-2 border rounded"
+              />
             </div>
           )}
           {hasContent(data.personalDetails?.location) && (
             <div>
               <label className="block text-sm font-medium mb-1">Location</label>
-              <input type="text" value={data.personalDetails?.location ?? ''} onChange={(e) => onFieldChange(['personalDetails', 'location'], e.target.value)} className="w-full p-2 border rounded" />
+              <input
+                type="text"
+                value={data.personalDetails?.location ?? ''}
+                onChange={(e) => onFieldChange(['personalDetails', 'location'], e.target.value)}
+                className="w-full p-2 border rounded"
+              />
             </div>
           )}
           {hasContent(data.personalDetails?.linkedin) && (
             <div>
               <label className="block text-sm font-medium mb-1">LinkedIn</label>
-              <input type="url" value={data.personalDetails?.linkedin ?? ''} onChange={(e) => onFieldChange(['personalDetails', 'linkedin'], e.target.value)} className="w-full p-2 border rounded" />
+              <input
+                type="url"
+                value={data.personalDetails?.linkedin ?? ''}
+                onChange={(e) => onFieldChange(['personalDetails', 'linkedin'], e.target.value)}
+                className="w-full p-2 border rounded"
+              />
             </div>
           )}
           {hasContent(data.personalDetails?.github) && (
             <div>
               <label className="block text-sm font-medium mb-1">GitHub</label>
-              <input type="url" value={data.personalDetails?.github ?? ''} onChange={(e) => onFieldChange(['personalDetails', 'github'], e.target.value)} className="w-full p-2 border rounded" />
+              <input
+                type="url"
+                value={data.personalDetails?.github ?? ''}
+                onChange={(e) => onFieldChange(['personalDetails', 'github'], e.target.value)}
+                className="w-full p-2 border rounded"
+              />
             </div>
           )}
           {hasContent(data.personalDetails?.portfolio) && (
             <div>
               <label className="block text-sm font-medium mb-1">Portfolio</label>
-              <input type="url" value={data.personalDetails?.portfolio ?? ''} onChange={(e) => onFieldChange(['personalDetails', 'portfolio'], e.target.value)} className="w-full p-2 border rounded" />
+              <input
+                type="url"
+                value={data.personalDetails?.portfolio ?? ''}
+                onChange={(e) => onFieldChange(['personalDetails', 'portfolio'], e.target.value)}
+                className="w-full p-2 border rounded"
+              />
             </div>
           )}
         </div>
       )}
       
-      {/* Summary, Roles, Skills, Experience, Education, Projects, Accomplishments, Awards, Certifications, Languages, Interests, Publications, Volunteer Work, Additional Sections */}
-      {/* ... (all the rest of CVEditForm remains exactly the same as you had it) ... */}
-
+      {/* Summary */}
+      {hasContent(data.summary) && (
+        <div className="border-b pb-6">
+          <h3 className="text-base font-semibold mb-3">Professional Summary</h3>
+          <textarea
+            value={data.summary}
+            onChange={(e) => onFieldChange(['summary'], e.target.value)}
+            className="w-full p-2 border rounded"
+            rows={5}
+          />
+        </div>
+      )}
+      
+      {/* Roles */}
+      {hasContent(data.roles) && (
+        <div className="border-b pb-6">
+          <h3 className="text-base font-semibold mb-3">Professional Roles</h3>
+          {(data.roles ?? []).map((role, index) => (
+            <div key={index} className="flex gap-2 mb-2">
+              <input
+                type="text"
+                value={role}
+                onChange={(e) => {
+                  const newRoles = [...(data.roles || [])];
+                  newRoles[index] = e.target.value;
+                  onFieldChange(['roles'], newRoles);
+                }}
+                className="flex-1 p-2 border rounded"
+              />
+              <button
+                onClick={() => {
+                  const newRoles = [...(data.roles || [])];
+                  newRoles.splice(index, 1);
+                  onFieldChange(['roles'], newRoles);
+                }}
+                className="p-2 text-red-600 hover:bg-red-50 rounded"
+              >
+                <Trash2 size={16} />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+      
+      {/* Skills */}
+      {hasContent(data.skills) && (
+        <div className="border-b pb-6">
+          <h3 className="text-base font-semibold mb-3">Skills</h3>
+          <div className="space-y-2">
+            {(data.skills ?? []).map((skill, index) => (
+              <div key={index} className="flex gap-2">
+                <input
+                  type="text"
+                  value={skill}
+                  onChange={(e) => {
+                    const newSkills = [...(data.skills || [])];
+                    newSkills[index] = e.target.value;
+                    onFieldChange(['skills'], newSkills);
+                  }}
+                  className="flex-1 p-2 border rounded"
+                />
+                <button
+                  onClick={() => {
+                    const newSkills = [...(data.skills || [])];
+                    newSkills.splice(index, 1);
+                    onFieldChange(['skills'], newSkills);
+                  }}
+                  className="p-2 text-red-600 hover:bg-red-50 rounded"
+                >
+                  <Trash2 size={16} />
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      
+      {/* Experience */}
+      {hasContent(data.experience) && (
+        <div className="border-b pb-6">
+          <h3 className="text-base font-semibold mb-3">Work Experience</h3>
+          <div className="space-y-4">
+            {(data.experience ?? []).map((exp, index) => (
+              <div key={index} className="border rounded p-4 space-y-3">
+                <div className="flex justify-between items-start mb-2">
+                  <h4 className="font-medium">Experience #{index + 1}</h4>
+                  <button
+                    onClick={() => onArrayItemRemove(['experience'], index)}
+                    className="text-red-600 hover:bg-red-50 p-1 rounded"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Role</label>
+                  <input
+                    type="text"
+                    value={exp.role}
+                    onChange={(e) => onArrayItemChange(['experience'], index, 'role', e.target.value)}
+                    className="w-full p-2 border rounded"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Company</label>
+                  <input
+                    type="text"
+                    value={exp.company}
+                    onChange={(e) => onArrayItemChange(['experience'], index, 'company', e.target.value)}
+                    className="w-full p-2 border rounded"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Years</label>
+                  <input
+                    type="text"
+                    value={exp.years}
+                    onChange={(e) => onArrayItemChange(['experience'], index, 'years', e.target.value)}
+                    className="w-full p-2 border rounded"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Bullets</label>
+                  {exp.bullets.map((bullet, bulletIndex) => (
+                    <div key={bulletIndex} className="flex gap-2 mb-2">
+                      <textarea
+                        value={bullet}
+                        onChange={(e) => {
+                          const newBullets = [...exp.bullets];
+                          newBullets[bulletIndex] = e.target.value;
+                          onArrayItemChange(['experience'], index, 'bullets', newBullets);
+                        }}
+                        className="flex-1 p-2 border rounded"
+                        rows={2}
+                      />
+                      <button
+                        onClick={() => {
+                          const newBullets = [...exp.bullets];
+                          newBullets.splice(bulletIndex, 1);
+                          onArrayItemChange(['experience'], index, 'bullets', newBullets);
+                        }}
+                        className="p-2 text-red-600 hover:bg-red-50 rounded"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      
+      {/* Education */}
+      {hasContent(data.education) && (
+        <div className="border-b pb-6">
+          <h3 className="text-base font-semibold mb-3">Education</h3>
+          <div className="space-y-4">
+            {(data.education ?? []).map((edu, index) => (
+              <div key={index} className="border rounded p-4 space-y-3">
+                <div className="flex justify-between items-start mb-2">
+                  <h4 className="font-medium">Education #{index + 1}</h4>
+                  <button onClick={() => onArrayItemRemove(['education'], index)} className="text-red-600 hover:bg-red-50 p-1 rounded"><Trash2 size={16} /></button>
+                </div>
+                <div><label className="block text-sm font-medium mb-1">Degree</label><input type="text" value={edu.degree} onChange={(e) => onArrayItemChange(['education'], index, 'degree', e.target.value)} className="w-full p-2 border rounded" /></div>
+                <div><label className="block text-sm font-medium mb-1">Institution</label><input type="text" value={edu.institution} onChange={(e) => onArrayItemChange(['education'], index, 'institution', e.target.value)} className="w-full p-2 border rounded" /></div>
+                <div><label className="block text-sm font-medium mb-1">Years</label><input type="text" value={edu.years} onChange={(e) => onArrayItemChange(['education'], index, 'years', e.target.value)} className="w-full p-2 border rounded" /></div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      
+      {/* Projects */}
+      {hasContent(data.projects) && (
+        <div className="border-b pb-6">
+          <h3 className="text-lg font-semibold mb-3">Projects</h3>
+          <div className="space-y-4">
+            {(data.projects ?? []).map((proj, index) => (
+              <div key={index} className="border rounded p-4 space-y-3">
+                <div className="flex justify-between items-start mb-2">
+                  <h4 className="font-medium">Project #{index + 1}</h4>
+                  <button onClick={() => onArrayItemRemove(['projects'], index)} className="text-red-600 hover:bg-red-50 p-1 rounded"><Trash2 size={16} /></button>
+                </div>
+                <div><label className="block text-sm font-medium mb-1">Title</label><input type="text" value={proj.title} onChange={(e) => onArrayItemChange(['projects'], index, 'title', e.target.value)} className="w-full p-2 border rounded" /></div>
+                <div><label className="block text-sm font-medium mb-1">Description</label><textarea value={proj.description} onChange={(e) => onArrayItemChange(['projects'], index, 'description', e.target.value)} className="w-full p-2 border rounded" rows={3} /></div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      
+      {/* Accomplishments */}
+      {hasContent(data.accomplishments) && (
+        <div className="border-b pb-6">
+          <h3 className="text-lg font-semibold mb-3">Key Accomplishments</h3>
+          {(data.accomplishments ?? []).map((acc, index) => (
+            <div key={index} className="flex gap-2 mb-2">
+              <input type="text" value={acc} onChange={(e) => { const newAccs = [...(data.accomplishments || [])]; newAccs[index] = e.target.value; onFieldChange(['accomplishments'], newAccs); }} className="flex-1 p-2 border rounded" />
+              <button onClick={() => { const newAccs = [...(data.accomplishments || [])]; newAccs.splice(index, 1); onFieldChange(['accomplishments'], newAccs); }} className="p-2 text-red-600 hover:bg-red-50 rounded"><Trash2 size={16} /></button>
+            </div>
+          ))}
+        </div>
+      )}
+      
+      {/* Awards */}
+      {hasContent(data.awards) && (
+        <div className="border-b pb-6">
+          <h3 className="text-lg font-semibold mb-3">Awards</h3>
+          <div className="space-y-4">
+            {(data.awards ?? []).map((award, index) => (
+              <div key={index} className="border rounded p-4 space-y-3">
+                <div className="flex justify-between items-start mb-2">
+                  <h4 className="font-medium">Award #{index + 1}</h4>
+                  <button onClick={() => onArrayItemRemove(['awards'], index)} className="text-red-600 hover:bg-red-50 p-1 rounded"><Trash2 size={16} /></button>
+                </div>
+                <div><label className="block text-sm font-medium mb-1">Title</label><input type="text" value={award.title} onChange={(e) => onArrayItemChange(['awards'], index, 'title', e.target.value)} className="w-full p-2 border rounded" /></div>
+                {hasContent(award.issuer) && <div><label className="block text-sm font-medium mb-1">Issuer</label><input type="text" value={award.issuer} onChange={(e) => onArrayItemChange(['awards'], index, 'issuer', e.target.value)} className="w-full p-2 border rounded" /></div>}
+                {hasContent(award.year) && <div><label className="block text-sm font-medium mb-1">Year</label><input type="text" value={award.year} onChange={(e) => onArrayItemChange(['awards'], index, 'year', e.target.value)} className="w-full p-2 border rounded" /></div>}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      
+      {/* Certifications */}
+      {hasContent(data.certifications) && (
+        <div className="border-b pb-6">
+          <h3 className="text-lg font-semibold mb-3">Certifications</h3>
+          <div className="space-y-4">
+            {(data.certifications ?? []).map((cert, index) => (
+              <div key={index} className="border rounded p-4 space-y-3">
+                <div className="flex justify-between items-start mb-2">
+                  <h4 className="font-medium">Certification #{index + 1}</h4>
+                  <button onClick={() => onArrayItemRemove(['certifications'], index)} className="text-red-600 hover:bg-red-50 p-1 rounded"><Trash2 size={16} /></button>
+                </div>
+                <div><label className="block text-sm font-medium mb-1">Name</label><input type="text" value={cert.name} onChange={(e) => onArrayItemChange(['certifications'], index, 'name', e.target.value)} className="w-full p-2 border rounded" /></div>
+                {hasContent(cert.issuer) && <div><label className="block text-sm font-medium mb-1">Issuer</label><input type="text" value={cert.issuer} onChange={(e) => onArrayItemChange(['certifications'], index, 'issuer', e.target.value)} className="w-full p-2 border rounded" /></div>}
+                {hasContent(cert.year) && <div><label className="block text-sm font-medium mb-1">Year</label><input type="text" value={cert.year} onChange={(e) => onArrayItemChange(['certifications'], index, 'year', e.target.value)} className="w-full p-2 border rounded" /></div>}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      
+      {/* Languages */}
+      {hasContent(data.languages) && (
+        <div className="border-b pb-6">
+          <h3 className="text-lg font-semibold mb-3">Languages</h3>
+          <div className="space-y-2">
+            {(data.languages ?? []).map((lang, index) => (
+              <div key={index} className="flex gap-2">
+                <input type="text" value={lang} onChange={(e) => { const newLangs = [...(data.languages || [])]; newLangs[index] = e.target.value; onFieldChange(['languages'], newLangs); }} className="flex-1 p-2 border rounded" />
+                <button onClick={() => { const newLangs = [...(data.languages || [])]; newLangs.splice(index, 1); onFieldChange(['languages'], newLangs); }} className="p-2 text-red-600 hover:bg-red-50 rounded"><Trash2 size={16} /></button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      
+      {/* Interests */}
+      {hasContent(data.interests) && (
+        <div className="border-b pb-6">
+          <h3 className="text-lg font-semibold mb-3">Interests</h3>
+          <div className="space-y-2">
+            {(data.interests ?? []).map((interest, index) => (
+              <div key={index} className="flex gap-2">
+                <input type="text" value={interest} onChange={(e) => { const newInterests = [...(data.interests || [])]; newInterests[index] = e.target.value; onFieldChange(['interests'], newInterests); }} className="flex-1 p-2 border rounded" />
+                <button onClick={() => { const newInterests = [...(data.interests || [])]; newInterests.splice(index, 1); onFieldChange(['interests'], newInterests); }} className="p-2 text-red-600 hover:bg-red-50 rounded"><Trash2 size={16} /></button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      
+      {/* Publications */}
+      {hasContent(data.publications) && (
+        <div className="border-b pb-6">
+          <h3 className="text-lg font-semibold mb-3">Publications</h3>
+          <div className="space-y-4">
+            {(data.publications ?? []).map((pub, index) => (
+              <div key={index} className="border rounded p-4 space-y-3">
+                <div className="flex justify-between items-start mb-2">
+                  <h4 className="font-medium">Publication #{index + 1}</h4>
+                  <button onClick={() => onArrayItemRemove(['publications'], index)} className="text-red-600 hover:bg-red-50 p-1 rounded"><Trash2 size={16} /></button>
+                </div>
+                <div><label className="block text-sm font-medium mb-1">Title</label><input type="text" value={pub.title} onChange={(e) => onArrayItemChange(['publications'], index, 'title', e.target.value)} className="w-full p-2 border rounded" /></div>
+                {hasContent(pub.journal) && <div><label className="block text-sm font-medium mb-1">Journal</label><input type="text" value={pub.journal} onChange={(e) => onArrayItemChange(['publications'], index, 'journal', e.target.value)} className="w-full p-2 border rounded" /></div>}
+                {hasContent(pub.year) && <div><label className="block text-sm font-medium mb-1">Year</label><input type="text" value={pub.year} onChange={(e) => onArrayItemChange(['publications'], index, 'year', e.target.value)} className="w-full p-2 border rounded" /></div>}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      
+      {/* Volunteer Work */}
+      {hasContent(data.volunteerWork) && (
+        <div className="border-b pb-6">
+          <h3 className="text-lg font-semibold mb-3">Volunteer Work</h3>
+          <div className="space-y-4">
+            {(data.volunteerWork ?? []).map((vol, index) => (
+              <div key={index} className="border rounded p-4 space-y-3">
+                <div className="flex justify-between items-start mb-2">
+                  <h4 className="font-medium">Volunteer Work #{index + 1}</h4>
+                  <button onClick={() => onArrayItemRemove(['volunteerWork'], index)} className="text-red-600 hover:bg-red-50 p-1 rounded"><Trash2 size={16} /></button>
+                </div>
+                {hasContent(vol.organization) && <div><label className="block text-sm font-medium mb-1">Organization</label><input type="text" value={vol.organization} onChange={(e) => onArrayItemChange(['volunteerWork'], index, 'organization', e.target.value)} className="w-full p-2 border rounded" /></div>}
+                {hasContent(vol.role) && <div><label className="block text-sm font-medium mb-1">Role</label><input type="text" value={vol.role} onChange={(e) => onArrayItemChange(['volunteerWork'], index, 'role', e.target.value)} className="w-full p-2 border rounded" /></div>}
+                {hasContent(vol.duration) && <div><label className="block text-sm font-medium mb-1">Duration</label><input type="text" value={vol.duration} onChange={(e) => onArrayItemChange(['volunteerWork'], index, 'duration', e.target.value)} className="w-full p-2 border rounded" /></div>}
+                {hasContent(vol.description) && <div><label className="block text-sm font-medium mb-1">Description</label><textarea value={vol.description} onChange={(e) => onArrayItemChange(['volunteerWork'], index, 'description', e.target.value)} className="w-full p-2 border rounded" rows={3} /></div>}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      
       {/* Additional Sections */}
       {hasContent(data.additionalSections) && (
         <div className="pb-6">
@@ -567,7 +971,7 @@ function CVEditForm({
   );
 }
 
-// Helper functions for Cover Letter
+// Helper function to check if personal info section has content
 function hasPersonalInfoContent(personalInfo: any): boolean {
   if (!personalInfo) return false;
   return hasContent(personalInfo.name) || 
@@ -577,6 +981,7 @@ function hasPersonalInfoContent(personalInfo: any): boolean {
          hasContent(personalInfo.location);
 }
 
+// Helper function to check if recipient info section has content
 function hasRecipientInfoContent(recipientInfo: any): boolean {
   if (!recipientInfo) return false;
   return hasContent(recipientInfo.name) || 
@@ -585,12 +990,13 @@ function hasRecipientInfoContent(recipientInfo: any): boolean {
          hasContent(recipientInfo.address);
 }
 
+// Helper function to check if meta section has content
 function hasMetaContent(meta: any): boolean {
   if (!meta) return false;
   return hasContent(meta.jobTitle) || hasContent(meta.company) || hasContent(meta.date);
 }
 
-// Cover Letter Edit Form - Fixed (no AdUnit inside)
+// Cover Letter Edit Form - shows only fields that have content
 function CoverLetterEditForm({ 
   data, 
   onFieldChange, 
@@ -607,34 +1013,145 @@ function CoverLetterEditForm({
     <div className="bg-white rounded-xl p-6 shadow-sm space-y-6 max-w-4xl mx-auto">
       <h2 className="text-xl font-bold mb-6">Edit Cover Letter</h2>
       
-      {/* All your Cover Letter fields - exactly as you had them */}
-      {/* Personal Info, Recipient Info, Subject, Opening, Body 1, Body 2, Body 3, Highlights, Closing, Signoff, Meta */}
-
       {/* Personal Info */}
       {hasPersonalInfoContent(data.personalInfo) && (
         <div className="border-b pb-6 space-y-4">
           <h3 className="text-base font-semibold">Personal Information</h3>
           {hasContent(data.personalInfo?.name) && (
-            <div><label className="block text-sm font-medium mb-1">Name</label><input type="text" value={data.personalInfo?.name ?? ''} onChange={(e) => onFieldChange(['personalInfo', 'name'], e.target.value)} className="w-full p-2 border rounded" /></div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Name</label>
+              <input type="text" value={data.personalInfo?.name ?? ''} onChange={(e) => onFieldChange(['personalInfo', 'name'], e.target.value)} className="w-full p-2 border rounded" />
+            </div>
           )}
           {hasContent(data.personalInfo?.email) && (
-            <div><label className="block text-sm font-medium mb-1">Email</label><input type="email" value={data.personalInfo?.email ?? ''} onChange={(e) => onFieldChange(['personalInfo', 'email'], e.target.value)} className="w-full p-2 border rounded" /></div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Email</label>
+              <input type="email" value={data.personalInfo?.email ?? ''} onChange={(e) => onFieldChange(['personalInfo', 'email'], e.target.value)} className="w-full p-2 border rounded" />
+            </div>
           )}
           {hasContent(data.personalInfo?.phone) && (
-            <div><label className="block text-sm font-medium mb-1">Phone</label><input type="tel" value={data.personalInfo?.phone ?? ''} onChange={(e) => onFieldChange(['personalInfo', 'phone'], e.target.value)} className="w-full p-2 border rounded" /></div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Phone</label>
+              <input type="tel" value={data.personalInfo?.phone ?? ''} onChange={(e) => onFieldChange(['personalInfo', 'phone'], e.target.value)} className="w-full p-2 border rounded" />
+            </div>
           )}
           {hasContent(data.personalInfo?.address) && (
-            <div><label className="block text-sm font-medium mb-1">Address</label><input type="text" value={data.personalInfo?.address ?? ''} onChange={(e) => onFieldChange(['personalInfo', 'address'], e.target.value)} className="w-full p-2 border rounded" /></div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Address</label>
+              <input type="text" value={data.personalInfo?.address ?? ''} onChange={(e) => onFieldChange(['personalInfo', 'address'], e.target.value)} className="w-full p-2 border rounded" />
+            </div>
           )}
           {hasContent(data.personalInfo?.location) && (
-            <div><label className="block text-sm font-medium mb-1">Location</label><input type="text" value={data.personalInfo?.location ?? ''} onChange={(e) => onFieldChange(['personalInfo', 'location'], e.target.value)} className="w-full p-2 border rounded" /></div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Location</label>
+              <input type="text" value={data.personalInfo?.location ?? ''} onChange={(e) => onFieldChange(['personalInfo', 'location'], e.target.value)} className="w-full p-2 border rounded" />
+            </div>
           )}
         </div>
       )}
-
-      {/* Recipient Info, Subject, Opening, Body1, Body2, Body3, Highlights, Closing, Signoff, Meta - all remain exactly as in your original code */}
-      {/* ... (I kept them unchanged to avoid making the response too long) ... */}
-
+      
+      {/* Recipient Info */}
+      {hasRecipientInfoContent(data.recipientInfo) && (
+        <div className="border-b pb-6 space-y-4">
+          <h3 className="text-base font-semibold">Recipient Information</h3>
+          {hasContent(data.recipientInfo?.name) && (
+            <div>
+              <label className="block text-sm font-medium mb-1">Name</label>
+              <input type="text" value={data.recipientInfo?.name ?? ''} onChange={(e) => onFieldChange(['recipientInfo', 'name'], e.target.value)} className="w-full p-2 border rounded" />
+            </div>
+          )}
+          {hasContent(data.recipientInfo?.title) && (
+            <div>
+              <label className="block text-sm font-medium mb-1">Title</label>
+              <input type="text" value={data.recipientInfo?.title ?? ''} onChange={(e) => onFieldChange(['recipientInfo', 'title'], e.target.value)} className="w-full p-2 border rounded" />
+            </div>
+          )}
+          {hasContent(data.recipientInfo?.company) && (
+            <div>
+              <label className="block text-sm font-medium mb-1">Company</label>
+              <input type="text" value={data.recipientInfo?.company ?? ''} onChange={(e) => onFieldChange(['recipientInfo', 'company'], e.target.value)} className="w-full p-2 border rounded" />
+            </div>
+          )}
+          {hasContent(data.recipientInfo?.address) && (
+            <div>
+              <label className="block text-sm font-medium mb-1">Address</label>
+              <input type="text" value={data.recipientInfo?.address ?? ''} onChange={(e) => onFieldChange(['recipientInfo', 'address'], e.target.value)} className="w-full p-2 border rounded" />
+            </div>
+          )}
+        </div>
+      )}
+      
+      {/* Subject */}
+      {hasContent(data.subject) && (
+        <div className="border-b pb-6">
+          <h3 className="text-base font-semibold mb-3">Subject</h3>
+          <input type="text" value={data.subject} onChange={(e) => onFieldChange(['subject'], e.target.value)} className="w-full p-2 border rounded" />
+        </div>
+      )}
+      
+      {/* Opening */}
+      {hasContent(data.opening) && (
+        <div className="border-b pb-6">
+          <h3 className="text-base font-semibold mb-3">Opening</h3>
+          <textarea value={data.opening} onChange={(e) => onFieldChange(['opening'], e.target.value)} className="w-full p-2 border rounded" rows={4} />
+        </div>
+      )}
+      
+      {/* Body 1 */}
+      {hasContent(data.body1) && (
+        <div className="border-b pb-6">
+          <h3 className="text-base font-semibold mb-3">Body Paragraph 1</h3>
+          <textarea value={data.body1} onChange={(e) => onFieldChange(['body1'], e.target.value)} className="w-full p-2 border rounded" rows={6} />
+        </div>
+      )}
+      
+      {/* Body 2 */}
+      {hasContent(data.body2) && (
+        <div className="border-b pb-6">
+          <h3 className="text-base font-semibold mb-3">Body Paragraph 2</h3>
+          <textarea value={data.body2} onChange={(e) => onFieldChange(['body2'], e.target.value)} className="w-full p-2 border rounded" rows={6} />
+        </div>
+      )}
+      
+      {/* Body 3 */}
+      {hasContent(data.body3) && (
+        <div className="border-b pb-6">
+          <h3 className="text-base font-semibold mb-3">Body Paragraph 3</h3>
+          <textarea value={data.body3} onChange={(e) => onFieldChange(['body3'], e.target.value)} className="w-full p-2 border rounded" rows={6} />
+        </div>
+      )}
+      
+      {/* Highlights */}
+      {hasContent(data.highlights) && (
+        <div className="border-b pb-6">
+          <h3 className="text-base font-semibold mb-3">Highlights</h3>
+          <div className="space-y-2">
+            {(data.highlights ?? []).map((highlight, index) => (
+              <div key={index} className="flex gap-2">
+                <input type="text" value={highlight} onChange={(e) => { const newHighlights = [...(data.highlights || [])]; newHighlights[index] = e.target.value; onFieldChange(['highlights'], newHighlights); }} className="flex-1 p-2 border rounded" />
+                <button onClick={() => { const newHighlights = [...(data.highlights || [])]; newHighlights.splice(index, 1); onFieldChange(['highlights'], newHighlights); }} className="p-2 text-red-600 hover:bg-red-50 rounded"><Trash2 size={16} /></button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      
+      {/* Closing */}
+      {hasContent(data.closing) && (
+        <div className="border-b pb-6">
+          <h3 className="text-base font-semibold mb-3">Closing</h3>
+          <textarea value={data.closing} onChange={(e) => onFieldChange(['closing'], e.target.value)} className="w-full p-2 border rounded" rows={4} />
+        </div>
+      )}
+      
+      {/* Signoff */}
+      {hasContent(data.signoff) && (
+        <div className="border-b pb-6">
+          <h3 className="text-base font-semibold mb-3">Signoff</h3>
+          <input type="text" value={data.signoff} onChange={(e) => onFieldChange(['signoff'], e.target.value)} className="w-full p-2 border rounded" />
+        </div>
+      )}
+      
       {/* Meta */}
       {hasMetaContent(data.meta) && (
         <div className="pb-6">

@@ -1,7 +1,4 @@
 // 📁 app/tools/quiz/[company]/page.tsx
-// Pre-rendered at build time for every company in COMPANIES.
-// Supabase is called ONCE per company at build time for SEO content — never on user visit.
-
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import CompanyQuizClient from './CompanyQuizClient';
@@ -81,14 +78,6 @@ export default async function CompanyQuizPage({ params }: Props) {
 
         {/* ── Left / main content ────────────────────────────────────────── */}
         <div className="flex-1 min-w-0">
-          {/*
-            Ad placement map for this page:
-            1. [mobile only] Ad just above company name badge       — inside CompanyQuizClient, slot 4198231153
-            2. [mobile only] Ad after disclaimer container          — inside CompanyQuizClient, slot 9751041788
-            3. [desktop only] Sidebar ads                           — aside below, slots 4198231153 + 9751041788
-            4. [mobile only]  Anchor ad fixed at bottom             — fixed div below, slot 3349195672
-          -->
-          */}
           <CompanyQuizClient company={company!} companyData={companyData} />
         </div>
 
@@ -107,9 +96,10 @@ export default async function CompanyQuizPage({ params }: Props) {
         </aside>
       </div>
 
-      {/* ── Mobile anchor ad (fixed bottom, hidden on desktop) ─────────── */}
-      {/* Adds bottom padding so content isn't hidden behind the anchor bar */}
-      <div className="h-[50px] lg:hidden" aria-hidden="true" />
+      {/* ── Mobile anchor ad (50px - consistent with other pages) ─────────── */}
+      {/* Spacer to prevent content from being blocked by the fixed anchor */}
+      <div className="h-14 lg:hidden" aria-hidden="true" />
+      
       <div
         className="fixed bottom-0 left-0 right-0 z-40 lg:hidden bg-white border-t border-gray-100"
         style={{ height: '50px', overflow: 'hidden' }}
@@ -117,7 +107,13 @@ export default async function CompanyQuizPage({ params }: Props) {
         <AdUnit
           slot="3349195672"
           format="auto"
-          style={{ display: 'block', width: '100%', height: '50px', maxHeight: '50px', overflow: 'hidden' }}
+          style={{ 
+            display: 'block', 
+            width: '100%', 
+            height: '50px', 
+            maxHeight: '50px', 
+            overflow: 'hidden' 
+          }}
         />
       </div>
     </>

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { 
@@ -27,6 +27,7 @@ import {
   ChevronRight,
   BookOpen,
   PenTool,
+  X, // Added for close button
 } from 'lucide-react';
 import { theme } from '@/lib/theme';
 import UpgradeModal from '@/components/jobs/UpgradeModal';
@@ -36,13 +37,23 @@ import AdUnit from '@/components/ads/AdUnit';
 
 // ─── Ad slot IDs ───────────────────────────────────────────────────────────────
 const AD_SLOTS = {
-  BANNER_TOP:    '6866736453',
-  IN_ARTICLE:    '5553654784',
-  BANNER_BOTTOM: '4240573110',
-  SIDEBAR:       '9189647463',
-  ANCHOR_MOBILE: '3349195672',
-  MULTIPLEX:     '3568104363',
+  // Ad 1 — In-grid / below overview row (320x100 mobile, 728x90 desktop)
+  BANNER_TOP:       '6866736453',
+  // Ad 2 — Skill Gap Zone: between Skills and Responsibilities (native in-article)
+  IN_ARTICLE:       '5553654784',
+  // Ad 3 — Pre-Conversion: between Benefits and How to Apply (300x250)
+  BANNER_BOTTOM:    '4240573110',
+  // Ad 4 — Sidebar mobile in-flow (300x250)
+  SIDEBAR:          '9189647463',
+  // Ad 5 — Static anchor bar, mobile only (320x100)
+  ANCHOR_MOBILE:    '3349195672',
+  // Ad 6 — Sidebar top desktop: autorelaxed banner (fills available width)
+  SIDEBAR_BANNER:   '1143238075',
+  // Ad 7 — Sidebar bottom desktop: multiplex / related content unit
+  MULTIPLEX:        '8344942808',
 } as const;
+
+const ANCHOR_HEIGHT = 100; // px — 320x100 large mobile banner
 
 const STORAGE_KEYS = {
   SAVED_JOBS: 'saved_jobs',
@@ -51,43 +62,44 @@ const STORAGE_KEYS = {
 
 // ─── Featured Quizzes — hardcoded, zero DB calls ──────────────────────────────
 const FEATURED_QUIZZES = [
-  { name: 'KPMG Recruitment Test Practice', url: 'https://www.jobmeter.app/tools/quiz/kpmg-assessment-practice-test' },
-  { name: 'PwC Recruitment Test Practice', url: 'https://www.jobmeter.app/tools/quiz/pwc-recruitment-assessment-practice-test' },
-  { name: 'Deloitte Recruitment Test Practice', url: 'https://www.jobmeter.app/tools/quiz/deloitte-recruitment-assessment-practice-test' },
-  { name: 'Ernst & Young (EY) Recruitment Test Practice', url: 'https://www.jobmeter.app/tools/quiz/ernst-young-ey-assessment-practice-test' },
-  { name: 'Access Bank Graduate Trainee Aptitude Test', url: 'https://www.jobmeter.app/tools/quiz/access-bank-graduate-trainee-assessment-test' },
+  { name: 'KPMG Recruitment Test Practice', url: '/tools/quiz/kpmg-assessment-practice-test' },
+  { name: 'PwC Recruitment Test Practice', url: '/tools/quiz/pwc-recruitment-assessment-practice-test' },
+  { name: 'Deloitte Recruitment Test Practice', url: '/tools/quiz/deloitte-recruitment-assessment-practice-test' },
+  { name: 'Ernst & Young (EY) Recruitment Test Practice', url: '/tools/quiz/ernst-young-ey-assessment-practice-test' },
+  { name: 'Access Bank Graduate Trainee Aptitude Test', url: '/tools/quiz/access-bank-graduate-trainee-assessment-test' },
 ];
 
 // ─── Blog Articles — hardcoded pool, shown randomly ──────────────────────────
 // region: 'nigeria' = shown for NG jobs | 'global' = shown for all jobs
 const ALL_BLOGS = [
-  { title: 'Should You Include Your Photo on Nigerian CVs?', url: 'https://www.jobmeter.app/blog/nigerian-cv-photo-pros-cons-recruiter-tips', region: 'nigeria' },
-  { title: 'What to Wear to Interviews in Lagos vs Abuja', url: 'https://www.jobmeter.app/blog/lagos-vs-abuja-interview-attir-guide', region: 'nigeria' },
-  { title: '10 Certifications That Actually Increase Your Salary in Nigeria', url: 'https://www.jobmeter.app/blog/10-certifications-that-actually-increase-your-salary-in-nigeria', region: 'nigeria' },
-  { title: 'Free Online Courses Nigerians Can Take to Boost Employability', url: 'https://www.jobmeter.app/blog/boost-employability-free-online-courses-for-nigerians', region: 'nigeria' },
-  { title: 'How to Write a CV with No Experience', url: 'https://www.jobmeter.app/blog/write-a-cv-with-no-experience-beginners-guide', region: 'global' },
-  { title: "How to Answer 'Tell Me About Yourself' in Job Interviews", url: 'https://www.jobmeter.app/blog/tell-me-about-yourself-job-interview-nigeria', region: 'global' },
-  { title: '30 Common Bank Interview Questions', url: 'https://www.jobmeter.app/blog/bank-interview-questions-nigeria-ace-job', region: 'global' },
-  { title: 'Is an MBA Worth It in Nigeria? Complete Cost-Benefit Analysis', url: 'https://www.jobmeter.app/blog/is-an-mba-worth-it-nigeria', region: 'nigeria' },
-  { title: 'Office Politics in Nigeria: Survival Guide for New Graduates', url: 'https://www.jobmeter.app/blog/office-politics-nigeria-new-grad-survival-guide', region: 'nigeria' },
-  { title: 'Software Developer Salary in Nigeria', url: 'https://www.jobmeter.app/blog/software-developer-salary-nigeria-2026-your-ultimate-guide', region: 'nigeria' },
-  { title: 'How to Apply for KPMG Internship: Step-by-Step Guide', url: 'https://www.jobmeter.app/blog/kpmg-internship-2026-your-ultimate-application-guide', region: 'nigeria' },
-  { title: 'How to Transition from Banking to Tech (Guide)', url: 'https://www.jobmeter.app/blog/how-to-transition-from-banking-to-tech-in-nigeria-2026-guide', region: 'global' },
-  { title: 'How to Transition from Teaching to Corporate HR', url: 'https://www.jobmeter.app/blog/nigerian-teachers-to-hr-your-career-transition-guide', region: 'global' },
-  { title: 'How to Handle a Difficult Boss in Nigerian Corporate Culture', url: 'https://www.jobmeter.app/blog/navigate-difficult-bosses-nigeria-expert-guide', region: 'nigeria' },
-  { title: 'Virtual Interview Online Preparation Tips', url: 'https://www.jobmeter.app/blog/virtual-interview-tips', region: 'global' },
-  { title: 'Medical & Public Health Salaries in Nigeria', url: 'https://www.jobmeter.app/blog/healthcare-salaries-nigeria-2026-your-guide', region: 'nigeria' },
-  { title: 'Civil, Mechanical & Petroleum Engineering Salaries in Nigeria', url: 'https://www.jobmeter.app/blog/nigeria-engineering-salaries-2026-civil-mech-petro', region: 'nigeria' },
-  { title: 'Top 8 NGOs That Pay Corpers in Abuja (NYSC PPA Guide)', url: 'https://www.jobmeter.app/blog/ngos-that-pay-corpers-in-abuja-2026', region: 'nigeria' },
-  { title: 'Best Paying Companies in Nigeria 2026', url: 'https://www.jobmeter.app/blog/best-paying-companies-in-nigeria-2026-high-salary-jobs-guide', region: 'nigeria' },
-  { title: 'Top 25 Highest Paying Jobs in Nigeria: Best Careers & Salaries', url: 'https://www.jobmeter.app/blog/highest-paying-jobs-in-nigeria', region: 'nigeria' },
-  { title: 'How to Identify Fake Job Offers & Scam Interviews', url: 'https://www.jobmeter.app/blog/spot-fake-jobs--scam-interviews-nigeria', region: 'global' },
+  { title: 'Should You Include Your Photo on Nigerian CVs?', url: '/blog/nigerian-cv-photo-pros-cons-recruiter-tips', region: 'nigeria' },
+  { title: 'What to Wear to Interviews in Lagos vs Abuja', url: '/blog/lagos-vs-abuja-interview-attir-guide', region: 'nigeria' },
+  { title: '10 Certifications That Actually Increase Your Salary in Nigeria', url: '/blog/10-certifications-that-actually-increase-your-salary-in-nigeria', region: 'nigeria' },
+  { title: 'Free Online Courses Nigerians Can Take to Boost Employability', url: '/blog/boost-employability-free-online-courses-for-nigerians', region: 'nigeria' },
+  { title: 'How to Write a CV with No Experience', url: '/blog/write-a-cv-with-no-experience-beginners-guide', region: 'global' },
+  { title: "How to Answer 'Tell Me About Yourself' in Job Interviews", url: '/blog/tell-me-about-yourself-job-interview-nigeria', region: 'global' },
+  { title: '30 Common Bank Interview Questions', url: '/blog/bank-interview-questions-nigeria-ace-job', region: 'global' },
+  { title: 'Is an MBA Worth It in Nigeria? Complete Cost-Benefit Analysis', url: '/blog/is-an-mba-worth-it-nigeria', region: 'nigeria' },
+  { title: 'Office Politics in Nigeria: Survival Guide for New Graduates', url: '/blog/office-politics-nigeria-new-grad-survival-guide', region: 'nigeria' },
+  { title: 'Software Developer Salary in Nigeria', url: '/blog/software-developer-salary-nigeria-2026-your-ultimate-guide', region: 'nigeria' },
+  { title: 'How to Apply for KPMG Internship: Step-by-Step Guide', url: '/blog/kpmg-internship-2026-your-ultimate-application-guide', region: 'nigeria' },
+  { title: 'How to Transition from Banking to Tech (Guide)', url: '/blog/how-to-transition-from-banking-to-tech-in-nigeria-2026-guide', region: 'global' },
+  { title: 'How to Transition from Teaching to Corporate HR', url: '/blog/nigerian-teachers-to-hr-your-career-transition-guide', region: 'global' },
+  { title: 'How to Handle a Difficult Boss in Nigerian Corporate Culture', url: '/blog/navigate-difficult-bosses-nigeria-expert-guide', region: 'nigeria' },
+  { title: 'Virtual Interview Online Preparation Tips', url: '/blog/virtual-interview-tips', region: 'global' },
+  { title: 'Medical & Public Health Salaries in Nigeria', url: '/blog/healthcare-salaries-nigeria-2026-your-guide', region: 'nigeria' },
+  { title: 'Civil, Mechanical & Petroleum Engineering Salaries in Nigeria', url: '/blog/nigeria-engineering-salaries-2026-civil-mech-petro', region: 'nigeria' },
+  { title: 'Top 8 NGOs That Pay Corpers in Abuja (NYSC PPA Guide)', url: '/blog/ngos-that-pay-corpers-in-abuja-2026', region: 'nigeria' },
+  { title: 'Best Paying Companies in Nigeria 2026', url: '/blog/best-paying-companies-in-nigeria-2026-high-salary-jobs-guide', region: 'nigeria' },
+  { title: 'Top 25 Highest Paying Jobs in Nigeria: Best Careers & Salaries', url: '/blog/highest-paying-jobs-in-nigeria', region: 'nigeria' },
+  { title: 'How to Identify Fake Job Offers & Scam Interviews', url: '/blog/spot-fake-jobs--scam-interviews-nigeria', region: 'global' },
 ];
 
 // ─── Helper: get random N items from array ────────────────────────────────────
 function getRandomItems<T>(arr: T[], n: number): T[] {
   return [...arr].sort(() => Math.random() - 0.5).slice(0, n);
 }
+
 
 export default function JobClient({ job, relatedJobs }: { job: any; relatedJobs?: any[] }) {
   const router = useRouter();
@@ -109,28 +121,37 @@ export default function JobClient({ job, relatedJobs }: { job: any; relatedJobs?
   const [showEmail, setShowEmail] = useState(false);
   const [showPhone, setShowPhone] = useState(false);
   const [showUrl, setShowUrl] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
 
-  // ─── Blog randomization — computed once per page load ─────────────────────
-  // Uses job location to determine region filter, then picks 5 random articles.
-  // Nigerians see nigerian + global; international sees global only.
-  const randomBlogs = useMemo(() => {
+  // New states for mobile anchor ad
+  const [anchorHeight, setAnchorHeight] = useState(100);
+  const [isAnchorClosed, setIsAnchorClosed] = useState(false);
+
+  // ─── Blog randomization — client-only to avoid SSR/hydration mismatch ─────
+  const [randomBlogs, setRandomBlogs] = useState<typeof ALL_BLOGS>([]);
+
+  useEffect(() => {
+    setIsMounted(true);
     const jobCountry = typeof job.location === 'object'
       ? (job.location?.country || '')
       : '';
     const isNigerianJob = jobCountry === 'NG' || jobCountry.toLowerCase() === 'nigeria';
-
     const pool = ALL_BLOGS.filter(b =>
       b.region === 'global' || (isNigerianJob && b.region === 'nigeria')
     );
-
-    return getRandomItems(pool, 5);
-  }, [job.id]); // eslint-disable-line react-hooks/exhaustive-deps
+    setRandomBlogs(getRandomItems(pool, 5));
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleCopy = async (text: string, label: string) => {
     await navigator.clipboard.writeText(text);
     setCopied(label);
     toast({ title: 'Copied!', description: `${label} copied to clipboard` });
     setTimeout(() => setCopied(null), 2000);
+  };
+
+  const handleCloseAnchorAd = () => {
+    setAnchorHeight(50);
+    setIsAnchorClosed(true);
   };
 
   const loadCompanyJobs = async () => {
@@ -245,61 +266,65 @@ export default function JobClient({ job, relatedJobs }: { job: any; relatedJobs?
 
   const loadSimilarJobs = async () => {
     try {
-      if (!userCountry) return;
-      
+      const FIELDS = 'id, title, company, location, category, sector, role_category, slug';
+      const TARGET = 10;
+
       const jobLocation = typeof job.location === 'object' ? job.location : null;
-      const jobCountry = jobLocation?.country || 'Nigeria';
-      const filterCountry = userCountry || jobCountry;
+      const jobCountry = (jobLocation?.country || '').toLowerCase().trim();
+      const jobIsRemote = !jobCountry || jobCountry === 'global';
 
-      let query = supabase
-        .from('jobs')
-        .select('id, title, company, location, category, sector, slug')
-        .neq('id', jobId)
-        .eq('is_published', true)
-        .limit(15);
-
-      if (job.category) {
-        query = query.eq('category', job.category);
-      }
-
-      const { data: categoryJobs, error: categoryError } = await query;
-
-      if (categoryError) {
-        console.error('Error loading similar jobs:', categoryError);
-        return;
-      }
-
-      let filteredJobs = (categoryJobs || []).filter(j => {
+      const matchesCountry = (j: any): boolean => {
         const jLoc = typeof j.location === 'object' ? j.location : null;
-        const jCountry = jLoc?.country || '';
-        const jRemote = jLoc?.remote || false;
-        return jCountry.toLowerCase() === filterCountry.toLowerCase() || jRemote;
-      });
+        const jCountry = (jLoc?.country || '').toLowerCase().trim();
+        const jRemote = jLoc?.remote === true;
+        const jHasCountry = !!jCountry && jCountry !== 'global';
+        if (jobIsRemote) return jRemote || !jHasCountry;
+        return jCountry === jobCountry || (jRemote && !jHasCountry);
+      };
 
-      if (filteredJobs.length < 10 && job.sector) {
-        const remainingCount = 10 - filteredJobs.length;
-        const existingIds = filteredJobs.map(j => j.id);
+      const collected: any[] = [];
+      const seenIds = new Set<string>([jobId]);
 
-        const { data: sectorJobs } = await supabase
+      const addFiltered = (rows: any[] | null) => {
+        for (const j of rows || []) {
+          if (!seenIds.has(j.id) && matchesCountry(j)) {
+            seenIds.add(j.id);
+            collected.push(j);
+          }
+        }
+      };
+
+      if (job.role_category && collected.length < TARGET) {
+        const { data } = await supabase
           .from('jobs')
-          .select('id, title, company, location, category, sector, slug')
-          .eq('sector', job.sector)
-          .neq('id', jobId)
-          .not('id', 'in', `(${existingIds.join(',')})`)
+          .select(FIELDS)
+          .eq('role_category', job.role_category)
           .eq('is_published', true)
-          .limit(remainingCount);
-
-        const finalSectorJobs = (sectorJobs || []).filter(j => {
-          const jLoc = typeof j.location === 'object' ? j.location : null;
-          const jCountry = jLoc?.country || '';
-          const jRemote = jLoc?.remote || false;
-          return jCountry.toLowerCase() === filterCountry.toLowerCase() || jRemote;
-        });
-
-        setSimilarJobs([...filteredJobs, ...finalSectorJobs]);
-      } else {
-        setSimilarJobs(filteredJobs.slice(0, 10));
+          .limit(40);
+        addFiltered(data);
       }
+
+      if (job.category && collected.length < TARGET) {
+        const { data } = await supabase
+          .from('jobs')
+          .select(FIELDS)
+          .eq('category', job.category)
+          .eq('is_published', true)
+          .limit(40);
+        addFiltered(data);
+      }
+
+      if (job.sector && collected.length < TARGET) {
+        const { data } = await supabase
+          .from('jobs')
+          .select(FIELDS)
+          .eq('sector', job.sector)
+          .eq('is_published', true)
+          .limit(40);
+        addFiltered(data);
+      }
+
+      setSimilarJobs(collected.slice(0, TARGET));
     } catch (error) {
       console.error('Error loading similar jobs:', error);
     }
@@ -517,12 +542,10 @@ export default function JobClient({ job, relatedJobs }: { job: any; relatedJobs?
         </div>
 
         {/* Main Content */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pt-[96px]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pt-[96px] pb-[110px] lg:pb-6">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-            {/* ═══════════════════════════════════════════════
-                LEFT COLUMN — Main Job Details
-            ═══════════════════════════════════════════════ */}
+            {/* LEFT COLUMN — Main Job Details */}
             <div className="lg:col-span-2 space-y-6">
 
               {/* Job Header Card */}
@@ -542,11 +565,12 @@ export default function JobClient({ job, relatedJobs }: { job: any; relatedJobs?
                         </>
                       );
                     }
+                    const matchedCompany = companies.find(c => c.name === companyName);
                     return (
                       <>
-                        {companies.some(c => c.name === companyName) ? (
+                        {matchedCompany?.slug ? (
                           <a
-                            href={`/companies?name=${encodeURIComponent(companyName)}`}
+                            href={`/companies/${matchedCompany.slug}`}
                             className="hover:underline transition-colors"
                             style={{ color: theme.colors.primary.DEFAULT }}
                           >
@@ -560,48 +584,71 @@ export default function JobClient({ job, relatedJobs }: { job: any; relatedJobs?
                   })()}
                 </p>
 
-                {/* Quick Links — live jobs only */}
-                {!isExpired && (
-                  <div className="flex flex-wrap gap-2 mb-6">
-                    {userCountry === 'Nigeria' && (
-                      <>
-                        <a href="/jobs?posted=today" className="px-3 py-1.5 rounded-full text-sm font-medium transition-colors" style={{ backgroundColor: `${theme.colors.primary.DEFAULT}15`, color: theme.colors.primary.DEFAULT }}>
-                          Today&apos;s jobs
-                        </a>
-                        {job.category && (
-                          <a href={`/jobs?category=${job.category}`} className="px-3 py-1.5 rounded-full text-sm font-medium transition-colors" style={{ backgroundColor: `${theme.colors.primary.DEFAULT}15`, color: theme.colors.primary.DEFAULT }}>
-                            {job.category.replace(/-/g, ' ')} Jobs
-                          </a>
-                        )}
-                        {typeof job.location === 'object' && job.location?.state && !job.location?.remote && (
-                          <a href={`/jobs/state/${job.location.state.toLowerCase().replace(/\s+/g, '-')}`} className="px-3 py-1.5 rounded-full text-sm font-medium transition-colors" style={{ backgroundColor: `${theme.colors.primary.DEFAULT}15`, color: theme.colors.primary.DEFAULT }}>
-                            {job.location.state} Jobs
-                          </a>
-                        )}
-                        <a href="/jobs/remote" className="px-3 py-1.5 rounded-full text-sm font-medium transition-colors" style={{ backgroundColor: `${theme.colors.primary.DEFAULT}15`, color: theme.colors.primary.DEFAULT }}>
-                          Remote Jobs
-                        </a>
-                      </>
-                    )}
-                    {userCountry && userCountry !== 'Nigeria' && (
-                      <>
-                        {job.category && (
-                          <a href={`/jobs?sector=${encodeURIComponent(job.sector || '')}&sort=match`} className="px-3 py-1.5 rounded-full text-sm font-medium transition-colors" style={{ backgroundColor: `${theme.colors.primary.DEFAULT}15`, color: theme.colors.primary.DEFAULT }}>
-                            Similar Jobs
-                          </a>
-                        )}
-                        <a href={`/jobs?country=${encodeURIComponent(userCountry)}`} className="px-3 py-1.5 rounded-full text-sm font-medium transition-colors" style={{ backgroundColor: `${theme.colors.primary.DEFAULT}15`, color: theme.colors.primary.DEFAULT }}>
-                          {userCountry} Jobs
-                        </a>
-                        <a href="/jobs/remote" className="px-3 py-1.5 rounded-full text-sm font-medium transition-colors" style={{ backgroundColor: `${theme.colors.primary.DEFAULT}15`, color: theme.colors.primary.DEFAULT }}>
-                          Remote Jobs
-                        </a>
-                      </>
-                    )}
-                  </div>
-                )}
+                {!isExpired && isMounted && (() => {
+                  const rawRole = (job.role || job.title || '').trim();
+                  const STOP_WORDS = new Set(['a','an','the','of','for','in','at','to','and','or','with','on','by','as','is','are','be','was','were','job','jobs']);
+                  const roleWords = rawRole.split(/\s+/).filter(Boolean);
+                  const roleLabel = roleWords
+                    .filter((w, i) => !(i === roleWords.length - 1 && /^jobs?$/i.test(w)))
+                    .join(' ');
+                  const searchWords = roleWords
+                    .filter(w => !STOP_WORDS.has(w.toLowerCase()))
+                    .slice(0, 2);
+                  const roleSearchUrl = searchWords.length
+                    ? `/jobs?sort=match&search=${encodeURIComponent(searchWords.join(' '))}`
+                    : null;
 
-                {/* Expired — similar jobs inline */}
+                  const locObj = typeof job.location === 'object' ? job.location : null;
+                  const isRemote = locObj?.remote === true;
+                  const locRaw = !isRemote
+                    ? (locObj?.state || locObj?.city || locObj?.country || null)
+                    : null;
+                  const locWord = locRaw ? locRaw.trim().split(/\s+/)[0] : null;
+                  const locSearchUrl = locWord
+                    ? `/jobs?sort=match&search=${encodeURIComponent(locWord)}`
+                    : null;
+
+                  return (
+                    <div className="flex flex-wrap gap-2 mb-6">
+                      <a
+                        href="/jobs?posted=today"
+                        className="px-3 py-1.5 rounded-full text-sm font-medium transition-colors"
+                        style={{ backgroundColor: `${theme.colors.primary.DEFAULT}15`, color: theme.colors.primary.DEFAULT }}
+                      >
+                        Today&apos;s jobs
+                      </a>
+
+                      {roleSearchUrl && roleLabel && (
+                        <a
+                          href={roleSearchUrl}
+                          className="px-3 py-1.5 rounded-full text-sm font-medium transition-colors"
+                          style={{ backgroundColor: `${theme.colors.primary.DEFAULT}15`, color: theme.colors.primary.DEFAULT }}
+                        >
+                          {roleLabel} Jobs
+                        </a>
+                      )}
+
+                      {locSearchUrl && locWord && (
+                        <a
+                          href={locSearchUrl}
+                          className="px-3 py-1.5 rounded-full text-sm font-medium transition-colors"
+                          style={{ backgroundColor: `${theme.colors.primary.DEFAULT}15`, color: theme.colors.primary.DEFAULT }}
+                        >
+                          {locWord} Jobs
+                        </a>
+                      )}
+
+                      <a
+                        href="/jobs?sort=match&search=remote"
+                        className="px-3 py-1.5 rounded-full text-sm font-medium transition-colors"
+                        style={{ backgroundColor: `${theme.colors.primary.DEFAULT}15`, color: theme.colors.primary.DEFAULT }}
+                      >
+                        Remote Jobs
+                      </a>
+                    </div>
+                  );
+                })()}
+
                 {isExpired && similarJobs && similarJobs.length > 0 && (
                   <div className="mb-6 -mt-2 p-4 bg-white border border-gray-200 rounded-lg">
                     <div className="p-3 bg-red-50 border border-red-200 rounded-lg mb-4">
@@ -626,7 +673,6 @@ export default function JobClient({ job, relatedJobs }: { job: any; relatedJobs?
                   </div>
                 )}
 
-                {/* Job Overview */}
                 <div className="mt-6 pt-6 border-t border-gray-100">
                   <h2 className="text-xl font-semibold mb-4 text-gray-900">Job Overview</h2>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
@@ -671,6 +717,25 @@ export default function JobClient({ job, relatedJobs }: { job: any; relatedJobs?
                   </div>
                 </div>
 
+                <div className="mt-4 -mx-6 px-6">
+                  <div className="block sm:hidden">
+                    <AdUnit
+                      key={`${AD_SLOTS.BANNER_TOP}-mobile`}
+                      slot={AD_SLOTS.BANNER_TOP}
+                      format="auto"
+                      style={{ display: 'block', width: '320px', height: '100px', maxWidth: '100%', margin: '0 auto' }}
+                    />
+                  </div>
+                  <div className="hidden sm:block">
+                    <AdUnit
+                      key={`${AD_SLOTS.BANNER_TOP}-desktop`}
+                      slot={AD_SLOTS.BANNER_TOP}
+                      format="auto"
+                      style={{ display: 'block', width: '728px', height: '90px', maxWidth: '100%', margin: '0 auto' }}
+                    />
+                  </div>
+                </div>
+
                 {(job.sector || job.experience_level || job.deadline) && (
                   <div className="mt-6 pt-6 border-t border-gray-100">
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
@@ -708,12 +773,6 @@ export default function JobClient({ job, relatedJobs }: { job: any; relatedJobs?
                 )}
               </div>
 
-              {/* ── AD #1: Responsive banner after job header ── */}
-              <div className="w-full rounded-lg">
-                <AdUnit key={AD_SLOTS.BANNER_TOP} slot={AD_SLOTS.BANNER_TOP} format="auto" />
-              </div>
-
-              {/* About Company */}
               {job.about_company && (
                 <div className="bg-white rounded-xl shadow-sm p-6">
                   <h2 className="text-xl font-semibold mb-4 text-gray-900">About the Company</h2>
@@ -724,7 +783,6 @@ export default function JobClient({ job, relatedJobs }: { job: any; relatedJobs?
                 </div>
               )}
 
-              {/* Job Description */}
               {job.description && (
                 <div className="bg-white rounded-xl shadow-sm p-6">
                   <h2 className="text-xl font-semibold mb-4 text-gray-900">Job Description</h2>
@@ -735,12 +793,6 @@ export default function JobClient({ job, relatedJobs }: { job: any; relatedJobs?
                 </div>
               )}
 
-              {/* ── AD #2: In-article after description ── */}
-              <div className="w-full rounded-lg" style={{ minHeight: '100px' }}>
-                <AdUnit key={AD_SLOTS.IN_ARTICLE} slot={AD_SLOTS.IN_ARTICLE} format="fluid" layout="in-article" />
-              </div>
-
-              {/* Required Skills */}
               {((job.skills_required && Array.isArray(job.skills_required) && job.skills_required.length > 0) ||
                 (job.skills && Array.isArray(job.skills) && job.skills.length > 0)) && (
                 <div className="bg-white rounded-xl shadow-sm p-6">
@@ -755,7 +807,26 @@ export default function JobClient({ job, relatedJobs }: { job: any; relatedJobs?
                 </div>
               )}
 
-              {/* Key Responsibilities */}
+              <div className="w-full overflow-hidden">
+                <div className="block sm:hidden flex justify-center">
+                  <AdUnit
+                    key={`${AD_SLOTS.IN_ARTICLE}-mobile`}
+                    slot={AD_SLOTS.IN_ARTICLE}
+                    format="auto"
+                    style={{ display: 'block', width: '300px', height: '250px', maxWidth: '100%', margin: '0 auto' }}
+                  />
+                </div>
+                <div className="hidden sm:block">
+                  <AdUnit
+                    key={`${AD_SLOTS.IN_ARTICLE}-desktop`}
+                    slot={AD_SLOTS.IN_ARTICLE}
+                    format="fluid"
+                    layout="in-article"
+                    style={{ display: 'block', width: '100%' }}
+                  />
+                </div>
+              </div>
+
               {(() => {
                 const responsibilities = job.responsibilities || [];
                 const responsibilitiesArray = Array.isArray(responsibilities) ? responsibilities : [];
@@ -777,7 +848,6 @@ export default function JobClient({ job, relatedJobs }: { job: any; relatedJobs?
                 return null;
               })()}
 
-              {/* Qualifications */}
               {(() => {
                 const qualifications = job.qualifications || [];
                 const qualificationsArray = Array.isArray(qualifications) ? qualifications : [];
@@ -799,7 +869,6 @@ export default function JobClient({ job, relatedJobs }: { job: any; relatedJobs?
                 return null;
               })()}
 
-              {/* Benefits */}
               {(() => {
                 const benefits = job.benefits || [];
                 const benefitsArray = Array.isArray(benefits) ? benefits : [];
@@ -821,6 +890,26 @@ export default function JobClient({ job, relatedJobs }: { job: any; relatedJobs?
                 return null;
               })()}
 
+              {/* BANNER_BOTTOM — before How to Apply */}
+              <div className="w-full overflow-hidden">
+                <div className="block sm:hidden flex justify-center">
+                  <AdUnit
+                    key={`${AD_SLOTS.BANNER_BOTTOM}-mobile`}
+                    slot={AD_SLOTS.BANNER_BOTTOM}
+                    format="auto"
+                    style={{ display: 'block', width: '300px', height: '250px', maxWidth: '100%', margin: '0 auto' }}
+                  />
+                </div>
+                <div className="hidden sm:block">
+                  <AdUnit
+                    key={`${AD_SLOTS.BANNER_BOTTOM}-desktop`}
+                    slot={AD_SLOTS.BANNER_BOTTOM}
+                    format="auto"
+                    style={{ display: 'block', width: '728px', height: '90px', maxWidth: '100%', margin: '0 auto' }}
+                  />
+                </div>
+              </div>
+
               {/* How to Apply */}
               {isExpired ? (
                 <div id="how-to-apply" className="bg-white rounded-xl shadow-sm p-6">
@@ -839,7 +928,6 @@ export default function JobClient({ job, relatedJobs }: { job: any; relatedJobs?
                   )}
                   
                   <div className="space-y-3">
-                    {/* Phone */}
                     {(job.application?.phone || job.application_phone) && (
                       <div>
                         <button
@@ -862,7 +950,7 @@ export default function JobClient({ job, relatedJobs }: { job: any; relatedJobs?
                             <div className="flex items-center gap-2">
                               <a
                                 href={`https://wa.me/${(job.application?.phone || job.application_phone || '').replace(/[^0-9]/g, '')}`}
-                                target="_blank" rel="noopener noreferrer"
+                                target="_blank" rel="nofollow noopener noreferrer"
                                 className="px-4 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition-colors font-medium"
                               >
                                 WhatsApp
@@ -879,7 +967,6 @@ export default function JobClient({ job, relatedJobs }: { job: any; relatedJobs?
                       </div>
                     )}
 
-                    {/* Email */}
                     {(job.application?.email || job.application_email) && (
                       <div>
                         <button
@@ -918,7 +1005,6 @@ export default function JobClient({ job, relatedJobs }: { job: any; relatedJobs?
                       </div>
                     )}
 
-                    {/* URL */}
                     {(job.application?.link || job.application?.url || job.application_url) && (
                       <div>
                         <button
@@ -927,7 +1013,7 @@ export default function JobClient({ job, relatedJobs }: { job: any; relatedJobs?
                         >
                           <span className="flex items-center gap-2">
                             <ExternalLink size={16} />
-                            Apply via Link
+                            Apply via Website
                           </span>
                           <span className="text-purple-600 text-xs font-medium">{showUrl ? '▲' : '▼'}</span>
                         </button>
@@ -939,10 +1025,10 @@ export default function JobClient({ job, relatedJobs }: { job: any; relatedJobs?
                             <div className="flex items-center gap-2">
                               <a
                                 href={job.application?.link || job.application?.url || job.application_url || ''}
-                                target="_blank" rel="noopener noreferrer"
+                                target="_blank" rel="nofollow noopener noreferrer"
                                 className="px-4 py-2 bg-purple-600 text-white text-sm rounded-lg hover:bg-purple-700 transition-colors font-medium"
                               >
-                                Open Link
+                                Apply Now
                               </a>
                               <button
                                 onClick={() => handleCopy(job.application?.link || job.application?.url || job.application_url || '', 'URL')}
@@ -959,13 +1045,12 @@ export default function JobClient({ job, relatedJobs }: { job: any; relatedJobs?
                 </div>
               )}
 
-              {/* Join Our Communities */}
               <div className="bg-white rounded-xl shadow-sm p-6">
                 <h2 className="text-xl font-semibold mb-4 text-gray-900">Join Our Communities</h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <a
                     href="https://whatsapp.com/channel/0029VbC3NrUKLaHp8JAt7v3y"
-                    target="_blank" rel="noopener noreferrer"
+                    target="_blank" rel="nofollow noopener noreferrer"
                     className="flex items-center justify-center gap-3 p-4 bg-green-50 rounded-lg border border-green-200 hover:bg-green-100 transition-colors"
                   >
                     <svg className="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 24 24">
@@ -975,7 +1060,7 @@ export default function JobClient({ job, relatedJobs }: { job: any; relatedJobs?
                   </a>
                   <a
                     href="https://t.me/+1YYoQJdLzzkwNDI0"
-                    target="_blank" rel="noopener noreferrer"
+                    target="_blank" rel="nofollow noopener noreferrer"
                     className="flex items-center justify-center gap-3 p-4 bg-blue-50 rounded-lg border border-blue-200 hover:bg-blue-100 transition-colors"
                   >
                     <svg className="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 24 24">
@@ -986,12 +1071,11 @@ export default function JobClient({ job, relatedJobs }: { job: any; relatedJobs?
                 </div>
               </div>
 
-              {/* Additional Info Accordion */}
               {((job.about_role && job.about_role.trim()) ||
                 (job.who_apply && job.who_apply.trim()) ||
                 (job.standout && job.standout.trim())) && (
                 <div className="bg-white rounded-xl shadow-sm p-6">
-                  <Accordion type="multiple" className="w-full" style={{ marginTop: '8px' }}>
+                  <Accordion type="multiple" defaultValue={["about-role"]} className="w-full" style={{ marginTop: '8px' }}>
                     {job.about_role && job.about_role.trim() && (
                       <AccordionItem value="about-role" className="border-b border-gray-200">
                         <AccordionTrigger className="text-base font-semibold text-gray-900 hover:no-underline py-4">
@@ -1035,7 +1119,6 @@ export default function JobClient({ job, relatedJobs }: { job: any; relatedJobs?
                 </div>
               )}
 
-              {/* Posted Date */}
               {(job.posted_date || job.created_at) && (
                 <div className="bg-white rounded-xl shadow-sm p-6">
                   <h2 className="text-xl font-semibold mb-3 text-gray-900">Posted Date</h2>
@@ -1055,12 +1138,20 @@ export default function JobClient({ job, relatedJobs }: { job: any; relatedJobs?
                 </div>
               )}
 
-              {/* Application Link */}
+              <div className="hidden lg:block w-full overflow-hidden">
+                <AdUnit
+                  key={`${AD_SLOTS.IN_ARTICLE}-after-date`}
+                  slot={AD_SLOTS.IN_ARTICLE}
+                  format="auto"
+                  style={{ display: 'block', width: '728px', height: '90px', maxWidth: '100%', margin: '0 auto' }}
+                />
+              </div>
+
               {!isExpired && (job.application_url || (job.application && (job.application.url || job.application.link))) && (
                 <div className="bg-white rounded-xl shadow-sm p-6">
                   <a
                     href={job.application_url || job.application?.url || job.application?.link}
-                    target="_blank" rel="noopener noreferrer"
+                    target="_blank" rel="nofollow noopener noreferrer"
                     className="flex items-center gap-2 text-sm font-medium hover:underline"
                     style={{ color: theme.colors.primary.DEFAULT }}
                   >
@@ -1070,25 +1161,21 @@ export default function JobClient({ job, relatedJobs }: { job: any; relatedJobs?
                 </div>
               )}
 
-              {/* ── AD #3: Banner at the end of main content ── */}
-              <div className="w-full rounded-lg">
-                <AdUnit key={AD_SLOTS.BANNER_BOTTOM} slot={AD_SLOTS.BANNER_BOTTOM} format="auto" />
-              </div>
-
             </div>
 
-            {/* ═══════════════════════════════════════════════
-                RIGHT COLUMN — Sidebar
-            ═══════════════════════════════════════════════ */}
             {/* RIGHT COLUMN — Sidebar */}
             <div className="lg:col-span-1 space-y-6">
 
-              {/* ── Sidebar AD ── */}
-              <div className="hidden lg:block w-full rounded-lg">
-                <AdUnit key={AD_SLOTS.SIDEBAR} slot={AD_SLOTS.SIDEBAR} format="auto" />
+              {/* Sidebar top — autorelaxed banner, desktop only */}
+              <div className="hidden lg:block w-full rounded-lg overflow-hidden">
+                <AdUnit
+                  key={AD_SLOTS.SIDEBAR_BANNER}
+                  slot={AD_SLOTS.SIDEBAR_BANNER}
+                  format="autorelaxed"
+                  style={{ display: 'block' }}
+                />
               </div>
 
-              {/* ── Practice Assessments ── */}
               <div className="bg-white rounded-xl shadow-sm overflow-hidden">
                 <div className="px-5 py-4 font-semibold text-base flex items-center gap-2" 
                      style={{ backgroundColor: `${theme.colors.primary.DEFAULT}10`, color: theme.colors.primary.DEFAULT }}>
@@ -1111,7 +1198,7 @@ export default function JobClient({ job, relatedJobs }: { job: any; relatedJobs?
                   </ul>
                   <div className="mt-4 pt-3 border-t border-gray-100">
                     <a
-                      href="https://www.jobmeter.app/tools/quiz"
+                      href="/tools/quiz"
                       className="flex items-center gap-1.5 text-sm font-semibold hover:underline"
                       style={{ color: theme.colors.primary.DEFAULT }}
                     >
@@ -1122,7 +1209,15 @@ export default function JobClient({ job, relatedJobs }: { job: any; relatedJobs?
                 </div>
               </div>
 
-              {/* Similar Jobs */}
+              <div className="flex lg:hidden w-full justify-center overflow-hidden">
+                <AdUnit
+                  key={`${AD_SLOTS.SIDEBAR}-mobile`}
+                  slot={AD_SLOTS.SIDEBAR}
+                  format="auto"
+                  style={{ display: 'block', width: '300px', height: '250px', maxWidth: '100%' }}
+                />
+              </div>
+
               {similarJobs && similarJobs.length > 0 && (
                 <div className="bg-white rounded-xl shadow-sm overflow-hidden">
                   <div className="px-5 py-4 text-white font-semibold text-base" style={{ backgroundColor: theme.colors.primary.DEFAULT }}>
@@ -1172,7 +1267,6 @@ export default function JobClient({ job, relatedJobs }: { job: any; relatedJobs?
                 </div>
               )}
 
-              {/* ── Free Career Tools ── (Moved under Similar Jobs) */}
               <div className="bg-white rounded-xl shadow-sm overflow-hidden">
                 <div 
                   className="px-5 py-4 font-semibold text-base flex items-center gap-2" 
@@ -1225,8 +1319,6 @@ export default function JobClient({ job, relatedJobs }: { job: any; relatedJobs?
                 </div>
               </div>
 
-
-              {/* ── Career Articles — after similar jobs ── */}
               {randomBlogs.length > 0 && (
                 <div className="bg-white rounded-xl shadow-sm overflow-hidden">
                   <div className="px-5 py-4 font-semibold text-base flex items-center gap-2" style={{ backgroundColor: `${theme.colors.primary.DEFAULT}10`, color: theme.colors.primary.DEFAULT }}>
@@ -1249,7 +1341,7 @@ export default function JobClient({ job, relatedJobs }: { job: any; relatedJobs?
                     </ul>
                     <div className="mt-4 pt-3 border-t border-gray-100">
                       <a
-                        href="https://www.jobmeter.app/blog"
+                        href="/blog"
                         className="flex items-center gap-1.5 text-sm font-semibold hover:underline"
                         style={{ color: theme.colors.primary.DEFAULT }}
                       >
@@ -1261,65 +1353,72 @@ export default function JobClient({ job, relatedJobs }: { job: any; relatedJobs?
                 </div>
               )}
 
-              {/* ── Multiplex Ad — autorelaxed, after blog section ── */}
-              <div className="w-full rounded-lg">
-                <AdUnit key={AD_SLOTS.MULTIPLEX} slot={AD_SLOTS.MULTIPLEX} format="autorelaxed" />
+              {/* Sidebar bottom — multiplex unit, desktop only, below Career Articles */}
+              <div className="hidden lg:block w-full rounded-lg overflow-hidden">
+                <AdUnit
+                  key={`${AD_SLOTS.MULTIPLEX}-sidebar`}
+                  slot={AD_SLOTS.MULTIPLEX}
+                  format="auto"
+                  style={{ display: 'block', width: '100%' }}
+                />
               </div>
 
             </div>
           </div>
         </div>
-      </div>
 
-      {/*
-        ── Anchor Ad — mobile only, sticky bottom bar ──
-      */}
-      <div
-        className="fixed bottom-0 left-0 right-0 z-40 lg:hidden bg-white border-t border-gray-100"
-        style={{ height: '50px', overflow: 'hidden' }}
-      >
+        {/* Updated Mobile Anchor Ad with Close Button */}
         <div
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            height: '50px',
-            overflow: 'hidden',
-          }}
+          id="mobile-anchor-ad"
+          className="fixed bottom-0 left-0 right-0 z-40 lg:hidden bg-white border-t border-gray-100 overflow-hidden transition-all duration-300"
+          style={{ height: `${anchorHeight}px` }}
         >
-          <AdUnit
-            key={AD_SLOTS.ANCHOR_MOBILE}
-            slot={AD_SLOTS.ANCHOR_MOBILE}
-            format="auto"
-            style={{
-              display: 'block',
-              width: '100%',
-              height: '50px',
-              maxHeight: '50px',
-              overflow: 'hidden',
-            }}
-          />
-        </div>
-      </div>
+          {/* Close Button */}
+          <button
+            onClick={handleCloseAnchorAd}
+            className="absolute top-1.5 left-3 z-50 w-7 h-7 flex items-center justify-center bg-white rounded-full shadow text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition-colors"
+            aria-label="Close bottom advertisement"
+          >
+            <X size={18} />
+          </button>
 
-      {/* Upgrade Modal */}
-      {upgradeErrorType && (
-        <UpgradeModal
-          isOpen={upgradeModalOpen}
-          onClose={() => {
-            setUpgradeModalOpen(false);
-            setUpgradeErrorType(null);
-            setUpgradeErrorData(null);
-          }}
-          errorType={upgradeErrorType}
-          message={upgradeErrorData?.message}
-          resetDate={upgradeErrorData?.resetDate}
-          monthlyLimit={upgradeErrorData?.monthlyLimit}
-          requiredCredits={upgradeErrorData?.requiredCredits}
-          currentCredits={upgradeErrorData?.currentCredits}
-        />
-      )}
+          {/* Ad Container */}
+          <div
+            className="w-full transition-all duration-300"
+            style={{ height: `${anchorHeight}px` }}
+          >
+            <AdUnit
+              key={AD_SLOTS.ANCHOR_MOBILE}
+              slot={AD_SLOTS.ANCHOR_MOBILE}
+              format="auto"
+              style={{
+                display: 'block',
+                width: '100%',
+                height: `${anchorHeight}px`,
+                maxHeight: `${anchorHeight}px`,
+              }}
+            />
+          </div>
+        </div>
+
+        {/* Upgrade Modal */}
+        {upgradeErrorType && (
+          <UpgradeModal
+            isOpen={upgradeModalOpen}
+            onClose={() => {
+              setUpgradeModalOpen(false);
+              setUpgradeErrorType(null);
+              setUpgradeErrorData(null);
+            }}
+            errorType={upgradeErrorType}
+            message={upgradeErrorData?.message}
+            resetDate={upgradeErrorData?.resetDate}
+            monthlyLimit={upgradeErrorData?.monthlyLimit}
+            requiredCredits={upgradeErrorData?.requiredCredits}
+            currentCredits={upgradeErrorData?.currentCredits}
+          />
+        )}
+      </div>
     </>
   );
 }

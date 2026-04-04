@@ -1,5 +1,4 @@
 "use client";
-// 📁 app/tools/quiz/[company]/CompanyQuizClient.tsx
 
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -61,7 +60,10 @@ export default function CompanyQuizClient({
 
   const fetchSections = async () => {
     const cached = getCached<string[]>(CACHE_KEYS.sections(company));
-    if (cached) { setSections(cached); return; }
+    if (cached) { 
+      setSections(cached); 
+      return; 
+    }
 
     try {
       const { data } = await quizSupabase
@@ -275,9 +277,8 @@ export default function CompanyQuizClient({
 
       <div className="max-w-4xl mx-auto px-4 py-6">
 
-        {/* ── [AD 1] Before company name — mobile only ─────────────────── */}
-        {/* Desktop: sidebar handles this slot instead */}
-        <div className="lg:hidden mb-5">
+        {/* ── Ad 1: After company name card / timer section (mobile only) ── */}
+        <div className="lg:hidden mb-6">
           <AdUnit slot="4198231153" format="auto" />
         </div>
 
@@ -425,9 +426,8 @@ export default function CompanyQuizClient({
           </div>
         </div>
 
-        {/* ── [AD 2] After disclaimer — mobile only ────────────────────── */}
-        {/* Desktop: second sidebar ad handles this slot instead */}
-        <div className="lg:hidden mt-5">
+        {/* ── Ad 2: Before the About container (after disclaimer) ── */}
+        <div className="lg:hidden mt-6 mb-6">
           <AdUnit slot="9751041788" format="auto" />
         </div>
 

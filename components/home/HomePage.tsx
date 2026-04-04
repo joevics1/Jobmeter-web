@@ -769,51 +769,59 @@ export default function HomePage({ jobs: initialJobs, blogPosts, companies = [] 
           </section>
         )}
 
-        {/* SEO Footer Content */}
-        <section className="px-6 py-12 bg-gray-50">
-          <div className="max-w-4xl mx-auto">
-            <div className="prose prose-sm max-w-none">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">Your Trusted Partner in Global Job Search</h2>
-              <p className="text-gray-700 leading-relaxed mb-4">
-                JobMeter connects job seekers with employment opportunities across multiple industries, experience levels, and countries. Whether you're searching for entry-level positions, professional careers, remote work, or specialized roles, our platform provides access to thousands of current job listings from direct employer postings and various sources across the web. Our intelligent job matching technology helps candidates find positions that align with their skills, experience, location preferences, and career aspirations.
-              </p>
-              <p className="text-gray-700 leading-relaxed mb-4">
-                <span className="font-semibold text-amber-600">Important Notice:</span> While we strive to provide quality listings, some jobs on our platform may come from third-party sources. We encourage job seekers to conduct their own research before applying. Always verify job details directly with the hiring company, research employers independently, and exercise caution when sharing personal information. Report any suspicious listings to help.jobmeter@gmail.com.
-              </p>
-              <p className="text-gray-700 leading-relaxed mb-4">
-                From accounting and finance jobs to technology, healthcare, sales, marketing, engineering, and administrative positions, JobMeter serves as your complete career platform. Job seekers benefit from personalized match scores, application tracking, CV creation tools, interview preparation resources, and career advice. Employers can post jobs directly to reach qualified candidates. We facilitate connections between job seekers and companies, though applications are typically submitted directly to employers or their designated systems.
-              </p>
-              <p className="text-gray-700 leading-relaxed mb-6">
-                Explore job opportunities in major cities, browse by industry sector, search by job type (full-time, part-time, contract, remote), and access career resources including salary guides, resume tips, and interview strategies. JobMeter is committed to making your job search journey seamless, productive, and successful. Join thousands of professionals who have found their ideal careers through our platform.
-              </p>
-              <div className="flex flex-wrap gap-4 text-sm">
-                <Link href="/jobs" className="font-semibold hover:underline" style={{ color: theme.colors.primary.DEFAULT }}>
-                  Browse All Jobs
-                </Link>
-                <span className="text-gray-400">•</span>
-                <Link href="/resources" className="font-semibold hover:underline" style={{ color: theme.colors.primary.DEFAULT }}>
-                  Career Resources
-                </Link>
-                <span className="text-gray-400">•</span>
-                <Link href="/blog" className="font-semibold hover:underline" style={{ color: theme.colors.primary.DEFAULT }}>
-                  Career Blog
-                </Link>
-                <span className="text-gray-400">•</span>
-                <Link href="/company" className="font-semibold hover:underline" style={{ color: theme.colors.primary.DEFAULT }}>
-                  Company Directory
-                </Link>
-                <span className="text-gray-400">•</span>
-                <Link href="/about" className="font-semibold hover:underline" style={{ color: theme.colors.primary.DEFAULT }}>
-                  About JobMeter
-                </Link>
-                <span className="text-gray-400">•</span>
-                <Link href="/submit" className="font-semibold hover:underline" style={{ color: theme.colors.primary.DEFAULT }}>
-                  Post a Job
-                </Link>
-              </div>
-            </div>
-          </div>
-        </section>
+{/* SEO Footer Content */}
+<section className="px-6 py-12 bg-gray-50">
+  <div className="max-w-4xl mx-auto">
+    <div className="prose prose-sm max-w-none">
+      <h2 className="text-xl font-bold text-gray-900 mb-4">Your Trusted Partner in Global Job Search</h2>
+      <p className="text-gray-700 leading-relaxed mb-4">
+        JobMeter connects job seekers with employment opportunities across multiple industries, experience levels, and countries. Whether you're searching for entry-level positions, professional careers, remote work, or specialized roles, our platform provides access to thousands of current job listings from direct employer postings and various sources across the web. Our intelligent job matching technology helps candidates find positions that align with their skills, experience, location preferences, and career aspirations.
+      </p>
+      <p className="text-gray-700 leading-relaxed mb-4">
+        <span className="font-semibold text-amber-600">Important Notice:</span> While we strive to provide quality listings, some jobs on our platform may come from third-party sources. We encourage job seekers to conduct their own research before applying. Always verify job details directly with the hiring company, research employers independently, and exercise caution when sharing personal information. Report any suspicious listings to help.jobmeter@gmail.com.
+      </p>
+      <p className="text-gray-700 leading-relaxed mb-4">
+        From accounting and finance jobs to technology, healthcare, sales, marketing, engineering, and administrative positions, JobMeter serves as your complete career platform. Job seekers benefit from personalized match scores, application tracking, CV creation tools, interview preparation resources, and career advice. Employers can post jobs directly to reach qualified candidates. We facilitate connections between job seekers and companies, though applications are typically submitted directly to employers or their designated systems.
+      </p>
+      <p className="text-gray-700 leading-relaxed mb-6">
+        Explore job opportunities in major cities, browse by industry sector, search by job type (full-time, part-time, contract, remote), and access resources including salary guides, resume tips, and interview strategies. JobMeter is committed to making your job search journey seamless, productive, and successful. Join thousands of professionals who have found their ideal careers through our platform.
+      </p>
+      <div className="flex flex-wrap gap-4 text-sm">
+        <Link href="/jobs" className="font-semibold hover:underline" style={{ color: theme.colors.primary.DEFAULT }}>
+          Browse Jobs
+        </Link>
+        <span className="text-gray-400">•</span>
+        <Link href="/resources" className="font-semibold hover:underline" style={{ color: theme.colors.primary.DEFAULT }}>
+          Resources
+        </Link>
+        <span className="text-gray-400">•</span>
+        <Link href="/blog" className="font-semibold hover:underline" style={{ color: theme.colors.primary.DEFAULT }}>
+          blog
+        </Link>
+        <span className="text-gray-400">•</span>
+        <Link href="/company" className="font-semibold hover:underline" style={{ color: theme.colors.primary.DEFAULT }}>
+          Companies
+        </Link>
+        <span className="text-gray-400">•</span>
+        <Link href="/about" className="font-semibold hover:underline" style={{ color: theme.colors.primary.DEFAULT }}>
+          About Us
+        </Link>
+        <span className="text-gray-400">•</span>
+        <Link href="/submit" className="font-semibold hover:underline" style={{ color: theme.colors.primary.DEFAULT }}>
+          Post a Job
+        </Link>
+        <span className="text-gray-400">•</span>
+        <Link href="/privacy" className="font-semibold hover:underline" style={{ color: theme.colors.primary.DEFAULT }}>
+          Privacy
+        </Link>
+        <span className="text-gray-400">•</span>
+        <Link href="/terms" className="font-semibold hover:underline" style={{ color: theme.colors.primary.DEFAULT }}>
+          Terms
+        </Link>
+      </div>
+    </div>
+  </div>
+</section>
 
         {/* ── AD 3: Bottom banner — final impression before footer ── */}
         <section className="px-6 py-4 bg-gray-50">

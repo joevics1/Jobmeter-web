@@ -119,11 +119,8 @@ export default function ResourcePage() {
     },
   ];
 
-  // Split at midpoint so mid-page ad always lands in the middle
-  // regardless of how many cards are added in future
-  const midpoint = Math.ceil(resources.length / 2);
-  const firstHalf = resources.slice(0, midpoint);
-  const secondHalf = resources.slice(midpoint);
+  // Show middle ad only if there are at least 14 resources
+  const showMiddleAd = resources.length >= 14;
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: theme.colors.background.muted }}>
@@ -152,7 +149,7 @@ export default function ResourcePage() {
 
         {/* First half of cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-          {firstHalf.map((resource) => {
+          {resources.slice(0, Math.ceil(resources.length / 2)).map((resource) => {
             const Icon = resource.icon;
             return (
               <Link
@@ -182,14 +179,16 @@ export default function ResourcePage() {
           })}
         </div>
 
-        {/* ── AD 2: In-article mid-page — always sits at the midpoint ── */}
-        <div className="mb-6">
-          <AdUnit slot="4690286797" format="fluid" layout="in-article" />
-        </div>
+        {/* ── Conditional Middle AD ── */}
+        {showMiddleAd && (
+          <div className="mb-6">
+            <AdUnit slot="4690286797" format="fluid" layout="in-article" />
+          </div>
+        )}
 
         {/* Second half of cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {secondHalf.map((resource) => {
+          {resources.slice(Math.ceil(resources.length / 2)).map((resource) => {
             const Icon = resource.icon;
             return (
               <Link

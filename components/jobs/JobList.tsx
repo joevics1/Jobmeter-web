@@ -10,7 +10,7 @@ import { JobUI } from '@/components/jobs/JobCard';
 import MatchBreakdownModal from '@/components/jobs/MatchBreakdownModal';
 import { MatchBreakdownModalData } from '@/components/jobs/MatchBreakdownModal';
 import JobFilters from '@/components/jobs/JobFilters';
-import { ChevronDown, LogIn, Search, X, Filter, SlidersHorizontal, ArrowUpDown, RefreshCw, Laptop, Home, Globe, Rocket, GraduationCap, Briefcase, Award, ChevronRight } from 'lucide-react';
+import { Search, X, SlidersHorizontal, ArrowUpDown, RefreshCw, Globe, FileText, ArrowRight, CheckCircle, AlertCircle, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import AuthModal from '@/components/AuthModal';
 import { scoreJob, JobRow, UserOnboardingData } from '@/lib/matching/matchEngine';
@@ -23,9 +23,14 @@ import { OrganizationSchema, WebSiteSchema } from '@/components/seo/StructuredDa
 
 // ─── Ad slot IDs ───────────────────────────────────────────────────────────────
 const AD_SLOTS = {
-  BANNER:           '8152297343',       // jobpilot-banner-responsive  (above pagination)
-  IN_FEED:          '2040985457',       // jobpilot-infeed-native      (every 7 jobs)
-  IN_FEED_LAYOUT_KEY: '-g4-2b+f-5v+o7',
+  DISPLAY_TOP:         '4198231153',
+  BANNER:              '8152297343',
+  IN_ARTICLE_1:        '4690286797',
+  IN_ARTICLE_2:        '8181708196',
+  DISPLAY_BOTTOM:      '9751041788',
+  IN_FEED:             '9025117620',
+  IN_FEED_LAYOUT_KEY:  '-fb+5w+4e-db+86',
+  MIDDLE_DISPLAY:      '9010641928',
 } as const;
 // ───────────────────────────────────────────────────────────────────────────────
 
@@ -40,10 +45,11 @@ const STORAGE_KEYS = {
   MATCHES_CACHE_USER: 'jobs_cache_user_id',
 };
 
-const JOBS_PER_PAGE_DISPLAY = 50;
+const JOBS_PER_PAGE_DISPLAY = 25;
 const CLIENT_CACHE_DURATION = 20 * 60 * 1000; // 20 min — expires before Redis 30 min
 
 interface JobListProps {
+  initialJobs?: any[];
   initialCountry?: string;
   initialRoleCategory?: string;
   initialJobType?: string;
@@ -51,7 +57,36 @@ interface JobListProps {
   initialTown?: string;
 }
 
-export default function JobList({ initialCountry, initialRoleCategory, initialJobType, initialState, initialTown }: JobListProps) {
+// ── Static transform for SSR seeding (no user/match context) ─────────────────
+function transformJobToUIStatic(job: any): JobUI {
+  let locationStr = 'Location not specified';
+  if (typeof job.location === 'string') { locationStr = job.location; }
+  else if (job.location && typeof job.location === 'object') {
+    const loc = job.location;
+    if (loc.remote) { locationStr = 'Remote'; }
+    else { const parts = [loc.city, loc.state, loc.country].filter(Boolean); locationStr = parts.length > 0 ? parts.join(', ') : 'Location not specified'; }
+  }
+  let companyStr = 'Unknown Company';
+  if (typeof job.company === 'string') { companyStr = job.company; }
+  else if (job.company && typeof job.company === 'object') { companyStr = job.company.name || 'Unknown Company'; }
+  let salaryStr = '';
+  if (typeof job.salary === 'string') { salaryStr = job.salary; }
+  else if (job.salary_range && typeof job.salary_range === 'object') {
+    const sal = job.salary_range;
+    if (sal.min !== null && sal.currency) salaryStr = `${sal.currency} ${sal.min.toLocaleString()} ${sal.period || ''}`.trim();
+  }
+  return {
+    id: job.id, slug: job.slug || job.id, title: job.title || 'Untitled Job',
+    company: companyStr, location: locationStr, rawLocation: job.location,
+    country: job.country || [], salary: salaryStr, match: 0,
+    calculatedTotal: 0, type: job.type || job.employment_type || '',
+    breakdown: null, postedDate: undefined,
+    sector: job.sector || '', role_category: job.role_category || '',
+    description: job.description || job.job_description || '',
+  };
+}
+
+export default function JobList({ initialJobs, initialCountry, initialRoleCategory, initialJobType, initialState, initialTown }: JobListProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -59,8 +94,10 @@ export default function JobList({ initialCountry, initialRoleCategory, initialJo
   const [activeTab, setActiveTab] = useState<'latest' | 'matches'>('latest');
 
   // ── Latest tab state ────────────────────────────────────────────────────────
-  const [latestJobs, setLatestJobs] = useState<JobUI[]>([]);
-  const [latestJobsLoading, setLatestJobsLoading] = useState(true);
+  const [latestJobs, setLatestJobs] = useState<JobUI[]>(() =>
+    initialJobs ? initialJobs.map(j => transformJobToUIStatic(j)) : []
+  );
+  const [latestJobsLoading, setLatestJobsLoading] = useState(!initialJobs);
   const [currentPage, setCurrentPage] = useState(1);
 
   // ── Matches tab state ───────────────────────────────────────────────────────
@@ -90,6 +127,7 @@ export default function JobList({ initialCountry, initialRoleCategory, initialJo
   const [filteredSuggestions, setFilteredSuggestions] = useState<string[]>([]);
   const [detectedCountry, setDetectedCountry] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [showCountryPopup, setShowCountryPopup] = useState(false);
 
   const [filters, setFilters] = useState({
     search: '',
@@ -109,15 +147,79 @@ export default function JobList({ initialCountry, initialRoleCategory, initialJo
   const latestFetchedRef = useRef(false);
   const matchesFetchedRef = useRef(false);
 
-  const categories = [
-    { id: 'remote', label: 'Remote', icon: Laptop, url: '/jobs?remote=true' },
-    { id: 'nysc', label: 'NYSC', icon: Award, url: '/tools/nysc-finder' },
-    { id: 'accommodation', label: 'Accommodation', icon: Home, url: '/tools/accommodation-finder' },
-    { id: 'visa', label: 'Visa', icon: Globe, url: '/tools/visa-finder' },
-    { id: 'trainee', label: 'Graduate/Trainee', icon: GraduationCap, url: '/tools/graduate-trainee-finder' },
-    { id: 'entry', label: 'Entry Level', icon: Rocket, url: '/tools/entry-level-finder' },
-    { id: 'internship', label: 'Internship', icon: Briefcase, url: '/tools/internship-finder' },
-  ];
+  // ── CV Upload state (for unauthenticated users) ─────────────────────────────
+  type CVUploadStatus = 'idle' | 'dragging' | 'uploading' | 'parsing' | 'done' | 'error';
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [cvStatus, setCvStatus] = useState<CVUploadStatus>('idle');
+  const [cvFileName, setCvFileName] = useState('');
+  const [cvErrorMsg, setCvErrorMsg] = useState('');
+  const [cvProgress, setCvProgress] = useState(0);
+
+  const processCVFile = useCallback(async (file: File) => {
+    const isPDF = file.type === 'application/pdf';
+    const isImage = file.type.startsWith('image/');
+    const isDoc = file.type.includes('document') || file.name.endsWith('.doc') || file.name.endsWith('.docx');
+    if (!isPDF && !isImage && !isDoc) { setCvStatus('error'); setCvErrorMsg('Please upload a PDF, Word document, or image file.'); return; }
+    if (file.size > 10 * 1024 * 1024) { setCvStatus('error'); setCvErrorMsg('File too large. Maximum size is 10MB.'); return; }
+    setCvFileName(file.name); setCvErrorMsg(''); setCvStatus('uploading'); setCvProgress(20);
+    try {
+      const form = new FormData();
+      form.append('file', file);
+      const ocrRes = await fetch('/api/onboarding/ocr', { method: 'POST', body: form });
+      if (!ocrRes.ok) { const err = await ocrRes.json().catch(() => ({})); throw new Error(err.message || 'Failed to extract text from CV.'); }
+      const { text } = await ocrRes.json();
+      if (!text) throw new Error('No text could be extracted from this file.');
+      setCvProgress(55); setCvStatus('parsing');
+      const parseRes = await fetch('/api/onboarding/parse', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text }) });
+      if (!parseRes.ok) { const err = await parseRes.json().catch(() => ({})); throw new Error(err.error || 'Failed to parse CV.'); }
+      const { parsed } = await parseRes.json();
+      if (!parsed) throw new Error('Invalid parse response.');
+      setCvProgress(90);
+      const cvRoles = parsed.workExperience?.map((e: any) => e.title) || [];
+      const profile = {
+        name: parsed.fullName || '', email: parsed.email || '', phone: parsed.phone || '',
+        location: parsed.location || '', summary: parsed.summary || '', roles: cvRoles,
+        skills: Array.isArray(parsed.skills) ? parsed.skills : [],
+        experience: '', workExperience: Array.isArray(parsed.workExperience) ? parsed.workExperience : [],
+        education: Array.isArray(parsed.education) ? parsed.education : [],
+        projects: Array.isArray(parsed.projects) ? parsed.projects : [],
+        accomplishments: Array.isArray(parsed.accomplishments) ? parsed.accomplishments : [],
+        awards: Array.isArray(parsed.awards) ? parsed.awards : [],
+        certifications: Array.isArray(parsed.certifications) ? parsed.certifications : [],
+        languages: Array.isArray(parsed.languages) ? parsed.languages : [],
+        interests: Array.isArray(parsed.interests) ? parsed.interests : [],
+        linkedin: parsed.linkedin || '', github: parsed.github || '', portfolio: parsed.portfolio || '',
+        publications: Array.isArray(parsed.publications) ? parsed.publications : [],
+        volunteerWork: Array.isArray(parsed.volunteerWork) ? parsed.volunteerWork : [],
+        additionalSections: Array.isArray(parsed.additionalSections) ? parsed.additionalSections : [],
+        cvAiSuggestedRoles: Array.isArray(parsed.suggestedRoles) ? parsed.suggestedRoles : [],
+      };
+      try {
+        localStorage.setItem('onboarding_cv_data', JSON.stringify(profile));
+        localStorage.setItem('onboarding_cv_file', JSON.stringify({ text }));
+        localStorage.setItem('extractedProfile', JSON.stringify(profile));
+        localStorage.setItem('cvText', text);
+      } catch {}
+      setCvProgress(100); setCvStatus('done');
+      setTimeout(() => router.push('/onboarding'), 800);
+    } catch (err: any) {
+      setCvStatus('error');
+      setCvErrorMsg(err.message || 'Something went wrong. Please try again.');
+    }
+  }, [router]);
+
+  const handleCVDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setCvStatus('idle');
+    const file = e.dataTransfer.files?.[0];
+    if (file) processCVFile(file);
+  }, [processCVFile]);
+
+  const handleCVChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) processCVFile(file);
+    e.target.value = '';
+  }, [processCVFile]);
 
   const popularRoles = [
     'Accountant', 'Digital Marketer', 'Social Media Manager', 'Data Analyst', 'Developer',
@@ -133,7 +235,7 @@ export default function JobList({ initialCountry, initialRoleCategory, initialJo
     'Civil Engineer', 'Mechanical Engineer', 'Electrical Engineer', 'Architect',
     'Quality Assurance Officer', 'Teacher', 'Lecturer', 'Research Assistant', 'Graduate Trainee', 'Intern',
     'Chief Executive Officer', 'Chief Financial Officer', 'Chief Technology Officer', 'Chief Operating Officer',
-    'VP of Marketing', 'VP of Sales', 'VP of Engineering', 'Director of Operations', 'Director of HR',
+    'VP of Marketing', 'VP of Sales', 'VP of Engineering', 'VP of HR',
     'Regional Manager', 'Area Manager', 'Branch Manager', 'General Manager', 'Managing Director',
     'Legal Counsel', 'Corporate Lawyer', 'Compliance Officer', 'Risk Manager', 'Security Analyst',
     'Network Administrator', 'Systems Administrator', 'Database Administrator', 'Cloud Engineer',
@@ -241,7 +343,10 @@ export default function JobList({ initialCountry, initialRoleCategory, initialJo
       const userChangedCountry = localStorage.getItem('user_changed_country');
       if (userChangedCountry === 'true') {
         const savedCountry = localStorage.getItem('user_country');
-        if (savedCountry) { setDetectedCountry(savedCountry); setFilters(prev => ({ ...prev, country: savedCountry })); }
+        if (savedCountry && savedCountry !== 'Global') {
+          setDetectedCountry(savedCountry);
+          setFilters(prev => ({ ...prev, country: savedCountry }));
+        }
         return;
       }
       const hasVisited = localStorage.getItem('has_visited_jobs');
@@ -250,16 +355,19 @@ export default function JobList({ initialCountry, initialRoleCategory, initialJo
           const response = await fetch('/api/geo');
           const data = await response.json();
           const country = data.country || 'Nigeria';
-          setDetectedCountry(country); setFilters(prev => ({ ...prev, country }));
-          localStorage.setItem('user_country', country);
-          localStorage.setItem('has_visited_jobs', 'true');
+          setDetectedCountry(country);
+          setFilters(prev => ({ ...prev, country }));
         } catch {
-          localStorage.setItem('user_country', 'Nigeria');
-          localStorage.setItem('has_visited_jobs', 'true');
+          setDetectedCountry('Nigeria');
+          setFilters(prev => ({ ...prev, country: 'Nigeria' }));
         }
+        setShowCountryPopup(true);
       } else {
         const savedCountry = localStorage.getItem('user_country');
-        if (savedCountry) { setDetectedCountry(savedCountry); setFilters(prev => ({ ...prev, country: savedCountry })); }
+        if (savedCountry && savedCountry !== 'Global') {
+          setDetectedCountry(savedCountry);
+          setFilters(prev => ({ ...prev, country: savedCountry }));
+        }
       }
     };
     detectCountry();
@@ -301,24 +409,23 @@ export default function JobList({ initialCountry, initialRoleCategory, initialJo
     if (sortParam === 'latest' || sortParam === 'salary') setSortBy(sortParam);
   }, [searchParams]);
 
-  // ── Fetch latest jobs (runs once after auth check) ──────────────────────────
+  // ── Fetch latest jobs ───────────────────────────────────────────────────────
   useEffect(() => {
     if (!authChecked) return;
     if (latestFetchedRef.current) return;
     latestFetchedRef.current = true;
+    if (initialJobs && initialJobs.length > 0) return;
     fetchLatestJobs();
   }, [authChecked]);
 
-  // ── Fetch matches (runs once when matches tab is active + user ready) ────────
+  // ── Fetch matches ───────────────────────────────────────────────────────────
   useEffect(() => {
     if (!authChecked) return;
     if (activeTab !== 'matches') return;
     if (matchesFetchedRef.current) return;
-    // For logged-in users, wait until onboarding data has been attempted
     if (user && userOnboardingData === null) return;
     matchesFetchedRef.current = true;
 
-    // Try localStorage cache first
     try {
       const cachedJobs = localStorage.getItem(STORAGE_KEYS.MATCHES_CACHE);
       const cacheTimestamp = localStorage.getItem(STORAGE_KEYS.MATCHES_CACHE_TS);
@@ -328,23 +435,20 @@ export default function JobList({ initialCountry, initialRoleCategory, initialJo
         const age = Date.now() - parseInt(cacheTimestamp, 10);
         const userMatches = (!user && !cachedUserId) || (user && cachedUserId === user.id);
         if (age < CLIENT_CACHE_DURATION && userMatches) {
-          const parsed = JSON.parse(cachedJobs);
-          setJobs(parsed);
+          setJobs(JSON.parse(cachedJobs));
           return;
         }
       }
-    } catch { /* corrupt cache — fall through */ }
+    } catch { }
 
     fetchJobs();
   }, [authChecked, activeTab, user, userOnboardingData]);
 
-  // ── Reset matches fetch guard when user changes (login/logout) ─────────────
   useEffect(() => {
     matchesFetchedRef.current = false;
     setJobs([]);
   }, [user?.id]);
 
-  // ── Profile / onboarding ────────────────────────────────────────────────────
   const fetchUserProfile = async (u: any) => {
     if (!u) return;
     const { data, error } = await supabase.from('profiles').select('full_name').eq('id', u.id).single();
@@ -368,7 +472,6 @@ export default function JobList({ initialCountry, initialRoleCategory, initialJo
           sector: data.sector || null,
         });
       } else {
-        // No onboarding data — set empty so the matches tab doesn't wait forever
         setUserOnboardingData({
           target_roles: [], cv_skills: [], preferred_locations: [],
           experience_level: null, salary_min: null, salary_max: null,
@@ -380,7 +483,6 @@ export default function JobList({ initialCountry, initialRoleCategory, initialJo
     }
   };
 
-  // ── Job matching ────────────────────────────────────────────────────────────
   const processJobsWithMatching = useCallback(async (jobRows: any[]): Promise<JobUI[]> => {
     if (!userOnboardingData || !user) {
       return jobRows.map((job: any) => transformJobToUI(job, 0, null));
@@ -479,13 +581,11 @@ export default function JobList({ initialCountry, initialRoleCategory, initialJo
     };
   };
 
-  // ── Fetch latest jobs ───────────────────────────────────────────────────────
   const fetchLatestJobs = async (forceRefresh = false) => {
     try {
       setLatestJobsLoading(true);
 
       if (!forceRefresh) {
-        // Check sessionStorage cache + validate against server version
         const sessionCached = sessionStorage.getItem(STORAGE_KEYS.LATEST_JOBS_CACHE);
         const sessionTimestamp = sessionStorage.getItem(STORAGE_KEYS.LATEST_JOBS_CACHE_TS);
         const sessionVersion = sessionStorage.getItem(STORAGE_KEYS.LATEST_JOBS_CACHE_VERSION);
@@ -498,7 +598,7 @@ export default function JobList({ initialCountry, initialRoleCategory, initialJo
               setLatestJobs(parsedJobs);
               setLatestJobsLoading(false);
               return;
-            } catch { /* corrupt — fall through */ }
+            } catch { }
           }
         }
       }
@@ -511,13 +611,12 @@ export default function JobList({ initialCountry, initialRoleCategory, initialJo
       setLatestJobs(allUiJobs);
       setCurrentPage(1);
 
-      // Persist to sessionStorage
       try {
         sessionStorage.setItem(STORAGE_KEYS.LATEST_JOBS_CACHE, JSON.stringify(allUiJobs));
         sessionStorage.setItem(STORAGE_KEYS.LATEST_JOBS_CACHE_TS, Date.now().toString());
         if (cacheVersion) sessionStorage.setItem(STORAGE_KEYS.LATEST_JOBS_CACHE_VERSION, cacheVersion);
       } catch (e) {
-        console.warn('[JobList] sessionStorage write failed (quota?):', e);
+        console.warn('[JobList] sessionStorage write failed:', e);
       }
     } catch (error) {
       console.error('[JobList] Error fetching latest jobs:', error);
@@ -526,12 +625,10 @@ export default function JobList({ initialCountry, initialRoleCategory, initialJo
     }
   };
 
-  // ── Fetch matched jobs ──────────────────────────────────────────────────────
   const fetchJobs = async (forceRefresh = false) => {
     try {
       setLoading(true);
 
-      // Check localStorage cache before hitting the API (mirrors fetchLatestJobs pattern)
       if (!forceRefresh) {
         try {
           const cachedJobs = localStorage.getItem(STORAGE_KEYS.MATCHES_CACHE);
@@ -546,7 +643,7 @@ export default function JobList({ initialCountry, initialRoleCategory, initialJo
               return;
             }
           }
-        } catch { /* corrupt cache — fall through */ }
+        } catch { }
       }
 
       const res = await fetch('/api/jobs');
@@ -561,7 +658,7 @@ export default function JobList({ initialCountry, initialRoleCategory, initialJo
         localStorage.setItem(STORAGE_KEYS.MATCHES_CACHE_TS, Date.now().toString());
         localStorage.setItem(STORAGE_KEYS.MATCHES_CACHE_USER, user?.id || '');
       } catch (e) {
-        console.warn('[JobList] localStorage write failed (quota?):', e);
+        console.warn('[JobList] localStorage write failed:', e);
       }
 
       setJobs(processedJobs);
@@ -572,7 +669,6 @@ export default function JobList({ initialCountry, initialRoleCategory, initialJo
     }
   };
 
-  // ── Saved / applied jobs ────────────────────────────────────────────────────
   const loadSavedJobs = () => {
     if (typeof window === 'undefined') return;
     const saved = localStorage.getItem(STORAGE_KEYS.SAVED_JOBS);
@@ -597,11 +693,9 @@ export default function JobList({ initialCountry, initialRoleCategory, initialJo
     if (typeof window !== 'undefined') localStorage.setItem(STORAGE_KEYS.APPLIED_JOBS, JSON.stringify(newApplied));
   };
 
-  // ── Refresh all caches ──────────────────────────────────────────────────────
   const handleRefreshMatches = async () => {
     setRefreshingMatches(true);
     try {
-      // Clear all client caches
       localStorage.removeItem(STORAGE_KEYS.MATCHES_CACHE);
       localStorage.removeItem(STORAGE_KEYS.MATCHES_CACHE_TS);
       localStorage.removeItem(STORAGE_KEYS.MATCHES_CACHE_USER);
@@ -628,14 +722,41 @@ export default function JobList({ initialCountry, initialRoleCategory, initialJo
     }
   };
 
-  // ── Match breakdown ─────────────────────────────────────────────────────────
   const handleShowBreakdown = (job: JobUI) => {
     const breakdown = job.breakdown || { rolesScore: 0, rolesReason: '', skillsScore: 0, skillsReason: '', sectorScore: 0, sectorReason: '', locationScore: 0, experienceScore: 0, salaryScore: 0, typeScore: 0 };
     setMatchModalData({ breakdown, totalScore: job.calculatedTotal || job.match || 0, jobTitle: job.title, companyName: job.company });
     setMatchModalOpen(true);
   };
 
-  // ── Filtering ───────────────────────────────────────────────────────────────
+  const handleCountryPopupSave = (country: string) => {
+    const isGlobal = !country || country === 'Global';
+    if (isGlobal) {
+      setFilters(prev => ({ ...prev, country: '', location: [] }));
+      setDetectedCountry('');
+      localStorage.setItem('user_country', 'Global');
+    } else {
+      setFilters(prev => ({ ...prev, country }));
+      setDetectedCountry(country);
+      localStorage.setItem('user_country', country);
+    }
+    localStorage.setItem('user_changed_country', 'true');
+    localStorage.setItem('has_visited_jobs', 'true');
+    setShowCountryPopup(false);
+    const params = new URLSearchParams(searchParams.toString());
+    isGlobal ? params.delete('country') : params.set('country', country);
+    router.replace(params.toString() ? `${pathname}?${params.toString()}` : pathname);
+  };
+
+  const clearAllFilters = () => {
+    setFilters({ search: '', location: [], sector: [], employmentType: [], salaryRange: undefined, remote: false, country: '', roleCategory: '', jobType: '', state: '', town: '' });
+    setSearchQuery('');
+    localStorage.setItem('user_changed_country', 'false');
+    const params = new URLSearchParams();
+    if (sortBy !== 'latest') params.set('sort', sortBy);
+    const qs = params.toString();
+    router.replace(qs ? `${pathname}?${qs}` : pathname);
+  };
+
   const filteredJobs = useMemo(() => {
     if (activeTab !== 'latest') return [];
     if (latestJobsLoading && latestJobs.length === 0) return [];
@@ -767,16 +888,6 @@ export default function JobList({ initialCountry, initialRoleCategory, initialJo
     return count;
   };
 
-  const clearAllFilters = () => {
-    setFilters({ search: '', location: [], sector: [], employmentType: [], salaryRange: undefined, remote: false, country: '', roleCategory: '', jobType: '', state: '', town: '' });
-    setSearchQuery('');
-    localStorage.setItem('user_changed_country', 'false');
-    const params = new URLSearchParams();
-    if (sortBy !== 'latest') params.set('sort', sortBy);
-    const qs = params.toString();
-    router.replace(qs ? `${pathname}?${qs}` : pathname);
-  };
-
   return (
     <>
       <OrganizationSchema />
@@ -850,15 +961,22 @@ export default function JobList({ initialCountry, initialRoleCategory, initialJo
               )}
             </div>
 
-            {/* Country select */}
-            <div className="flex flex-row items-center gap-2">
+            {/* Country select + Upload CV Button — same line on mobile and desktop */}
+            <div className="flex flex-row items-center gap-3">
               <div className="flex-1 relative flex items-center gap-2">
                 <Globe size={16} className="shrink-0" style={{ color: theme.colors.text.secondary }} />
-                <select value={filters.country || detectedCountry || ''}
+                <select value={filters.country || detectedCountry || 'Global'}
                   onChange={(e) => {
                     const v = e.target.value;
-                    if (v === 'Global') { setFilters(prev => ({ ...prev, country: '', location: [] })); localStorage.setItem('user_country', 'Global'); }
-                    else if (v) { setFilters(prev => ({ ...prev, country: v, location: v === 'Nigeria' ? prev.location : [] })); localStorage.setItem('user_country', v); }
+                    if (v === 'Global') {
+                      setFilters(prev => ({ ...prev, country: '', location: [] }));
+                      setDetectedCountry('');
+                      localStorage.setItem('user_country', 'Global');
+                    } else if (v) {
+                      setFilters(prev => ({ ...prev, country: v, location: v === 'Nigeria' ? prev.location : [] }));
+                      setDetectedCountry(v);
+                      localStorage.setItem('user_country', v);
+                    }
                     localStorage.setItem('user_changed_country', 'true');
                     const params = new URLSearchParams(searchParams.toString());
                     v && v !== 'Global' ? params.set('country', v) : params.delete('country');
@@ -937,26 +1055,34 @@ export default function JobList({ initialCountry, initialRoleCategory, initialJo
                   <option value="Zimbabwe">Zimbabwe</option>
                 </select>
               </div>
+
+              {!user && (
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="px-5 py-2.5 rounded-lg font-medium text-sm whitespace-nowrap flex items-center gap-2 transition-all hover:opacity-90 active:scale-95 flex-shrink-0"
+                  style={{ backgroundColor: theme.colors.primary.DEFAULT, color: '#ffffff', height: '42px' }}
+                >
+                  <FileText size={16} />
+                  Upload CV: Get Matched
+                </button>
+              )}
             </div>
 
-            {/* Loading indicator */}
-            {latestJobsLoading && latestJobs.length === 0 && (
-              <div className="flex items-center justify-center gap-2 py-2">
-                <div className="w-5 h-5 border-2 border-gray-200 border-t-blue-500 rounded-full animate-spin"></div>
-                <span className="text-sm" style={{ color: theme.colors.text.secondary }}>Finding the latest jobs for you...</span>
-              </div>
-            )}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,image/jpeg,image/jpg,image/png"
+              onChange={handleCVChange}
+              className="hidden"
+            />
 
-            {/* Category chips */}
-            <div className="flex gap-2 overflow-x-auto pb-2 md:flex-wrap md:overflow-visible md:justify-center scrollbar-hide">
-              {categories.filter(cat => {
-                if (cat.id === 'nysc' || cat.id === 'accommodation') return detectedCountry === 'NG';
-                return true;
-              }).map(cat => { const Icon = cat.icon; return (
-                <a key={cat.id} href={cat.url} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-blue-600 text-white hover:bg-blue-700 transition-colors whitespace-nowrap">
-                  <Icon size={12} />{cat.label}
-                </a>
-              ); })}
+            {/* Ad: Under location dropdown — always visible */}
+            <div className="w-full overflow-hidden" style={{ margin: 0, padding: '3px 0' }}>
+              <AdUnit
+                slot={AD_SLOTS.DISPLAY_TOP}
+                format="auto"
+                style={{ display: 'block', height: '100px' }}
+              />
             </div>
 
             {/* Results count + sort + refresh */}
@@ -1000,134 +1126,245 @@ export default function JobList({ initialCountry, initialRoleCategory, initialJo
               if (sortBy !== 'latest') params.set('sort', sortBy);
               router.replace(params.toString() ? `${pathname}?${params.toString()}` : pathname);
             }} isOpen={filtersOpen} onToggle={() => setFiltersOpen(!filtersOpen)} />
-          </div>
-        )}
 
-        {/* Matches tab header */}
-        {activeTab === 'matches' && (
-          <div className="px-6 py-6">
-            <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-xl p-4 border border-green-100">
-              <div className="flex items-center justify-between gap-4">
-                <div className="flex-1">
-                  <h3 className="font-semibold text-lg mb-1" style={{ color: theme.colors.text.primary }}>Your Personalized Matches</h3>
-                  <p className="text-sm" style={{ color: theme.colors.text.secondary }}>
-                    {loading ? <span className="flex items-center gap-2"><RefreshCw size={14} className="animate-spin" />Calculating your match scores...</span>
-                      : <>Found <span className="font-semibold text-green-600">{matchedJobs.length}</span> job{matchedJobs.length !== 1 ? 's' : ''} that match your profile</>}
-                  </p>
-                  {!loading && matchedJobs.length > 0 && <p className="text-xs mt-2" style={{ color: theme.colors.text.muted }}>Jobs are sorted by how well they match your skills, experience, and preferences</p>}
-                </div>
-                {user && (
-                  <button onClick={handleRefreshMatches} className="flex items-center gap-2 px-3 py-2 text-sm bg-white rounded-lg border border-gray-200 hover:border-green-300 hover:bg-green-50 transition-all" disabled={refreshingMatches}>
-                    <RefreshCw size={14} className={refreshingMatches ? 'animate-spin' : ''} />Refresh
-                  </button>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Job list */}
-        <div className="px-6 py-4">
-          {activeTab === 'latest' && (
-            <>
-              {sortedJobs.length === 0 && !latestJobsLoading ? (
-                <div className="flex flex-col items-center justify-center py-16 text-center max-w-md mx-auto">
-                  <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4"><Search size={24} style={{ color: theme.colors.text.muted }} /></div>
-                  <h3 className="text-lg font-semibold mb-2" style={{ color: theme.colors.text.primary }}>{filters.search ? 'No matching jobs found' : 'No jobs available'}</h3>
-                  <p className="text-sm mb-4" style={{ color: theme.colors.text.secondary }}>{filters.search ? 'Try adjusting your search terms or filters to find more opportunities' : 'Check back later for new job postings'}</p>
-                  {hasActiveFilters() && <button onClick={clearAllFilters} className="px-4 py-2 text-sm bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors font-medium">Clear filters</button>}
-                </div>
-              ) : (
+            {/* Job list */}
+            <div className="px-6 py-4">
+              {activeTab === 'latest' && (
                 <>
-                  {paginatedJobs.map((job, index) => (
-                    <React.Fragment key={job.id}>
-                      {/* ── Banner ad before the very first job card ── */}
-                      {index === 0 && (
-                        <div className="mb-4 w-full overflow-hidden rounded-lg">
-                          <AdUnit slot={AD_SLOTS.BANNER} format="auto" />
-                        </div>
-                      )}
+                  {sortedJobs.length === 0 && !latestJobsLoading ? (
+                    <div className="flex flex-col items-center justify-center py-16 text-center max-w-md mx-auto">
+                      <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4"><Search size={24} style={{ color: theme.colors.text.muted }} /></div>
+                      <h3 className="text-lg font-semibold mb-2" style={{ color: theme.colors.text.primary }}>{filters.search ? 'No matching jobs found' : 'No jobs available'}</h3>
+                      <p className="text-sm mb-4" style={{ color: theme.colors.text.secondary }}>{filters.search ? 'Try adjusting your search terms or filters to find more opportunities' : 'Try again or check your internet connection'}</p>
+                      {hasActiveFilters() && <button onClick={clearAllFilters} className="px-4 py-2 text-sm bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors font-medium">Clear filters</button>}
+                    </div>
+                  ) : (
+                    <>
+                      {paginatedJobs.map((job, index) => (
+                        <React.Fragment key={job.id}>
+                          <JobCard job={job} savedJobs={savedJobs} appliedJobs={appliedJobs} onSave={handleSave} onApply={handleApply} onShowBreakdown={handleShowBreakdown} showMatch={false} />
 
-                      <JobCard job={job} savedJobs={savedJobs} appliedJobs={appliedJobs} onSave={handleSave} onApply={handleApply} onShowBreakdown={handleShowBreakdown} showMatch={false} />
+                          {/* Ad after job card #1 */}
+                          {index === 0 && (
+                            <div className="w-full overflow-hidden" style={{ margin: 0, padding: '3px 0' }}>
+                              <AdUnit slot={AD_SLOTS.BANNER} format="auto" style={{ display: 'block' }} />
+                            </div>
+                          )}
 
-                      {/* ── In-feed ad after every 5th job, skip the very last card ── */}
-                      {(index + 1) % 5 === 0 && index !== paginatedJobs.length - 1 && (
-                        <div className="my-3 w-full overflow-hidden rounded-lg">
-                          <AdUnit
-                            slot={AD_SLOTS.IN_FEED}
-                            format="fluid"
-                            layoutKey={AD_SLOTS.IN_FEED_LAYOUT_KEY}
-                          />
-                        </div>
+                          {/* Ad after every 5th job card: card 5, 10, 15, 20 (index 4,9,14,19) */}
+                          {(index + 1) % 5 === 0 && (
+                            <div className="w-full overflow-hidden" style={{ margin: 0, padding: '3px 0' }}>
+                              <AdUnit
+                                key={`infeed-${currentPage}-${index}`}
+                                slot={AD_SLOTS.IN_FEED}
+                                format="fluid"
+                                layoutKey={AD_SLOTS.IN_FEED_LAYOUT_KEY}
+                                style={{ display: 'block' }}
+                              />
+                            </div>
+                          )}
+                        </React.Fragment>
+                      ))}
+                      {latestJobsLoading && paginatedJobs.length === 0 && (
+                        <div className="flex items-center justify-center py-6"><p style={{ color: theme.colors.text.secondary }}>Loading jobs...</p></div>
                       )}
-                    </React.Fragment>
-                  ))}
-                  {latestJobsLoading && paginatedJobs.length === 0 && (
-                    <div className="flex items-center justify-center py-6"><p style={{ color: theme.colors.text.secondary }}>Loading jobs...</p></div>
+                    </>
+                  )}
+
+                  {/* Display bottom ad before pagination — 320x250 mobile, 728x90 desktop */}
+                  {!latestJobsLoading && sortedJobs.length > 0 && (
+                    <div className="w-full flex justify-center overflow-hidden" style={{ margin: 0, padding: '3px 0' }}>
+                      {/* Mobile: 320x250 */}
+                      <div className="block lg:hidden" style={{ width: '320px', height: '250px' }}>
+                        <AdUnit
+                          key={`display-bottom-mobile-${currentPage}`}
+                          slot={AD_SLOTS.DISPLAY_BOTTOM}
+                          format="fixed"
+                          style={{ display: 'inline-block', width: '320px', height: '250px' }}
+                        />
+                      </div>
+                      {/* Desktop: leaderboard */}
+                      <div className="hidden lg:block" style={{ width: '728px', height: '90px' }}>
+                        <AdUnit
+                          key={`display-bottom-desktop-${currentPage}`}
+                          slot={AD_SLOTS.DISPLAY_BOTTOM}
+                          format="fixed"
+                          style={{ display: 'inline-block', width: '728px', height: '90px' }}
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {totalPages > 1 && !latestJobsLoading && (
+                    <div className="flex items-center justify-center py-6 space-x-2">
+                      <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1}
+                        className="px-3 py-2 text-sm font-medium rounded-lg border transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        style={{ borderColor: theme.colors.border.DEFAULT, color: currentPage === 1 ? theme.colors.text.muted : theme.colors.text.primary, backgroundColor: currentPage === 1 ? theme.colors.background.muted : 'transparent' }}>
+                        Previous
+                      </button>
+                      <div className="flex items-center space-x-1">
+                        {(() => { const pages = []; const max = 5; let start = Math.max(1, currentPage - Math.floor(max / 2)); let end = Math.min(totalPages, start + max - 1); if (end - start + 1 < max) start = Math.max(1, end - max + 1);
+                          for (let i = start; i <= end; i++) pages.push(<button key={i} onClick={() => setCurrentPage(i)} className={`px-3 py-2 text-sm font-medium rounded-lg transition-colors ${currentPage === i ? 'text-white' : 'text-gray-700 hover:bg-gray-100'}`} style={{ backgroundColor: currentPage === i ? theme.colors.primary.DEFAULT : 'transparent' }}>{i}</button>);
+                          return pages; })()}
+                      </div>
+                      <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages}
+                        className="px-3 py-2 text-sm font-medium rounded-lg border transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        style={{ borderColor: theme.colors.border.DEFAULT, color: currentPage === totalPages ? theme.colors.text.muted : theme.colors.text.primary, backgroundColor: currentPage === totalPages ? theme.colors.background.muted : 'transparent' }}>
+                        Next
+                      </button>
+                    </div>
                   )}
                 </>
               )}
 
-              {/* ── Banner ad above pagination ── */}
-              {totalPages > 1 && !latestJobsLoading && sortedJobs.length > 0 && (
-                <div className="mt-6 mb-2 w-full overflow-hidden rounded-lg">
-                  <AdUnit slot={AD_SLOTS.BANNER} format="auto" />
-                </div>
-              )}
+              {activeTab === 'matches' && (
+                <>
+                  {loading ? (
+                    <div className="flex flex-col items-center justify-center py-16">
+                      <div className="w-12 h-12 border-3 border-gray-200 border-t-green-500 rounded-full animate-spin mb-4"></div>
+                      <p style={{ color: theme.colors.text.secondary }}>Analyzing jobs for your perfect match...</p>
+                    </div>
+                  ) : matchedJobs.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-16 text-center max-w-md mx-auto">
+                      <div className="w-16 h-16 bg-orange-50 rounded-full flex items-center justify-center mb-4"><Search size={24} style={{ color: theme.colors.warning }} /></div>
+                      <h3 className="text-lg font-semibold mb-2" style={{ color: theme.colors.text.primary }}>No matches found yet</h3>
+                      <p className="text-sm mb-4" style={{ color: theme.colors.text.secondary }}>{user ? 'Update your profile to improve matching or check back later for new opportunities' : 'Create an account to get personalized job matches based on your profile'}</p>
+                      {user ? <button onClick={() => router.push('/onboarding')} className="px-4 py-2 text-sm bg-orange-50 text-orange-600 rounded-lg hover:bg-orange-100 transition-colors font-medium">Update Profile</button>
+                        : <button onClick={() => setAuthModalOpen(true)} className="px-4 py-2 text-sm bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors font-medium">Sign Up Free</button>}
+                    </div>
+                  ) : (
+                    matchedJobs.map((job, index) => (
+                      <React.Fragment key={job.id}>
+                        <JobCard job={job} savedJobs={savedJobs} appliedJobs={appliedJobs} onSave={handleSave} onApply={handleApply} onShowBreakdown={handleShowBreakdown} showMatch={true} />
 
-              {totalPages > 1 && !latestJobsLoading && (
-                <div className="flex items-center justify-center py-6 space-x-2">
-                  <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1}
-                    className="px-3 py-2 text-sm font-medium rounded-lg border transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    style={{ borderColor: theme.colors.border.DEFAULT, color: currentPage === 1 ? theme.colors.text.muted : theme.colors.text.primary, backgroundColor: currentPage === 1 ? theme.colors.background.muted : 'transparent' }}>
-                    Previous
-                  </button>
-                  <div className="flex items-center space-x-1">
-                    {(() => { const pages = []; const max = 5; let start = Math.max(1, currentPage - Math.floor(max / 2)); let end = Math.min(totalPages, start + max - 1); if (end - start + 1 < max) start = Math.max(1, end - max + 1);
-                      for (let i = start; i <= end; i++) pages.push(<button key={i} onClick={() => setCurrentPage(i)} className={`px-3 py-2 text-sm font-medium rounded-lg transition-colors ${currentPage === i ? 'text-white' : 'text-gray-700 hover:bg-gray-100'}`} style={{ backgroundColor: currentPage === i ? theme.colors.primary.DEFAULT : 'transparent' }}>{i}</button>);
-                      return pages; })()}
-                  </div>
-                  <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages}
-                    className="px-3 py-2 text-sm font-medium rounded-lg border transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    style={{ borderColor: theme.colors.border.DEFAULT, color: currentPage === totalPages ? theme.colors.text.muted : theme.colors.text.primary, backgroundColor: currentPage === totalPages ? theme.colors.background.muted : 'transparent' }}>
-                    Next
-                  </button>
-                </div>
-              )}
-            </>
-          )}
+                        {/* Ad after job card #1 */}
+                        {index === 0 && (
+                          <div className="w-full overflow-hidden" style={{ margin: 0, padding: '3px 0' }}>
+                            <AdUnit slot={AD_SLOTS.BANNER} format="auto" style={{ display: 'block' }} />
+                          </div>
+                        )}
 
-          {activeTab === 'matches' && (
-            <>
-              {loading ? (
-                <div className="flex flex-col items-center justify-center py-16">
-                  <div className="w-12 h-12 border-3 border-gray-200 border-t-green-500 rounded-full animate-spin mb-4"></div>
-                  <p style={{ color: theme.colors.text.secondary }}>Analyzing jobs for your perfect match...</p>
-                </div>
-              ) : matchedJobs.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-16 text-center max-w-md mx-auto">
-                  <div className="w-16 h-16 bg-orange-50 rounded-full flex items-center justify-center mb-4"><Search size={24} style={{ color: theme.colors.warning }} /></div>
-                  <h3 className="text-lg font-semibold mb-2" style={{ color: theme.colors.text.primary }}>No matches found yet</h3>
-                  <p className="text-sm mb-4" style={{ color: theme.colors.text.secondary }}>{user ? 'Update your profile to improve matching or check back later for new opportunities' : 'Create an account to get personalized job matches based on your profile'}</p>
-                  {user ? <button onClick={() => router.push('/onboarding')} className="px-4 py-2 text-sm bg-orange-50 text-orange-600 rounded-lg hover:bg-orange-100 transition-colors font-medium">Update Profile</button>
-                    : <button onClick={() => setAuthModalOpen(true)} className="px-4 py-2 text-sm bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors font-medium">Sign Up Free</button>}
-                </div>
-              ) : (
-                matchedJobs.map((job) => (
-                  <React.Fragment key={job.id}>
-                    <JobCard job={job} savedJobs={savedJobs} appliedJobs={appliedJobs} onSave={handleSave} onApply={handleApply} onShowBreakdown={handleShowBreakdown} showMatch={true} />
-                  </React.Fragment>
-                ))
+                        {/* Ad after every 5th job card: card 5, 10, 15, 20 (index 4,9,14,19) */}
+                        {(index + 1) % 5 === 0 && (
+                          <div className="w-full overflow-hidden" style={{ margin: 0, padding: '3px 0' }}>
+                            <AdUnit
+                              key={`infeed-match-${index}`}
+                              slot={AD_SLOTS.IN_FEED}
+                              format="fluid"
+                              layoutKey={AD_SLOTS.IN_FEED_LAYOUT_KEY}
+                              style={{ display: 'block' }}
+                            />
+                          </div>
+                        )}
+                      </React.Fragment>
+                    ))
+                  )}
+                </>
               )}
-            </>
-          )}
-        </div>
+            </div>
+          </div>
+        )}
+
+        {/* First-visit country selection popup */}
+        {showCountryPopup && (
+          <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+            <div className="w-full max-w-sm rounded-2xl p-6 shadow-2xl" style={{ backgroundColor: theme.colors.background.DEFAULT }}>
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center shrink-0">
+                  <Globe size={20} className="text-blue-600" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-bold" style={{ color: theme.colors.text.primary }}>Where are you based?</h2>
+                  <p className="text-sm" style={{ color: theme.colors.text.secondary }}>We'll show you the most relevant jobs</p>
+                </div>
+              </div>
+
+              <select
+                defaultValue={detectedCountry || 'Nigeria'}
+                id="country-popup-select"
+                className="w-full mt-4 px-4 py-3 rounded-xl border-2 font-medium text-sm focus:outline-none focus:border-blue-500 transition-colors"
+                style={{ backgroundColor: theme.colors.background.muted, borderColor: theme.colors.border.DEFAULT, color: theme.colors.text.primary }}
+              >
+                <option value="Global">🌍 Global (show all countries)</option>
+                <option value="Nigeria">🇳🇬 Nigeria</option>
+                <option value="United States">🇺🇸 United States</option>
+                <option value="United Kingdom">🇬🇧 United Kingdom</option>
+                <option value="Canada">🇨🇦 Canada</option>
+                <option value="Australia">🇦🇺 Australia</option>
+                <option value="Germany">🇩🇪 Germany</option>
+                <option value="France">🇫🇷 France</option>
+                <option value="India">🇮🇳 India</option>
+                <option value="Kenya">🇰🇪 Kenya</option>
+                <option value="South Africa">🇿🇦 South Africa</option>
+                <option value="Ghana">🇬🇭 Ghana</option>
+                <option value="United Arab Emirates">🇦🇪 United Arab Emirates</option>
+                <option value="Saudi Arabia">🇸🇦 Saudi Arabia</option>
+                <option value="Singapore">🇸🇬 Singapore</option>
+                <option value="Netherlands">🇳🇱 Netherlands</option>
+                <option value="Spain">🇪🇸 Spain</option>
+                <option value="Italy">🇮🇹 Italy</option>
+                <option value="Brazil">🇧🇷 Brazil</option>
+                <option value="Mexico">🇲🇽 Mexico</option>
+                <option value="Japan">🇯🇵 Japan</option>
+                <option value="China">🇨🇳 China</option>
+                <option value="Ireland">🇮🇪 Ireland</option>
+                <option value="Switzerland">🇨🇭 Switzerland</option>
+                <option value="Sweden">🇸🇪 Sweden</option>
+                <option value="Norway">🇳🇴 Norway</option>
+                <option value="Denmark">🇩🇰 Denmark</option>
+                <option value="Finland">🇫🇮 Finland</option>
+                <option value="Poland">🇵🇱 Poland</option>
+                <option value="Portugal">🇵🇹 Portugal</option>
+                <option value="Belgium">🇧🇪 Belgium</option>
+                <option value="Austria">🇦🇹 Austria</option>
+                <option value="New Zealand">🇳🇿 New Zealand</option>
+                <option value="Israel">🇮🇱 Israel</option>
+                <option value="Malaysia">🇲🇾 Malaysia</option>
+                <option value="Philippines">🇵🇭 Philippines</option>
+                <option value="Indonesia">🇮🇩 Indonesia</option>
+                <option value="Thailand">🇹🇭 Thailand</option>
+                <option value="Vietnam">🇻🇳 Vietnam</option>
+                <option value="South Korea">🇰🇷 South Korea</option>
+                <option value="Egypt">🇪🇬 Egypt</option>
+                <option value="Pakistan">🇵🇰 Pakistan</option>
+                <option value="Bangladesh">🇧🇩 Bangladesh</option>
+                <option value="Morocco">🇲🇦 Morocco</option>
+                <option value="Tanzania">🇹🇿 Tanzania</option>
+                <option value="Ethiopia">🇪🇹 Ethiopia</option>
+                <option value="Qatar">🇶🇦 Qatar</option>
+                <option value="Kuwait">🇰🇼 Kuwait</option>
+                <option value="Oman">🇴🇲 Oman</option>
+                <option value="Jordan">🇯🇴 Jordan</option>
+                <option value="Lebanon">🇱🇧 Lebanon</option>
+              </select>
+
+              <button
+                onClick={() => {
+                  const sel = (document.getElementById('country-popup-select') as HTMLSelectElement)?.value;
+                  handleCountryPopupSave(sel || 'Global');
+                }}
+                className="w-full mt-4 py-3 rounded-xl font-semibold text-white text-sm transition-all hover:opacity-90 active:scale-95"
+                style={{ backgroundColor: theme.colors.primary.DEFAULT }}
+              >
+                Show Jobs
+              </button>
+
+              <button
+                onClick={() => handleCountryPopupSave('Global')}
+                className="w-full mt-2 py-2 text-sm font-medium transition-colors"
+                style={{ color: theme.colors.text.muted }}
+              >
+                Skip — show all countries
+              </button>
+            </div>
+          </div>
+        )}
+
+        <MatchBreakdownModal open={matchModalOpen} onClose={() => setMatchModalOpen(false)} data={matchModalData} />
+        <AuthModal open={authModalOpen} onOpenChange={setAuthModalOpen} />
+        <CreateCVModal isOpen={cvModalOpen} onClose={() => setCvModalOpen(false)} onComplete={(cvId) => router.push(`/cv/view/${cvId}`)} />
+        <CreateCoverLetterModal isOpen={coverLetterModalOpen} onClose={() => setCoverLetterModalOpen(false)} onComplete={(coverLetterId) => router.push(`/cv/view/${coverLetterId}`)} />
       </div>
-
-      <MatchBreakdownModal open={matchModalOpen} onClose={() => setMatchModalOpen(false)} data={matchModalData} />
-      <AuthModal open={authModalOpen} onOpenChange={setAuthModalOpen} />
-      <CreateCVModal isOpen={cvModalOpen} onClose={() => setCvModalOpen(false)} onComplete={(cvId) => router.push(`/cv/view/${cvId}`)} />
-      <CreateCoverLetterModal isOpen={coverLetterModalOpen} onClose={() => setCoverLetterModalOpen(false)} onComplete={(coverLetterId) => router.push(`/cv/view/${coverLetterId}`)} />
     </>
   );
 }

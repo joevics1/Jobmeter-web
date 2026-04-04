@@ -1,4 +1,3 @@
-// 📁 app/tools/quiz/page.tsx
 import React from 'react';
 import { Metadata } from 'next';
 import { COMPANIES } from '@/lib/quizCompanies';
@@ -112,47 +111,14 @@ const webAppSchema = {
   }
 };
 
-// Helper: inject an ad after every N items in a list
-function intersperse<T>(items: T[], every: number, getAd: (i: number) => React.ReactNode): React.ReactNode[] {
-  const result: React.ReactNode[] = [];
-  items.forEach((item, idx) => {
-    result.push(item as React.ReactNode);
-    if ((idx + 1) % every === 0 && idx !== items.length - 1) {
-      result.push(
-        <div key={`ad-${idx}`} className="col-span-3 sm:col-span-4 md:col-span-5">
-          {getAd(idx)}
-        </div>
-      );
-    }
-  });
-  return result;
-}
-
 export default function QuizPage() {
-  // Build company card nodes
   const companyNodes = COMPANIES.map((company) => (
     <CompanyCard key={company} company={company} />
   ));
 
-  // Interleave ads every 4 rows.
-  // Grid is 3 cols on mobile → 4 rows = 12 items. Use 12 so the ad always fires
-  // after 4 visible rows on the smallest screen (on wider screens it lands mid-grid
-  // which is still a natural break and better than never firing on short lists).
-  const CARDS_PER_AD = 12;
-  const cardGridContent: React.ReactNode[] = [];
-  companyNodes.forEach((node, idx) => {
-    cardGridContent.push(node);
-    if ((idx + 1) % CARDS_PER_AD === 0 && idx !== companyNodes.length - 1) {
-      cardGridContent.push(
-        <div key={`grid-ad-${idx}`} className="col-span-3 sm:col-span-4 md:col-span-5 py-1">
-          <AdUnit slot="9751041788" format="auto" />
-        </div>
-      );
-    }
-  });
-
   return (
     <>
+      {/* JSON-LD Structured Data */}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
@@ -194,10 +160,7 @@ export default function QuizPage() {
               </div>
             </div>
 
-            {/* ── Ads: after How It Works, before company cards ───────────── */}
-            <div className="mb-4">
-              <AdUnit slot="9751041788" format="auto" />
-            </div>
+            {/* ── Ad 1: After How It Works ── */}
             <div className="mb-6">
               <AdUnit slot="4198231153" format="auto" />
             </div>
@@ -207,14 +170,14 @@ export default function QuizPage() {
               <h2 className="text-lg font-bold text-gray-900">Select a Company</h2>
             </div>
 
-            {/* Company card grid — ad injected every 20 cards (≈4 rows on 5-col) */}
+            {/* Company Cards Grid — NO ADS IN BETWEEN */}
             <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
-              {cardGridContent}
+              {companyNodes}
             </div>
 
-            {/* ── Ad: bottom of company grid ───────────────────────────────── */}
-            <div className="mt-4 mb-4">
-              <AdUnit slot="4198231153" format="auto" />
+            {/* ── Ad 2: After Company Cards ── */}
+            <div className="mt-8 mb-6">
+              <AdUnit slot="9751041788" format="auto" />
             </div>
 
             <p className="text-xs text-gray-500 text-center mt-2 mb-6">
@@ -304,43 +267,28 @@ export default function QuizPage() {
               <p className="mb-2"><strong>Review every error.</strong> Use our AI feedback to understand not just the correct answer, but why alternative options are wrong.</p>
               <p className="mb-6"><strong>Simulate full assessments.</strong> Complete both objective and theory sections together to build the stamina needed for a real recruitment day.</p>
 
-              <h3 className="text-xl font-bold text-gray-900 mt-8 mb-3">Frequently Asked Questions</h3>
-
-              <p className="mb-1"><strong>What is an aptitude test for interview?</strong></p>
-              <p className="mb-4">A timed, standardized assessment used by employers to measure reasoning, problem-solving, and judgment. Used by over 90% of top-tier employers, covering numerical, verbal, logical, and situational judgment sections.</p>
-
-              <p className="mb-1"><strong>How do I access KPMG aptitude test practice?</strong></p>
-              <p className="mb-4">Select KPMG from the company list above for 20 multiple-choice questions styled around the KPMG graduate program test, plus 5 AI-graded theory essays covering numerical, verbal, and SJT content for global and Nigeria-specific recruitment.</p>
-
-              <p className="mb-1"><strong>Where can I find Deloitte aptitude test questions and answers PDF?</strong></p>
-              <p className="mb-4">Our platform provides structured practice equivalent to a Deloitte aptitude test questions and answers PDF, with detailed explanations for every question. Premium members can download practice packs for offline use.</p>
-
-              <p className="mb-1"><strong>What does PwC aptitude test practice include?</strong></p>
-              <p className="mb-4">Numerical reasoning, verbal reasoning, and PwC technical assessment essay questions, AI-graded against the clarity, structure, and insight criteria that assessors look for in real PwC evaluations.</p>
-
-              <p className="mb-1"><strong>Why is a password required for theory tests?</strong></p>
-              <p className="mb-4">The password requirement mirrors the secure, proctored environment of actual recruitment theory tests — just as Deloitte, PwC, and other firms secure their written components.</p>
-
-              <p className="mb-1"><strong>How many questions are in each test?</strong></p>
-              <p className="mb-6">Every test includes <strong>20 objective multiple-choice questions</strong> and <strong>5 theory essay questions</strong>. Objective tests are timed to match real employer conditions. Essays are AI-graded with immediate, structured feedback.</p>
-
             </div>
           </div>
         </div>
       </div>
 
-      {/* ── Mobile anchor ad (fixed bottom, hidden on desktop) ─────────── */}
+      {/* ── Mobile Anchor Ad (50px) ─────────── */}
+      <div className="h-14 lg:hidden"></div>   {/* spacer to prevent content overlap */}
+
       <div
         className="fixed bottom-0 left-0 right-0 z-40 lg:hidden bg-white border-t border-gray-100"
         style={{ height: '50px', overflow: 'hidden' }}
       >
-        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '50px', overflow: 'hidden' }}>
-          <AdUnit
-            slot="3349195672"
-            format="auto"
-            style={{ display: 'block', width: '100%', height: '50px', maxHeight: '50px', overflow: 'hidden' }}
-          />
-        </div>
+        <AdUnit
+          slot="3349195672"
+          format="auto"
+          style={{ 
+            display: 'block', 
+            width: '100%', 
+            height: '50px', 
+            maxHeight: '50px' 
+          }}
+        />
       </div>
     </>
   );

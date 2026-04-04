@@ -8,7 +8,6 @@ import { Button } from '@/components/ui/button';
 import CreateCVModal from '@/components/cv/CreateCVModal';
 import CreateCoverLetterModal from '@/components/cv/CreateCoverLetterModal';
 import Link from 'next/link';
-import AdUnit from '@/components/ads/AdUnit';
 
 interface CVDocument {
   id: string;
@@ -632,14 +631,6 @@ export default function CVListPage() {
           "aggregateRating": { "@type": "AggregateRating", "ratingValue": "4.8", "ratingCount": "2400" }
         })}} />
 
-      </div>
-
-      <AdUnit slot="9751041788" format="auto" />
-
-      <div className="fixed bottom-0 left-0 right-0 z-40 lg:hidden bg-white border-t border-gray-100" style={{ height: '50px', overflow: 'hidden' }}>
-        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '50px', overflow: 'hidden' }}>
-          <AdUnit slot="3349195672" format="auto" style={{ display: 'block', width: '100%', height: '50px', maxHeight: '50px', overflow: 'hidden' }} />
-        </div>
       </div>
     </div>
   );

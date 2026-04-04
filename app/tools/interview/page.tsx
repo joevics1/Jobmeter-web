@@ -1,11 +1,55 @@
-import Link from 'next/link';
-import { ArrowLeft, MessageCircle } from 'lucide-react';
-import InterviewClient from './InterviewClient';
-import AdUnit from '@/components/ads/AdUnit';
+'use client';
 
-export const revalidate = false;
+import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { ArrowLeft, Plus, MessageCircle, FileCheck, Clock, TrendingUp } from 'lucide-react';
+import Link from 'next/link';
+import { theme } from '@/lib/theme';
+import { InterviewPrepService, InterviewSession } from '@/lib/services/interviewPrepService';
+import InterviewPrepModal from '@/components/tools/InterviewPrepModal';
 
 export default function InterviewPage() {
+  const router = useRouter();
+  const [sessionHistory, setSessionHistory] = useState<InterviewSession[]>([]);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadSessionHistory();
+  }, []);
+
+  const loadSessionHistory = () => {
+    try {
+      const history = InterviewPrepService.getHistory();
+      // Ensure all sessions have a chat array (migration for old sessions)
+      const cleanedHistory = history.map(session => ({
+        ...session,
+        chat: session.chat || [],
+      }));
+      setSessionHistory(cleanedHistory);
+    } catch (error) {
+      console.error('Error loading session history:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const formatDate = (timestamp: number) => {
+    return new Date(timestamp).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -13,7 +57,10 @@ export default function InterviewPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <Link href="/tools" className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+              <Link
+                href="/tools"
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              >
                 <ArrowLeft size={20} className="text-gray-600" />
               </Link>
               <div>
@@ -23,7 +70,12 @@ export default function InterviewPage() {
                 </p>
               </div>
             </div>
-            <div className="w-10 h-10" />
+            <button
+              onClick={() => setModalOpen(true)}
+              className="flex items-center justify-center w-10 h-10 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+            >
+              <Plus size={20} />
+            </button>
           </div>
         </div>
       </div>
@@ -53,17 +105,114 @@ export default function InterviewPage() {
         </div>
       </div>
 
-      {/* Ad 1: Display Top - After How It Works */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <AdUnit slot="4198231153" format="auto" />
-      </div>
-
-      {/* Main Content - Client Island */}
+      {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <InterviewClient />
+        {sessionHistory.length > 0 ? (
+          <div>
+            <div className="mb-6">
+              <h2 className="text-xl font-bold text-gray-900 mb-4">Recent Sessions</h2>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {sessionHistory.map((session) => {
+                const chat = session.chat || [];
+                const totalQuestions = chat.filter(m => m.type === 'question').length;
+                const completedAnswers = chat.filter(m => m.type === 'answer').length;
+                const progressPercent = totalQuestions > 0 ? (completedAnswers / totalQuestions) * 100 : 0;
+
+                return (
+                  <div
+                    key={session.id}
+                    className="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-lg transition-shadow cursor-pointer"
+                    onClick={() => router.push(`/tools/interview/${session.id}`)}
+                  >
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-3">
+                        <MessageCircle size={24} className="text-green-600" />
+                        <div>
+                          <h3 className="font-semibold text-gray-900 text-lg">
+                            {session.jobTitle || 'Interview Practice'}
+                          </h3>
+                          <span className="text-sm text-gray-600">
+                            {session.cvUsed ? 'With CV' : 'Job Only'}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-lg font-bold text-green-600">
+                          {completedAnswers}/{totalQuestions}
+                        </div>
+                        <div className="text-xs text-gray-500">Questions</div>
+                      </div>
+                    </div>
+
+                    <div className="mb-4">
+                      <div className="flex justify-between text-sm text-gray-600 mb-1">
+                        <span>Progress</span>
+                        <span>{Math.round(progressPercent)}%</span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div
+                          className="bg-green-600 h-2 rounded-full transition-all duration-300"
+                          style={{ width: `${progressPercent}%` }}
+                        ></div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-4 text-sm text-gray-600">
+                      <div className="flex items-center gap-1">
+                        <Clock size={14} />
+                        <span>{formatDate(session.timestamp)}</span>
+                      </div>
+                    </div>
+
+                    {session.jobCompany && (
+                      <p className="text-sm text-gray-600 mt-2">
+                        <strong>Company:</strong> {session.jobCompany}
+                      </p>
+                    )}
+
+                    <div className="mt-4 pt-4 border-t border-gray-100">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-gray-500">
+                          {session.completed ? 'Completed' : 'In Progress'}
+                        </span>
+                        <TrendingUp size={16} className="text-gray-400" />
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ) : (
+          <div className="text-center py-16">
+            <MessageCircle size={64} className="mx-auto text-gray-400 mb-4" />
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">No Practice Sessions Yet</h2>
+            <p className="text-gray-600 mb-6 max-w-md mx-auto">
+              Start your first interview practice session to get personalized questions and AI-powered feedback.
+            </p>
+            <button
+              onClick={() => setModalOpen(true)}
+              className="inline-flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-lg font-semibold"
+            >
+              <Plus size={20} />
+              Start Your First Session
+            </button>
+          </div>
+        )}
       </div>
 
-      {/* Related Tools */}
+      {/* Interview Prep Modal */}
+      <InterviewPrepModal
+        isOpen={modalOpen}
+        onClose={() => {
+          setModalOpen(false);
+          loadSessionHistory();
+        }}
+      />
+
+{/* Related Tools */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="border-t border-gray-200 pt-8 mb-8">
           <h2 className="text-xl font-bold text-gray-900 mb-4">Related Tools</h2>
@@ -93,16 +242,18 @@ export default function InterviewPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="border-t border-gray-200 pt-8 space-y-8">
 
+          {/* Intro */}
           <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
             <h2 className="text-2xl font-bold text-gray-900 mb-4">AI Interview Practice: Free Mock Interviews with Instant Feedback</h2>
             <p className="text-gray-700 mb-4">
-              JobMeter's AI Interview Practice tool gives you a realistic mock interview experience — completely free. Whether you are preparing for a first-round screen, a technical panel, or a final-stage behavioural interview, our AI generates questions tailored to your exact job description and CV, then scores your answers in real time.
+              JobMeter's AI Interview Practice tool gives you a realistic mock interview experience — completely free. Whether you're preparing for a first-round screen, a technical panel, or a final-stage behavioural interview, our AI generates questions tailored to your exact job description and CV, then scores your answers in real time.
             </p>
             <p className="text-gray-700">
               Practice via audio or text, track your progress across sessions, and walk into every interview with the confidence that comes from genuine preparation. No signup required to get started.
             </p>
           </div>
 
+          {/* How It Works */}
           <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
             <h2 className="text-xl font-bold text-gray-900 mb-4">How It Works</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -123,10 +274,11 @@ export default function InterviewPage() {
             </div>
           </div>
 
+          {/* Why Use AI Interview Practice */}
           <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
             <h2 className="text-xl font-bold text-gray-900 mb-4">Why Use AI for Interview Practice?</h2>
             <p className="text-gray-700 mb-4">
-              Traditional mock interviews require scheduling with a career counsellor or persuading a friend to roleplay a hiring manager. AI interview practice removes every barrier — it is available 24/7, infinitely patient, and gives objective feedback uncoloured by social comfort.
+              Traditional mock interviews require scheduling with a career counsellor or persuading a friend to roleplay a hiring manager. AI interview practice removes every barrier — it's available 24/7, infinitely patient, and gives objective feedback uncoloured by social comfort.
             </p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {[
@@ -145,8 +297,9 @@ export default function InterviewPage() {
             </div>
           </div>
 
+          {/* Question Types */}
           <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">Interview Question Types You Will Practice</h2>
+            <h2 className="text-xl font-bold text-gray-900 mb-4">Interview Question Types You'll Practice</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-gray-700">
               <div>
                 <h3 className="font-semibold text-gray-900 mb-2">Behavioural Questions</h3>
@@ -175,6 +328,7 @@ export default function InterviewPage() {
             </div>
           </div>
 
+          {/* STAR Method */}
           <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
             <h2 className="text-xl font-bold text-gray-900 mb-4">Answering with the STAR Method</h2>
             <p className="text-gray-700 mb-4">
@@ -196,6 +350,7 @@ export default function InterviewPage() {
             </div>
           </div>
 
+          {/* Audio vs Text */}
           <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
             <h2 className="text-xl font-bold text-gray-900 mb-4">Audio vs Text Mode: Which Should You Choose?</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -226,13 +381,14 @@ export default function InterviewPage() {
             </div>
           </div>
 
+          {/* Tips */}
           <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
             <h2 className="text-xl font-bold text-gray-900 mb-4">Tips to Get the Most from AI Interview Practice</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm text-gray-700">
               {[
                 { tip: 'Use a real job description', detail: 'The more specific the JD, the more targeted the questions.' },
                 { tip: 'Do multiple sessions', detail: 'Repetition builds genuine recall under pressure — not just recognition.' },
-                { tip: 'Review every piece of feedback', detail: 'Do not skip the model answers. They show you what "excellent" looks like.' },
+                { tip: 'Review every piece of feedback', detail: 'Don\'t skip the model answers. They show you what "excellent" looks like.' },
                 { tip: 'Try both modes', detail: 'If your interview is on video, finish with audio mode to simulate real conditions.' },
                 { tip: 'Time yourself', detail: 'Aim for 90–120 seconds per answer — concise, structured, and specific.' },
                 { tip: 'Practice the day before', detail: 'One focused session the evening before dramatically reduces anxiety.' },
@@ -245,6 +401,7 @@ export default function InterviewPage() {
             </div>
           </div>
 
+          {/* FAQ */}
           <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
             <h2 className="text-2xl font-bold text-gray-900 mb-6">Frequently Asked Questions</h2>
             <div className="space-y-5">
@@ -270,9 +427,6 @@ export default function InterviewPage() {
 
         </div>
 
-        {/* Ad 4: Display Bottom - Before JSON-LD */}
-        <AdUnit slot="9751041788" format="auto" />
-
         {/* JSON-LD Schema */}
         <script
           type="application/ld+json"
@@ -288,12 +442,6 @@ export default function InterviewPage() {
             })
           }}
         />
-      </div>
-
-      <div className="fixed bottom-0 left-0 right-0 z-40 lg:hidden bg-white border-t border-gray-100" style={{ height: '50px', overflow: 'hidden' }}>
-        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '50px', overflow: 'hidden' }}>
-          <AdUnit slot="3349195672" format="auto" style={{ display: 'block', width: '100%', height: '50px', maxHeight: '50px', overflow: 'hidden' }} />
-        </div>
       </div>
     </div>
   );

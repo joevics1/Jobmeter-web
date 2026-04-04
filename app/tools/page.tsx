@@ -72,6 +72,12 @@ export default function ToolsPage() {
     },
   ];
 
+  // Calculate total number of tools/cards
+  const totalTools = categories.reduce((sum, category) => sum + category.tools.length, 0);
+
+  // Show middle ad only if there are at least 14 tools
+  const showMiddleAd = totalTools >= 14;
+
   return (
     <div className="min-h-screen" style={{ backgroundColor: theme.colors.background.muted }}>
       {/* Header */}
@@ -126,8 +132,8 @@ export default function ToolsPage() {
                   </div>
                 </section>
 
-                {/* ── AD 2: Updated condition to index === 1 (after Career Tools) ── */}
-                {index === 1 && (
+                {/* ── Conditional Middle AD ── */}
+                {showMiddleAd && index === 1 && (
                   <div className="py-2">
                     <AdUnit slot="8181708196" format="fluid" layout="in-article" />
                   </div>

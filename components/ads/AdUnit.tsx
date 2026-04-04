@@ -38,20 +38,16 @@ export default function AdUnit({
     const ins = adRef.current;
     if (!ins) return;
 
-    // If this ins element was already filled (e.g. back-navigation or
-    // hot-reload), skip — pushing again causes a blank/broken ad.
     if (ins.getAttribute('data-adsbygoogle-status')) return;
 
     const pushAd = () => {
       try {
         ((window as any).adsbygoogle = (window as any).adsbygoogle || []).push({});
       } catch (e) {
-        // swallow — happens if script not yet parsed
+        // swallow
       }
     };
 
-    // If adsbygoogle script is already loaded and ready, push immediately.
-    // Otherwise wait up to 3 s for it to load, then push.
     if (typeof (window as any).adsbygoogle !== 'undefined') {
       pushAd();
     } else {
@@ -63,14 +59,13 @@ export default function AdUnit({
           pushAd();
         } else if (waited >= 3000) {
           clearInterval(interval);
-          // Last-ditch attempt — push anyway; AdSense may queue it internally
           pushAd();
         }
       }, 200);
 
       return () => clearInterval(interval);
     }
-  }, [slot]); // re-run if slot changes (i.e. navigating between job pages)
+  }, [slot]);
 
   return (
     <ins

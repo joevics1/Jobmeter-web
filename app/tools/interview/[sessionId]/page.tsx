@@ -7,7 +7,6 @@ import Link from 'next/link';
 import { InterviewPrepService, InterviewSession, ChatMessage } from '@/lib/services/interviewPrepService';
 import { SpeechUtils } from '@/lib/utils/speechUtils';
 import { theme } from '@/lib/theme';
-import AdUnit from '@/components/ads/AdUnit';
 
 export default function InterviewSessionPage() {
   const params = useParams();
@@ -302,8 +301,6 @@ export default function InterviewSessionPage() {
         </div>
       </div>
 
-      <AdUnit slot="4198231153" format="auto" />
-
       {/* Chat Interface - Takes remaining space */}
       <div className="flex-1 flex flex-col max-w-4xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-4 pb-48">
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex-1 flex flex-col">
@@ -477,14 +474,6 @@ export default function InterviewSessionPage() {
               </div>
             </div>
           )}
-        </div>
-      </div>
-
-      <AdUnit slot="9751041788" format="auto" />
-
-      <div className="fixed bottom-0 left-0 right-0 z-40 lg:hidden bg-white border-t border-gray-100" style={{ height: '50px', overflow: 'hidden' }}>
-        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '50px', overflow: 'hidden' }}>
-          <AdUnit slot="3349195672" format="auto" style={{ display: 'block', width: '100%', height: '50px', maxHeight: '50px', overflow: 'hidden' }} />
         </div>
       </div>
     </div>
