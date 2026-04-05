@@ -12,26 +12,25 @@ if (typeof window !== 'undefined') {
       `Anon Key: ${supabaseAnonKey ? '✅' : '❌ Missing'}\n` +
       'Please check NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in your .env.local file and restart your dev server.'
     )
-  } else if (process.env.NODE_ENV === 'development') {
-    console.log('Supabase Client Init - URL:', supabaseUrl ? '✅ Set' : '❌ Missing')
-    console.log('Supabase Client Init - Anon Key:', supabaseAnonKey ? `✅ Set (${supabaseAnonKey.substring(0, 20)}...)` : '❌ Missing')
   }
 }
 
-// Create Supabase client with configuration to minimize automatic network calls
+// Create Supabase client
+// flowType: 'implicit' is required because the server-side callback (createServerClient)
+// reads from cookies, while 'pkce' stores the verifier in localStorage — they never match.
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
-    autoRefreshToken: false, // CRITICAL: Disable automatic token refresh to prevent network calls
-    persistSession: true, // Keep session persistence for logged-in users
-    detectSessionInUrl: false, // Don't check URL for session tokens
-    flowType: 'pkce',
+    autoRefreshToken: false,
+    persistSession: true,
+    detectSessionInUrl: true, // Must be true so the client picks up the session from the URL hash on redirect
+    flowType: 'implicit',     // ✅ Fixed: was 'pkce' which caused AuthPKCECodeVerifierMissingError
     storage: typeof window !== 'undefined' ? window.localStorage : undefined,
     storageKey: 'supabase.auth.token',
     debug: false
   },
   global: {
     headers: {
-      'x-client-info': 'jobpilot-web'
+      'x-client-info': 'jobmeter-web'
     }
   }
 })
@@ -48,11 +47,9 @@ export const supabaseAdmin = typeof window === 'undefined' && supabaseServiceRol
   : supabase // Fallback to regular client on client-side
 
 // Suppress console errors for failed token refresh attempts
-// These errors occur because autoRefreshToken is disabled, but they don't break functionality
 if (typeof window !== 'undefined') {
   const originalError = console.error
   console.error = (...args: any[]) => {
-    // Filter out Supabase token refresh errors
     const errorString = args.join(' ')
     if (
       errorString.includes('refresh_token') ||
@@ -60,10 +57,8 @@ if (typeof window !== 'undefined') {
       errorString.includes('Failed to fetch') ||
       (errorString.includes('auth/v1/token') && errorString.includes('grant_type=refresh_token'))
     ) {
-      // Silently ignore token refresh errors - they're expected when autoRefreshToken is false
       return
     }
-    // Log all other errors normally
     originalError.apply(console, args)
   }
 }
