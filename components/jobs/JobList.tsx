@@ -291,40 +291,6 @@ export default function JobList({ initialJobs, initialCountry, initialRoleCatego
     }
   };
 
-  const fetchUserProfile = async (u: any) => {
-    if (!u) return;
-    const { data, error } = await supabase.from('profiles').select('full_name').eq('id', u.id).single();
-    if (!error && data) setUserName(data.full_name || null);
-  };
-
-  const fetchUserOnboardingData = async (u: any) => {
-    if (!u) return;
-    try {
-      const { data, error } = await supabase.from('onboarding_data').select('*').eq('user_id', u.id).single();
-      if (error && error.code !== 'PGRST116') { console.error('Error fetching onboarding data:', error); return; }
-      if (data) {
-        setUserOnboardingData({
-          target_roles: data.target_roles || [],
-          cv_skills: data.cv_skills || [],
-          preferred_locations: data.preferred_locations || [],
-          experience_level: data.experience_level || null,
-          salary_min: data.salary_min || null,
-          salary_max: data.salary_max || null,
-          job_type: data.job_type || null,
-          sector: data.sector || null,
-        });
-      } else {
-        setUserOnboardingData({
-          target_roles: [], cv_skills: [], preferred_locations: [],
-          experience_level: null, salary_min: null, salary_max: null,
-          job_type: null, sector: null,
-        });
-      }
-    } catch (error) {
-      console.error('Error fetching onboarding data:', error);
-    }
-  };
-
   useEffect(() => {
     checkAuth();
     loadSavedJobs();
@@ -443,16 +409,67 @@ export default function JobList({ initialJobs, initialCountry, initialRoleCatego
     if (sortParam === 'latest' || sortParam === 'salary') setSortBy(sortParam);
   }, [searchParams]);
 
-  // ── Fetch latest jobs ───────────────────────────────────────────────────────
+  const fetchUserProfile = async (u: any) => {
+    if (!u) return;
+    const { data, error } = await supabase.from('profiles').select('full_name').eq('id', u.id).single();
+    if (!error && data) setUserName(data.full_name || null);
+  };
+
+  const fetchUserOnboardingData = async (u: any) => {
+    if (!u) return;
+    try {
+      const { data, error } = await supabase.from('onboarding_data').select('*').eq('user_id', u.id).single();
+      if (error && error.code !== 'PGRST116') { console.error('Error fetching onboarding data:', error); return; }
+      if (data) {
+        setUserOnboardingData({
+          target_roles: data.target_roles || [],
+          cv_skills: data.cv_skills || [],
+          preferred_locations: data.preferred_locations || [],
+          experience_level: data.experience_level || null,
+          salary_min: data.salary_min || null,
+          salary_max: data.salary_max || null,
+          job_type: data.job_type || null,
+          sector: data.sector || null,
+        });
+      } else {
+        setUserOnboardingData({
+          target_roles: [], cv_skills: [], preferred_locations: [],
+          experience_level: null, salary_min: null, salary_max: null,
+          job_type: null, sector: null,
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching onboarding data:', error);
+    }
+  };
+
+  // ── Fetch functions moved here (before useEffects that call them) ─────────────
   const fetchLatestJobs = async (forceRefresh = false) => {
     try {
       setLatestJobsLoading(true);
 
-      const JOBS_API_URL = process.env.NEXT_PUBLIC_JOBS_API_URL || 'https://jobs-api.joevicspro.workers.dev';
+      if (!forceRefresh) {
+        const sessionCached = sessionStorage.getItem(STORAGE_KEYS.LATEST_JOBS_CACHE);
+        const sessionTimestamp = sessionStorage.getItem(STORAGE_KEYS.LATEST_JOBS_CACHE_TS);
+        const sessionVersion = sessionStorage.getItem(STORAGE_KEYS.LATEST_JOBS_CACHE_VERSION);
 
+        if (sessionCached && sessionTimestamp) {
+          const age = Date.now() - parseInt(sessionTimestamp, 10);
+          if (age < CLIENT_CACHE_DURATION) {
+            try {
+              const parsedJobs = JSON.parse(sessionCached);
+              setLatestJobs(parsedJobs);
+              setLatestJobsLoading(false);
+              return;
+            } catch { }
+          }
+        }
+      }
+
+      const JOBS_API_URL = process.env.NEXT_PUBLIC_JOBS_API_URL || 'https://jobs-api.joevicspro.workers.dev';
       const res = await fetch(JOBS_API_URL);
       if (!res.ok) throw new Error(`Jobs API error: ${res.status}`);
-      const { jobs: allData } = await res.json();
+      const { jobs: allData, cacheVersion } = await res.json();
 
       const allUiJobs = (allData || []).map((job: any) => transformJobToUI(job, 0, null));
       setLatestJobs(allUiJobs);
@@ -461,6 +478,7 @@ export default function JobList({ initialJobs, initialCountry, initialRoleCatego
       try {
         sessionStorage.setItem(STORAGE_KEYS.LATEST_JOBS_CACHE, JSON.stringify(allUiJobs));
         sessionStorage.setItem(STORAGE_KEYS.LATEST_JOBS_CACHE_TS, Date.now().toString());
+        if (cacheVersion) sessionStorage.setItem(STORAGE_KEYS.LATEST_JOBS_CACHE_VERSION, cacheVersion);
       } catch (e) {
         console.warn('[JobList] sessionStorage write failed:', e);
       }
@@ -471,13 +489,28 @@ export default function JobList({ initialJobs, initialCountry, initialRoleCatego
     }
   };
 
-  // ── Fetch matches ───────────────────────────────────────────────────────────
   const fetchJobs = async (forceRefresh = false) => {
     try {
       setLoading(true);
 
-      const JOBS_API_URL = process.env.NEXT_PUBLIC_JOBS_API_URL || 'https://jobs-api.joevicspro.workers.dev';
+      if (!forceRefresh) {
+        try {
+          const cachedJobs = localStorage.getItem(STORAGE_KEYS.MATCHES_CACHE);
+          const cacheTimestamp = localStorage.getItem(STORAGE_KEYS.MATCHES_CACHE_TS);
+          const cachedUserId = localStorage.getItem(STORAGE_KEYS.MATCHES_CACHE_USER);
+          if (cachedJobs && cacheTimestamp) {
+            const age = Date.now() - parseInt(cacheTimestamp, 10);
+            const userMatches = (!user && !cachedUserId) || (user && cachedUserId === user.id);
+            if (age < CLIENT_CACHE_DURATION && userMatches) {
+              setJobs(JSON.parse(cachedJobs));
+              setLoading(false);
+              return;
+            }
+          }
+        } catch { }
+      }
 
+      const JOBS_API_URL = process.env.NEXT_PUBLIC_JOBS_API_URL || 'https://jobs-api.joevicspro.workers.dev';
       const res = await fetch(JOBS_API_URL);
       if (!res.ok) throw new Error(`Jobs API error: ${res.status}`);
       const { jobs: data } = await res.json();
@@ -499,6 +532,144 @@ export default function JobList({ initialJobs, initialCountry, initialRoleCatego
     } finally {
       setLoading(false);
     }
+  };
+
+  // ── Fetch latest jobs trigger ───────────────────────────────────────────────
+  useEffect(() => {
+    if (!authChecked) return;
+    if (latestFetchedRef.current) return;
+    latestFetchedRef.current = true;
+    if (initialJobs && initialJobs.length > 0) return;
+    fetchLatestJobs();
+  }, [authChecked]);
+
+  // ── Fetch matches trigger ───────────────────────────────────────────────────
+  useEffect(() => {
+    if (!authChecked) return;
+    if (activeTab !== 'matches') return;
+    if (matchesFetchedRef.current) return;
+    if (user && userOnboardingData === null) return;
+    matchesFetchedRef.current = true;
+
+    try {
+      const cachedJobs = localStorage.getItem(STORAGE_KEYS.MATCHES_CACHE);
+      const cacheTimestamp = localStorage.getItem(STORAGE_KEYS.MATCHES_CACHE_TS);
+      const cachedUserId = localStorage.getItem(STORAGE_KEYS.MATCHES_CACHE_USER);
+
+      if (cachedJobs && cacheTimestamp) {
+        const age = Date.now() - parseInt(cacheTimestamp, 10);
+        const userMatches = (!user && !cachedUserId) || (user && cachedUserId === user.id);
+        if (age < CLIENT_CACHE_DURATION && userMatches) {
+          setJobs(JSON.parse(cachedJobs));
+          return;
+        }
+      }
+    } catch { }
+
+    fetchJobs();
+  }, [authChecked, activeTab, user, userOnboardingData]);
+
+  useEffect(() => {
+    matchesFetchedRef.current = false;
+    setJobs([]);
+  }, [user?.id]);
+
+  const processJobsWithMatching = useCallback(async (jobRows: any[]): Promise<JobUI[]> => {
+    if (!userOnboardingData || !user) {
+      return jobRows.map((job: any) => transformJobToUI(job, 0, null));
+    }
+
+    const matchCache = matchCacheService.loadMatchCache(user.id);
+    let cacheNeedsUpdate = false;
+    const updatedCache = { ...matchCache };
+    const batchSize = 20;
+    const processedJobs: JobUI[] = [];
+
+    for (let i = 0; i < jobRows.length; i += batchSize) {
+      const batch = jobRows.slice(i, i + batchSize);
+      const batchResults = batch.map((job: any) => {
+        try {
+          let matchResult;
+          const cachedMatch = updatedCache[job.id];
+          if (cachedMatch) {
+            matchResult = { score: cachedMatch.score, breakdown: cachedMatch.breakdown, computedAt: cachedMatch.cachedAt };
+          } else {
+            const jobRow: JobRow = {
+              role: job.role || job.title, related_roles: job.related_roles,
+              ai_enhanced_roles: job.ai_enhanced_roles, skills_required: job.skills_required,
+              ai_enhanced_skills: job.ai_enhanced_skills, location: job.location,
+              experience_level: job.experience_level, salary_range: job.salary_range,
+              employment_type: job.employment_type, sector: job.sector,
+            };
+            matchResult = scoreJob(jobRow, userOnboardingData);
+            updatedCache[job.id] = { score: matchResult.score, breakdown: matchResult.breakdown, cachedAt: matchResult.computedAt };
+            cacheNeedsUpdate = true;
+          }
+          const rsCapped = Math.min(80, matchResult.breakdown.rolesScore + matchResult.breakdown.skillsScore + matchResult.breakdown.sectorScore);
+          const calculatedTotal = Math.round(rsCapped + matchResult.breakdown.locationScore + matchResult.breakdown.experienceScore + matchResult.breakdown.salaryScore + matchResult.breakdown.typeScore);
+          return transformJobToUI(job, calculatedTotal, matchResult.breakdown);
+        } catch {
+          return transformJobToUI(job, 0, null);
+        }
+      });
+      processedJobs.push(...batchResults);
+      if (i + batchSize < jobRows.length) await new Promise(resolve => setTimeout(resolve, 0));
+    }
+
+    if (cacheNeedsUpdate) matchCacheService.saveMatchCache(user.id, updatedCache);
+    return processedJobs;
+  }, [user, userOnboardingData]);
+
+  const transformJobToUI = (job: any, matchScore: number, breakdown: any): JobUI => {
+    const finalMatchScore = user ? matchScore : 0;
+    const finalBreakdown = user ? breakdown : null;
+
+    let locationStr = 'Location not specified';
+    if (typeof job.location === 'string') { locationStr = job.location; }
+    else if (job.location && typeof job.location === 'object') {
+      const loc = job.location;
+      if (loc.remote) { locationStr = 'Remote'; }
+      else { const parts = [loc.city, loc.state, loc.country].filter(Boolean); locationStr = parts.length > 0 ? parts.join(', ') : 'Location not specified'; }
+    }
+
+    let companyStr = 'Unknown Company';
+    if (typeof job.company === 'string') { companyStr = job.company; }
+    else if (job.company && typeof job.company === 'object') { companyStr = job.company.name || 'Unknown Company'; }
+
+    let salaryStr = '';
+    if (typeof job.salary === 'string') { salaryStr = job.salary; }
+    else if (job.salary_range && typeof job.salary_range === 'object') {
+      const sal = job.salary_range;
+      if (sal.min !== null && sal.currency) salaryStr = `${sal.currency} ${sal.min.toLocaleString()} ${sal.period || ''}`.trim();
+    }
+
+    const getRelativeTime = (dateString: string | null): string | undefined => {
+      if (!dateString) return undefined;
+      try {
+        const date = new Date(dateString);
+        const now = new Date();
+        const diffInMs = now.getTime() - date.getTime();
+        const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
+        const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
+        if (diffInHours < 24) return 'Today';
+        if (diffInDays === 1) return '1 day ago';
+        if (diffInDays < 7) return `${diffInDays} days ago`;
+        if (diffInDays < 30) { const weeks = Math.floor(diffInDays / 7); return weeks === 1 ? '1 week ago' : `${weeks} weeks ago`; }
+        if (diffInDays < 365) { const months = Math.floor(diffInDays / 30); return months === 1 ? '1 month ago' : `${months} months ago`; }
+        const years = Math.floor(diffInDays / 365);
+        return years === 1 ? '1 year ago' : `${years} years ago`;
+      } catch { return undefined; }
+    };
+
+    return {
+      id: job.id, slug: job.slug || job.id, title: job.title || 'Untitled Job',
+      company: companyStr, location: locationStr, rawLocation: job.location,
+      country: job.country || [], salary: salaryStr, match: finalMatchScore,
+      calculatedTotal: finalMatchScore, type: job.type || job.employment_type || '',
+      breakdown: finalBreakdown, postedDate: getRelativeTime(job.posted_date || job.created_at),
+      sector: job.sector || '', role_category: job.role_category || '',
+      description: job.description || job.job_description || '',
+    };
   };
 
   const loadSavedJobs = () => {
@@ -574,6 +745,7 @@ export default function JobList({ initialJobs, initialCountry, initialRoleCatego
     localStorage.setItem('user_changed_country', 'true');
     localStorage.setItem('has_visited_jobs', 'true');
     setShowCountryPopup(false);
+    // Filter applied in-memory — no page reload, no URL push
   };
 
   const clearAllFilters = () => {
@@ -715,104 +887,6 @@ export default function JobList({ initialJobs, initialCountry, initialRoleCatego
     if (filters.remote) count += 1;
     if (filters.search) count += 1;
     return count;
-  };
-
-  const processJobsWithMatching = useCallback(async (jobRows: any[]): Promise<JobUI[]> => {
-    if (!userOnboardingData || !user) {
-      return jobRows.map((job: any) => transformJobToUI(job, 0, null));
-    }
-
-    const matchCache = matchCacheService.loadMatchCache(user.id);
-    let cacheNeedsUpdate = false;
-    const updatedCache = { ...matchCache };
-    const batchSize = 20;
-    const processedJobs: JobUI[] = [];
-
-    for (let i = 0; i < jobRows.length; i += batchSize) {
-      const batch = jobRows.slice(i, i + batchSize);
-      const batchResults = batch.map((job: any) => {
-        try {
-          let matchResult;
-          const cachedMatch = updatedCache[job.id];
-          if (cachedMatch) {
-            matchResult = { score: cachedMatch.score, breakdown: cachedMatch.breakdown, computedAt: cachedMatch.cachedAt };
-          } else {
-            const jobRow: JobRow = {
-              role: job.role || job.title, related_roles: job.related_roles,
-              ai_enhanced_roles: job.ai_enhanced_roles, skills_required: job.skills_required,
-              ai_enhanced_skills: job.ai_enhanced_skills, location: job.location,
-              experience_level: job.experience_level, salary_range: job.salary_range,
-              employment_type: job.employment_type, sector: job.sector,
-            };
-            matchResult = scoreJob(jobRow, userOnboardingData);
-            updatedCache[job.id] = { score: matchResult.score, breakdown: matchResult.breakdown, cachedAt: matchResult.computedAt };
-            cacheNeedsUpdate = true;
-          }
-          const rsCapped = Math.min(80, matchResult.breakdown.rolesScore + matchResult.breakdown.skillsScore + matchResult.breakdown.sectorScore);
-          const calculatedTotal = Math.round(rsCapped + matchResult.breakdown.locationScore + matchResult.breakdown.experienceScore + matchResult.breakdown.salaryScore + matchResult.breakdown.typeScore);
-          return transformJobToUI(job, calculatedTotal, matchResult.breakdown);
-        } catch {
-          return transformJobToUI(job, 0, null);
-        }
-      });
-      processedJobs.push(...batchResults);
-      if (i + batchSize < jobRows.length) await new Promise(resolve => setTimeout(resolve, 0));
-    }
-
-    if (cacheNeedsUpdate) matchCacheService.saveMatchCache(user.id, updatedCache);
-    return processedJobs;
-  }, [user, userOnboardingData]);
-
-  const transformJobToUI = (job: any, matchScore: number, breakdown: any): JobUI => {
-    const finalMatchScore = user ? matchScore : 0;
-    const finalBreakdown = user ? breakdown : null;
-
-    let locationStr = 'Location not specified';
-    if (typeof job.location === 'string') { locationStr = job.location; }
-    else if (job.location && typeof job.location === 'object') {
-      const loc = job.location;
-      if (loc.remote) { locationStr = 'Remote'; }
-      else { const parts = [loc.city, loc.state, loc.country].filter(Boolean); locationStr = parts.length > 0 ? parts.join(', ') : 'Location not specified'; }
-    }
-
-    let companyStr = 'Unknown Company';
-    if (typeof job.company === 'string') { companyStr = job.company; }
-    else if (job.company && typeof job.company === 'object') { companyStr = job.company.name || 'Unknown Company'; }
-
-    let salaryStr = '';
-    if (typeof job.salary === 'string') { salaryStr = job.salary; }
-    else if (job.salary_range && typeof job.salary_range === 'object') {
-      const sal = job.salary_range;
-      if (sal.min !== null && sal.currency) salaryStr = `${sal.currency} ${sal.min.toLocaleString()} ${sal.period || ''}`.trim();
-    }
-
-    const getRelativeTime = (dateString: string | null): string | undefined => {
-      if (!dateString) return undefined;
-      try {
-        const date = new Date(dateString);
-        const now = new Date();
-        const diffInMs = now.getTime() - date.getTime();
-        const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
-        const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
-        if (diffInHours < 24) return 'Today';
-        if (diffInDays === 1) return '1 day ago';
-        if (diffInDays < 7) return `${diffInDays} days ago`;
-        if (diffInDays < 30) { const weeks = Math.floor(diffInDays / 7); return weeks === 1 ? '1 week ago' : `${weeks} weeks ago`; }
-        if (diffInDays < 365) { const months = Math.floor(diffInDays / 30); return months === 1 ? '1 month ago' : `${months} months ago`; }
-        const years = Math.floor(diffInDays / 365);
-        return years === 1 ? '1 year ago' : `${years} years ago`;
-      } catch { return undefined; }
-    };
-
-    return {
-      id: job.id, slug: job.slug || job.id, title: job.title || 'Untitled Job',
-      company: companyStr, location: locationStr, rawLocation: job.location,
-      country: job.country || [], salary: salaryStr, match: finalMatchScore,
-      calculatedTotal: finalMatchScore, type: job.type || job.employment_type || '',
-      breakdown: finalBreakdown, postedDate: getRelativeTime(job.posted_date || job.created_at),
-      sector: job.sector || '', role_category: job.role_category || '',
-      description: job.description || job.job_description || '',
-    };
   };
 
   return (
