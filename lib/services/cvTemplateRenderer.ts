@@ -214,21 +214,16 @@ function calculateSpacing(data: CVData): { spacing: number; useDistribution: boo
   let useDistribution = false;
   
   if (extraSpace < 0) {
-    // Content exceeds available space - use tight spacing
-    spacing = 8; // tighter than before
+    spacing = 8;
     useDistribution = false;
   } else if (extraSpace > 100 && activeSections < 6) {
-    // Lots of space and few sections - distribute evenly
     useDistribution = true;
     spacing = Math.max(15, Math.min(40, extraSpace / gapsBetweenSections));
   } else if (extraSpace > 50) {
-    // Moderate extra space
     spacing = Math.max(15, Math.min(25, extraSpace / gapsBetweenSections));
   } else if (extraSpace > 20) {
-    // Limited extra space
     spacing = Math.max(12, extraSpace / gapsBetweenSections);
   } else {
-    // Very limited space - tight spacing
     spacing = 10;
   }
   
@@ -1470,12 +1465,27 @@ function renderTemplate6(data: CVData): string {
 </html>`;
 }
 
-// ==================== RESPONSIVE TEMPLATES (for view mode) - Unchanged ====================
-function renderResponsiveTemplate1(data: CVData): string { /* ... your original code ... */ }
-function renderResponsiveTemplate2(data: CVData): string { /* ... your original code ... */ }
-function renderResponsiveTemplate3(data: CVData): string { /* ... your original code ... */ }
-function renderResponsiveTemplate5(data: CVData): string { /* ... your original code ... */ }
-function renderResponsiveTemplate6(data: CVData): string { /* ... your original code ... */ }
+// ==================== RESPONSIVE TEMPLATES (for view mode) ====================
+// Simple fallback responsive versions (you can expand these later with full responsive logic)
+function renderResponsiveTemplate1(data: CVData): string {
+  return renderTemplate1(data); // Reuse PDF version for now as responsive fallback
+}
+
+function renderResponsiveTemplate2(data: CVData): string {
+  return renderTemplate2(data);
+}
+
+function renderResponsiveTemplate3(data: CVData): string {
+  return renderTemplate3(data);
+}
+
+function renderResponsiveTemplate5(data: CVData): string {
+  return renderTemplate5(data);
+}
+
+function renderResponsiveTemplate6(data: CVData): string {
+  return renderTemplate6(data);
+}
 
 // Main renderer function
 export function renderCVTemplate(templateId: string, data: CVData, mode: 'view' | 'pdf' = 'pdf'): string {
