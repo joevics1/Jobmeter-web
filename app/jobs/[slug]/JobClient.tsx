@@ -43,6 +43,7 @@ const AD_SLOTS = {
   ANCHOR_MOBILE:      '9010641928',  // fixed bottom mobile
   BANNER_1:           '7253585934',  // new banner — top of sidebar (desktop) + bottom of main (desktop)
   BANNER_2:           '5940504265',  // new banner — bottom of sidebar (desktop)
+  BANNER_3:           '8348311222',  // new banner — bottom of sidebar (desktop)
 } as const;
 
 const STORAGE_KEYS = {
@@ -121,10 +122,14 @@ export default function JobClient({ job, relatedJobs, companies }: {
 
   useEffect(() => {
     setIsMounted(true);
-    const jobCountry = typeof job.location === 'object'
+    const locationCountry = typeof job.location === 'object'
       ? (job.location?.country || '')
-      : '';
-    const nigerianJob = jobCountry === 'NG' || jobCountry.toLowerCase() === 'nigeria';
+      : (typeof job.location === 'string' ? job.location : '');
+    const countryArr: string[] = Array.isArray(job.country) ? job.country : [];
+    const nigerianJob =
+      locationCountry === 'NG' ||
+      locationCountry.toLowerCase() === 'nigeria' ||
+      countryArr.some((c: string) => c === 'NG' || c.toLowerCase() === 'nigeria');
     setIsNigerianJob(nigerianJob);
     const pool = ALL_BLOGS.filter(b =>
       b.region === 'global' || (nigerianJob && b.region === 'nigeria')
@@ -1058,7 +1063,7 @@ export default function JobClient({ job, relatedJobs, companies }: {
               {/* ─── Desktop-only banner ad — top of sidebar ─────────────────────── */}
               <div className="hidden lg:block w-full rounded-lg overflow-hidden">
                 <AdUnit
-                  slot={AD_SLOTS.BANNER_1}
+                  slot={AD_SLOTS.BANNER_3}
                   format="auto"
                   style={{ display: 'block', width: '100%' }}
                 />

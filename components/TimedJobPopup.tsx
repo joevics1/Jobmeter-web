@@ -15,15 +15,19 @@ export default function TimedJobPopup({ forceShow = false }: TimedJobPopupProps)
   const [showPopup, setShowPopup] = useState(false);
 
   useEffect(() => {
-    if (typeof window === 'undefined' || !forceShow) return;
+    // forceShow is derived from isNigerianJob which is set after mount,
+    // so this effect will re-run once it flips true. Guard until then.
+    if (!forceShow) return;
 
-    // 1. Frequency Check
-    const stored = localStorage.getItem('timed-popup-shown');
-    if (stored) {
-      if (Date.now() - parseInt(stored) < FIVE_DAYS_MS) return;
+    // 1. Frequency Check — only suppress if shown recently
+    try {
+      const stored = localStorage.getItem('timed-popup-shown');
+      if (stored && Date.now() - parseInt(stored, 10) < FIVE_DAYS_MS) return;
+    } catch (_) {
+      // localStorage unavailable (e.g. private browsing restrictions)
     }
 
-    // 2. 3-Minute Timer
+    // 2. Delay Timer
     const timer = setTimeout(() => {
       setShowPopup(true);
     }, THREE_MINUTES_MS);
@@ -33,7 +37,9 @@ export default function TimedJobPopup({ forceShow = false }: TimedJobPopupProps)
 
   const handleClose = () => {
     setShowPopup(false);
-    localStorage.setItem('timed-popup-shown', Date.now().toString());
+    try {
+      localStorage.setItem('timed-popup-shown', Date.now().toString());
+    } catch (_) {}
   };
 
   if (!showPopup) return null;
@@ -61,8 +67,8 @@ export default function TimedJobPopup({ forceShow = false }: TimedJobPopupProps)
         </div>
 
         <div className="bg-gray-50 border-t border-gray-100 py-4 px-8 flex items-center justify-center gap-2">
-          <CheckCircle className="w-4 h-4 text-emerald-500" />
-          <span className="text-[10px] font-bold uppercase tracking-tighter text-gray-400">
+          <CheckCircle className="w-4 h-4 text-emerald-600" />
+          <span className="text-[11px] font-bold uppercase tracking-tighter text-gray-600">
             Exclusive to Nigerian Professionals
           </span>
         </div>
