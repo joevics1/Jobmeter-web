@@ -1,10 +1,17 @@
 import { Metadata } from 'next';
-import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
 import { Newspaper, Calendar, Eye, ArrowRight } from 'lucide-react';
 import Image from 'next/image';
 import { BlogSchema } from '@/components/seo/StructuredData';
 import AdUnit from '@/components/ads/AdUnit';
+
+// Render once at build time, cache forever. Cloudflare caches the HTML on top.
+// When you publish a new blog post, redeploy or call revalidatePath('/blog').
+export const revalidate = false;
+export const dynamic = 'force-static';
+
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
 export const metadata: Metadata = {
   title: 'Career Blog & Articles | Job Search Tips & Salary Guides | JobMeter',
@@ -41,25 +48,30 @@ interface BlogPost {
 
 async function getBlogPosts(): Promise<BlogPost[]> {
   try {
-    const { data, error } = await supabase
-      .from('blogs')
-      .select('id, title, slug, excerpt, featured_image_url, category, tags, published_at, view_count, read_time_minutes')
-      .eq('is_published', true)
-      .order('published_at', { ascending: false });
+    const params = new URLSearchParams({
+      select: 'id,title,slug,excerpt,featured_image_url,category,tags,published_at,view_count,read_time_minutes',
+      is_published: 'eq.true',
+      order: 'published_at.desc',
+    });
 
-    if (error) {
-      console.error('Error fetching blog posts:', error);
-      return [];
-    }
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/blogs?${params.toString()}`,
+      {
+        headers: {
+          apikey: SUPABASE_ANON_KEY,
+          Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+        },
+        next: { revalidate: false },
+      }
+    );
 
-    return data || [];
+    if (!res.ok) return [];
+    return await res.json();
   } catch (error) {
     console.error('Error fetching blog posts:', error);
     return [];
   }
 }
-
-export const revalidate = false;
 
 // Reusable card component to avoid duplication
 function BlogCard({ post, formatDate }: { post: BlogPost; formatDate: (d: string) => string }) {

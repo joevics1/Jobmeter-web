@@ -1,14 +1,20 @@
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
 import Image from 'next/image';
 import { ArrowLeft, Calendar, Eye, Clock, Share2 } from 'lucide-react';
 import { ArticleSchema, FAQSchema } from '@/components/seo/StructuredData';
 import BlogMarkdownRenderer from '@/components/BlogMarkdownRenderer';
 import AdUnit from '@/components/ads/AdUnit';
+import BlogViewTracker from '@/components/BlogViewTracker';
 
+// Render once per slug at first visit, cache forever.
+// Cloudflare caches the HTML on top indefinitely.
 export const revalidate = false;
+export const dynamic = 'force-static';
+
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
 interface BlogPost {
   id: string;
@@ -35,49 +41,43 @@ interface BlogPost {
 
 async function getBlogPost(slug: string): Promise<BlogPost | null> {
   try {
-    const { data, error } = await supabase
-      .from('blogs')
-      .select('*')
-      .eq('slug', slug)
-      .eq('is_published', true)
-      .single();
+    const params = new URLSearchParams({
+      select: '*',
+      slug: `eq.${slug}`,
+      is_published: 'eq.true',
+      limit: '1',
+    });
 
-    if (error || !data) {
-      return null;
-    }
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/blogs?${params.toString()}`,
+      {
+        headers: {
+          apikey: SUPABASE_ANON_KEY,
+          Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+        },
+        next: { revalidate: false },
+      }
+    );
 
-    return data;
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data[0] || null;
   } catch (error) {
     console.error('Error fetching blog post:', error);
     return null;
   }
 }
 
-async function incrementViewCount(slug: string) {
-  try {
-    await supabase.rpc('increment_blog_views', { blog_slug: slug });
-  } catch (error) {
-    console.error('Error incrementing view count:', error);
-  }
-}
-
 function splitContentAtMidpoint(content: string): [string, string] {
   const mid = Math.floor(content.length / 2);
   const breakIndex = content.indexOf('\n\n', mid);
-  if (breakIndex === -1) {
-    return [content, ''];
-  }
+  if (breakIndex === -1) return [content, ''];
   return [content.slice(0, breakIndex + 2), content.slice(breakIndex + 2)];
 }
 
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
   const post = await getBlogPost(params.slug);
-
-  if (!post) {
-    return {
-      title: 'Post Not Found | JobMeter',
-    };
-  }
+  if (!post) return { title: 'Post Not Found | JobMeter' };
 
   const keywords = post.seo_keywords?.join(', ') || 'career, jobs, blog';
   const url = `https://jobmeter.app/blog/${post.slug}`;
@@ -104,38 +104,36 @@ export async function generateMetadata({ params }: { params: { slug: string } })
       description: post.meta_description,
       images: post.featured_image_url ? [post.featured_image_url] : [],
     },
-    alternates: {
-      canonical: url,
-    },
+    alternates: { canonical: url },
   };
 }
 
 export async function generateStaticParams() {
   try {
-    const { data } = await supabase
-      .from('blogs')
-      .select('slug')
-      .eq('is_published', true);
-
-    if (!data) return [];
-
-    return data.map((post) => ({
-      slug: post.slug,
-    }));
-  } catch (error) {
-    console.error('Error generating static params:', error);
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/blogs?select=slug&is_published=eq.true`,
+      {
+        headers: {
+          apikey: SUPABASE_ANON_KEY,
+          Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+        },
+      }
+    );
+    if (!res.ok) return [];
+    const data = await res.json();
+    return data.map((post: { slug: string }) => ({ slug: post.slug }));
+  } catch {
     return [];
   }
 }
 
 export default async function BlogPostPage({ params }: { params: { slug: string } }) {
   const post = await getBlogPost(params.slug);
+  if (!post) notFound();
 
-  if (!post) {
-    notFound();
-  }
-
-  incrementViewCount(params.slug);
+  // View count is tracked client-side via BlogViewTracker below.
+  // Previously incrementViewCount() was called here in the server render,
+  // meaning every Cloudflare cache miss fired a Supabase RPC call at Vercel's cost.
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -157,15 +155,16 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
         image={post.featured_image_url || undefined}
         datePublished={post.published_at}
         dateModified={post.updated_at}
-        author={{
-          name: post.author_name,
-        }}
+        author={{ name: post.author_name }}
         url={`https://jobmeter.app/blog/${post.slug}`}
       />
-      
+
       {post.faqs && Array.isArray(post.faqs) && post.faqs.length > 0 && (
         <FAQSchema faqs={post.faqs} />
       )}
+
+      {/* Tracks view count in browser — not on server render */}
+      <BlogViewTracker slug={params.slug} />
 
       <div className="min-h-screen bg-gray-50">
         {/* Breadcrumb */}
@@ -176,9 +175,7 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
               <span>/</span>
               <Link href="/blog" className="hover:text-blue-600">Blog</Link>
               <span>/</span>
-              <span className="text-gray-900 font-medium line-clamp-1">
-                {post.title}
-              </span>
+              <span className="text-gray-900 font-medium line-clamp-1">{post.title}</span>
             </nav>
           </div>
         </div>
@@ -262,7 +259,7 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
                 </>
               )}
 
-              {/* 3. Ad Before FAQs (moved from bottom) */}
+              {/* 3. Ad Before FAQs */}
               <div className="my-10 min-h-[280px] flex items-center justify-center bg-gray-50 rounded">
                 <AdUnit slot="9751041788" format="auto" />
               </div>
@@ -274,12 +271,8 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
                   <div className="space-y-6">
                     {post.faqs.map((faq: any, index: number) => (
                       <div key={index} className="bg-gray-50 rounded-lg p-6">
-                        <h3 className="text-xl font-bold text-gray-900 mb-3">
-                          {faq.question}
-                        </h3>
-                        <p className="text-gray-700 leading-relaxed">
-                          {faq.answer}
-                        </p>
+                        <h3 className="text-xl font-bold text-gray-900 mb-3">{faq.question}</h3>
+                        <p className="text-gray-700 leading-relaxed">{faq.answer}</p>
                       </div>
                     ))}
                   </div>
@@ -310,7 +303,7 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
           )}
         </div>
 
-        {/* Sticky Mobile Anchor Ad (remains at bottom on mobile) */}
+        {/* Sticky Mobile Anchor Ad */}
         <div
           className="fixed bottom-0 left-0 right-0 z-40 lg:hidden bg-white border-t border-gray-100"
           style={{ height: '60px', overflow: 'hidden' }}

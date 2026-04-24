@@ -81,7 +81,24 @@ function transformJobToUIStatic(job: any): JobUI {
     company: companyStr, location: locationStr, rawLocation: job.location,
     country: job.country || [], salary: salaryStr, match: 0,
     calculatedTotal: 0, type: job.type || job.employment_type || '',
-    breakdown: null, postedDate: undefined,
+    breakdown: null, postedDate: job.posted_date || job.created_at
+      ? (() => {
+          try {
+            const date = new Date(job.posted_date || job.created_at);
+            const now = new Date();
+            const diffInMs = now.getTime() - date.getTime();
+            const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
+            const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
+            if (diffInHours < 24) return 'Today';
+            if (diffInDays === 1) return '1 day ago';
+            if (diffInDays < 7) return `${diffInDays} days ago`;
+            if (diffInDays < 30) { const weeks = Math.floor(diffInDays / 7); return weeks === 1 ? '1 week ago' : `${weeks} weeks ago`; }
+            if (diffInDays < 365) { const months = Math.floor(diffInDays / 30); return months === 1 ? '1 month ago' : `${months} months ago`; }
+            const years = Math.floor(diffInDays / 365);
+            return years === 1 ? '1 year ago' : `${years} years ago`;
+          } catch { return undefined; }
+        })()
+      : undefined,
     sector: job.sector || '', role_category: job.role_category || '',
     description: job.description || job.job_description || '',
   };
@@ -168,7 +185,7 @@ export default function JobList({ initialJobs, initialCountry, initialRoleCatego
     employmentType: [] as string[],
     salaryRange: undefined as { min: number; max: number } | undefined,
     remote: false,
-    country: '',
+    country: 'Nigeria',
     roleCategory: '',
     jobType: '',
     state: '',
@@ -351,15 +368,8 @@ export default function JobList({ initialJobs, initialCountry, initialRoleCatego
     if (initialTown) setFilters(prev => ({ ...prev, town: initialTown }));
   }, [initialTown]);
 
-  // ── Country restore from localStorage (no geo API call) ────────────────────
-  useEffect(() => {
-    if (initialCountry) return;
-    const savedCountry = localStorage.getItem('user_country');
-    if (savedCountry && savedCountry !== 'Global') {
-      setDetectedCountry(savedCountry);
-      setFilters(prev => ({ ...prev, country: savedCountry }));
-    }
-  }, []);
+  // ── Country is locked to Nigeria for jobmeter.app ──────────────────────────
+  // No country restore needed — Nigeria is always the default.
 
   // ── Desktop detection ───────────────────────────────────────────────────────
   useEffect(() => {
@@ -383,11 +393,7 @@ export default function JobList({ initialJobs, initialCountry, initialRoleCatego
 
     if (searchParam) { setSearchQuery(searchParam); setFilters(prev => ({ ...prev, search: searchParam })); }
     if (locationParam) setFilters(prev => ({ ...prev, location: locationParam.split(',') }));
-    if (countryParam) {
-      setFilters(prev => ({ ...prev, country: countryParam }));
-      localStorage.setItem('user_country', countryParam);
-      localStorage.setItem('user_changed_country', 'true');
-    }
+    // country is locked to Nigeria — ignore URL country param
     if (sectorParam) setFilters(prev => ({ ...prev, sector: sectorParam.split(',') }));
     if (employmentTypeParam) setFilters(prev => ({ ...prev, employmentType: employmentTypeParam.split(',') }));
     if (salaryMinParam || salaryMaxParam) {
@@ -489,7 +495,13 @@ export default function JobList({ initialJobs, initialCountry, initialRoleCatego
       if (!res.ok) throw new Error(`Jobs API error: ${res.status}`);
       const { jobs: allData, cacheVersion } = await res.json();
 
-      const allUiJobs = (allData || []).map((job: any) => transformJobToUI(job, 0, null));
+      const allData_raw = (allData || []);
+      // Filter to Nigerian jobs and remote jobs with Nigeria as country
+      const nigerianJobs = allData_raw.filter((job: any) => {
+        const countries: string[] = (job.country || []).map((c: string) => c.toLowerCase());
+        return countries.includes('nigeria');
+      });
+      const allUiJobs = nigerianJobs.map((job: any) => transformJobToUI(job, 0, null));
       setLatestJobs(allUiJobs);
       setCurrentPage(1);
 
@@ -533,8 +545,12 @@ export default function JobList({ initialJobs, initialCountry, initialRoleCatego
       const res = await fetch(JOBS_API_URL);
       if (!res.ok) throw new Error(`Jobs API error: ${res.status}`);
       const { jobs: data } = await res.json();
-
-      const processedJobs = await processJobsWithMatching(data || []);
+      // Filter to Nigerian jobs only
+      const nigerianData = (data || []).filter((job: any) => {
+        const countries: string[] = (job.country || []).map((c: string) => c.toLowerCase());
+        return countries.includes('nigeria');
+      });
+      const processedJobs = await processJobsWithMatching(nigerianData || []);
       processedJobs.sort((a, b) => (b.calculatedTotal || 0) - (a.calculatedTotal || 0));
 
       try {
@@ -754,7 +770,7 @@ export default function JobList({ initialJobs, initialCountry, initialRoleCatego
   };
 
   const clearAllFilters = () => {
-    setFilters({ search: '', location: [], sector: [], employmentType: [], salaryRange: undefined, remote: false, country: '', roleCategory: '', jobType: '', state: '', town: '' });
+    setFilters({ search: '', location: [], sector: [], employmentType: [], salaryRange: undefined, remote: false, country: 'Nigeria', roleCategory: '', jobType: '', state: '', town: '' });
     setSearchQuery('');
     localStorage.setItem('user_changed_country', 'false');
     const params = new URLSearchParams();
@@ -1083,126 +1099,38 @@ export default function JobList({ initialJobs, initialCountry, initialRoleCatego
               )}
             </div>
 
-            {/* Country select + Upload CV Button */}
+            {/* Nigeria badge + Action Buttons */}
             <div className="flex flex-row items-center gap-2 w-full min-w-0 relative">
-              <div style={{ flex: "0 1 160px", minWidth: 0 }} className="lg:flex-1">
-                <select value={filters.country || detectedCountry || 'Global'}
-                  onChange={(e) => {
-                    const v = e.target.value;
-                    if (v === 'Global') {
-                      setFilters(prev => ({ ...prev, country: '', location: [] }));
-                      setDetectedCountry('');
-                      localStorage.setItem('user_country', 'Global');
-                    } else if (v) {
-                      setFilters(prev => ({ ...prev, country: v, location: v === 'Nigeria' ? prev.location : [] }));
-                      setDetectedCountry(v);
-                      localStorage.setItem('user_country', v);
-                    }
-                    localStorage.setItem('user_changed_country', 'true');
-                    const params = new URLSearchParams(searchParams.toString());
-                    v && v !== 'Global' ? params.set('country', v) : params.delete('country');
-                    router.replace(params.toString() ? `${pathname}?${params.toString()}` : pathname);
-                    setShowCountryHint(false); // hide hint on interaction
-                  }}
-                  className="w-full px-2 py-2.5 rounded-lg border cursor-pointer font-medium text-sm"
-                  style={{ backgroundColor: filters.country ? theme.colors.primary.DEFAULT + '10' : theme.colors.background.DEFAULT, borderColor: filters.country ? theme.colors.primary.DEFAULT : theme.colors.border.DEFAULT, color: theme.colors.text.primary }}>
-                  <option value="Global">Global</option>
-                  <option value="Nigeria">🇳🇬 Nigeria</option>
-                  <option value="United States">🇺🇸 United States</option>
-                  <option value="United Kingdom">🇬🇧 United Kingdom</option>
-                  <option value="Canada">🇨🇦 Canada</option>
-                  <option value="Australia">🇦🇺 Australia</option>
-                  <option value="Germany">🇩🇪 Germany</option>
-                  <option value="France">🇫🇷 France</option>
-                  <option value="India">🇮🇳 India</option>
-                  <option value="Kenya">🇰🇪 Kenya</option>
-                  <option value="South Africa">🇿🇦 South Africa</option>
-                  <option value="Ghana">🇬🇭 Ghana</option>
-                  <option value="United Arab Emirates">🇦🇪 United Arab Emirates</option>
-                  <option value="Saudi Arabia">🇸🇦 Saudi Arabia</option>
-                  <option value="Singapore">🇸🇬 Singapore</option>
-                  <option value="Netherlands">🇳🇱 Netherlands</option>
-                  <option value="Spain">🇪🇸 Spain</option>
-                  <option value="Italy">🇮🇹 Italy</option>
-                  <option value="Brazil">🇧🇷 Brazil</option>
-                  <option value="Mexico">🇲🇽 Mexico</option>
-                  <option value="Japan">🇯🇵 Japan</option>
-                  <option value="China">🇨🇳 China</option>
-                  <option value="Ireland">🇮🇪 Ireland</option>
-                  <option value="Switzerland">🇨🇭 Switzerland</option>
-                  <option value="Sweden">🇸🇪 Sweden</option>
-                  <option value="Norway">🇳🇴 Norway</option>
-                  <option value="Denmark">🇩🇰 Denmark</option>
-                  <option value="Finland">🇫🇮 Finland</option>
-                  <option value="Poland">🇵🇱 Poland</option>
-                  <option value="Portugal">🇵🇹 Portugal</option>
-                  <option value="Belgium">🇧🇪 Belgium</option>
-                  <option value="Austria">🇦🇹 Austria</option>
-                  <option value="New Zealand">🇳🇿 New Zealand</option>
-                  <option value="Israel">🇮🇱 Israel</option>
-                  <option value="Malaysia">🇲🇾 Malaysia</option>
-                  <option value="Philippines">🇵🇭 Philippines</option>
-                  <option value="Indonesia">🇮🇩 Indonesia</option>
-                  <option value="Thailand">🇹🇭 Thailand</option>
-                  <option value="Vietnam">🇻🇳 Vietnam</option>
-                  <option value="South Korea">🇰🇷 South Korea</option>
-                  <option value="Egypt">🇪🇬 Egypt</option>
-                  <option value="Argentina">🇦🇷 Argentina</option>
-                  <option value="Bangladesh">🇧🇩 Bangladesh</option>
-                  <option value="Colombia">🇨🇴 Colombia</option>
-                  <option value="Czech Republic">🇨🇿 Czech Republic</option>
-                  <option value="Chile">🇨🇱 Chile</option>
-                  <option value="Ecuador">🇪🇨 Ecuador</option>
-                  <option value="Ethiopia">🇪🇹 Ethiopia</option>
-                  <option value="Greece">🇬🇷 Greece</option>
-                  <option value="Hong Kong">🇭🇰 Hong Kong</option>
-                  <option value="Hungary">🇭🇺 Hungary</option>
-                  <option value="Iraq">🇮🇶 Iraq</option>
-                  <option value="Jordan">🇯🇴 Jordan</option>
-                  <option value="Kuwait">🇰🇼 Kuwait</option>
-                  <option value="Lebanon">🇱🇧 Lebanon</option>
-                  <option value="Morocco">🇲🇦 Morocco</option>
-                  <option value="Oman">🇴🇲 Oman</option>
-                  <option value="Pakistan">🇵🇰 Pakistan</option>
-                  <option value="Peru">🇵🇪 Peru</option>
-                  <option value="Qatar">🇶🇦 Qatar</option>
-                  <option value="Romania">🇷🇴 Romania</option>
-                  <option value="Russia">🇷🇺 Russia</option>
-                  <option value="Sri Lanka">🇱🇰 Sri Lanka</option>
-                  <option value="Taiwan">🇹🇼 Taiwan</option>
-                  <option value="Tanzania">🇹🇿 Tanzania</option>
-                  <option value="Turkey">🇹🇷 Turkey</option>
-                  <option value="Ukraine">🇺🇦 Ukraine</option>
-                  <option value="Venezuela">🇻🇪 Venezuela</option>
-                  <option value="Zimbabwe">🇿🇼 Zimbabwe</option>
-                </select>
+              {/* Nigeria locked badge */}
+              <div className="flex items-center gap-1.5 px-3 py-2.5 rounded-lg border font-medium text-sm flex-shrink-0"
+                style={{ backgroundColor: theme.colors.primary.DEFAULT + '10', borderColor: theme.colors.primary.DEFAULT, color: theme.colors.text.primary }}>
+                🇳🇬 Nigeria
               </div>
 
-              {/* Country hint - appears only for first visit */}
-              {showCountryHint && (
-                <div className="absolute -top-8 left-0 text-xs text-blue-600 flex items-center gap-1 pointer-events-none animate-pulse">
-                  <span>Select country</span>
-                  <ArrowRight size={14} className="animate-bounce" />
-                </div>
-              )}
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={cvStatus === 'uploading' || cvStatus === 'parsing'}
+                className="px-3 py-2.5 lg:px-4 rounded-lg font-medium text-sm whitespace-nowrap transition-all hover:opacity-90 active:scale-95 flex-shrink-0 flex items-center gap-2 disabled:opacity-70"
+                style={{ backgroundColor: theme.colors.primary.DEFAULT, color: '#ffffff', height: '42px' }}
+              >
+                {cvStatus === 'uploading' || cvStatus === 'parsing' ? (
+                  <>
+                    <Loader2 size={16} className="animate-spin" />
+                    Processing...
+                  </>
+                ) : (
+                  'Upload CV: Get Matched'
+                )}
+              </button>
 
-              {!user && (
-                <button
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={cvStatus === 'uploading' || cvStatus === 'parsing'}
-                  className="px-3 py-2.5 lg:px-6 rounded-lg font-medium text-sm whitespace-nowrap transition-all hover:opacity-90 active:scale-95 flex-shrink-0 flex items-center gap-2 disabled:opacity-70"
-                  style={{ backgroundColor: theme.colors.primary.DEFAULT, color: '#ffffff', height: '42px' }}
-                >
-                  {cvStatus === 'uploading' || cvStatus === 'parsing' ? (
-                    <>
-                      <Loader2 size={16} className="animate-spin" />
-                      Processing...
-                    </>
-                  ) : (
-                    'Upload CV: Get Matched'
-                  )}
-                </button>
-              )}
+              <button
+                onClick={() => router.push('/apply-for-me')}
+                className="px-3 py-2.5 lg:px-4 rounded-lg font-medium text-sm whitespace-nowrap transition-all hover:opacity-90 active:scale-95 flex-shrink-0 flex items-center gap-2"
+                style={{ backgroundColor: '#7C3AED', color: '#ffffff', height: '42px' }}
+              >
+                <Sparkles size={15} />
+                Apply for Me Package
+              </button>
             </div>
 
             <input
@@ -1246,18 +1174,18 @@ export default function JobList({ initialJobs, initialCountry, initialRoleCatego
             </div>
 
             <JobFilters filters={filters} onFiltersChange={(newFilters: any) => {
-              if (newFilters.country && newFilters.country !== filters.country) { localStorage.setItem('user_country', newFilters.country); localStorage.setItem('user_changed_country', 'true'); }
-              setFilters(newFilters);
+              // country is locked to Nigeria — ignore any country change from filters
+              const safeFilters = { ...newFilters, country: 'Nigeria' };
+              setFilters(safeFilters);
               const params = new URLSearchParams();
-              if (newFilters.search) params.set('search', newFilters.search);
-              if (newFilters.sector) params.set('sector', newFilters.sector);
-              if (newFilters.country) params.set('country', newFilters.country);
-              if (newFilters.role) params.set('role', newFilters.role);
-              if (newFilters.state) params.set('state', newFilters.state);
-              if (newFilters.town) params.set('town', newFilters.town);
-              if (newFilters.jobType?.length) params.set('jobType', newFilters.jobType.join(','));
-              if (newFilters.workMode?.length) params.set('workMode', newFilters.workMode.join(','));
-              if (newFilters.salaryRange?.enabled) { if (newFilters.salaryRange.min > 0) params.set('salaryMin', newFilters.salaryRange.min.toString()); if (newFilters.salaryRange.max > 0) params.set('salaryMax', newFilters.salaryRange.max.toString()); }
+              if (safeFilters.search) params.set('search', safeFilters.search);
+              if (safeFilters.sector) params.set('sector', safeFilters.sector);
+              if (safeFilters.role) params.set('role', safeFilters.role);
+              if (safeFilters.state) params.set('state', safeFilters.state);
+              if (safeFilters.town) params.set('town', safeFilters.town);
+              if (safeFilters.jobType?.length) params.set('jobType', safeFilters.jobType.join(','));
+              if (safeFilters.workMode?.length) params.set('workMode', safeFilters.workMode.join(','));
+              if (safeFilters.salaryRange?.enabled) { if (safeFilters.salaryRange.min > 0) params.set('salaryMin', safeFilters.salaryRange.min.toString()); if (safeFilters.salaryRange.max > 0) params.set('salaryMax', safeFilters.salaryRange.max.toString()); }
               if (sortBy !== 'latest') params.set('sort', sortBy);
               router.replace(params.toString() ? `${pathname}?${params.toString()}` : pathname);
             }} isOpen={filtersOpen} onToggle={() => setFiltersOpen(!filtersOpen)} />
@@ -1271,7 +1199,7 @@ export default function JobList({ initialJobs, initialCountry, initialRoleCatego
             )}
 
             {/* Job list */}
-            <div className="py-2">
+            <div className="py-2 space-y-3">
               {activeTab === 'latest' && latestJobs.length > 0 && (
                 <>
                   {sortedJobs.length === 0 && !latestJobsLoading ? (

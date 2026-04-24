@@ -21,7 +21,6 @@ import {
 } from 'lucide-react';
 
 import Link from 'next/link';
-import Head from 'next/head';
 import Image from 'next/image';
 import AdUnit from '@/components/ads/AdUnit';
 
@@ -305,19 +304,6 @@ export default function HomePage({ jobs: initialJobs, blogPosts, companies = [] 
 
   return (
     <>
-      <Head>
-        <title>JobMeter - Find Your Dream Job | Smart Job Matching Platform</title>
-        <meta
-          name="description"
-          content="JobMeter connects job seekers with top employers across industries. Browse thousands of job listings, get personalized match scores, and find your perfect career opportunity."
-        />
-        <meta name="keywords" content="jobs, careers, employment, job search, hiring, recruitment, job board" />
-        <link rel="canonical" href="https://jobmeter.com" />
-        {process.env.NEXT_PUBLIC_SUPABASE_URL && (
-          <link rel="preconnect" href={process.env.NEXT_PUBLIC_SUPABASE_URL} crossOrigin="anonymous" />
-        )}
-      </Head>
-
       <div className="min-h-screen" style={{ backgroundColor: theme.colors.background.muted }}>
         {/* Hero Section */}
         <section className="relative px-6 py-16 overflow-hidden">
@@ -326,8 +312,7 @@ export default function HomePage({ jobs: initialJobs, blogPosts, companies = [] 
               src="/homepage.webp"
               alt=""
               fill
-              priority={false}
-              loading="lazy"
+              priority
               className="object-cover object-center"
               sizes="100vw"
               quality={80}
