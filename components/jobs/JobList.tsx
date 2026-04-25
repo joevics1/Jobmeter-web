@@ -32,7 +32,20 @@ const AD_SLOTS = {
   IN_FEED_LAYOUT_KEY:  '-fb+5w+4e-db+86',
   MIDDLE_DISPLAY:      '9010641928',
 } as const;
-// ───────────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+
+// ── Site-specific job filter helpers ─────────────────────────────────────────
+const GULF_COUNTRIES = ['uae', 'saudi arabia', 'kuwait', 'qatar', 'bahrain', 'oman', 'jordan', 'egypt', 'lebanon'];
+function getJobCountries(job: any): string[] { return (job.country || []).map((c: string) => c.toLowerCase()); }
+function isJobRemote(job: any): boolean { const loc = job.location; if (!loc) return false; if (typeof loc === 'string') return loc.toLowerCase().includes('remote'); if (typeof loc === 'object') return Boolean(loc.remote); return false; }
+function filterForNigeria(job: any): boolean {
+  const countries = getJobCountries(job);
+  if (countries.includes('nigeria')) return true;
+  // Remote jobs only if tagged with nigeria
+  if (isJobRemote(job)) return countries.includes('nigeria');
+  return false;
+}
+// ─────────────────────────────────────────────────────────────────────────────
 
 const STORAGE_KEYS = {
   SAVED_JOBS: 'saved_jobs',
@@ -496,11 +509,8 @@ export default function JobList({ initialJobs, initialCountry, initialRoleCatego
       const { jobs: allData, cacheVersion } = await res.json();
 
       const allData_raw = (allData || []);
-      // Filter to Nigerian jobs and remote jobs with Nigeria as country
-      const nigerianJobs = allData_raw.filter((job: any) => {
-        const countries: string[] = (job.country || []).map((c: string) => c.toLowerCase());
-        return countries.includes('nigeria');
-      });
+      // Nigeria site: only Nigerian jobs + remote jobs tagged with Nigeria
+      const nigerianJobs = allData_raw.filter((job: any) => filterForNigeria(job));
       const allUiJobs = nigerianJobs.map((job: any) => transformJobToUI(job, 0, null));
       setLatestJobs(allUiJobs);
       setCurrentPage(1);
@@ -545,12 +555,9 @@ export default function JobList({ initialJobs, initialCountry, initialRoleCatego
       const res = await fetch(JOBS_API_URL);
       if (!res.ok) throw new Error(`Jobs API error: ${res.status}`);
       const { jobs: data } = await res.json();
-      // Filter to Nigerian jobs only
-      const nigerianData = (data || []).filter((job: any) => {
-        const countries: string[] = (job.country || []).map((c: string) => c.toLowerCase());
-        return countries.includes('nigeria');
-      });
-      const processedJobs = await processJobsWithMatching(nigerianData || []);
+      // Nigeria site: only Nigerian jobs + remote jobs tagged with Nigeria
+      const nigerianData = (data || []).filter((job: any) => filterForNigeria(job));
+      const processedJobs = await processJobsWithMatching(nigerianData);
       processedJobs.sort((a, b) => (b.calculatedTotal || 0) - (a.calculatedTotal || 0));
 
       try {
@@ -1099,19 +1106,76 @@ export default function JobList({ initialJobs, initialCountry, initialRoleCatego
               )}
             </div>
 
-            {/* Nigeria badge + Action Buttons */}
-            <div className="flex flex-row items-center gap-2 w-full min-w-0 relative">
-              {/* Nigeria locked badge */}
-              <div className="flex items-center gap-1.5 px-3 py-2.5 rounded-lg border font-medium text-sm flex-shrink-0"
-                style={{ backgroundColor: theme.colors.primary.DEFAULT + '10', borderColor: theme.colors.primary.DEFAULT, color: theme.colors.text.primary }}>
-                🇳🇬 Nigeria
+            {/* Country dropdown + Upload CV + Apply for Me — same line desktop, wraps on mobile */}
+            <div className="flex flex-wrap items-center gap-2 w-full min-w-0 relative">
+              <div style={{ flex: "0 1 170px", minWidth: 0 }}>
+                <select
+                  defaultValue="Nigeria"
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    const countryRoutes: Record<string, string> = {
+                      // Nigeria — same site, no redirect needed (handled below)
+                      // Gulf site
+                      'UAE': 'https://www.gulf.jobmeter.app/jobs?search=UAE',
+                      'Saudi Arabia': 'https://www.gulf.jobmeter.app/jobs?search=Saudi+Arabia',
+                      'Kuwait': 'https://www.gulf.jobmeter.app/jobs?search=Kuwait',
+                      'Qatar': 'https://www.gulf.jobmeter.app/jobs?search=Qatar',
+                      'Bahrain': 'https://www.gulf.jobmeter.app/jobs?search=Bahrain',
+                      'Oman': 'https://www.gulf.jobmeter.app/jobs?search=Oman',
+                      'Jordan': 'https://www.gulf.jobmeter.app/jobs?search=Jordan',
+                      'Egypt': 'https://www.gulf.jobmeter.app/jobs?search=Egypt',
+                      'Lebanon': 'https://www.gulf.jobmeter.app/jobs?search=Lebanon',
+                      // Global site
+                      'United States': 'https://www.global.jobmeter.app/jobs?search=USA',
+                      'United Kingdom': 'https://www.global.jobmeter.app/jobs?search=UK',
+                      'Canada': 'https://www.global.jobmeter.app/jobs?search=Canada',
+                      'Australia': 'https://www.global.jobmeter.app/jobs?search=Australia',
+                      'Germany': 'https://www.global.jobmeter.app/jobs?search=Germany',
+                      'France': 'https://www.global.jobmeter.app/jobs?search=France',
+                      'Netherlands': 'https://www.global.jobmeter.app/jobs?search=Netherlands',
+                      'Ireland': 'https://www.global.jobmeter.app/jobs?search=Ireland',
+                      'Global': 'https://www.global.jobmeter.app/jobs',
+                    };
+                    if (v === 'Nigeria') { router.push('/jobs'); return; }
+                    const url = countryRoutes[v];
+                    if (url) window.open(url, '_blank', 'noopener,noreferrer');
+                  }}
+                  className="w-full px-2 py-2.5 rounded-lg border cursor-pointer font-medium text-sm"
+                  style={{ backgroundColor: theme.colors.primary.DEFAULT + '10', borderColor: theme.colors.primary.DEFAULT, color: theme.colors.text.primary, height: '42px' }}
+                >
+                  <optgroup label="🇳🇬 Nigeria">
+                    <option value="Nigeria">🇳🇬 Nigeria</option>
+                  </optgroup>
+                  <optgroup label="🌍 Gulf &amp; Middle East">
+                    <option value="UAE">🇦🇪 UAE</option>
+                    <option value="Saudi Arabia">🇸🇦 Saudi Arabia</option>
+                    <option value="Kuwait">🇰🇼 Kuwait</option>
+                    <option value="Qatar">🇶🇦 Qatar</option>
+                    <option value="Bahrain">🇧🇭 Bahrain</option>
+                    <option value="Oman">🇴🇲 Oman</option>
+                    <option value="Jordan">🇯🇴 Jordan</option>
+                    <option value="Egypt">🇪🇬 Egypt</option>
+                    <option value="Lebanon">🇱🇧 Lebanon</option>
+                  </optgroup>
+                  <optgroup label="🌐 Global / Western">
+                    <option value="United States">🇺🇸 United States</option>
+                    <option value="United Kingdom">🇬🇧 United Kingdom</option>
+                    <option value="Canada">🇨🇦 Canada</option>
+                    <option value="Australia">🇦🇺 Australia</option>
+                    <option value="Germany">🇩🇪 Germany</option>
+                    <option value="France">🇫🇷 France</option>
+                    <option value="Netherlands">🇳🇱 Netherlands</option>
+                    <option value="Ireland">🇮🇪 Ireland</option>
+                    <option value="Global">🌐 Global</option>
+                  </optgroup>
+                </select>
               </div>
 
               <button
                 onClick={() => fileInputRef.current?.click()}
                 disabled={cvStatus === 'uploading' || cvStatus === 'parsing'}
-                className="px-3 py-2.5 lg:px-4 rounded-lg font-medium text-sm whitespace-nowrap transition-all hover:opacity-90 active:scale-95 flex-shrink-0 flex items-center gap-2 disabled:opacity-70"
-                style={{ backgroundColor: theme.colors.primary.DEFAULT, color: '#ffffff', height: '42px' }}
+                className="flex-1 px-3 py-2.5 rounded-lg font-medium text-sm whitespace-nowrap transition-all hover:opacity-90 active:scale-95 flex items-center justify-center gap-2 disabled:opacity-70"
+                style={{ backgroundColor: theme.colors.primary.DEFAULT, color: '#ffffff', height: '42px', minWidth: '160px' }}
               >
                 {cvStatus === 'uploading' || cvStatus === 'parsing' ? (
                   <>
@@ -1125,8 +1189,8 @@ export default function JobList({ initialJobs, initialCountry, initialRoleCatego
 
               <button
                 onClick={() => router.push('/apply-for-me')}
-                className="px-3 py-2.5 lg:px-4 rounded-lg font-medium text-sm whitespace-nowrap transition-all hover:opacity-90 active:scale-95 flex-shrink-0 flex items-center gap-2"
-                style={{ backgroundColor: '#7C3AED', color: '#ffffff', height: '42px' }}
+                className="flex-1 px-3 py-2.5 rounded-lg font-medium text-sm whitespace-nowrap transition-all hover:opacity-90 active:scale-95 flex items-center justify-center gap-2 w-full sm:w-auto"
+                style={{ backgroundColor: '#7C3AED', color: '#ffffff', height: '42px', minWidth: '160px' }}
               >
                 <Sparkles size={15} />
                 Apply for Me Package
@@ -1164,14 +1228,7 @@ export default function JobList({ initialJobs, initialCountry, initialRoleCatego
               </div>
             )}
 
-            {/* Ad: Under location dropdown — always visible */}
-            <div className="w-full overflow-hidden" style={{ margin: 0, padding: '10px 0 3px 0' }}>
-              <AdUnit
-                slot={AD_SLOTS.DISPLAY_TOP}
-                format="auto"
-                style={{ display: 'block', height: '100px' }}
-              />
-            </div>
+            {/* First ad removed */}
 
             <JobFilters filters={filters} onFiltersChange={(newFilters: any) => {
               // country is locked to Nigeria — ignore any country change from filters
