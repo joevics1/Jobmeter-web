@@ -36,20 +36,26 @@ import TimedJobPopup from '@/components/TimedJobPopup';
 
 // ─── Ad slot IDs ───────────────────────────────────────────────────────────────
 const AD_SLOTS = {
-  DISPLAY_TOP:        '4198231153',  // in main job header card
-  IN_ARTICLE:         '3314340925',  // new in-article (replaces both old in-article slots)
-  DISPLAY_BOTTOM:     '9751041788',  // below benefits in main column
-  SIDEBAR_MOBILE:     '9025117620',  // mobile only, below quizzes
-  ANCHOR_MOBILE:      '9010641928',  // fixed bottom mobile
-  BANNER_1:           '7253585934',  // new banner — top of sidebar (desktop) + bottom of main (desktop)
-  BANNER_2:           '5940504265',  // new banner — bottom of sidebar (desktop)
-  BANNER_3:           '8348311222',  // new banner — bottom of sidebar (desktop)
+  DISPLAY_TOP:        '4198231153',
+  IN_ARTICLE:         '3314340925',
+  DISPLAY_BOTTOM:     '9751041788',
+  SIDEBAR_MOBILE:     '9025117620',
+  ANCHOR_MOBILE:      '9010641928',
+  BANNER_1:           '7253585934',
+  BANNER_2:           '5940504265',
+  BANNER_3:           '8348311222',
 } as const;
 
+// Namespaced per site so saved/applied state doesn't bleed across subdomains
+// if a user ever visits multiple sites on the same browser.
 const STORAGE_KEYS = {
-  SAVED_JOBS: 'saved_jobs',
-  APPLIED_JOBS: 'applied_jobs',
+  SAVED_JOBS: 'ng_saved_jobs',
+  APPLIED_JOBS: 'ng_applied_jobs',
 };
+
+// ─── Worker URL for similar/related jobs (client-side fallback) ───────────────
+// Replace this with the Nigeria-specific worker URL when ready.
+const SIMILAR_JOBS_WORKER_URL = 'https://jobs-api.joevicspro.workers.dev/jobs';
 
 // ─── Featured Quizzes ────────────────────────────────────────────────────────
 const FEATURED_QUIZZES = [
@@ -60,29 +66,33 @@ const FEATURED_QUIZZES = [
   { name: 'Access Bank Graduate Trainee Aptitude Test', url: '/tools/quiz/access-bank-graduate-trainee-assessment-test' },
 ];
 
-// ─── Blog Articles ───────────────────────────────────────────────────────────
+// ─── Blog Articles (Nigeria) ──────────────────────────────────────────────────
+// NOTE: Add your new blog URLs here. All entries in this list are eligible for
+// random selection — the old "region" filter has been removed for Nigeria.
+// Simply add new objects with { title, url } to this array.
 const ALL_BLOGS = [
-  { title: 'Should You Include Your Photo on Nigerian CVs?', url: '/blog/nigerian-cv-photo-pros-cons-recruiter-tips', region: 'nigeria' },
-  { title: 'What to Wear to Interviews in Lagos vs Abuja', url: '/blog/lagos-vs-abuja-interview-attir-guide', region: 'nigeria' },
-  { title: '10 Certifications That Actually Increase Your Salary in Nigeria', url: '/blog/10-certifications-that-actually-increase-your-salary-in-nigeria', region: 'nigeria' },
-  { title: 'Free Online Courses Nigerians Can Take to Boost Employability', url: '/blog/boost-employability-free-online-courses-for-nigerians', region: 'nigeria' },
-  { title: 'How to Write a CV with No Experience', url: '/blog/write-a-cv-with-no-experience-beginners-guide', region: 'global' },
-  { title: "How to Answer 'Tell Me About Yourself' in Job Interviews", url: '/blog/tell-me-about-yourself-job-interview-nigeria', region: 'global' },
-  { title: '30 Common Bank Interview Questions', url: '/blog/bank-interview-questions-nigeria-ace-job', region: 'global' },
-  { title: 'Is an MBA Worth It in Nigeria? Complete Cost-Benefit Analysis', url: '/blog/is-an-mba-worth-it-nigeria', region: 'nigeria' },
-  { title: 'Office Politics in Nigeria: Survival Guide for New Graduates', url: '/blog/office-politics-nigeria-new-grad-survival-guide', region: 'nigeria' },
-  { title: 'Software Developer Salary in Nigeria', url: '/blog/software-developer-salary-nigeria-2026-your-ultimate-guide', region: 'nigeria' },
-  { title: 'How to Apply for KPMG Internship: Step-by-Step Guide', url: '/blog/kpmg-internship-2026-your-ultimate-application-guide', region: 'nigeria' },
-  { title: 'How to Transition from Banking to Tech (Guide)', url: '/blog/how-to-transition-from-banking-to-tech-in-nigeria-2026-guide', region: 'global' },
-  { title: 'How to Transition from Teaching to Corporate HR', url: '/blog/nigerian-teachers-to-hr-your-career-transition-guide', region: 'global' },
-  { title: 'How to Handle a Difficult Boss in Nigerian Corporate Culture', url: '/blog/navigate-difficult-bosses-nigeria-expert-guide', region: 'nigeria' },
-  { title: 'Virtual Interview Online Preparation Tips', url: '/blog/virtual-interview-tips', region: 'global' },
-  { title: 'Medical & Public Health Salaries in Nigeria', url: '/blog/healthcare-salaries-nigeria-2026-your-guide', region: 'nigeria' },
-  { title: 'Civil, Mechanical & Petroleum Engineering Salaries in Nigeria', url: '/blog/nigeria-engineering-salaries-2026-civil-mech-petro', region: 'nigeria' },
-  { title: 'Top 8 NGOs That Pay Corpers in Abuja (NYSC PPA Guide)', url: '/blog/ngos-that-pay-corpers-in-abuja-2026', region: 'nigeria' },
-  { title: 'Best Paying Companies in Nigeria 2026', url: '/blog/best-paying-companies-in-nigeria-2026-high-salary-jobs-guide', region: 'nigeria' },
-  { title: 'Top 25 Highest Paying Jobs in Nigeria: Best Careers & Salaries', url: '/blog/highest-paying-jobs-in-nigeria', region: 'nigeria' },
-  { title: 'How to Identify Fake Job Offers & Scam Interviews', url: '/blog/spot-fake-jobs--scam-interviews-nigeria', region: 'global' },
+  { title: 'Should You Include Your Photo on Nigerian CVs?', url: '/blog/nigerian-cv-photo-pros-cons-recruiter-tips' },
+  { title: 'What to Wear to Interviews in Lagos vs Abuja', url: '/blog/lagos-vs-abuja-interview-attir-guide' },
+  { title: '10 Certifications That Actually Increase Your Salary in Nigeria', url: '/blog/10-certifications-that-actually-increase-your-salary-in-nigeria' },
+  { title: 'Free Online Courses Nigerians Can Take to Boost Employability', url: '/blog/boost-employability-free-online-courses-for-nigerians' },
+  { title: 'How to Write a CV with No Experience', url: '/blog/write-a-cv-with-no-experience-beginners-guide' },
+  { title: "How to Answer 'Tell Me About Yourself' in Job Interviews", url: '/blog/tell-me-about-yourself-job-interview-nigeria' },
+  { title: '30 Common Bank Interview Questions', url: '/blog/bank-interview-questions-nigeria-ace-job' },
+  { title: 'Is an MBA Worth It in Nigeria? Complete Cost-Benefit Analysis', url: '/blog/is-an-mba-worth-it-nigeria' },
+  { title: 'Office Politics in Nigeria: Survival Guide for New Graduates', url: '/blog/office-politics-nigeria-new-grad-survival-guide' },
+  { title: 'Software Developer Salary in Nigeria', url: '/blog/software-developer-salary-nigeria-2026-your-ultimate-guide' },
+  { title: 'How to Apply for KPMG Internship: Step-by-Step Guide', url: '/blog/kpmg-internship-2026-your-ultimate-application-guide' },
+  { title: 'How to Transition from Banking to Tech (Guide)', url: '/blog/how-to-transition-from-banking-to-tech-in-nigeria-2026-guide' },
+  { title: 'How to Transition from Teaching to Corporate HR', url: '/blog/nigerian-teachers-to-hr-your-career-transition-guide' },
+  { title: 'How to Handle a Difficult Boss in Nigerian Corporate Culture', url: '/blog/navigate-difficult-bosses-nigeria-expert-guide' },
+  { title: 'Virtual Interview Online Preparation Tips', url: '/blog/virtual-interview-tips' },
+  { title: 'Medical & Public Health Salaries in Nigeria', url: '/blog/healthcare-salaries-nigeria-2026-your-guide' },
+  { title: 'Civil, Mechanical & Petroleum Engineering Salaries in Nigeria', url: '/blog/nigeria-engineering-salaries-2026-civil-mech-petro' },
+  { title: 'Top 8 NGOs That Pay Corpers in Abuja (NYSC PPA Guide)', url: '/blog/ngos-that-pay-corpers-in-abuja-2026' },
+  { title: 'Best Paying Companies in Nigeria 2026', url: '/blog/best-paying-companies-in-nigeria-2026-high-salary-jobs-guide' },
+  { title: 'Top 25 Highest Paying Jobs in Nigeria: Best Careers & Salaries', url: '/blog/highest-paying-jobs-in-nigeria' },
+  { title: 'How to Identify Fake Job Offers & Scam Interviews', url: '/blog/spot-fake-jobs--scam-interviews-nigeria' },
+  // ─── Add new blog URLs below ────────────────────────────────────────────────
 ];
 
 // ─── Helper ───────────────────────────────────────────────────────────────────
@@ -116,25 +126,13 @@ export default function JobClient({ job, relatedJobs, companies }: {
   const [anchorHeight, setAnchorHeight] = useState(100);
   const [isAnchorClosed, setIsAnchorClosed] = useState(false);
 
+  // Always show 5 random blogs from the full pool — no condition hiding them
   const [randomBlogs, setRandomBlogs] = useState<typeof ALL_BLOGS>([]);
-  // Exposed for conditional rendering (Apply for Me section)
-  const [isNigerianJob, setIsNigerianJob] = useState(false);
 
   useEffect(() => {
     setIsMounted(true);
-    const locationCountry = typeof job.location === 'object'
-      ? (job.location?.country || '')
-      : (typeof job.location === 'string' ? job.location : '');
-    const countryArr: string[] = Array.isArray(job.country) ? job.country : [];
-    const nigerianJob =
-      locationCountry === 'NG' ||
-      locationCountry.toLowerCase() === 'nigeria' ||
-      countryArr.some((c: string) => c === 'NG' || c.toLowerCase() === 'nigeria');
-    setIsNigerianJob(nigerianJob);
-    const pool = ALL_BLOGS.filter(b =>
-      b.region === 'global' || (nigerianJob && b.region === 'nigeria')
-    );
-    setRandomBlogs(getRandomItems(pool, 5));
+    // Always pick 5 random blogs — no region filtering needed for Nigeria
+    setRandomBlogs(getRandomItems(ALL_BLOGS, 5));
   }, []);
 
   const handleCopy = async (text: string, label: string) => {
@@ -233,7 +231,7 @@ export default function JobClient({ job, relatedJobs, companies }: {
       if (job.sector) params.set('sector', job.sector);
 
       const res = await fetch(
-        `https://jobs-api.joevicspro.workers.dev/jobs?${params.toString()}`
+        `${SIMILAR_JOBS_WORKER_URL}?${params.toString()}`
       );
       if (!res.ok) throw new Error('Related jobs fetch failed');
       const data = await res.json();
@@ -911,8 +909,8 @@ export default function JobClient({ job, relatedJobs, companies }: {
                 </div>
               )}
 
-              {/* ─── Apply for Me — Nigerian jobs only ──────────────────────────── */}
-              {isNigerianJob && !isExpired && (
+              {/* ─── Apply for Me — always shown for non-expired jobs ─────────────── */}
+              {!isExpired && (
                 <div
                   className="rounded-xl overflow-hidden shadow-sm flex flex-col sm:flex-row sm:items-center gap-4 px-5 py-5"
                   style={{ backgroundColor: '#fff7ed', border: '1.5px solid #fed7aa' }}
@@ -1046,7 +1044,7 @@ export default function JobClient({ job, relatedJobs, companies }: {
                 </div>
               )}
 
-              {/* ─── Banner ad — bottom of main column (all screens) ─────────────── */}
+              {/* ─── Banner ad — bottom of main column ─────────────────────────── */}
               <div className="w-full rounded-lg overflow-hidden">
                 <AdUnit
                   slot={AD_SLOTS.BANNER_1}
@@ -1213,41 +1211,40 @@ export default function JobClient({ job, relatedJobs, companies }: {
                 </div>
               </div>
 
-              {randomBlogs.length > 0 && (
-                <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-                  <div className="px-5 py-4 font-semibold text-base flex items-center gap-2" style={{ backgroundColor: `${theme.colors.primary.DEFAULT}10`, color: theme.colors.primary.DEFAULT }}>
-                    <BookOpen size={16} />
-                    Read Career Articles
-                  </div>
-                  <div className="px-5 py-4">
-                    <ul className="space-y-3">
-                      {randomBlogs.map((blog, index) => (
-                        <li key={index}>
-                          <a
-                            href={blog.url}
-                            className="flex items-start gap-2 text-sm font-medium text-gray-800 hover:text-blue-600 transition-colors group"
-                          >
-                            <ChevronRight size={14} className="text-gray-400 group-hover:text-blue-500 flex-shrink-0 mt-0.5 transition-colors" />
-                            <span className="group-hover:underline leading-snug">{blog.title}</span>
-                          </a>
-                        </li>
-                      ))}
-                    </ul>
-                    <div className="mt-4 pt-3 border-t border-gray-100">
-                      <a
-                        href="/blog"
-                        className="flex items-center gap-1.5 text-sm font-semibold hover:underline"
-                        style={{ color: theme.colors.primary.DEFAULT }}
-                      >
-                        See all articles
-                        <ChevronRight size={14} />
-                      </a>
-                    </div>
+              {/* ─── Blog Articles — always shown, 5 random picks ─────────────────── */}
+              <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+                <div className="px-5 py-4 font-semibold text-base flex items-center gap-2" style={{ backgroundColor: `${theme.colors.primary.DEFAULT}10`, color: theme.colors.primary.DEFAULT }}>
+                  <BookOpen size={16} />
+                  Read Career Articles
+                </div>
+                <div className="px-5 py-4">
+                  <ul className="space-y-3">
+                    {randomBlogs.map((blog, index) => (
+                      <li key={index}>
+                        <a
+                          href={blog.url}
+                          className="flex items-start gap-2 text-sm font-medium text-gray-800 hover:text-blue-600 transition-colors group"
+                        >
+                          <ChevronRight size={14} className="text-gray-400 group-hover:text-blue-500 flex-shrink-0 mt-0.5 transition-colors" />
+                          <span className="group-hover:underline leading-snug">{blog.title}</span>
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                  <div className="mt-4 pt-3 border-t border-gray-100">
+                    <a
+                      href="/blog"
+                      className="flex items-center gap-1.5 text-sm font-semibold hover:underline"
+                      style={{ color: theme.colors.primary.DEFAULT }}
+                    >
+                      See all articles
+                      <ChevronRight size={14} />
+                    </a>
                   </div>
                 </div>
-              )}
+              </div>
 
-              {/* ─── Banner ad — bottom of sidebar (all screens) ─────────────────── */}
+              {/* ─── Banner ad — bottom of sidebar ─────────────────────────────── */}
               <div className="w-full rounded-lg overflow-hidden">
                 <AdUnit
                   slot={AD_SLOTS.BANNER_2}
@@ -1299,8 +1296,9 @@ export default function JobClient({ job, relatedJobs, companies }: {
             currentCredits={upgradeErrorData?.currentCredits}
           />
         )}
-        {/* Apply for Me popup — Nigerian jobs only, shows after 45s */}
-        <TimedJobPopup forceShow={isNigerianJob} />
+
+        {/* TimedJobPopup — always shown for all jobs on jobmeter.app */}
+        <TimedJobPopup forceShow={true} />
 
       </div>
     </>

@@ -22,6 +22,7 @@ export async function GET() {
       .from('remote_categories')
       .select('slug, updated_at')
       .eq('is_active', true)
+      .eq('website_country', 'nigeria')
       .order('display_order', { ascending: true });
 
     if (!remoteError && remoteCategories) {
@@ -40,6 +41,7 @@ export async function GET() {
       .from('category_pages')
       .select('slug, updated_at, location, job_count')
       .eq('is_published', true)
+      .eq('website_country', 'nigeria')
       .order('job_count', { ascending: false });
 
     if (error) {
@@ -56,7 +58,7 @@ export async function GET() {
           priority: page.job_count > 20 ? 0.9 : 0.7,
         });
       });
-      console.log(`📄 Category sitemap: ${routes.length} pages total (${categoryPages.length} Nigerian category pages)`);
+      console.log(`📄 Category sitemap: ${routes.length} pages total (${categoryPages.length} Nigeria category pages)`);
     }
   } catch (error) {
     console.error('Error generating category sitemap:', error);

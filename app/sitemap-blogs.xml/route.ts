@@ -25,7 +25,8 @@ export async function GET() {
     const { data: blogs, error: blogError } = await supabase
       .from('blogs')
       .select('slug, updated_at')
-      .eq('is_published', true);
+      .eq('is_published', true)
+      .eq('country', 'nigeria');
 
     if (blogError) {
       console.error('Error fetching blogs:', JSON.stringify(blogError));
