@@ -19,8 +19,12 @@ export async function GET(
   }
 
   try {
+    // short_code is written to `jobs` (source of truth, via trigger + backfill).
+    // `jobs_nigeria` is a mirror and may lag behind on that column, so we look
+    // the code up against `jobs` and just redirect using the shared `slug`,
+    // which the live job page resolves against `jobs_nigeria`.
     const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/jobs_nigeria?short_code=eq.${encodeURIComponent(code)}&select=slug&limit=1`,
+      `${SUPABASE_URL}/rest/v1/jobs?short_code=eq.${encodeURIComponent(code)}&select=slug&limit=1`,
       {
         headers: {
           apikey: SUPABASE_ANON_KEY,
