@@ -23,8 +23,11 @@ export async function GET(
     // `jobs_nigeria` is a mirror and may lag behind on that column, so we look
     // the code up against `jobs` and just redirect using the shared `slug`,
     // which the live job page resolves against `jobs_nigeria`.
+    // Case-insensitive match so links still work regardless of how the code
+    // was typed/cased — avoids sending real visitors to a dead end over a
+    // case mismatch.
     const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/jobs?short_code=eq.${encodeURIComponent(code)}&select=slug&limit=1`,
+      `${SUPABASE_URL}/rest/v1/jobs?short_code=ilike.${encodeURIComponent(code)}&select=slug&limit=1`,
       {
         headers: {
           apikey: SUPABASE_ANON_KEY,
