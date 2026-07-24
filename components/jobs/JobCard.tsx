@@ -138,6 +138,24 @@ interface JobCardProps {
   onApply: (jobId: string) => void;
   onShowBreakdown: (job: JobUI) => void;
   showMatch?: boolean; // ✅ NEW: Control match score visibility
+  /** Position of this job within the current matches page (0 = top match). Only used when showMatch is true. */
+  matchRank?: number;
+}
+
+interface MatchTier {
+  label: string;
+  color: string;
+  bg: string;
+  border: string;
+}
+
+/** Richer match tiering — distinct color per band instead of a single green/red split. */
+function getMatchTier(score: number): MatchTier {
+  if (score >= 80) return { label: 'Excellent Match', color: '#4338CA', bg: '#EEF2FF', border: '#C7D2FE' }; // indigo
+  if (score >= 65) return { label: 'Great Match', color: '#2563EB', bg: '#EFF6FF', border: '#BFDBFE' };    // blue
+  if (score >= 50) return { label: 'Good Match', color: '#059669', bg: '#ECFDF5', border: '#A7F3D0' };     // green
+  if (score >= 31) return { label: 'Fair Match', color: '#D97706', bg: '#FFFBEB', border: '#FDE68A' };     // amber
+  return { label: 'Low Match', color: '#64748B', bg: '#F8FAFC', border: '#E2E8F0' };                        // neutral gray, not alarming red
 }
 
 export default function JobCard({
@@ -148,16 +166,12 @@ export default function JobCard({
   onApply,
   onShowBreakdown,
   showMatch = true, // ✅ Default to true for backward compatibility
+  matchRank,
 }: JobCardProps) {
   const matchScore = job.calculatedTotal || job.match || 0;
-  
-  const getMatchColor = (match: number) => {
-    if (match >= 50) return theme.colors.match.good;
-    if (match >= 31) return theme.colors.match.average;
-    return theme.colors.match.bad;
-  };
 
-  const matchColor = useMemo(() => getMatchColor(matchScore), [matchScore]);
+  const matchTier = useMemo(() => getMatchTier(matchScore), [matchScore]);
+  const isTopMatch = showMatch && matchRank === 0 && matchScore >= 50;
   const isSaved = useMemo(() => savedJobs.includes(job.id), [savedJobs, job.id]);
   const isApplied = useMemo(() => appliedJobs.includes(job.id), [appliedJobs, job.id]);
 
@@ -199,16 +213,26 @@ export default function JobCard({
     <div
       className="bg-white rounded-2xl p-5 mb-5 shadow-md hover:shadow-xl transition-all duration-300 border-2 relative overflow-hidden group"
       style={{
-        borderColor: theme.colors.border.DEFAULT,
+        borderColor: showMatch ? matchTier.border : theme.colors.border.DEFAULT,
         backgroundColor: theme.colors.card.DEFAULT,
       }}
     >
-      {/* Top accent bar for high match scores */}
-      {showMatch && matchScore >= 50 && (
-        <div 
-          className="absolute top-0 left-0 w-1 h-full"
-          style={{ backgroundColor: theme.colors.match.good }}
+      {/* Top accent bar — colored by match tier */}
+      {showMatch && (
+        <div
+          className="absolute top-0 left-0 w-1.5 h-full"
+          style={{ backgroundColor: matchTier.color }}
         />
+      )}
+
+      {/* Top Match ribbon */}
+      {isTopMatch && (
+        <div
+          className="absolute top-0 right-0 px-3 py-1 rounded-bl-xl text-[11px] font-bold text-white flex items-center gap-1"
+          style={{ backgroundColor: matchTier.color }}
+        >
+          🏆 Top Match
+        </div>
       )}
 
       <div className="flex flex-col gap-4">
@@ -226,7 +250,7 @@ export default function JobCard({
           {/* Job Info */}
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between gap-3">
-              <div className="flex-1 min-w-0">
+              <div className={`flex-1 min-w-0 ${isTopMatch ? 'pr-16' : ''}`}>
                 <h3
                   className="text-lg font-semibold mb-1 line-clamp-2 leading-tight group-hover:text-blue-600 transition-colors"
                   style={{ color: theme.colors.text.primary }}
@@ -242,31 +266,22 @@ export default function JobCard({
                 </p>
               </div>
               
-              {/* Match Score - Compact Circle */}
+              {/* Match Score — tiered pill badge */}
               {showMatch && (
                 <button
                   onClick={handleMatchClick}
-                  className="flex-shrink-0 relative group/match"
+                  className="flex-shrink-0 flex flex-col items-end gap-1"
                 >
                   <div
-                    className="w-14 h-14 rounded-full border-2 flex items-center justify-center transition-all hover:scale-110"
-                    style={{
-                      borderColor: matchColor,
-                      backgroundColor: matchColor + '10',
-                    }}
+                    className="flex items-center gap-1.5 pl-2.5 pr-3 py-1.5 rounded-full border-2 transition-all hover:scale-105"
+                    style={{ backgroundColor: matchTier.bg, borderColor: matchTier.border }}
                   >
-                    <span
-                      className="text-sm font-bold"
-                      style={{ color: matchColor }}
-                    >
+                    <span className="text-base font-bold leading-none" style={{ color: matchTier.color }}>
                       {matchScore}%
                     </span>
                   </div>
-                  <span
-                    className="text-[10px] font-medium absolute -bottom-5 left-1/2 -translate-x-1/2 opacity-0 group-hover/match:opacity-100 transition-opacity whitespace-nowrap"
-                    style={{ color: theme.colors.text.secondary }}
-                  >
-                    View Match
+                  <span className="text-[11px] font-semibold whitespace-nowrap" style={{ color: matchTier.color }}>
+                    {matchTier.label}
                   </span>
                 </button>
               )}
