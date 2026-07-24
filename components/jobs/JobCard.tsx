@@ -2,7 +2,7 @@
 
 import React, { useMemo } from 'react';
 import Link from 'next/link';
-import { MapPin, Bookmark, BookmarkCheck, FileCheck, Trash2, Calendar, ExternalLink, Briefcase, Building2, Laptop, GraduationCap, Globe, Home, Rocket, Award, Heart, Stethoscope, ShoppingCart, Factory, Truck, Banknote, PenTool, Palette, Music, Camera, Utensils, FlaskConical, Cpu, BarChart3 } from 'lucide-react';
+import { MapPin, Bookmark, BookmarkCheck, FileCheck, Trash2, Calendar, ExternalLink, Briefcase, Building2, Laptop, GraduationCap, Globe, Home, Rocket, Award, Heart, Stethoscope, ShoppingCart, Factory, Truck, Banknote, PenTool, Palette, Music, Camera, Utensils, FlaskConical, Cpu, BarChart3, CheckCircle2, AlertCircle, AlertTriangle } from 'lucide-react';
 import { theme } from '@/lib/theme';
 import { getCountrySlug } from '@/lib/countrySlugMap';
 
@@ -147,15 +147,14 @@ interface MatchTier {
   color: string;
   bg: string;
   border: string;
+  Icon: React.ElementType;
 }
 
-/** Richer match tiering — distinct color per band instead of a single green/red split. */
+/** Established 3-tier system: green (good) / yellow (average) / red (bad). */
 function getMatchTier(score: number): MatchTier {
-  if (score >= 80) return { label: 'Excellent Match', color: '#4338CA', bg: '#EEF2FF', border: '#C7D2FE' }; // indigo
-  if (score >= 65) return { label: 'Great Match', color: '#2563EB', bg: '#EFF6FF', border: '#BFDBFE' };    // blue
-  if (score >= 50) return { label: 'Good Match', color: '#059669', bg: '#ECFDF5', border: '#A7F3D0' };     // green
-  if (score >= 31) return { label: 'Fair Match', color: '#D97706', bg: '#FFFBEB', border: '#FDE68A' };     // amber
-  return { label: 'Low Match', color: '#64748B', bg: '#F8FAFC', border: '#E2E8F0' };                        // neutral gray, not alarming red
+  if (score >= 50) return { label: 'Good Match', color: '#059669', bg: '#ECFDF5', border: '#A7F3D0', Icon: CheckCircle2 };
+  if (score >= 31) return { label: 'Average Match', color: '#D97706', bg: '#FFFBEB', border: '#FDE68A', Icon: AlertCircle };
+  return { label: 'Low Match', color: '#DC2626', bg: '#FEF2F2', border: '#FECACA', Icon: AlertTriangle };
 }
 
 export default function JobCard({
@@ -217,19 +216,11 @@ export default function JobCard({
         backgroundColor: theme.colors.card.DEFAULT,
       }}
     >
-      {/* Top accent bar — colored by match tier */}
-      {showMatch && (
-        <div
-          className="absolute top-0 left-0 w-1.5 h-full"
-          style={{ backgroundColor: matchTier.color }}
-        />
-      )}
-
-      {/* Top Match ribbon */}
+      {/* Top Match ribbon — independent of the tier color, marks the best result on the page */}
       {isTopMatch && (
         <div
           className="absolute top-0 right-0 px-3 py-1 rounded-bl-xl text-[11px] font-bold text-white flex items-center gap-1"
-          style={{ backgroundColor: matchTier.color }}
+          style={{ backgroundColor: '#1E293B' }}
         >
           🏆 Top Match
         </div>
@@ -266,21 +257,20 @@ export default function JobCard({
                 </p>
               </div>
               
-              {/* Match Score — tiered pill badge */}
+              {/* Match Score — solid container badge (not a thin accent line) */}
               {showMatch && (
                 <button
                   onClick={handleMatchClick}
-                  className="flex-shrink-0 flex flex-col items-end gap-1"
+                  className="flex-shrink-0 flex flex-col items-center justify-center gap-0.5 px-3 py-2 rounded-xl border-2 transition-all hover:scale-105 min-w-[76px]"
+                  style={{ backgroundColor: matchTier.bg, borderColor: matchTier.border }}
                 >
-                  <div
-                    className="flex items-center gap-1.5 pl-2.5 pr-3 py-1.5 rounded-full border-2 transition-all hover:scale-105"
-                    style={{ backgroundColor: matchTier.bg, borderColor: matchTier.border }}
-                  >
+                  <div className="flex items-center gap-1">
+                    <matchTier.Icon size={13} style={{ color: matchTier.color }} />
                     <span className="text-base font-bold leading-none" style={{ color: matchTier.color }}>
                       {matchScore}%
                     </span>
                   </div>
-                  <span className="text-[11px] font-semibold whitespace-nowrap" style={{ color: matchTier.color }}>
+                  <span className="text-[10px] font-semibold leading-none whitespace-nowrap" style={{ color: matchTier.color }}>
                     {matchTier.label}
                   </span>
                 </button>

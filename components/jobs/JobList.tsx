@@ -52,11 +52,11 @@ function getSiteKeys(site: string) {
 
 const JOBS_PER_PAGE_DISPLAY = 50;
 const CLIENT_CACHE_DURATION = 20 * 60 * 1000; // 20 min — latest jobs
-// Matches listing cache — kept short (same as Latest Jobs) so job status/details
-// shown in "My Matches" don't go stale for days. Individual match SCORES are
-// cached separately (and much longer) in matchCacheService since scores rarely
-// change; this only controls how often the underlying job list refreshes.
-const MATCHES_CACHE_DURATION = 20 * 60 * 1000;
+// Matches listing cache — refreshes once a day, or immediately when the user
+// clicks "Recalculate". Match SCORES are cached separately (and longer) in
+// matchCacheService, so this only governs how often the underlying job list
+// (titles/status/etc.) and overall match set are refetched.
+const MATCHES_CACHE_DURATION = 24 * 60 * 60 * 1000;
 
 interface JobListProps {
   siteType?: 'nigeria' | 'gulf' | 'global';
@@ -1028,14 +1028,14 @@ if (filters.remote) {
               onClick={() => handleTabChange('matches')}
               className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-semibold text-sm transition-all duration-200 relative"
               style={activeTab === 'matches'
-                ? { backgroundColor: '#4338CA', color: '#ffffff', boxShadow: '0 2px 8px rgba(67,56,202,0.35)' }
+                ? { backgroundColor: '#1D4ED8', color: '#ffffff', boxShadow: '0 2px 8px rgba(29,78,216,0.35)' }
                 : { backgroundColor: 'transparent', color: '#64748B' }}
             >
-              <Sparkles size={15} style={{ color: activeTab === 'matches' ? '#ffffff' : '#4338CA' }} />
+              <Sparkles size={15} style={{ color: activeTab === 'matches' ? '#ffffff' : '#1D4ED8' }} />
               My Matches
               {activeTab !== 'matches' && (
                 <span className="absolute -top-1 -right-1 w-5 h-5 text-xs font-bold rounded-full flex items-center justify-center"
-                  style={{ backgroundColor: '#4338CA', color: '#ffffff' }}>✦</span>
+                  style={{ backgroundColor: '#1D4ED8', color: '#ffffff' }}>✦</span>
               )}
             </button>
           </div>
@@ -1044,20 +1044,20 @@ if (filters.remote) {
         {/* Matches tab header */}
         {activeTab === 'matches' && (
           <div className="px-6 py-4">
-            <div className="rounded-xl p-4 border" style={{ background: 'linear-gradient(135deg, #EFF6FF 0%, #E0E7FF 100%)', borderColor: '#BFDBFE' }}>
+            <div className="rounded-xl p-4 border" style={{ background: 'linear-gradient(135deg, #EFF6FF 0%, #DBEAFE 100%)', borderColor: '#BFDBFE' }}>
               <div className="flex items-center justify-between gap-4">
                 <div className="flex-1">
                   <h3 className="font-bold text-lg mb-1 flex items-center gap-2" style={{ color: '#1E3A8A' }}>
-                    <Sparkles size={18} style={{ color: '#4338CA' }} />
+                    <Sparkles size={18} style={{ color: '#1D4ED8' }} />
                     Your Personalized Matches
                   </h3>
-                  <p className="text-sm" style={{ color: '#3730A3' }}>
+                  <p className="text-sm" style={{ color: '#1D4ED8' }}>
                     {loading
                       ? 'Calculating your match scores…'
-                      : <>Found <span className="font-bold" style={{ color: '#4338CA' }}>{matchedJobs.length}</span> job{matchedJobs.length !== 1 ? 's' : ''} matched to your profile</>}
+                      : <>Found <span className="font-bold" style={{ color: '#1D4ED8' }}>{matchedJobs.length}</span> job{matchedJobs.length !== 1 ? 's' : ''} matched to your profile</>}
                   </p>
                   {!loading && matchesCachedAt && (
-                    <p className="text-xs mt-1.5" style={{ color: '#6366F1' }}>
+                    <p className="text-xs mt-1.5" style={{ color: '#3B82F6' }}>
                       ⏱ Last calculated: {(() => {
                         const diffMs = Date.now() - matchesCachedAt;
                         const diffMin = Math.floor(diffMs / 60000);
@@ -1076,7 +1076,7 @@ if (filters.remote) {
                     onClick={handleRefreshMatches}
                     disabled={refreshingMatches}
                     className="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold rounded-xl border-2 transition-all disabled:opacity-60"
-                    style={{ backgroundColor: '#ffffff', borderColor: '#4338CA', color: '#4338CA' }}
+                    style={{ backgroundColor: '#ffffff', borderColor: '#1D4ED8', color: '#1D4ED8' }}
                   >
                     <RefreshCw size={14} className={refreshingMatches ? 'animate-spin' : ''} />
                     {refreshingMatches ? 'Calculating…' : 'Recalculate'}
@@ -1093,12 +1093,12 @@ if (filters.remote) {
             {/* Not logged in and auth has resolved — show inline sign-in prompt */}
             {!user && authChecked ? (
               <div className="flex flex-col items-center justify-center py-16 text-center max-w-md mx-auto">
-                <div className="w-16 h-16 rounded-full flex items-center justify-center mb-4" style={{ backgroundColor: '#E0E7FF' }}>
-                  <Sparkles size={28} style={{ color: '#4338CA' }} />
+                <div className="w-16 h-16 rounded-full flex items-center justify-center mb-4" style={{ backgroundColor: '#DBEAFE' }}>
+                  <Sparkles size={28} style={{ color: '#1D4ED8' }} />
                 </div>
                 <h3 className="text-lg font-semibold mb-2" style={{ color: theme.colors.text.primary }}>Sign in to see your matches</h3>
                 <p className="text-sm mb-5" style={{ color: theme.colors.text.secondary }}>Create a free account and we'll match you to jobs based on your skills, experience, and preferences.</p>
-                <button onClick={() => setAuthModalOpen(true)} className="px-6 py-3 rounded-xl font-semibold text-sm text-white transition-all" style={{ backgroundColor: '#4338CA' }}>
+                <button onClick={() => setAuthModalOpen(true)} className="px-6 py-3 rounded-xl font-semibold text-sm text-white transition-all" style={{ backgroundColor: '#1D4ED8' }}>
                   Sign Up Free
                 </button>
               </div>
@@ -1115,7 +1115,7 @@ if (filters.remote) {
                   {matchSearch ? 'Try a different search term or clear it to see all your matches.' : 'Update your profile to improve matching or check back later for new opportunities'}
                 </p>
                 {matchSearch ? (
-                  <button onClick={() => setMatchSearch('')} className="px-4 py-2 text-sm rounded-lg font-medium transition-colors" style={{ backgroundColor: '#E0E7FF', color: '#4338CA' }}>Clear search</button>
+                  <button onClick={() => setMatchSearch('')} className="px-4 py-2 text-sm rounded-lg font-medium transition-colors" style={{ backgroundColor: '#DBEAFE', color: '#1D4ED8' }}>Clear search</button>
                 ) : (
                   <button onClick={() => router.push('/onboarding')} className="px-4 py-2 text-sm bg-orange-50 text-orange-600 rounded-lg hover:bg-orange-100 transition-colors font-medium">Update Profile</button>
                 )}
@@ -1131,7 +1131,7 @@ if (filters.remote) {
                       value={matchSearch}
                       onChange={(e) => setMatchSearch(e.target.value)}
                       placeholder="Search your matches by title, company, location..."
-                      className="w-full pl-9 pr-8 py-2.5 rounded-lg border text-sm outline-none focus:border-indigo-400 transition-colors"
+                      className="w-full pl-9 pr-8 py-2.5 rounded-lg border text-sm outline-none focus:border-blue-400 transition-colors"
                       style={{ backgroundColor: theme.colors.background.DEFAULT, borderColor: theme.colors.border.DEFAULT, color: theme.colors.text.primary }}
                     />
                     {matchSearch && (
@@ -1142,7 +1142,7 @@ if (filters.remote) {
                   </div>
                   <button
                     onClick={() => { const next = matchSortBy === 'match' ? 'salary' : matchSortBy === 'salary' ? 'latest' : 'match'; setMatchSortBy(next); }}
-                    className="flex items-center gap-1.5 px-3 py-2.5 text-xs font-medium rounded-lg border hover:border-indigo-300 hover:bg-indigo-50 transition-all whitespace-nowrap"
+                    className="flex items-center gap-1.5 px-3 py-2.5 text-xs font-medium rounded-lg border hover:border-blue-300 hover:bg-blue-50 transition-all whitespace-nowrap"
                     style={{ backgroundColor: theme.colors.background.DEFAULT, borderColor: theme.colors.border.DEFAULT, color: theme.colors.text.primary }}
                   >
                     <ArrowUpDown size={12} />
@@ -1187,7 +1187,7 @@ if (filters.remote) {
                     </button>
                     <div className="flex items-center space-x-1">
                       {(() => { const pages = []; const max = 5; let start = Math.max(1, matchPage - Math.floor(max / 2)); let end = Math.min(matchTotalPages, start + max - 1); if (end - start + 1 < max) start = Math.max(1, end - max + 1);
-                        for (let i = start; i <= end; i++) pages.push(<button key={i} onClick={() => setMatchPage(i)} className={`px-3 py-2 text-sm font-medium rounded-lg transition-colors ${matchPage === i ? 'text-white' : 'text-gray-700 hover:bg-gray-100'}`} style={{ backgroundColor: matchPage === i ? '#4338CA' : 'transparent' }}>{i}</button>);
+                        for (let i = start; i <= end; i++) pages.push(<button key={i} onClick={() => setMatchPage(i)} className={`px-3 py-2 text-sm font-medium rounded-lg transition-colors ${matchPage === i ? 'text-white' : 'text-gray-700 hover:bg-gray-100'}`} style={{ backgroundColor: matchPage === i ? '#1D4ED8' : 'transparent' }}>{i}</button>);
                         return pages; })()}
                     </div>
                     <button onClick={() => setMatchPage(p => Math.min(matchTotalPages, p + 1))} disabled={matchPage === matchTotalPages}
