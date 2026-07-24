@@ -239,47 +239,24 @@ export default function JobCard({
           </div>
           
           {/* Job Info */}
-          <div className="flex-1 min-w-0">
-            <div className="flex items-start justify-between gap-3">
-              <div className={`flex-1 min-w-0 ${isTopMatch ? 'pr-16' : ''}`}>
-                <h3
-                  className="text-lg font-semibold mb-1 line-clamp-2 leading-tight group-hover:text-blue-600 transition-colors"
-                  style={{ color: theme.colors.text.primary }}
-                >
-                  {job.title}
-                </h3>
-                <p
-                  className="text-sm font-medium mb-2 flex items-center gap-1"
-                  style={{ color: theme.colors.text.secondary }}
-                >
-                  <Briefcase size={14} />
-                  {job.company}
-                </p>
-              </div>
-              
-              {/* Match Score — solid container badge (not a thin accent line) */}
-              {showMatch && (
-                <button
-                  onClick={handleMatchClick}
-                  className="flex-shrink-0 flex flex-col items-center justify-center gap-0.5 px-3 py-2 rounded-xl border-2 transition-all hover:scale-105 min-w-[76px]"
-                  style={{ backgroundColor: matchTier.bg, borderColor: matchTier.border }}
-                >
-                  <div className="flex items-center gap-1">
-                    <matchTier.Icon size={13} style={{ color: matchTier.color }} />
-                    <span className="text-base font-bold leading-none" style={{ color: matchTier.color }}>
-                      {matchScore}%
-                    </span>
-                  </div>
-                  <span className="text-[10px] font-semibold leading-none whitespace-nowrap" style={{ color: matchTier.color }}>
-                    {matchTier.label}
-                  </span>
-                </button>
-              )}
-            </div>
+          <div className={`flex-1 min-w-0 ${isTopMatch ? 'pr-20' : ''}`}>
+            <h3
+              className="text-lg font-semibold mb-1 line-clamp-2 leading-tight group-hover:text-blue-600 transition-colors"
+              style={{ color: theme.colors.text.primary }}
+            >
+              {job.title}
+            </h3>
+            <p
+              className="text-sm font-medium mb-2 flex items-center gap-1"
+              style={{ color: theme.colors.text.secondary }}
+            >
+              <Briefcase size={14} />
+              {job.company}
+            </p>
           </div>
         </div>
 
-        {/* Job Details Grid */}
+        {/* Job Details Grid — location, match score, type and salary together */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {/* Location */}
           <div className="flex items-center gap-2">
@@ -291,6 +268,16 @@ export default function JobCard({
               {job.location}
             </span>
           </div>
+
+          {/* Match Score — inline with the other job details, not competing with the title */}
+          {showMatch && (
+            <button onClick={handleMatchClick} className="flex items-center gap-2 group/match w-fit">
+              <matchTier.Icon size={16} style={{ color: matchTier.color }} />
+              <span className="text-sm font-semibold group-hover/match:underline" style={{ color: matchTier.color }}>
+                {matchScore}% · {matchTier.label}
+              </span>
+            </button>
+          )}
           
           {/* Employment Type */}
           {job.type && (

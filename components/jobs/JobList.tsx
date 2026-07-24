@@ -593,7 +593,36 @@ export default function JobList({ siteType = 'global', initialJobs, initialCount
       if (!res.ok) throw new Error(`Jobs API error: ${res.status}`);
       const { jobs: data } = await res.json();
       // Worker already filtered by ?site=global
-      const processedJobs = await processJobsWithMatching(data || []);
+
+      // Matching is restricted to: (1) jobs posted in the last 14 days, and
+      // (2) jobs in the user's selected country, or remote jobs — mirrors the
+      // country/remote scoping already used on the Latest Jobs tab.
+      const MATCH_MAX_AGE_MS = 14 * 24 * 60 * 60 * 1000;
+      const cutoffTime = Date.now() - MATCH_MAX_AGE_MS;
+      const selectedCountry = filters.country || detectedCountry;
+
+      const eligibleJobs = (data || []).filter((job: any) => {
+        const dateStr = job.posted_date || job.created_at;
+        if (dateStr) {
+          const t = new Date(dateStr).getTime();
+          if (!isNaN(t) && t < cutoffTime) return false;
+        }
+
+        if (selectedCountry && selectedCountry !== 'Global') {
+          const jobCountries: string[] = Array.isArray(job.country) ? job.country : [];
+          const inCountry = jobCountries.some((c: string) => c?.toLowerCase() === selectedCountry.toLowerCase());
+          const jobLoc = job.location;
+          const isRemote =
+            (jobLoc && typeof jobLoc === 'object' && jobLoc.remote) ||
+            (typeof jobLoc === 'string' && jobLoc.toLowerCase().includes('remote')) ||
+            (job.job_type || job.employment_type || '').toLowerCase().includes('remote');
+          if (!inCountry && !isRemote) return false;
+        }
+
+        return true;
+      });
+
+      const processedJobs = await processJobsWithMatching(eligibleJobs);
       processedJobs.sort((a, b) => (b.calculatedTotal || 0) - (a.calculatedTotal || 0));
 
       try {
@@ -653,6 +682,27 @@ export default function JobList({ siteType = 'global', initialJobs, initialCount
     matchesFetchedRef.current = false;
     setJobs([]);
   }, [user?.id]);
+
+  // ── Invalidate matches when the selected country changes ───────────────────
+  // Matches are scoped to the user's selected country (+ remote). If they
+  // change country on the Latest Jobs tab, cached matches for the old country
+  // shouldn't keep showing for up to 24h — force a re-fetch next time the
+  // Matches tab is viewed.
+  const prevMatchCountryRef = useRef<string | null>(null);
+  useEffect(() => {
+    const current = filters.country || detectedCountry || '';
+    if (prevMatchCountryRef.current !== null && prevMatchCountryRef.current !== current) {
+      try {
+        localStorage.removeItem(STORAGE_KEYS.MATCHES_CACHE);
+        localStorage.removeItem(STORAGE_KEYS.MATCHES_CACHE_TS);
+        localStorage.removeItem(STORAGE_KEYS.MATCHES_CACHE_USER);
+      } catch { }
+      matchesFetchedRef.current = false;
+      setJobs([]);
+      setMatchesCachedAt(null);
+    }
+    prevMatchCountryRef.current = current;
+  }, [filters.country, detectedCountry]);
 
   const processJobsWithMatching = useCallback(async (jobRows: any[]): Promise<JobUI[]> => {
     if (!userOnboardingData || !user) {
@@ -1043,21 +1093,18 @@ if (filters.remote) {
 
         {/* Matches tab header */}
         {activeTab === 'matches' && (
-          <div className="px-6 py-4">
-            <div className="rounded-xl p-4 border" style={{ background: 'linear-gradient(135deg, #EFF6FF 0%, #DBEAFE 100%)', borderColor: '#BFDBFE' }}>
+          <div className="px-6 py-3">
+            <div className="rounded-xl p-3 border" style={{ background: 'linear-gradient(135deg, #EFF6FF 0%, #DBEAFE 100%)', borderColor: '#BFDBFE' }}>
               <div className="flex items-center justify-between gap-4">
                 <div className="flex-1">
-                  <h3 className="font-bold text-lg mb-1 flex items-center gap-2" style={{ color: '#1E3A8A' }}>
-                    <Sparkles size={18} style={{ color: '#1D4ED8' }} />
-                    Your Personalized Matches
-                  </h3>
-                  <p className="text-sm" style={{ color: '#1D4ED8' }}>
+                  <p className="text-sm font-semibold flex items-center gap-1.5" style={{ color: '#1E3A8A' }}>
+                    <Sparkles size={15} style={{ color: '#1D4ED8' }} />
                     {loading
                       ? 'Calculating your match scores…'
                       : <>Found <span className="font-bold" style={{ color: '#1D4ED8' }}>{matchedJobs.length}</span> job{matchedJobs.length !== 1 ? 's' : ''} matched to your profile</>}
                   </p>
                   {!loading && matchesCachedAt && (
-                    <p className="text-xs mt-1.5" style={{ color: '#3B82F6' }}>
+                    <p className="text-xs mt-1" style={{ color: '#3B82F6' }}>
                       ⏱ Last calculated: {(() => {
                         const diffMs = Date.now() - matchesCachedAt;
                         const diffMin = Math.floor(diffMs / 60000);
@@ -1067,7 +1114,7 @@ if (filters.remote) {
                         if (diffMin < 60) return `${diffMin}m ago`;
                         if (diffHr < 24) return `${diffHr}h ago`;
                         return `${diffDay}d ago`;
-                      })()} · refreshes regularly
+                      })()} · refreshes daily
                     </p>
                   )}
                 </div>
