@@ -1,6 +1,10 @@
 import React from 'react';
 import Link from 'next/link';
-import { FileText, FileCheck, Search, Shield, Calculator, MessageCircle, GraduationCap, ArrowRight, Briefcase, Brain } from 'lucide-react';
+import {
+  FileText, FileCheck, Search, Shield, Calculator, MessageCircle, GraduationCap, ArrowRight, Briefcase, Brain,
+  Globe, MapPin, DollarSign, Plane, Home, BookOpen, Award, BarChart2, Users, RefreshCw, CreditCard, Landmark,
+  Star, TrendingUp, ClipboardList, CheckSquare, Navigation, Flag, Wallet
+} from 'lucide-react';
 import { theme } from '@/lib/theme';
 import { Metadata } from 'next';
 import AdUnit from '@/components/ads/AdUnit';
@@ -31,7 +35,7 @@ export const metadata: Metadata = {
 };
 
 interface Tool {
-  id: string; title: string; description: string; icon: React.ComponentType<any>; color: string; route?: string;
+  id: string; title: string; description: string; icon: React.ComponentType<any>; color: string; route?: string; gulf?: boolean;
 }
 
 interface ToolCategory {
@@ -68,6 +72,31 @@ export default function ToolsPage() {
       id: 'salary-tools', title: 'Salary Tools', description: 'Calculate and compare salaries', icon: Calculator, color: '#3B82F6',
       tools: [
         { id: 'paye-calculator', title: 'PAYE Calculator', description: 'Calculate net salary with 2026 Nigeria tax rates', icon: Calculator, color: '#3B82F6', route: '/tools/paye-calculator' },
+      ],
+    },
+    {
+      id: 'gulf-tools', title: 'Gulf Tools', description: 'Calculators and checkers for working in the GCC (UAE, Saudi Arabia & more)', icon: Globe, color: '#059669',
+      tools: [
+        { id: 'job-offer-evaluator', title: 'Job Offer Evaluator', description: 'Evaluate and compare Gulf job offers to make the best decision', icon: ClipboardList, color: '#F59E0B', route: '/tools/job-offer-evaluator', gulf: true },
+        { id: 'profession-country-match', title: 'Profession Country Match', description: 'Find the best Gulf country for your profession and skills', icon: Globe, color: '#10B981', route: '/tools/profession-country-match', gulf: true },
+        { id: 'certification-roadmap', title: 'Certification Roadmap', description: 'Plan your professional certifications for Gulf career growth', icon: Award, color: '#6366F1', route: '/tools/certification-roadmap', gulf: true },
+        { id: 'education-equivalency-checker', title: 'Education Equivalency Checker', description: "Check how your degree is recognized across Gulf countries", icon: GraduationCap, color: '#0EA5E9', route: '/tools/education-equivalency-checker', gulf: true },
+        { id: 'ielts-checker', title: 'IELTS Checker', description: 'Verify IELTS score requirements for Gulf jobs and visas', icon: BookOpen, color: '#14B8A6', route: '/tools/ielts-checker', gulf: true },
+        { id: 'saudi-profession-classifier', title: 'Saudi Profession Classifier', description: "Classify your job under Saudi Arabia's official profession codes", icon: CheckSquare, color: '#8B5CF6', route: '/tools/saudi-profession-classifier', gulf: true },
+        { id: 'noc-job-change-checker', title: 'NOC & Job Change Checker', description: 'Check NOC requirements and job change rules by Gulf country', icon: RefreshCw, color: '#EF4444', route: '/tools/noc-job-change-checker', gulf: true },
+        { id: 'gcc-comparison', title: 'GCC Country Comparison', description: 'Compare living, working, and salary conditions across GCC countries', icon: BarChart2, color: '#3B82F6', route: '/tools/gcc-comparison', gulf: true },
+        { id: 'nitaqat-checker', title: 'Nitaqat Checker', description: 'Check Nitaqat Saudization category for Saudi employers', icon: Flag, color: '#DC2626', route: '/tools/nitaqat-checker', gulf: true },
+        { id: 'saudi-visa-calculator', title: 'Saudi Visa Calculator', description: 'Estimate visa fees and requirements for Saudi Arabia', icon: Plane, color: '#F97316', route: '/tools/saudi-visa-calculator', gulf: true },
+        { id: 'uae-job-seeker-visa', title: 'UAE Job Seeker Visa', description: 'Check eligibility and requirements for the UAE job seeker visa', icon: Navigation, color: '#0891B2', route: '/tools/uae-job-seeker-visa', gulf: true },
+        { id: 'salary-benchmark', title: 'Salary Benchmark', description: 'Compare your salary against Gulf market rates by role and country', icon: TrendingUp, color: '#10B981', route: '/tools/salary-benchmark', gulf: true },
+        { id: 'take-home-pay-calculator', title: 'Gulf Take-Home Pay Calculator', description: 'Calculate your net salary after Gulf country deductions', icon: DollarSign, color: '#3B82F6', route: '/tools/take-home-pay-calculator', gulf: true },
+        { id: 'saudi-dependent-levy', title: 'Saudi Dependent Levy Calculator', description: 'Calculate monthly dependent fees for expats in Saudi Arabia', icon: Users, color: '#7C3AED', route: '/tools/saudi-dependent-levy', gulf: true },
+        { id: 'saudi-eosb-calculator', title: 'Saudi EOSB Calculator', description: 'Calculate your end-of-service benefit under Saudi labor law', icon: Landmark, color: '#059669', route: '/tools/saudi-eosb-calculator', gulf: true },
+        { id: 'uae-gratuity-calculator', title: 'UAE Gratuity Calculator', description: 'Calculate your UAE end-of-service gratuity entitlement', icon: CreditCard, color: '#0EA5E9', route: '/tools/uae-gratuity-calculator', gulf: true },
+        { id: 'iqama-cost-calculator', title: 'Iqama Cost Calculator', description: 'Estimate the full cost of Iqama sponsorship in Saudi Arabia', icon: Star, color: '#D97706', route: '/tools/iqama-cost-calculator', gulf: true },
+        { id: 'relocation-budget-planner', title: 'Relocation Budget Planner', description: 'Plan and estimate your total relocation costs to any Gulf city', icon: Wallet, color: '#10B981', route: '/tools/relocation-budget-planner', gulf: true },
+        { id: 'cost-of-living', title: 'Cost of Living Comparison', description: 'Compare cost of living across Gulf cities and your home country', icon: Home, color: '#F59E0B', route: '/tools/cost-of-living', gulf: true },
+        { id: 'remittance-estimator', title: 'Remittance Estimator', description: 'Estimate money transfer costs and rates from Gulf countries', icon: RefreshCw, color: '#6366F1', route: '/tools/remittance-estimator', gulf: true },
       ],
     },
   ];
@@ -122,7 +151,17 @@ export default function ToolsPage() {
                             <Icon size={22} style={{ color: tool.color }} />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <h3 className="font-bold text-gray-900 mb-1 group-hover:text-blue-600 transition-colors">{tool.title}</h3>
+                            <div className="flex items-center gap-2 mb-1">
+                              <h3 className="font-bold text-gray-900 group-hover:text-blue-600 transition-colors">{tool.title}</h3>
+                              {tool.gulf && (
+                                <span
+                                  className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full flex-shrink-0"
+                                  style={{ backgroundColor: '#05966915', color: '#059669' }}
+                                >
+                                  GULF
+                                </span>
+                              )}
+                            </div>
                             <p className="text-sm text-gray-600 line-clamp-2">{tool.description}</p>
                           </div>
                           <ArrowRight size={18} className="text-gray-400 group-hover:text-gray-600 group-hover:translate-x-1 transition-all flex-shrink-0 mt-1" />
