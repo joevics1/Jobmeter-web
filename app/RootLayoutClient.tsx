@@ -7,7 +7,6 @@ import Header from '@/components/navigation/Header';
 import Footer from '@/components/navigation/Footer';
 import CookieModal from '@/components/CookieModal';
 import { theme } from '@/lib/theme';
-import WhatsAppFloatButton from '@/components/WhatsAppFloatButton';
 import ExitIntentPopup from '@/components/ExitIntentPopup';
 export default function RootLayoutClient({
   children,
@@ -58,9 +57,6 @@ export default function RootLayoutClient({
       
        {/* Cookie Modal */}
       <CookieModal />
-      
-      {/* WhatsApp Floating Button - Global */}
-      <WhatsAppFloatButton />
       
       {/* Exit Intent Popup */}
       <ExitIntentPopup />

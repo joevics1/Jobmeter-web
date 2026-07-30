@@ -127,6 +127,10 @@ export interface JobUI {
   rawLocation?: any;
   /** Dedicated country column — text[] array, used for server-side and client-side country filtering */
   country?: string[];
+  /** Whether this job accepts direct in-app applications on JobMeter */
+  apply_in_app?: boolean;
+  /** Whether apply_in_app is gated behind a screening quiz */
+  screening_enabled?: boolean;
 }
 
 
@@ -373,6 +377,11 @@ export default function JobCard({
                   <>
                     <Trash2 size={16} />
                     Applied
+                  </>
+                ) : job.apply_in_app ? (
+                  <>
+                    <FileCheck size={16} />
+                    Quick Apply
                   </>
                 ) : (
                   <>
