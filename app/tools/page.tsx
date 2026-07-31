@@ -97,6 +97,11 @@ export default function ToolsPage() {
         { id: 'relocation-budget-planner', title: 'Relocation Budget Planner', description: 'Plan and estimate your total relocation costs to any Gulf city', icon: Wallet, color: '#10B981', route: '/tools/relocation-budget-planner', gulf: true },
         { id: 'cost-of-living', title: 'Cost of Living Comparison', description: 'Compare cost of living across Gulf cities and your home country', icon: Home, color: '#F59E0B', route: '/tools/cost-of-living', gulf: true },
         { id: 'remittance-estimator', title: 'Remittance Estimator', description: 'Estimate money transfer costs and rates from Gulf countries', icon: RefreshCw, color: '#6366F1', route: '/tools/remittance-estimator', gulf: true },
+        { id: 'kuwait-dependent-fee-calculator', title: 'Kuwait Dependent Fee Calculator', description: "Calculate Kuwait's 2026 dependent residency fees by sponsor category", icon: Users, color: '#DC2626', route: '/tools/kuwait-dependent-fee-calculator', gulf: true },
+        { id: 'oman-eosb-calculator', title: 'Oman EOSB Calculator', description: 'Calculate your Oman end-of-service benefit, correctly split across the 2023 law change', icon: Landmark, color: '#059669', route: '/tools/oman-eosb-calculator', gulf: true },
+        { id: 'kuwait-indemnity-calculator', title: 'Kuwait Indemnity Calculator', description: 'Calculate your Kuwait end-of-service indemnity, including resignation reductions', icon: CreditCard, color: '#0EA5E9', route: '/tools/kuwait-indemnity-calculator', gulf: true },
+        { id: 'bahrain-gratuity-calculator', title: 'Bahrain Gratuity Calculator', description: 'Estimate your Bahrain end-of-service gratuity payout', icon: Landmark, color: '#7C3AED', route: '/tools/bahrain-gratuity-calculator', gulf: true },
+        { id: 'qatar-gratuity-calculator', title: 'Qatar Gratuity Calculator', description: "Calculate your Qatar end-of-service gratuity at 3 weeks' wage per year", icon: CreditCard, color: '#F59E0B', route: '/tools/qatar-gratuity-calculator', gulf: true },
       ],
     },
   ];

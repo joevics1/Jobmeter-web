@@ -39,6 +39,11 @@ const tools = [
   { slug: 'relocation-budget-planner', name: 'Relocation Budget Planner' },
   { slug: 'cost-of-living', name: 'Cost of Living Comparison' },
   { slug: 'remittance-estimator', name: 'Remittance Estimator' },
+  { slug: 'kuwait-dependent-fee-calculator', name: 'Kuwait Dependent Fee Calculator' },
+  { slug: 'oman-eosb-calculator', name: 'Oman EOSB Calculator' },
+  { slug: 'kuwait-indemnity-calculator', name: 'Kuwait Indemnity Calculator' },
+  { slug: 'bahrain-gratuity-calculator', name: 'Bahrain Gratuity Calculator' },
+  { slug: 'qatar-gratuity-calculator', name: 'Qatar Gratuity Calculator' },
 ];
 
 export async function GET() {
