@@ -106,6 +106,10 @@ export default function ToolsPage() {
         { id: 'oman-omanisation-calculator', title: 'Omanisation Calculator', description: 'Check your ratio against sector-specific Omanisation targets and fee impact', icon: Flag, color: '#C2410C', route: '/tools/oman-omanisation-calculator', gulf: true },
         { id: 'kuwait-kuwaitization-calculator', title: 'Kuwaitization Calculator', description: "Calculate your Kuwaiti national employment ratio by sector", icon: Flag, color: '#065F46', route: '/tools/kuwait-kuwaitization-calculator', gulf: true },
         { id: 'bahrain-bahrainisation-calculator', title: 'Bahrainisation Calculator', description: "Calculate your Bahraini national employment ratio", icon: Flag, color: '#B91C1C', route: '/tools/bahrain-bahrainisation-calculator', gulf: true },
+        { id: 'qatar-qid-cost-calculator', title: 'Qatar QID Cost Calculator', description: 'Calculate the real total cost of renewing your Qatar ID', icon: Star, color: '#8B0000', route: '/tools/qatar-qid-cost-calculator', gulf: true },
+        { id: 'kuwait-civil-id-cost-calculator', title: 'Kuwait Civil ID Cost Calculator', description: 'Calculate your Kuwait residency and Civil ID costs by sponsor category', icon: Star, color: '#065F46', route: '/tools/kuwait-civil-id-cost-calculator', gulf: true },
+        { id: 'bahrain-cpr-cost-calculator', title: 'Bahrain CPR Cost Calculator', description: 'Calculate your Bahrain work permit and CPR renewal costs', icon: Star, color: '#B91C1C', route: '/tools/bahrain-cpr-cost-calculator', gulf: true },
+        { id: 'oman-resident-card-cost-calculator', title: 'Oman Resident Card Cost Calculator', description: 'Calculate your Oman resident card renewal cost by validity period', icon: Star, color: '#C2410C', route: '/tools/oman-resident-card-cost-calculator', gulf: true },
       ],
     },
   ];

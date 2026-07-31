@@ -48,6 +48,10 @@ const tools = [
   { slug: 'oman-omanisation-calculator', name: 'Omanisation Calculator' },
   { slug: 'kuwait-kuwaitization-calculator', name: 'Kuwaitization Calculator' },
   { slug: 'bahrain-bahrainisation-calculator', name: 'Bahrainisation Calculator' },
+  { slug: 'qatar-qid-cost-calculator', name: 'Qatar QID Cost Calculator' },
+  { slug: 'kuwait-civil-id-cost-calculator', name: 'Kuwait Civil ID Cost Calculator' },
+  { slug: 'bahrain-cpr-cost-calculator', name: 'Bahrain CPR Cost Calculator' },
+  { slug: 'oman-resident-card-cost-calculator', name: 'Oman Resident Card Cost Calculator' },
 ];
 
 export async function GET() {
