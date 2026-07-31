@@ -44,6 +44,10 @@ const tools = [
   { slug: 'kuwait-indemnity-calculator', name: 'Kuwait Indemnity Calculator' },
   { slug: 'bahrain-gratuity-calculator', name: 'Bahrain Gratuity Calculator' },
   { slug: 'qatar-gratuity-calculator', name: 'Qatar Gratuity Calculator' },
+  { slug: 'qatar-qatarization-calculator', name: 'Qatarization Calculator' },
+  { slug: 'oman-omanisation-calculator', name: 'Omanisation Calculator' },
+  { slug: 'kuwait-kuwaitization-calculator', name: 'Kuwaitization Calculator' },
+  { slug: 'bahrain-bahrainisation-calculator', name: 'Bahrainisation Calculator' },
 ];
 
 export async function GET() {

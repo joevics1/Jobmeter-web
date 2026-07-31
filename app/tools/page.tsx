@@ -102,6 +102,10 @@ export default function ToolsPage() {
         { id: 'kuwait-indemnity-calculator', title: 'Kuwait Indemnity Calculator', description: 'Calculate your Kuwait end-of-service indemnity, including resignation reductions', icon: CreditCard, color: '#0EA5E9', route: '/tools/kuwait-indemnity-calculator', gulf: true },
         { id: 'bahrain-gratuity-calculator', title: 'Bahrain Gratuity Calculator', description: 'Estimate your Bahrain end-of-service gratuity payout', icon: Landmark, color: '#7C3AED', route: '/tools/bahrain-gratuity-calculator', gulf: true },
         { id: 'qatar-gratuity-calculator', title: 'Qatar Gratuity Calculator', description: "Calculate your Qatar end-of-service gratuity at 3 weeks' wage per year", icon: CreditCard, color: '#F59E0B', route: '/tools/qatar-gratuity-calculator', gulf: true },
+        { id: 'qatar-qatarization-calculator', title: 'Qatarization Calculator', description: "Check your company's ratio against Qatar's 20%-by-2030 national target", icon: Flag, color: '#8B0000', route: '/tools/qatar-qatarization-calculator', gulf: true },
+        { id: 'oman-omanisation-calculator', title: 'Omanisation Calculator', description: 'Check your ratio against sector-specific Omanisation targets and fee impact', icon: Flag, color: '#C2410C', route: '/tools/oman-omanisation-calculator', gulf: true },
+        { id: 'kuwait-kuwaitization-calculator', title: 'Kuwaitization Calculator', description: "Calculate your Kuwaiti national employment ratio by sector", icon: Flag, color: '#065F46', route: '/tools/kuwait-kuwaitization-calculator', gulf: true },
+        { id: 'bahrain-bahrainisation-calculator', title: 'Bahrainisation Calculator', description: "Calculate your Bahraini national employment ratio", icon: Flag, color: '#B91C1C', route: '/tools/bahrain-bahrainisation-calculator', gulf: true },
       ],
     },
   ];
