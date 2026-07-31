@@ -12,6 +12,9 @@ export const metadata: Metadata = {
   keywords: [
     'bahrain gratuity calculator', 'bahrain end of service benefit', 'bahrain indemnity calculator',
     'bahrain labour law gratuity', 'bahrain severance pay', 'bahrain sio reform',
+    'bahrain gratuity formula', 'bahrain end of service 2026', 'bahrain resignation gratuity',
+    'bahrain private sector gratuity', 'bahrain social insurance organisation', 'bahrain expat gratuity',
+    'bahrain gratuity calculation years of service',
   ],
   alternates: { canonical: pageUrl },
 };

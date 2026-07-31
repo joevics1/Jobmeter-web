@@ -47,6 +47,7 @@ export const metadata: Metadata = {
       'Accurate IELTS, OET and English proficiency requirements for licensing, work visas and employment across UAE, Saudi Arabia, Qatar and the wider Gulf.',
     images: [{ url: '/og-ielts-tool.jpg' }],
   },
+  alternates: { canonical: pageUrl }
 };
 
 const jsonLd = [

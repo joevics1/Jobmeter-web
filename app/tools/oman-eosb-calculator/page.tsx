@@ -12,6 +12,9 @@ export const metadata: Metadata = {
   keywords: [
     'oman eosb calculator', 'oman end of service benefit', 'oman gratuity calculator',
     'royal decree 53 2023 oman', 'oman labour law gratuity', 'oman severance pay calculator',
+    'oman gratuity formula', 'oman end of service 2026', 'oman resignation gratuity',
+    'oman old vs new gratuity law', 'oman gratuity split calculation', 'oman work permit gratuity',
+    'oman labor law article 61', 'oman expat end of service', 'oman gratuity eligibility',
   ],
   alternates: { canonical: pageUrl },
 };

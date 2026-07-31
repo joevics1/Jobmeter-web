@@ -20,6 +20,7 @@ export const metadata: Metadata = {
     description: 'Instantly calculate your monthly & annual family levy in Saudi Arabia. Includes exemptions, projections & full breakdown.',
     images: [{ url: '/og-levy-tool.jpg' }],
   },
+  alternates: { canonical: pageUrl }
 };
 
 const jsonLd = [

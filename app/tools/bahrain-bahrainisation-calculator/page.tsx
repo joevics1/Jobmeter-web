@@ -12,6 +12,8 @@ export const metadata: Metadata = {
   keywords: [
     'bahrainisation calculator', 'bahrain national employment quota', 'bahrainization ratio',
     'bahrain LMRA', 'tamkeen bahrain', 'bahrain private sector localization',
+    'bahrainisation percentage', 'bahrain workforce nationalization', 'bahrain training incentives',
+    'bahrain labour market regulatory authority', 'bahrainisation compliance',
   ],
   alternates: { canonical: pageUrl },
 };

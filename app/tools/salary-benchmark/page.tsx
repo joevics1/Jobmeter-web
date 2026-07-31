@@ -23,6 +23,7 @@ export const metadata: Metadata = {
       'Evaluate your contract using live market data for UAE, Saudi Arabia, Qatar, Kuwait, Bahrain, and Oman.',
     images: [{ url: '/og-salary-benchmark.jpg' }],
   },
+  alternates: { canonical: pageUrl }
 };
 
 const jsonLd = [

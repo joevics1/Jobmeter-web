@@ -20,6 +20,7 @@ export const metadata: Metadata = {
     description: 'Data-driven decision tool for expats moving to the Gulf.',
     images: [{ url: '/og-gcc-comparison.jpg' }],
   },
+  alternates: { canonical: pageUrl }
 };
 
 // All Schemas

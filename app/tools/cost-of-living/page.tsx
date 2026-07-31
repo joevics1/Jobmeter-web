@@ -24,6 +24,7 @@ export const metadata: Metadata = {
     description: 'Make informed relocation & job decisions with accurate GCC living cost data.',
     images: [{ url: '/og-cost-living.jpg' }],
   },
+  alternates: { canonical: pageUrl }
 };
 
 const jsonLd = [

@@ -23,6 +23,7 @@ export const metadata: Metadata = {
     title: 'Saudi EOSB Calculator - Accurate Gratuity Tool',
     description: 'Calculate your End of Service Benefits in Saudi Arabia with full transparency.',
   },
+  alternates: { canonical: pageUrl }
 };
 
 const jsonLd = [

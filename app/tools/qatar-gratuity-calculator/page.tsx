@@ -11,7 +11,9 @@ export const metadata: Metadata = {
   description: "Calculate your Qatar end-of-service gratuity: 3 weeks' basic wage per year of service under Qatar Labour Law No. 14 of 2004 — the simplest formula in the GCC.",
   keywords: [
     'qatar gratuity calculator', 'qatar end of service benefit', 'qatar labour law 14 2004',
-    'qatar severance pay calculator', 'qatar eosb calculator',
+    'qatar severance pay calculator', 'qatar eosb calculator', 'qatar gratuity formula',
+    'qatar end of service 2026', 'qatar three weeks wage gratuity', 'qatar resignation gratuity',
+    'qatar private sector gratuity', 'qatar expat end of service', 'qatar gratuity eligibility',
   ],
   alternates: { canonical: pageUrl },
 };

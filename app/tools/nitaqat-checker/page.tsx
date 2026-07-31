@@ -43,6 +43,7 @@ export const metadata: Metadata = {
       'Evaluate Saudi company compliance with the Nitaqat tier checker. Understand risks for Iqama renewal and visa transfers based on company color.',
     images: [{ url: '/og-nitaqat.jpg' }],
   },
+  alternates: { canonical: pageUrl }
 };
 
 // Step 2: Implement Schemas

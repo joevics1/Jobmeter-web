@@ -23,6 +23,7 @@ export const metadata: Metadata = {
     description: 'See exactly how much you will keep after rent, insurance, visas and living costs in the GCC.',
     images: [{ url: '/og-take-home.jpg' }],
   },
+  alternates: { canonical: pageUrl }
 };
 
 const jsonLd = [

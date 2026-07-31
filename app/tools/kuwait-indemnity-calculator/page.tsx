@@ -12,6 +12,9 @@ export const metadata: Metadata = {
   keywords: [
     'kuwait indemnity calculator', 'kuwait end of service benefit', 'kuwait gratuity calculator',
     'kuwait labour law article 51', 'kuwait severance pay', 'kuwait resignation gratuity',
+    'kuwait indemnity formula', 'kuwait gratuity cap', 'kuwait end of service 2026',
+    'kuwait indemnity resignation reduction', 'kuwait labor law 6 2010', 'kuwait termination indemnity',
+    'kuwait indemnity calculation years of service', 'kuwait private sector gratuity',
   ],
   alternates: { canonical: pageUrl },
 };

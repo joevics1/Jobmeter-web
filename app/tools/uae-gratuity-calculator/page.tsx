@@ -19,6 +19,7 @@ export const metadata: Metadata = {
     title: 'UAE Gratuity Calculator 2026 - Accurate End of Service Calculator',
     description: 'Free UAE EOS Gratuity Calculator with full breakdown and legal references.',
   },
+  alternates: { canonical: pageUrl }
 };
 
 export default function UAEGratuityPage() {

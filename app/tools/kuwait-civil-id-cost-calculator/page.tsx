@@ -9,7 +9,11 @@ const pageUrl = 'https://jobmeter.app/tools/kuwait-civil-id-cost-calculator';
 export const metadata: Metadata = {
   title: 'Kuwait Civil ID & Residency Cost Calculator (2026) | JobMeter',
   description: "Calculate your Kuwait residency and Civil ID costs by sponsor category — investor/partner (KWD 50/yr), self-sponsored (KWD 500/yr), plus mandatory health insurance.",
-  keywords: ['kuwait civil id cost', 'kuwait residency fee calculator', 'paci civil id fee', 'kuwait iqama cost', 'article 24 residency kuwait'],
+  keywords: [
+    'kuwait civil id cost', 'kuwait residency fee calculator', 'paci civil id fee', 'kuwait iqama cost',
+    'article 24 residency kuwait', 'kuwait civil id renewal 2026', 'kuwait health insurance fee',
+    'kuwait investor residency fee', 'kuwait domestic worker residency cost', 'kuwait self sponsored fee',
+  ],
   alternates: { canonical: pageUrl },
 };
 

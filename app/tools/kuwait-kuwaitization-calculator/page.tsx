@@ -12,6 +12,8 @@ export const metadata: Metadata = {
   keywords: [
     'kuwaitization calculator', 'kuwait national employment quota', 'kuwaitization ratio',
     'kuwait demographic structure committee', 'kuwait private sector nationalization',
+    'kuwaitization percentage', 'kuwait workforce nationalization', 'kuwaitization sector quota',
+    'kuwait public authority manpower', 'kuwaitization compliance', 'prime ministerial resolution 392',
   ],
   alternates: { canonical: pageUrl },
 };

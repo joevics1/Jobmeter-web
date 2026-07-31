@@ -13,6 +13,9 @@ export const metadata: Metadata = {
     'kuwait dependent fee calculator', 'kuwait residency fees 2026', 'kuwait family visa cost',
     'kuwait dependent visa fee', 'article 22 kuwait residency', 'kuwait iqama family fee',
     'kuwait expat dependent cost', 'kuwait residency law 2026', 'kuwait health insurance expat',
+    'kuwait spouse residency fee', 'kuwait children residency cost', 'kuwait parent sponsorship fee',
+    'ministerial resolution 2249 kuwait', 'kuwait family sponsorship cost', 'kuwait investor dependent fee',
+    'kuwait self sponsored article 24', 'kuwait residency reform 2025', 'kuwait dependent fee increase',
   ],
   openGraph: {
     title: 'Kuwait Dependent Fee Calculator — 2026 Residency Reform',

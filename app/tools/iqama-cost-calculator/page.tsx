@@ -30,6 +30,7 @@ export const metadata: Metadata = {
     description: 'Calculate your complete Iqama renewal expenses including all hidden levies and fees.',
     images: [{ url: '/og/iqama-calculator.jpg' }],
   },
+  alternates: { canonical: pageUrl }
 };
 
 const jsonLd = [

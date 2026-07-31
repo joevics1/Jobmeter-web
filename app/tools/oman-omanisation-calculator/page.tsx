@@ -12,6 +12,8 @@ export const metadata: Metadata = {
   keywords: [
     'omanisation calculator', 'oman localization quota', 'omanisation targets by sector',
     'oman ministerial decision 602 2025', 'oman work permit fee discount', 'omanisation compliance',
+    'omanisation ratio calculator', 'oman banking sector quota', 'oman ministry of labour quota',
+    'omanization percentage', 'oman workforce nationalization', 'omanisation fee incentive',
   ],
   alternates: { canonical: pageUrl },
 };

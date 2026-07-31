@@ -23,6 +23,7 @@ export const metadata: Metadata = {
     description: 'Free instant assessment with cost estimator and official checklist',
     images: [{ url: '/og-visa-tool.jpg' }],
   },
+  alternates: { canonical: pageUrl }
 };
 
 const jsonLd = [

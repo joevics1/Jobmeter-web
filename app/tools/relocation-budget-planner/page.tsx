@@ -22,6 +22,7 @@ export const metadata: Metadata = {
     description: 'Comprehensive cost estimator for moving to the UAE, Saudi Arabia & Qatar from any country. Tailored for global professionals.',
     images: [{ url: '/og-relocation-planner.jpg' }],
   },
+  alternates: { canonical: pageUrl }
 };
 
 const jsonLd = [

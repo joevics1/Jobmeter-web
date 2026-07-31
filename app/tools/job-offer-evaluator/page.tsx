@@ -25,6 +25,7 @@ export const metadata: Metadata = {
       'Compare Gulf job offers with gratuity, allowances, family costs, and market benchmarks for UAE, Saudi Arabia, Qatar, and the GCC.',
     images: [{ url: '/og-job-evaluator.jpg' }],
   },
+  alternates: { canonical: pageUrl }
 };
 
 const jsonLd = [

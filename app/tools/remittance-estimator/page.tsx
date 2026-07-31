@@ -21,6 +21,7 @@ export const metadata: Metadata = {
     description: 'Practical tool for expats in UAE, KSA, Qatar. See realistic remittances after rent, food, and lifestyle costs.',
     images: [{ url: '/og-remittance-tool.jpg' }],
   },
+  alternates: { canonical: pageUrl }
 };
 
 const jsonLd = [

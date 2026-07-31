@@ -9,7 +9,11 @@ const pageUrl = 'https://jobmeter.app/tools/oman-resident-card-cost-calculator';
 export const metadata: Metadata = {
   title: 'Oman Resident Card Cost Calculator (2026) | JobMeter',
   description: "Calculate your Oman resident card renewal cost under ROP Decision No. 78/2025: RO 5/10/15 for 1/2/3-year validity, plus visa renewal and medical fitness fees.",
-  keywords: ['oman resident card cost', 'oman rop fees 2026', 'oman residency renewal calculator', 'oman visa renewal fee'],
+  keywords: [
+    'oman resident card cost', 'oman rop fees 2026', 'oman residency renewal calculator',
+    'oman visa renewal fee', 'oman resident card renewal', 'rop decision 78 2025',
+    'oman medical fitness test fee', 'oman civil status division fee', 'oman resident card validity',
+  ],
   alternates: { canonical: pageUrl },
 };
 

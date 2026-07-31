@@ -29,6 +29,7 @@ export const metadata: Metadata = {
     description: 'Check your foreign qualifications for UAE & KSA jobs, Golden Visa, licensing & studies.',
     images: [{ url: '/og-education-equivalency.jpg' }],
   },
+  alternates: { canonical: pageUrl }
 };
 
 const jsonLd = [

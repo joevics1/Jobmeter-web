@@ -12,6 +12,8 @@ export const metadata: Metadata = {
   keywords: [
     'qatarization calculator', 'qatarization law 12 2024', 'qatar national employment quota',
     'qatarization compliance', 'qatar private sector quota', 'qatarization fines',
+    'qatarization ratio calculator', 'qatar 2030 national target', 'qatar ministry of labour quota',
+    'qatarization percentage', 'qatar workforce nationalization', 'qatarization sector targets',
   ],
   alternates: { canonical: pageUrl },
 };

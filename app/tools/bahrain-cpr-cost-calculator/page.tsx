@@ -9,7 +9,11 @@ const pageUrl = 'https://jobmeter.app/tools/bahrain-cpr-cost-calculator';
 export const metadata: Metadata = {
   title: 'Bahrain CPR & Work Permit Cost Calculator (2026) | JobMeter',
   description: 'Calculate the real cost of a Bahrain work permit and CPR renewal: LMRA work permit fee, basic healthcare fee, CPR card, and dependent permits.',
-  keywords: ['bahrain cpr cost', 'bahrain work permit fee', 'lmra fees 2026', 'bahrain residency cost calculator'],
+  keywords: [
+    'bahrain cpr cost', 'bahrain work permit fee', 'lmra fees 2026', 'bahrain residency cost calculator',
+    'bahrain cpr renewal fee', 'bahrain work permit renewal cost', 'bahrain healthcare fee expat',
+    'bahrain dependent permit fee', 'iga cpr renewal',
+  ],
   alternates: { canonical: pageUrl },
 };
 

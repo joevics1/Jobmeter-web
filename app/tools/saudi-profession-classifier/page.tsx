@@ -24,6 +24,7 @@ export const metadata: Metadata = {
     url: pageUrl,
     images: [{ url: '/og-saudi-classifier.jpg' }],
   },
+  alternates: { canonical: pageUrl }
 };
 
 const jsonLd = [
@@ -57,6 +58,32 @@ const jsonLd = [
     operatingSystem: 'Web',
     description: 'Assess Saudi iqama profession codes and skill levels for Qiwa and Nitaqat compliance.',
     offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+  },
+  {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: [
+      {
+        '@type': 'Question',
+        name: 'What is an SSCO code and why does it matter?',
+        acceptedAnswer: { '@type': 'Answer', text: 'SSCO stands for the Saudi Standard Classification of Occupations — the official system HRSD and Qiwa use to categorize every job title in the Kingdom. Your SSCO code determines your skill tier, which affects your Nitaqat classification, visa category, and family sponsorship eligibility.' },
+      },
+      {
+        '@type': 'Question',
+        name: 'How is my skill tier different from my job title?',
+        acceptedAnswer: { '@type': 'Answer', text: "Your job title is what's on your offer letter or Iqama, but your skill tier (High-Skilled, Skilled, or Basic) is assigned by the SSCO classification system based on the closest matching occupation code — the two don't always align perfectly." },
+      },
+      {
+        '@type': 'Question',
+        name: "Can my employer classify me differently from this tool's result?",
+        acceptedAnswer: { '@type': 'Answer', text: "Yes — this tool gives an independent estimate, but your official classification is set by your employer through the Qiwa platform and confirmed by HRSD." },
+      },
+      {
+        '@type': 'Question',
+        name: 'Does a Basic-tier classification limit family sponsorship?',
+        acceptedAnswer: { '@type': 'Answer', text: 'Generally yes — elementary/Basic-tier occupations (Group 9) typically face more restricted family sponsorship terms than Skilled or High-Skilled tiers under current Saudi labor rules.' },
+      },
+    ],
   },
 ];
 
@@ -203,6 +230,37 @@ export default function SaudiProfessionClassifierPage() {
                   <p><strong className="text-gray-800 dark:text-gray-200">Review Implications.</strong> Understand how your <strong>ksa skill tier</strong> affects <strong>iqama renewal</strong> and <strong>nitaqat classification</strong>.</p>
                 </li>
               </ol>
+            </div>
+
+            {/* Section 6: FAQ */}
+            <div className="px-10 py-8 border-b border-gray-100 dark:border-gray-800">
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Frequently Asked Questions</h2>
+              <div className="space-y-6">
+                <div>
+                  <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-1">What is an SSCO code and why does it matter?</h3>
+                  <p className="text-[15px] leading-relaxed text-gray-600 dark:text-gray-400">
+                    SSCO stands for the <strong>Saudi Standard Classification of Occupations</strong> — the official system HRSD and Qiwa use to categorize every job title in the Kingdom. Your SSCO code determines your skill tier, which in turn affects your Nitaqat classification, visa category, and even family sponsorship eligibility.
+                  </p>
+                </div>
+                <div>
+                  <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-1">How is my skill tier different from my job title?</h3>
+                  <p className="text-[15px] leading-relaxed text-gray-600 dark:text-gray-400">
+                    Your job title is what's written on your offer letter or Iqama, but your skill tier (High-Skilled, Skilled, or Basic) is what the SSCO classification system assigns based on the closest matching occupation code — the two don't always align perfectly, which is why checking the mapping matters.
+                  </p>
+                </div>
+                <div>
+                  <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-1">Can my employer classify me differently from this tool's result?</h3>
+                  <p className="text-[15px] leading-relaxed text-gray-600 dark:text-gray-400">
+                    Yes — this tool gives an independent estimate, but your official classification is set by your employer through the Qiwa platform and confirmed by HRSD. If the two don't match, that's worth raising with your employer's HR or PRO before it affects a visa or Nitaqat-related decision.
+                  </p>
+                </div>
+                <div>
+                  <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-1">Does a Basic-tier classification limit family sponsorship?</h3>
+                  <p className="text-[15px] leading-relaxed text-gray-600 dark:text-gray-400">
+                    Generally yes — elementary/Basic-tier occupations (Group 9) typically face more restricted family sponsorship terms than Skilled or High-Skilled tiers under current Saudi labor rules.
+                  </p>
+                </div>
+              </div>
             </div>
 
             {/* Disclaimer */}

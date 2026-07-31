@@ -35,6 +35,7 @@ export const metadata: Metadata = {
       'Discover where your skills are most in demand across the Gulf. Compare tax-free salaries, demand scores, mega projects and lifestyle across UAE, Saudi Arabia, Qatar and more.',
     images: [{ url: '/og-match-tool.jpg' }],
   },
+  alternates: { canonical: pageUrl }
 };
 
 const jsonLd = [

@@ -9,7 +9,11 @@ const pageUrl = 'https://jobmeter.app/tools/qatar-qid-cost-calculator';
 export const metadata: Metadata = {
   title: 'Qatar QID Cost Calculator | Residence Permit Fees 2026 | JobMeter',
   description: 'Calculate the real cost of renewing your Qatar ID (QID): QAR 500/year or QAR 900/3 years, plus medical test, delivery, family members, and late fines.',
-  keywords: ['qatar qid cost', 'qatar id renewal fee', 'qatar residence permit cost', 'qid renewal calculator', 'metrash2 fees'],
+  keywords: [
+    'qatar qid cost', 'qatar id renewal fee', 'qatar residence permit cost', 'qid renewal calculator',
+    'metrash2 fees', 'qatar id renewal 2026', 'qatar moi residence fee', 'qatar id family member fee',
+    'qatar id late renewal fine', 'qatar id medical test fee', 'qatar id delivery fee',
+  ],
   alternates: { canonical: pageUrl },
 };
 

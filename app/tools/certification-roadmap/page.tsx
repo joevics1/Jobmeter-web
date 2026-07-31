@@ -25,6 +25,7 @@ export const metadata: Metadata = {
     description: 'Personalized certification path for high-paying roles in Dubai, Riyadh, and Doha. Estimate ROI and salary uplift.',
     images: [{ url: '/og-cert-roadmap.jpg' }],
   },
+  alternates: { canonical: pageUrl }
 };
 
 const jsonLd = [
@@ -57,6 +58,32 @@ const jsonLd = [
     applicationCategory: 'EducationalApplication',
     operatingSystem: 'Web',
     offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+  },
+  {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: [
+      {
+        '@type': 'Question',
+        name: 'How do I start a cybersecurity career roadmap?',
+        acceptedAnswer: { '@type': 'Answer', text: 'Start with the basics like Security+, then progress through CISSP and specialized IT security certification tiers as you build Gulf market experience.' },
+      },
+      {
+        '@type': 'Question',
+        name: 'Is PMP or PRINCE2 better for the Gulf?',
+        acceptedAnswer: { '@type': 'Answer', text: 'PMP has much higher market penetration in Saudi Arabia and the UAE than PRINCE2. Most giga-project certifications list PMP as a primary requirement.' },
+      },
+      {
+        '@type': 'Question',
+        name: 'What are the best career certifications for expats in the Gulf?',
+        acceptedAnswer: { '@type': 'Answer', text: 'Global brands like ACCA, PMP, and AWS carry the most weight, but adding Emiratization or Saudization knowledge can make you a more valuable consultant in-market.' },
+      },
+      {
+        '@type': 'Question',
+        name: 'Can I combine different certification paths?',
+        acceptedAnswer: { '@type': 'Answer', text: 'Yes — an ACCA, CIPS, and PMP bundle is a common combination for professionals moving into senior operations or commercial management roles.' },
+      },
+    ],
   },
 ];
 

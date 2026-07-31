@@ -18,6 +18,7 @@ export const metadata: Metadata = {
     description: 'Know your rights before switching jobs in the Gulf countries. Check NOC requirements and Qiwa transfer eligibility instantly.',
     images: [{ url: '/og-noc-checker.jpg' }],
   },
+  alternates: { canonical: pageUrl }
 };
 
 const jsonLd = [
