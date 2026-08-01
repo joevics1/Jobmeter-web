@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 import { CategoryJobPage, SalaryRow, SkillRow, AgencyRow, LinkRow, FAQRow } from './page';
 
-const WORKER_URL = 'https://jobs-api.joevicspro.workers.dev/jobs-gulf';
+const WORKER_URL = 'https://jobs-api.joevicspro.workers.dev/jobs';
 const JOBS_PER_PAGE = 20;
 
 type RawJob = {

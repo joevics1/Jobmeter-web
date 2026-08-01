@@ -24,6 +24,7 @@ import {
   BookOpen,
   PenTool,
   X,
+  CheckCircle2,
 } from 'lucide-react';
 import { theme } from '@/lib/theme';
 import UpgradeModal from '@/components/jobs/UpgradeModal';
@@ -761,7 +762,7 @@ export default function JobClient({ job, relatedJobs, companies }: {
                     <p className="text-red-600 font-medium">This job has expired</p>
                   </div>
                 </div>
-              ) : (job.application?.email || job.application_email || job.application?.phone || job.application_phone || job.application?.link || job.application?.url || job.application_url) && (
+              ) : (job.apply_in_app || job.application?.email || job.application_email || job.application?.phone || job.application_phone || job.application?.link || job.application?.url || job.application_url) && (
                 <div id="how-to-apply" className="bg-white rounded-xl shadow-sm p-6">
                   <h2 className="text-xl font-semibold mb-4 text-gray-900">How to Apply</h2>
                   {job.apply_instruction && (
@@ -770,7 +771,22 @@ export default function JobClient({ job, relatedJobs, companies }: {
                     </p>
                   )}
                   <div className="space-y-3">
-                    {(job.application?.phone || job.application_phone) && (
+                    {/* Apply in-app on JobMeter */}
+                    {job.apply_in_app && (
+                      <a
+                        href={`/apply/${job.id}`}
+                        className="w-full flex items-center justify-between gap-3 px-5 py-3.5 rounded-xl border-2 font-semibold text-sm transition-colors text-white"
+                        style={{ backgroundColor: theme.colors.primary.DEFAULT, borderColor: theme.colors.primary.DEFAULT }}
+                      >
+                        <span className="flex items-center gap-2">
+                          <CheckCircle2 size={16} />
+                          Apply on JobMeter
+                          {job.screening_enabled ? ' (quiz required)' : ''}
+                        </span>
+                      </a>
+                    )}
+
+                    {!job.apply_in_app && (job.application?.phone || job.application_phone) && (
                       <div>
                         <button
                           onClick={() => setShowPhone(v => !v)}
@@ -809,7 +825,7 @@ export default function JobClient({ job, relatedJobs, companies }: {
                       </div>
                     )}
 
-                    {(job.application?.email || job.application_email) && (
+                    {!job.apply_in_app && (job.application?.email || job.application_email) && (
                       <div>
                         <button
                           onClick={() => setShowEmail(v => !v)}
@@ -847,7 +863,7 @@ export default function JobClient({ job, relatedJobs, companies }: {
                       </div>
                     )}
 
-                    {(job.application?.link || job.application?.url || job.application_url) && (
+                    {!job.apply_in_app && (job.application?.link || job.application?.url || job.application_url) && (
                       <div>
                         <button
                           onClick={() => setShowUrl(v => !v)}

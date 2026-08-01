@@ -1,7 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.jobmeter.app';
-const JOBS_TABLE = 'jobs_nigeria';
+const JOBS_TABLE = 'jobs'; // was jobs_nigeria mirror - doesn't carry apply_in_app/screening columns
 const JOBS_PER_SITEMAP = 1000;
 
 // Jobs created before this date keep their old /jobs/slug URL format.
