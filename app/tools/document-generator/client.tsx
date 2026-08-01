@@ -169,20 +169,28 @@ export default function DocumentGeneratorClient() {
           <div className="bg-card border border-border rounded-xl p-5 space-y-4">
             <div>
               <label className="text-sm font-medium text-foreground mb-1.5 block">Document type</label>
-              <select
-                value={documentTypeSlug}
-                onChange={e => setDocumentTypeSlug(e.target.value)}
-                className="w-full bg-background border border-border rounded-lg px-3 py-2.5 text-sm text-foreground"
-              >
-                <option value="">Select a document…</option>
-                {DOCUMENT_TYPES_SORTED.slice(0, DOCUMENT_TYPES_POPULAR_COUNT).map(d => (
-                  <option key={d.slug} value={d.slug}>{d.label}</option>
-                ))}
-                <option disabled>──────────</option>
-                {DOCUMENT_TYPES_SORTED.slice(DOCUMENT_TYPES_POPULAR_COUNT).map(d => (
-                  <option key={d.slug} value={d.slug}>{d.label}</option>
-                ))}
-              </select>
+              {DOCUMENT_TYPES_SORTED.length === 0 ? (
+                <p className="text-sm text-muted-foreground bg-background border border-border rounded-lg px-3 py-2.5">
+                  No document types are available yet — check back soon.
+                </p>
+              ) : (
+                <select
+                  value={documentTypeSlug}
+                  onChange={e => setDocumentTypeSlug(e.target.value)}
+                  className="w-full bg-background border border-border rounded-lg px-3 py-2.5 text-sm text-foreground"
+                >
+                  <option value="">Select a document…</option>
+                  {DOCUMENT_TYPES_SORTED.slice(0, DOCUMENT_TYPES_POPULAR_COUNT).map(d => (
+                    <option key={d.slug} value={d.slug}>{d.label}</option>
+                  ))}
+                  {DOCUMENT_TYPES_POPULAR_COUNT > 0 && DOCUMENT_TYPES_POPULAR_COUNT < DOCUMENT_TYPES_SORTED.length && (
+                    <option disabled>──────────</option>
+                  )}
+                  {DOCUMENT_TYPES_SORTED.slice(DOCUMENT_TYPES_POPULAR_COUNT).map(d => (
+                    <option key={d.slug} value={d.slug}>{d.label}</option>
+                  ))}
+                </select>
+              )}
               {docType && <p className="text-xs text-muted-foreground mt-1.5">{docType.description}</p>}
             </div>
 

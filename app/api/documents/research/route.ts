@@ -43,7 +43,7 @@ Return ONLY a valid JSON object, no markdown, no code fences, no preamble. Schem
 
 {
   "summary": "1-2 sentence summary of what this document needs in this jurisdiction",
-  "requiredFields": ["short label for each piece of information needed, e.g. 'Seller full legal name', 'Vehicle VIN', 'Sale price'"],
+  "requiredFields": ["short label for each piece of information needed, e.g. 'Seller full legal name', 'Item or subject matter description', 'Agreed price or amount'"],
   "mandatoryClauses": ["clause or disclosure legally required in this jurisdiction for this document, e.g. 'Odometer mileage disclosure'"],
   "disclosures": ["specific legal disclosure statements or warnings required by law here, written out close to their real legal wording"],
   "formattingNotes": "notarization, witness, or registration requirements and any other formatting/procedural notes",

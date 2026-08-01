@@ -18,82 +18,10 @@ export interface DocumentTypeDef {
 }
 
 export const DOCUMENT_TYPES: DocumentTypeDef[] = [
-  // ── Sale & Ownership Transfer ──────────────────────────────────────────
-  { slug: 'vehicle-bill-of-sale', label: 'Vehicle Bill of Sale', description: 'Transfers ownership of a vehicle from seller to buyer.', tier: 'template', category: 'Sale & Ownership Transfer', popular: true },
-  { slug: 'vehicle-purchase-agreement', label: 'Vehicle Purchase Agreement (Detailed)', description: 'A fuller sale agreement with payment terms, as-is clauses, and defect disclosures.', tier: 'ai', category: 'Sale & Ownership Transfer', popular: true },
-  { slug: 'installment-payment-agreement', label: 'Vehicle Installment Payment Agreement', description: 'A payment plan for a vehicle purchase spread over time.', tier: 'ai', category: 'Sale & Ownership Transfer', popular: true },
-  { slug: 'deposit-reservation-agreement', label: 'Deposit / Reservation Agreement', description: 'Buyer pays a deposit to hold a vehicle before completing full payment.', tier: 'template', category: 'Sale & Ownership Transfer', popular: false },
-  { slug: 'vehicle-trade-in-agreement', label: 'Vehicle Trade-In / Swap Agreement', description: 'A vehicle traded in as part or full payment toward another vehicle.', tier: 'ai', category: 'Sale & Ownership Transfer', popular: false },
-  { slug: 'change-of-ownership-agreement', label: 'Change of Ownership Agreement', description: 'A broader transfer deed, also used for gifts or family transfers.', tier: 'template', category: 'Sale & Ownership Transfer', popular: false },
-  { slug: 'as-is-sale-agreement', label: 'As-Is Vehicle Sale Agreement', description: 'A sale with no warranties — the buyer accepts the vehicle in its current condition.', tier: 'ai', category: 'Sale & Ownership Transfer', popular: true },
-
-  // ── Hire, Lease & Rental ────────────────────────────────────────────────
-  { slug: 'vehicle-lease-agreement', label: 'Vehicle Lease Agreement', description: 'Terms for leasing a vehicle over a fixed period.', tier: 'ai', category: 'Hire, Lease & Rental', popular: false },
-  { slug: 'ride-hailing-hire-purchase-agreement', label: 'Uber/Bolt Driver Hire-Purchase Agreement', description: 'Lease-to-own terms for a ride-hailing driver, with ownership transferring on completion.', tier: 'ai', category: 'Hire, Lease & Rental', popular: false },
-  { slug: 'ride-hailing-rental-agreement', label: 'Uber/Bolt Straight Rental Agreement', description: 'Fixed daily or weekly rental with no ownership change.', tier: 'template', category: 'Hire, Lease & Rental', popular: false },
-  { slug: 'dispatch-rider-hire-agreement', label: 'Dispatch Rider / Logistics Bike Hire Agreement', description: 'Hire terms for a delivery motorcycle.', tier: 'template', category: 'Hire, Lease & Rental', popular: false },
-  { slug: 'keke-lease-purchase-agreement', label: 'Keke (Tricycle) Lease-Purchase Agreement', description: 'Lease-to-own terms for a tricycle/keke.', tier: 'ai', category: 'Hire, Lease & Rental', popular: false },
-  { slug: 'peer-to-peer-rental-agreement', label: 'Peer-to-Peer Car Rental Agreement', description: 'Short-term rental of a vehicle between individuals.', tier: 'template', category: 'Hire, Lease & Rental', popular: false },
-  { slug: 'fleet-lease-agreement', label: 'Fleet / Multi-Vehicle Lease Agreement', description: 'Negotiated lease terms for someone leasing several vehicles to an operator.', tier: 'ai', category: 'Hire, Lease & Rental', popular: false },
-
-  // ── Ownership Structures & Finance ──────────────────────────────────────
-  { slug: 'co-ownership-partnership-agreement', label: 'Co-Ownership / Partnership Agreement', description: 'Terms for two or more people jointly owning one vehicle.', tier: 'ai', category: 'Ownership Structures & Finance', popular: false },
-  { slug: 'vehicle-loan-security-agreement', label: 'Vehicle Loan & Security Agreement', description: 'A loan used to buy a vehicle, with the vehicle pledged as collateral.', tier: 'ai', category: 'Ownership Structures & Finance', popular: true },
-  { slug: 'private-loan-lien-agreement', label: 'Private Loan / Lien Agreement', description: 'One person financing another\u2019s car purchase, with the car as collateral.', tier: 'ai', category: 'Ownership Structures & Finance', popular: false },
-  { slug: 'consignment-agreement', label: 'Consignment Agreement', description: 'Owner allows a dealer or agent to sell the car on their behalf for a commission.', tier: 'template', category: 'Ownership Structures & Finance', popular: false },
-  { slug: 'lien-release-letter', label: 'Lien Release / Lien Satisfaction Letter', description: 'Confirms a vehicle loan has been paid off and the lien is released.', tier: 'template', category: 'Ownership Structures & Finance', popular: false },
-  { slug: 'vehicle-repossession-notice', label: 'Vehicle Repossession Notice', description: 'A lender\u2019s formal notice of intent to repossess a vehicle after loan default.', tier: 'ai', category: 'Ownership Structures & Finance', popular: false },
-
-  // ── Protection & Disputes ────────────────────────────────────────────────
-  { slug: 'vehicle-condition-inspection-report', label: 'Vehicle Condition / Inspection Report', description: 'Signed at handover to record the vehicle\u2019s condition, protecting both sides.', tier: 'template', category: 'Protection & Disputes', popular: true },
-  { slug: 'indemnity-liability-waiver', label: 'Indemnity & Liability Waiver', description: 'For test drives or temporary use of a vehicle.', tier: 'template', category: 'Protection & Disputes', popular: false },
-  { slug: 'warranty-disclaimer-as-is-statement', label: 'Warranty Disclaimer / "Sold As-Is" Statement', description: 'A standalone statement disclaiming warranties, attached to any sale.', tier: 'template', category: 'Protection & Disputes', popular: false },
-  { slug: 'affidavit-of-ownership', label: 'Affidavit of Ownership (Private)', description: 'A sworn statement affirming you are the rightful owner before a sale.', tier: 'template', category: 'Protection & Disputes', popular: false },
-  { slug: 'storage-custody-agreement', label: 'Storage / Custody Agreement', description: 'Terms for leaving a vehicle with someone — a mechanic, friend, or dealer — for a period.', tier: 'template', category: 'Protection & Disputes', popular: false },
-  { slug: 'purchase-contingency-addendum', label: 'Purchase Contingency Addendum', description: 'Makes a sale conditional on financing approval or a passed inspection.', tier: 'ai', category: 'Protection & Disputes', popular: false },
-  { slug: 'cancellation-rescission-agreement', label: 'Cancellation / Rescission of Sale Agreement', description: 'Unwinds a sale during a cooling-off period.', tier: 'template', category: 'Protection & Disputes', popular: false },
-  { slug: 'dispute-resolution-addendum', label: 'Dispute Resolution / Arbitration Clause Addendum', description: 'Sets how disputes arising from the sale will be resolved.', tier: 'ai', category: 'Protection & Disputes', popular: false },
-  { slug: 'cross-border-sale-addendum', label: 'Cross-Border Sale Addendum', description: 'Covers currency, export paperwork, and shipping risk for an international private sale.', tier: 'ai', category: 'Protection & Disputes', popular: false },
-
-  // ── Disclosure & Compliance ──────────────────────────────────────────────
-  { slug: 'odometer-disclosure-statement', label: 'Odometer Disclosure Statement', description: 'Certifies the vehicle mileage at the time of sale.', tier: 'template', category: 'Disclosure & Compliance', popular: true },
-  { slug: 'damage-accident-disclosure', label: 'Damage / Accident History Disclosure', description: 'Discloses known prior damage or accident history.', tier: 'ai', category: 'Disclosure & Compliance', popular: false },
-  { slug: 'salvage-title-disclosure', label: 'Salvage / Rebuilt Title Disclosure', description: 'Discloses a salvage or rebuilt title status.', tier: 'ai', category: 'Disclosure & Compliance', popular: false },
-  { slug: 'emissions-safety-inspection-disclosure', label: 'Emissions / Safety Inspection Disclosure', description: 'Discloses emissions or safety inspection status, where required.', tier: 'ai', category: 'Disclosure & Compliance', popular: false },
-  { slug: 'ev-battery-health-disclosure', label: 'EV Battery Health / Warranty Disclosure', description: 'Discloses an EV\u2019s battery health and any remaining warranty.', tier: 'ai', category: 'Disclosure & Compliance', popular: false },
-  { slug: 'telematics-gps-consent-form', label: 'Telematics / GPS Tracker Consent Form', description: 'Records consent to a vehicle tracker or telematics device.', tier: 'template', category: 'Disclosure & Compliance', popular: false },
-
-  // ── Ownership Edge Cases ──────────────────────────────────────────────────
-  { slug: 'vehicle-gift-affidavit', label: 'Vehicle Gift Affidavit', description: 'Documents a vehicle given as a gift with no money changing hands.', tier: 'template', category: 'Ownership Edge Cases', popular: true },
-  { slug: 'deceased-owner-transfer-affidavit', label: 'Deceased Owner Transfer / Inheritance Affidavit', description: 'Transfers a vehicle from a deceased owner to an heir.', tier: 'ai', category: 'Ownership Edge Cases', popular: false },
-  { slug: 'spousal-co-owner-consent', label: 'Spousal or Co-Owner Consent to Sell', description: 'Records a co-owner or spouse\u2019s consent to sell a jointly held vehicle.', tier: 'template', category: 'Ownership Edge Cases', popular: false },
-  { slug: 'corporate-authorization-letter', label: 'Corporate Authorization Letter', description: 'Authorizes a signatory to sell a vehicle on a company\u2019s behalf.', tier: 'template', category: 'Ownership Edge Cases', popular: false },
-  { slug: 'vehicle-power-of-attorney', label: 'Vehicle Power of Attorney', description: 'Authorizes someone else to handle vehicle transactions on your behalf.', tier: 'ai', category: 'Ownership Edge Cases', popular: true },
-  { slug: 'release-of-liability', label: 'Release of Liability (Notice of Sale)', description: 'Notifies of a completed sale to release the seller from future liability.', tier: 'template', category: 'Ownership Edge Cases', popular: true },
-  { slug: 'vehicle-donation-agreement', label: 'Vehicle Donation Agreement', description: 'Documents a vehicle donated to a charity or organization, with no payment involved.', tier: 'template', category: 'Ownership Edge Cases', popular: false },
-
-  // ── Fleet & Business Use ───────────────────────────────────────────────────
-  { slug: 'company-car-policy', label: 'Company Car Policy / Use Agreement', description: 'Sets terms for an employee\u2019s use of a company vehicle.', tier: 'template', category: 'Fleet & Business Use', popular: false },
-  { slug: 'fleet-sale-nda', label: 'NDA for Bulk/Fleet Sale Negotiations', description: 'Confidentiality agreement for negotiating a bulk or fleet vehicle sale.', tier: 'template', category: 'Fleet & Business Use', popular: false },
-  { slug: 'fleet-vehicle-assignment-agreement', label: 'Fleet Vehicle Assignment Agreement', description: 'Assigns a specific company vehicle to an employee or driver, with terms of use.', tier: 'template', category: 'Fleet & Business Use', popular: false },
-
-  // ── Other vehicle types ─────────────────────────────────────────────────
-  { slug: 'motorcycle-bill-of-sale', label: 'Motorcycle Bill of Sale', description: 'Transfers ownership of a motorcycle.', tier: 'template', category: 'Other Vehicle Types', popular: false },
-  { slug: 'trailer-equipment-bill-of-sale', label: 'Trailer / Equipment Bill of Sale', description: 'Transfers ownership of a trailer or heavy equipment.', tier: 'template', category: 'Other Vehicle Types', popular: false },
-  { slug: 'salvage-yard-purchase-agreement', label: 'Salvage Yard Vehicle Purchase Agreement', description: 'A sale of a vehicle sold for parts or scrap through a salvage yard.', tier: 'template', category: 'Other Vehicle Types', popular: false },
-
-  // ── Registration & Compliance ──────────────────────────────────────────
-  { slug: 'duplicate-title-affidavit', label: 'Duplicate Title / Lost Registration Affidavit', description: 'A sworn statement to request a replacement for a lost vehicle title or registration.', tier: 'template', category: 'Registration & Compliance', popular: false },
-  { slug: 'insurance-claim-authorization-letter', label: 'Vehicle Insurance Claim Authorization Letter', description: 'Authorizes someone else to file or handle a vehicle insurance claim on your behalf.', tier: 'template', category: 'Registration & Compliance', popular: false },
-  { slug: 'vehicle-import-declaration', label: 'Vehicle Import Declaration Letter', description: 'Declares a vehicle being imported, its origin, value, and specification for customs.', tier: 'ai', category: 'Registration & Compliance', popular: false },
-  { slug: 'customs-clearance-authorization', label: 'Customs Clearance Authorization Letter', description: 'Authorizes an agent or clearing agent to clear a vehicle through customs on your behalf.', tier: 'template', category: 'Registration & Compliance', popular: false },
-  { slug: 'vehicle-impound-release-authorization', label: 'Vehicle Impound Release Authorization', description: 'Authorizes someone else to collect an impounded vehicle on the owner\u2019s behalf.', tier: 'template', category: 'Registration & Compliance', popular: false },
-  { slug: 'roadworthiness-certificate-request', label: 'Roadworthiness Certificate Request Letter', description: 'A formal request for a roadworthiness or safety inspection certificate.', tier: 'template', category: 'Registration & Compliance', popular: false },
-
-  // ── Repair & Service ────────────────────────────────────────────────────
-  { slug: 'auto-repair-authorization-form', label: 'Auto Repair Authorization & Estimate Form', description: 'Authorizes a repair shop to carry out specific work at an agreed estimated cost.', tier: 'template', category: 'Repair & Service', popular: false },
-  { slug: 'extended-warranty-agreement', label: 'Extended Warranty Purchase Agreement', description: 'Terms for a vehicle warranty purchased beyond the manufacturer\u2019s original coverage.', tier: 'ai', category: 'Repair & Service', popular: false },
-  { slug: 'rental-car-damage-waiver', label: 'Rental Car Damage Waiver Agreement', description: 'Terms under which a renter is or isn\u2019t liable for damage to a rented vehicle.', tier: 'template', category: 'Repair & Service', popular: false },
+  // No document types yet — the previous list (57 vehicle-related
+  // documents, inherited from naira.autos) has been removed as it doesn't
+  // fit a job platform. Add JobMeter-relevant document types here, e.g.:
+  // { slug: 'employment-offer-letter', label: 'Employment Offer Letter', description: '...', tier: 'ai', category: 'Employment', popular: true },
 ];
 
 export function getDocumentType(slug: string): DocumentTypeDef | undefined {
@@ -308,9 +236,8 @@ export const DOCUMENT_COUNTRIES_POPULAR_COUNT = DOCUMENT_COUNTRIES.filter(c => c
 // Document types flagged as higher legal risk — shown with a stronger
 // warning since AI-assembled/grounded content alone shouldn't be trusted
 // for these without real local legal review.
-export const HIGH_RISK_DOCUMENT_TYPES = new Set([
-  'vehicle-loan-security-agreement',
-  'private-loan-lien-agreement',
-  'vehicle-power-of-attorney',
-  'vehicle-repossession-notice',
+export const HIGH_RISK_DOCUMENT_TYPES = new Set<string>([
+  // No entries yet — the previous vehicle-related slugs (inherited from
+  // naira.autos) have been removed. Add slugs here for document types
+  // that warrant a stronger "get this reviewed" warning.
 ]);

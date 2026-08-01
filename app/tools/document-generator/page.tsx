@@ -89,7 +89,7 @@ export default function DocumentGeneratorPage() {
                 What Is the AI Document Generator?
               </h2>
               <p className="mb-3">Employment, tenancy, and everyday personal or business agreements almost always need paperwork — and the paperwork that actually holds up depends entirely on where you are. An offer letter that&apos;s perfectly valid in one country can be missing a mandatory disclosure, a witness signature, or a notarization requirement in another. This tool covers a growing range of document types across 160 countries, and instead of handing you a generic Western template with the country name swapped in, it researches the actual legal requirements for your chosen document and jurisdiction before drafting anything.</p>
-              <p>Some documents (marked as templates) use a carefully structured, jurisdiction-adapted format. Others — typically the more nuanced agreements, like installment payment plans, trade-in swaps, or cross-border sale addendums — are fully AI-drafted around your specific details after the legal research step runs. Either way, you end up with a complete, formatted document, not a fill-in-the-blank shell.</p>
+              <p>Some documents (marked as templates) use a carefully structured, jurisdiction-adapted format. Others — typically the more nuanced agreements, like installment payment plans or multi-party addendums — are fully AI-drafted around your specific details after the legal research step runs. Either way, you end up with a complete, formatted document, not a fill-in-the-blank shell.</p>
             </div>
 
             <div>
