@@ -86,7 +86,10 @@ export async function downloadCVAsDocx(data: CVData, fileNamePrefix: string) {
   if (data.certifications?.length) {
     children.push(
       new Paragraph({ text: 'CERTIFICATIONS', heading: HeadingLevel.HEADING_2, spacing: { before: 200, after: 100 } }),
-      new Paragraph({ text: data.certifications.join(', '), spacing: { after: 200 } }),
+      new Paragraph({
+        text: data.certifications.map((c) => [c.name, c.issuer, c.year].filter(Boolean).join(', ')).join('  |  '),
+        spacing: { after: 200 },
+      }),
     );
   }
 
