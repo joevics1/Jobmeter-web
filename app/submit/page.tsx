@@ -303,8 +303,8 @@ export default function SubmitJobPage() {
     // Validation
     if (!jobData.title.trim() || !jobData.sector.trim() ||
         !jobData.description.trim() ||
-        !jobData.city.trim() || !jobData.state.trim()) {
-      alert('Please fill in all required fields (Title, Sector, Description, and Location).');
+        !jobData.state.trim()) {
+      alert('Please fill in all required fields (Title, Sector, Description, and State/Country).');
       return;
     }
 
@@ -615,7 +615,7 @@ Posted Date: ${new Date().toISOString().split('T')[0]}`;
               <div className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-semibold mb-2 text-gray-900">City *</label>
+                    <label className="block text-sm font-semibold mb-2 text-gray-900">City</label>
                     <Input
                       placeholder="e.g., Lagos"
                       value={jobData.city}
