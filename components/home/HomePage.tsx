@@ -92,28 +92,28 @@ const FEATURED_POSTS = [
 ] as const;
 
 const COUNTRIES = [
-  { title: 'Jobs in Nigeria', slug: 'nigeria', flag: '🇳🇬' },
-  { title: 'Jobs in USA', slug: 'usa', flag: '🇺🇸' },
-  { title: 'Jobs in UK', slug: 'uk', flag: '🇬🇧' },
-  { title: 'Jobs in Canada', slug: 'canada', flag: '🇨🇦' },
-  { title: 'Jobs in Australia', slug: 'australia', flag: '🇦🇺' },
-  { title: 'Jobs in UAE', slug: 'united-arab-emirates', flag: '🇦🇪' },
-  { title: 'Jobs in Saudi Arabia', slug: 'saudi-arabia', flag: '🇸🇦' },
-  { title: 'Jobs in Germany', slug: 'germany', flag: '🇩🇪' },
-  { title: 'Jobs in France', slug: 'france', flag: '🇫🇷' },
-  { title: 'Jobs in Netherlands', slug: 'netherlands', flag: '🇳🇱' },
-  { title: 'Jobs in South Africa', slug: 'south-africa', flag: '🇿🇦' },
-  { title: 'Jobs in Ireland', slug: 'ireland', flag: '🇮🇪' },
-  { title: 'Jobs in New Zealand', slug: 'new-zealand', flag: '🇳🇿' },
-  { title: 'Jobs in Qatar', slug: 'qatar', flag: '🇶🇦' },
-  { title: 'Jobs in Kuwait', slug: 'kuwait', flag: '🇰🇼' },
-  { title: 'Jobs in Singapore', slug: 'singapore', flag: '🇸🇬' },
-  { title: 'Jobs in Sweden', slug: 'sweden', flag: '🇸🇪' },
-  { title: 'Jobs in Norway', slug: 'norway', flag: '🇳🇴' },
-  { title: 'Jobs in Switzerland', slug: 'switzerland', flag: '🇨🇭' },
-  { title: 'Jobs in Belgium', slug: 'belgium', flag: '🇧🇪' },
-  { title: 'Jobs in Italy', slug: 'italy', flag: '🇮🇹' },
-  { title: 'Jobs in Spain', slug: 'spain', flag: '🇪🇸' },
+  { title: 'Jobs in Nigeria', slug: 'nigeria', flag: '🇳🇬', searchTerm: 'Nigeria' },
+  { title: 'Jobs in USA', slug: 'usa', flag: '🇺🇸', searchTerm: 'United States' },
+  { title: 'Jobs in UK', slug: 'uk', flag: '🇬🇧', searchTerm: 'United Kingdom' },
+  { title: 'Jobs in Canada', slug: 'canada', flag: '🇨🇦', searchTerm: 'Canada' },
+  { title: 'Jobs in Australia', slug: 'australia', flag: '🇦🇺', searchTerm: 'Australia' },
+  { title: 'Jobs in UAE', slug: 'united-arab-emirates', flag: '🇦🇪', searchTerm: 'United Arab Emirates' },
+  { title: 'Jobs in Saudi Arabia', slug: 'saudi-arabia', flag: '🇸🇦', searchTerm: 'Saudi Arabia' },
+  { title: 'Jobs in Germany', slug: 'germany', flag: '🇩🇪', searchTerm: 'Germany' },
+  { title: 'Jobs in France', slug: 'france', flag: '🇫🇷', searchTerm: 'France' },
+  { title: 'Jobs in Netherlands', slug: 'netherlands', flag: '🇳🇱', searchTerm: 'Netherlands' },
+  { title: 'Jobs in South Africa', slug: 'south-africa', flag: '🇿🇦', searchTerm: 'South Africa' },
+  { title: 'Jobs in Ireland', slug: 'ireland', flag: '🇮🇪', searchTerm: 'Ireland' },
+  { title: 'Jobs in New Zealand', slug: 'new-zealand', flag: '🇳🇿', searchTerm: 'New Zealand' },
+  { title: 'Jobs in Qatar', slug: 'qatar', flag: '🇶🇦', searchTerm: 'Qatar' },
+  { title: 'Jobs in Kuwait', slug: 'kuwait', flag: '🇰🇼', searchTerm: 'Kuwait' },
+  { title: 'Jobs in Singapore', slug: 'singapore', flag: '🇸🇬', searchTerm: 'Singapore' },
+  { title: 'Jobs in Sweden', slug: 'sweden', flag: '🇸🇪', searchTerm: 'Sweden' },
+  { title: 'Jobs in Norway', slug: 'norway', flag: '🇳🇴', searchTerm: 'Norway' },
+  { title: 'Jobs in Switzerland', slug: 'switzerland', flag: '🇨🇭', searchTerm: 'Switzerland' },
+  { title: 'Jobs in Belgium', slug: 'belgium', flag: '🇧🇪', searchTerm: 'Belgium' },
+  { title: 'Jobs in Italy', slug: 'italy', flag: '🇮🇹', searchTerm: 'Italy' },
+  { title: 'Jobs in Spain', slug: 'spain', flag: '🇪🇸', searchTerm: 'Spain' },
 ] as const;
 
 const FAQS = [
@@ -642,7 +642,7 @@ export default function HomePage({ jobs: initialJobs, blogPosts, companies = [] 
               {COUNTRIES.map((country) => (
                 <Link
                   key={country.slug}
-                  href={`/jobs/${country.slug}`}
+                  href={`/jobs?sort=match&search=${encodeURIComponent(country.searchTerm)}`}
                   className="text-blue-600 hover:underline text-sm flex items-center gap-2"
                 >
                   <span>{country.flag}</span>
