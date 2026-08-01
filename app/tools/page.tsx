@@ -3,7 +3,7 @@ import Link from 'next/link';
 import {
   FileText, FileCheck, Search, Shield, Calculator, MessageCircle, GraduationCap, ArrowRight, Briefcase, Brain,
   Globe, MapPin, DollarSign, Plane, Home, BookOpen, Award, BarChart2, Users, RefreshCw, CreditCard, Landmark,
-  Star, TrendingUp, ClipboardList, CheckSquare, Navigation, Flag, Wallet
+  Star, TrendingUp, ClipboardList, CheckSquare, Navigation, Flag, Wallet, Wifi, Rocket
 } from 'lucide-react';
 import { theme } from '@/lib/theme';
 import { Metadata } from 'next';
@@ -59,6 +59,19 @@ export default function ToolsPage() {
         { id: 'career', title: 'Career Coach', description: 'Get personalized career guidance and advice', icon: GraduationCap, color: '#F59E0B', route: '/tools/career' },
         { id: 'role-finder', title: 'Role Finder', description: 'Discover new career paths based on your skills', icon: Search, color: '#06B6D4', route: '/tools/role-finder' },
         { id: 'quiz', title: 'Recruitment Assessment Practice Tests', description: 'Practice aptitude tests from top companies', icon: Brain, color: '#EC4899', route: '/tools/quiz' },
+        { id: 'paye-calculator', title: 'PAYE Calculator', description: 'Calculate net salary with 2026 Nigeria tax rates', icon: Calculator, color: '#3B82F6', route: '/tools/paye-calculator' },
+      ],
+    },
+    {
+      id: 'job-finders', title: 'Job Finders', description: 'Browse jobs by category — remote, entry-level, internships, and more', icon: Rocket, color: '#0EA5E9',
+      tools: [
+        { id: 'remote-jobs-finder', title: 'Remote Jobs', description: 'Find remote job opportunities in Nigeria and worldwide', icon: Wifi, color: '#06B6D4', route: '/tools/remote-jobs-finder' },
+        { id: 'entry-level-finder', title: 'Entry Level Jobs', description: 'Find entry-level job opportunities to start your career', icon: Rocket, color: '#0EA5E9', route: '/tools/entry-level-finder' },
+        { id: 'graduate-trainee-finder', title: 'Graduate & Trainee Jobs', description: 'Find graduate trainee programmes at top companies', icon: GraduationCap, color: '#8B5CF6', route: '/tools/graduate-trainee-finder' },
+        { id: 'internship-finder', title: 'Internship Finder', description: 'Find internship opportunities to kickstart your career', icon: Briefcase, color: '#2563EB', route: '/tools/internship-finder' },
+        { id: 'nysc-finder', title: 'NYSC Jobs', description: 'Find job opportunities for NYSC corpers', icon: Award, color: '#10B981', route: '/tools/nysc-finder' },
+        { id: 'accommodation-finder', title: 'Jobs with Accommodation', description: 'Find jobs that include housing or accommodation', icon: Home, color: '#F59E0B', route: '/tools/accommodation-finder' },
+        { id: 'visa-finder', title: 'Jobs with Visa Sponsorship', description: 'Find jobs offering visa sponsorship for international candidates', icon: Plane, color: '#DC2626', route: '/tools/visa-finder' },
       ],
     },
     {
@@ -66,12 +79,6 @@ export default function ToolsPage() {
       tools: [
 //        { id: 'scam-detector', title: 'Job Description Analyzer', description: 'AI-powered analysis to detect job scams in any text', icon: Shield, color: '#EF4444', route: '/tools/scam-detector' },
         { id: 'scam-checker', title: 'Job Scam Checker', description: 'Search and report fraudulent companies and recruiters', icon: Shield, color: '#DC2626', route: '/tools/scam-checker' },
-      ],
-    },
-    {
-      id: 'salary-tools', title: 'Salary Tools', description: 'Calculate and compare salaries', icon: Calculator, color: '#3B82F6',
-      tools: [
-        { id: 'paye-calculator', title: 'PAYE Calculator', description: 'Calculate net salary with 2026 Nigeria tax rates', icon: Calculator, color: '#3B82F6', route: '/tools/paye-calculator' },
       ],
     },
     {
@@ -164,17 +171,7 @@ export default function ToolsPage() {
                             <Icon size={22} style={{ color: tool.color }} />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-1">
-                              <h3 className="font-bold text-gray-900 group-hover:text-blue-600 transition-colors">{tool.title}</h3>
-                              {tool.gulf && (
-                                <span
-                                  className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full flex-shrink-0"
-                                  style={{ backgroundColor: '#05966915', color: '#059669' }}
-                                >
-                                  GULF
-                                </span>
-                              )}
-                            </div>
+                            <h3 className="font-bold text-gray-900 mb-1 group-hover:text-blue-600 transition-colors">{tool.title}</h3>
                             <p className="text-sm text-gray-600 line-clamp-2">{tool.description}</p>
                           </div>
                           <ArrowRight size={18} className="text-gray-400 group-hover:text-gray-600 group-hover:translate-x-1 transition-all flex-shrink-0 mt-1" />
