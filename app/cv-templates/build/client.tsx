@@ -11,6 +11,7 @@ import { useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { renderCVTemplate } from '@/lib/cv-template-pages/cv-renderer';
 import { CV_PAGE_DESIGNS } from '@/lib/cv-template-pages/design-list';
+import { downloadCVAsDocx } from '@/lib/cv-template-pages/cv-docx-export';
 import type { CVData } from '@/lib/cv-template-pages/cv-data-types';
 
 export default function BuildClient() {
@@ -34,6 +35,7 @@ export default function BuildClient() {
   const [selectedDesign, setSelectedDesign] = useState(CV_PAGE_DESIGNS[0]?.id ?? 'template-1');
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [downloadingDocx, setDownloadingDocx] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -107,6 +109,18 @@ export default function BuildClient() {
     iframe?.contentWindow?.print();
   }
 
+  async function handleDownloadDocx() {
+    if (!cvData) return;
+    setDownloadingDocx(true);
+    try {
+      await downloadCVAsDocx(cvData, `${cvData.personalDetails.name}-CV`);
+    } catch (err: any) {
+      setError(err.message || 'Could not build the Word file. Please try again.');
+    } finally {
+      setDownloadingDocx(false);
+    }
+  }
+
   return (
     <main className="max-w-5xl mx-auto px-4 py-10 grid md:grid-cols-2 gap-8">
       <section>
@@ -147,8 +161,11 @@ export default function BuildClient() {
             <div className="border rounded-lg overflow-hidden shadow-sm bg-gray-50 mb-3">
               <iframe id="cv-preview-frame" title="CV preview" srcDoc={previewHtml ?? ''} className="w-full" style={{ height: '900px', border: 'none' }} />
             </div>
-            <div className="flex gap-3">
+            <div className="flex gap-3 flex-wrap">
               <button onClick={handlePrint} className="border px-4 py-2 rounded-lg font-medium">Print / Save as PDF</button>
+              <button onClick={handleDownloadDocx} disabled={downloadingDocx} className="border px-4 py-2 rounded-lg font-medium disabled:opacity-50">
+                {downloadingDocx ? 'Preparing…' : 'Download as Word'}
+              </button>
               <button onClick={handleSave} disabled={saving} className="border px-4 py-2 rounded-lg font-medium disabled:opacity-50">
                 {saving ? 'Saving…' : saved ? 'Saved ✓' : 'Save this CV'}
               </button>
