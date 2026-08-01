@@ -3,7 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
-import { ArrowLeft, FileText, Clipboard, Plus, Building2, X, CheckCircle, AlertCircle } from 'lucide-react';
+import { ArrowLeft, FileText, Clipboard, Plus, Building2, X, CheckCircle, AlertCircle, Sparkles, Lock } from 'lucide-react';
+import UpgradeModal from '@/components/jobs/UpgradeModal';
 import { theme } from '@/lib/theme';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -39,6 +40,7 @@ const SECTORS = [
 ];
 
 const EMPLOYMENT_TYPES = ['Full-time', 'Part-time', 'Contract', 'Freelance', 'Internship'];
+const ANONYMOUS_OPTION = '__anonymous__';
 const EXPERIENCE_LEVELS = ['Entry Level', 'Junior', 'Mid-level', 'Senior', 'Lead', 'Executive'];
 
 export default function SubmitJobPage() {
@@ -73,6 +75,17 @@ export default function SubmitJobPage() {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [pastedContent, setPastedContent] = useState('');
   const [submissionNotes, setSubmissionNotes] = useState('');
+  const [applyInApp, setApplyInApp] = useState(true);
+  const [quizObjective, setQuizObjective] = useState(false);
+  const [quizSpeed, setQuizSpeed] = useState(false);
+  const [quizWritten, setQuizWritten] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [showQuizUpgradeModal, setShowQuizUpgradeModal] = useState(false);
+  // Derived from the 3 checkboxes above — kept as plain values (not state) so
+  // there's only ever one source of truth.
+  const screeningEnabled = quizObjective || quizSpeed || quizWritten;
+  const screeningMode: 'standard' | 'speed' = quizSpeed ? 'speed' : 'standard';
+  const screeningIncludesWritten = quizWritten;
   const [jobData, setJobData] = useState({
     title: '',
     sector: '',
@@ -102,11 +115,18 @@ export default function SubmitJobPage() {
     const checkUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        router.push('/auth/recruiter?redirect=/submit');
+        router.push('/auth?redirect=/submit');
         return;
       }
       setUser(user);
-      
+
+      supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single()
+        .then(({ data }) => setIsAdmin(data?.role === 'admin'));
+
       const { data: userCompanies } = await supabase
         .from('companies')
         .select('id, name, slug, industry')
@@ -118,8 +138,6 @@ export default function SubmitJobPage() {
       if (userCompanies && userCompanies.length > 0) {
         setCompanies(userCompanies);
         setSelectedCompanyId(userCompanies[0].id);
-      } else {
-        setShowAddCompany(true);
       }
     };
     checkUser();
@@ -127,6 +145,28 @@ export default function SubmitJobPage() {
 
   const generateSlug = (name: string): string => {
     return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  };
+
+  // The submit-job edge function doesn't know about apply_in_app/screening fields
+  // (they didn't exist when it was written, and we can't edit it from here) — so
+  // this is a follow-up patch onto the row it just created, matched by most-recent
+  // submission for this user. Only called when applyInApp is actually turned on.
+  const attachScreeningConfig = async (userId: string) => {
+    try {
+      await fetch('/api/recruiter/attach-screening-config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId,
+          applyInApp,
+          screeningEnabled: applyInApp && screeningEnabled,
+          screeningMode,
+          screeningIncludesWritten: applyInApp && screeningEnabled && screeningIncludesWritten,
+        }),
+      });
+    } catch (e) {
+      console.error('Failed to attach screening config:', e);
+    }
   };
 
   const handleAddCompany = async (e: React.FormEvent) => {
@@ -268,8 +308,13 @@ export default function SubmitJobPage() {
       return;
     }
 
-    if (!jobData.applicationUrl.trim() && !jobData.applicationEmail.trim() && !jobData.applicationPhone.trim()) {
-      alert('Please provide at least one application method (Email, URL, or Phone).');
+    if (!applyInApp && !jobData.applicationUrl.trim() && !jobData.applicationEmail.trim() && !jobData.applicationPhone.trim()) {
+      alert('Please provide at least one application method (Email, URL, or Phone), or enable "Let candidates apply directly on JobMeter" below.');
+      return;
+    }
+
+    if (!applyInApp && (postAnonymously || !selectedCompanyId)) {
+      alert('Posting with an external link, email, or phone number requires a company name. Either add/select a company, or turn on "Let candidates apply directly on JobMeter" to post anonymously.');
       return;
     }
 
@@ -329,10 +374,13 @@ Posted Date: ${new Date().toISOString().split('T')[0]}`;
           submissionMethod: 'form',
           submissionNotes: submissionNotes.trim() || undefined,
           userId: user?.id,
-          companyId: postAnonymously ? null : selectedCompanyId,
-          companyName: postAnonymously ? 'Anonymous' : companyName,
-          companyWebsite: postAnonymously ? null : (selectedCompany?.website_url || null),
-          postAnonymously: postAnonymously,
+          companyId: (postAnonymously || !selectedCompanyId) ? null : selectedCompanyId,
+          companyName: (postAnonymously || !selectedCompanyId) ? 'Confidential Employer' : companyName,
+          companyWebsite: (postAnonymously || !selectedCompanyId) ? null : (selectedCompany?.website_url || null),
+          postAnonymously: postAnonymously || !selectedCompanyId,
+          applyInApp,
+          screeningEnabled: applyInApp && screeningEnabled,
+          screeningIncludesWritten: applyInApp && screeningEnabled && screeningIncludesWritten,
         }),
       });
 
@@ -340,6 +388,10 @@ Posted Date: ${new Date().toISOString().split('T')[0]}`;
 
       if (!response.ok) {
         throw new Error(result.error || 'Failed to submit job');
+      }
+
+      if (applyInApp && user) {
+        await attachScreeningConfig(user.id);
       }
 
       setShowSuccessModal(true);
@@ -352,47 +404,60 @@ Posted Date: ${new Date().toISOString().split('T')[0]}`;
     }
   };
 
-  const handlePasteSubmit = async () => {
+  const [isParsing, setIsParsing] = useState(false);
+
+  const handleParseAndFill = async () => {
     if (!pastedContent.trim()) {
       alert('Please paste a job description.');
       return;
     }
 
-    setIsLoading(true);
+    setIsParsing(true);
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-
-      // Call edge function instead of direct insert (bypasses RLS)
-      const response = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/submit-job`, {
+      const res = await fetch('/api/jobs/parse-paste', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`,
-        },
-        body: JSON.stringify({
-          rawContent: pastedContent.trim(),
-          submissionMethod: 'paste',
-          submissionNotes: submissionNotes.trim() || undefined,
-          userId: user?.id,
-          companyId: postAnonymously ? null : selectedCompanyId,
-          postAnonymously: postAnonymously,
-        }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rawContent: pastedContent.trim() }),
       });
+      const { parsed, error } = await res.json();
 
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || 'Failed to submit job');
+      if (!res.ok || !parsed) {
+        throw new Error(error || 'Failed to parse job description');
       }
 
-      setShowSuccessModal(true);
+      setJobData({
+        title: parsed.title || '',
+        sector: parsed.sector || '',
+        companyName: parsed.companyName || '',
+        companyWebsite: parsed.companyWebsite || '',
+        city: parsed.city || '',
+        state: parsed.state || '',
+        remote: !!parsed.remote,
+        employmentType: parsed.employmentType || '',
+        skills: parsed.skills || '',
+        experienceLevel: parsed.experienceLevel || '',
+        salaryMin: parsed.salaryMin != null ? String(parsed.salaryMin) : '',
+        salaryMax: parsed.salaryMax != null ? String(parsed.salaryMax) : '',
+        currency: parsed.currency || 'NGN',
+        period: parsed.period || 'annually',
+        description: parsed.description || '',
+        responsibilities: parsed.responsibilities || '',
+        qualifications: parsed.qualifications || '',
+        benefits: parsed.benefits || '',
+        applicationUrl: parsed.applicationUrl || '',
+        applicationEmail: parsed.applicationEmail || '',
+        applicationPhone: parsed.applicationPhone || '',
+        deadline: parsed.deadline || '',
+      });
 
+      // Switch to the form tab so the user reviews/edits before submitting themselves.
+      setActiveTab('form');
     } catch (error: any) {
-      console.error('Job submission error:', error);
-      alert(error.message || 'Failed to submit job. Please try again.');
+      console.error('Parse error:', error);
+      alert(error.message || "Couldn't parse that. Try filling the form manually instead.");
     } finally {
-      setIsLoading(false);
+      setIsParsing(false);
     }
   };
 
@@ -400,7 +465,7 @@ Posted Date: ${new Date().toISOString().split('T')[0]}`;
     if (activeTab === 'form') {
       await handleFormSubmit();
     } else {
-      await handlePasteSubmit();
+      await handleParseAndFill();
     }
   };
 
@@ -410,9 +475,10 @@ Posted Date: ${new Date().toISOString().split('T')[0]}`;
       <div
         className="pt-12 pb-8 px-6"
         style={{
-          backgroundColor: theme.colors.primary.DEFAULT,
+          background: `linear-gradient(135deg, ${theme.colors.primary.DEFAULT} 0%, ${theme.colors.primary.dark} 100%)`,
         }}
       >
+        <div className="max-w-3xl mx-auto">
         <div className="flex items-center gap-4 mb-4">
           <button
             onClick={() => router.back()}
@@ -421,21 +487,21 @@ Posted Date: ${new Date().toISOString().split('T')[0]}`;
             <ArrowLeft size={24} className="text-white" />
           </button>
           <div className="flex-1">
-            <h1 className="text-3xl font-bold text-white">Submit a Job</h1>
+            <h1 className="text-3xl font-bold text-white tracking-tight">Post a Job</h1>
             <p className="text-white/80 mt-1">
-              Post a job opportunity to help others find their dream role
+              Reach candidates on JobMeter — fill it in or paste a description and we'll do the rest
             </p>
           </div>
         </div>
 
         {/* Tab Switcher */}
-        <div className="flex gap-2 bg-white/20 rounded-lg p-1 mt-4">
+        <div className="flex gap-2 bg-white/15 rounded-xl p-1 mt-4 backdrop-blur-sm">
           <button
             onClick={() => setActiveTab('form')}
-            className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-md font-medium transition-colors ${
+            className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-lg font-medium transition-all ${
               activeTab === 'form'
-                ? 'bg-white text-gray-900'
-                : 'text-white/80'
+                ? 'bg-white text-gray-900 shadow-sm'
+                : 'text-white/80 hover:text-white'
             }`}
           >
             <FileText size={20} />
@@ -443,24 +509,26 @@ Posted Date: ${new Date().toISOString().split('T')[0]}`;
           </button>
           <button
             onClick={() => setActiveTab('paste')}
-            className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-md font-medium transition-colors ${
+            className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-lg font-medium transition-all ${
               activeTab === 'paste'
-                ? 'bg-white text-gray-900'
-                : 'text-white/80'
+                ? 'bg-white text-gray-900 shadow-sm'
+                : 'text-white/80 hover:text-white'
             }`}
           >
             <Clipboard size={20} />
             <span>Paste Job</span>
           </button>
         </div>
+        </div>
       </div>
 
       {/* Content */}
       <div className="px-4 py-4 pb-24">
+        <div className="max-w-3xl mx-auto">
         {activeTab === 'form' ? (
           <div className="space-y-6">
             {/* Job Details */}
-            <section className="bg-white rounded-xl p-6 shadow-sm">
+            <section className="bg-white rounded-2xl p-6 sm:p-7 shadow-sm border border-gray-100">
               <h2 className="text-xl font-bold mb-4 text-gray-900">Job Details</h2>
               
               <div className="space-y-4">
@@ -541,7 +609,7 @@ Posted Date: ${new Date().toISOString().split('T')[0]}`;
             <input type="hidden" value={jobData.companyWebsite} onChange={() => {}} />
 
             {/* Location */}
-            <section className="bg-white rounded-xl p-6 shadow-sm">
+            <section className="bg-white rounded-2xl p-6 sm:p-7 shadow-sm border border-gray-100">
               <h2 className="text-xl font-bold mb-4 text-gray-900">Location *</h2>
               
               <div className="space-y-4">
@@ -578,7 +646,7 @@ Posted Date: ${new Date().toISOString().split('T')[0]}`;
             </section>
 
             {/* Compensation & Requirements */}
-            <section className="bg-white rounded-xl p-6 shadow-sm">
+            <section className="bg-white rounded-2xl p-6 sm:p-7 shadow-sm border border-gray-100">
               <h2 className="text-xl font-bold mb-4 text-gray-900">Compensation & Requirements</h2>
               
               <div className="space-y-4">
@@ -615,7 +683,7 @@ Posted Date: ${new Date().toISOString().split('T')[0]}`;
             </section>
 
             {/* Job Description */}
-            <section className="bg-white rounded-xl p-6 shadow-sm">
+            <section className="bg-white rounded-2xl p-6 sm:p-7 shadow-sm border border-gray-100">
               <h2 className="text-xl font-bold mb-4 text-gray-900">Job Description</h2>
               
               <div className="space-y-4">
@@ -659,9 +727,13 @@ Posted Date: ${new Date().toISOString().split('T')[0]}`;
             </section>
 
             {/* Application Details */}
-            <section className="bg-white rounded-xl p-6 shadow-sm">
-              <h2 className="text-xl font-bold mb-2 text-gray-900">Application Details *</h2>
-              <p className="text-sm text-gray-600 mb-4">Provide at least one application method</p>
+            <section className="bg-white rounded-2xl p-6 sm:p-7 shadow-sm border border-gray-100">
+              <h2 className="text-xl font-bold mb-2 text-gray-900">Application Details{applyInApp ? '' : ' *'}</h2>
+              <p className="text-sm text-gray-600 mb-4">
+                {applyInApp
+                  ? 'Optional — candidates will apply directly on JobMeter, but you can still list these as backup contact methods'
+                  : 'Provide at least one application method'}
+              </p>
               
               <div className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -706,7 +778,7 @@ Posted Date: ${new Date().toISOString().split('T')[0]}`;
             </section>
 
             {/* Additional Notes */}
-            <section className="bg-white rounded-xl p-6 shadow-sm">
+            <section className="bg-white rounded-2xl p-6 sm:p-7 shadow-sm border border-gray-100">
               <h2 className="text-xl font-bold mb-4 text-gray-900">Additional Notes</h2>
               <Textarea
                 placeholder="Any additional information about this job posting..."
@@ -718,11 +790,12 @@ Posted Date: ${new Date().toISOString().split('T')[0]}`;
           </div>
         ) : (
           <div className="space-y-6">
-            <section className="bg-white rounded-xl p-6 shadow-sm">
+            <section className="bg-white rounded-2xl p-6 sm:p-7 shadow-sm border border-gray-100">
               <h2 className="text-xl font-bold mb-2 text-gray-900">Paste Job Description</h2>
               <p className="text-sm text-gray-600 mb-4">
                 Paste the complete job description from any job board or company website.
-                JobMeter will automatically extract and structure the information.
+                JobMeter will extract and fill out the form for you to review and edit —
+                nothing gets submitted until you check it over and click submit yourself.
               </p>
               
               <Textarea
@@ -733,7 +806,7 @@ Posted Date: ${new Date().toISOString().split('T')[0]}`;
               />
             </section>
 
-            <section className="bg-white rounded-xl p-6 shadow-sm">
+            <section className="bg-white rounded-2xl p-6 sm:p-7 shadow-sm border border-gray-100">
               <h2 className="text-xl font-bold mb-4 text-gray-900">Additional Notes</h2>
               <Textarea
                 placeholder="Any additional information about this job posting..."
@@ -746,68 +819,157 @@ Posted Date: ${new Date().toISOString().split('T')[0]}`;
         )}
       </div>
 
+      {/* Apply in-app / Screening quiz — shared across form + paste tabs */}
+      <div className="px-4 pb-4">
+        <section className="bg-white rounded-2xl p-6 sm:p-7 shadow-sm border border-gray-100 space-y-3">
+          <h2 className="text-xl font-bold mb-1 text-gray-900">Applications</h2>
+          <label className="flex items-center gap-2 text-sm text-gray-700">
+            <input
+              type="checkbox"
+              checked={applyInApp}
+              onChange={(e) => {
+                setApplyInApp(e.target.checked);
+                if (!e.target.checked) {
+                  setQuizObjective(false);
+                  setQuizSpeed(false);
+                  setQuizWritten(false);
+                  // Anonymous/no-company posting is only allowed for in-app applications —
+                  // if this gets turned off, a real company becomes required.
+                  setPostAnonymously(false);
+                }
+              }}
+            />
+            Let candidates apply directly on JobMeter
+          </label>
+
+          {applyInApp && (
+            <div className="pl-6 pt-1 space-y-2">
+              <p className="text-sm font-medium text-gray-900">
+                Screening quiz <span className="text-xs font-normal text-gray-500">— paid feature, candidates must pass before applying</span>
+              </p>
+
+              {/* Objective / Speed are two variants of the same MCQ pool — mutually exclusive */}
+              <label className="flex items-center gap-2 text-sm text-gray-700">
+                <input
+                  type="checkbox"
+                  checked={quizObjective}
+                  onChange={(e) => {
+                    if (e.target.checked && !isAdmin) { setShowQuizUpgradeModal(true); return; }
+                    setQuizObjective(e.target.checked);
+                    if (e.target.checked) setQuizSpeed(false);
+                  }}
+                />
+                Objective quiz
+                {!isAdmin && <Lock size={12} className="text-gray-400" />}
+              </label>
+              <label className="flex items-center gap-2 text-sm text-gray-700">
+                <input
+                  type="checkbox"
+                  checked={quizSpeed}
+                  onChange={(e) => {
+                    if (e.target.checked && !isAdmin) { setShowQuizUpgradeModal(true); return; }
+                    setQuizSpeed(e.target.checked);
+                    if (e.target.checked) setQuizObjective(false);
+                  }}
+                />
+                Speed quiz
+                {!isAdmin && <Lock size={12} className="text-gray-400" />}
+              </label>
+              <label className="flex items-center gap-2 text-sm text-gray-700">
+                <input
+                  type="checkbox"
+                  checked={quizWritten}
+                  onChange={(e) => {
+                    if (e.target.checked && !isAdmin) { setShowQuizUpgradeModal(true); return; }
+                    setQuizWritten(e.target.checked);
+                  }}
+                />
+                Written quiz <span className="text-xs text-gray-500">(AI-graded)</span>
+                {!isAdmin && <Lock size={12} className="text-gray-400" />}
+              </label>
+            </div>
+          )}
+        </section>
+      </div>
+
+      <UpgradeModal
+        isOpen={showQuizUpgradeModal}
+        onClose={() => setShowQuizUpgradeModal(false)}
+        errorType="PREMIUM_REQUIRED"
+        message="Screening quizzes are a paid feature. Upgrade your account to add one to your job posting."
+      />
+
       {/* Company Section - Bottom */}
       <div className="px-4 pb-24">
-        <section className="bg-white rounded-xl p-6 shadow-sm">
+        <section className="bg-white rounded-2xl p-6 sm:p-7 shadow-sm border border-gray-100">
           <h2 className="text-xl font-bold mb-4 text-gray-900">Company</h2>
           
           {isLoadingCompanies ? (
             <div className="p-4 bg-gray-50 rounded-lg text-center">
               Loading companies...
             </div>
-            ) : !showAddCompany && companies.length > 0 ? (
+          ) : !showAddCompany ? (
             <div className="space-y-4">
-              <div className="flex gap-2">
-                <div className="flex-1">
-                  <label className="block text-sm font-medium text-gray-900 mb-1">Select Company</label>
-                  <select
-                    value={selectedCompanyId}
-                    onChange={(e) => {
-                      setSelectedCompanyId(e.target.value);
-                      setPostAnonymously(false);
-                    }}
-                    className="w-full h-10 rounded-md border border-gray-300 px-3 py-2 text-sm"
+              {companies.length > 0 ? (
+                <div className="flex gap-2">
+                  <div className="flex-1">
+                    <label className="block text-sm font-medium text-gray-900 mb-1">Select Company</label>
+                    <select
+                      value={postAnonymously ? ANONYMOUS_OPTION : selectedCompanyId}
+                      onChange={(e) => {
+                        if (e.target.value === ANONYMOUS_OPTION) {
+                          setPostAnonymously(true);
+                          setSelectedCompanyId('');
+                        } else {
+                          setPostAnonymously(false);
+                          setSelectedCompanyId(e.target.value);
+                        }
+                      }}
+                      className="w-full h-10 rounded-md border border-gray-300 px-3 py-2 text-sm"
+                    >
+                      {companies.map((company) => (
+                        <option key={company.id} value={company.id}>
+                          {company.name}
+                        </option>
+                      ))}
+                      {/* Anonymous posting only available for in-app applications, and only
+                          once at least one real company is on file (see conversation notes). */}
+                      {applyInApp && (
+                        <option value={ANONYMOUS_OPTION}>— Post Anonymously —</option>
+                      )}
+                    </select>
+                    {postAnonymously && (
+                      <p className="text-xs text-gray-500 mt-1">Shown to job seekers as a confidential employer</p>
+                    )}
+                  </div>
+                  <button
+                    onClick={() => setShowAddCompany(true)}
+                    className="mt-6 px-4 py-2 bg-blue-600 text-white rounded-md flex items-center gap-2 hover:bg-blue-700"
                   >
-                    {companies.map((company) => (
-                      <option key={company.id} value={company.id}>
-                        {company.name}
-                      </option>
-                    ))}
-                  </select>
+                    <Plus size={18} />
+                    Add Company
+                  </button>
                 </div>
-                <button
-                  onClick={() => setShowAddCompany(true)}
-                  className="mt-6 px-4 py-2 bg-blue-600 text-white rounded-md flex items-center gap-2 hover:bg-blue-700"
-                >
-                  <Plus size={18} />
-                  Add Company
-                </button>
-              </div>
-              
-              {/* Anonymous Posting Option */}
-              <label className="flex items-center gap-3 p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
-                <input
-                  type="checkbox"
-                  checked={postAnonymously}
-                  onChange={(e) => {
-                    setPostAnonymously(e.target.checked);
-                    if (e.target.checked) {
-                      setSelectedCompanyId('');
-                    }
-                  }}
-                  className="w-4 h-4 text-blue-600 rounded"
-                />
-                <div>
-                  <span className="font-medium text-gray-900">Post Anonymously</span>
-                  <p className="text-xs text-gray-500">Your company name will not be shown to job seekers</p>
-                </div>
-              </label>
+              ) : (
+                <>
+                  <button
+                    onClick={() => setShowAddCompany(true)}
+                    className="w-full px-4 py-2.5 bg-blue-600 text-white rounded-md flex items-center justify-center gap-2 hover:bg-blue-700"
+                  >
+                    <Plus size={18} />
+                    Add a Company
+                  </button>
+                  <p className="text-xs text-gray-500 px-1">
+                    Add at least one company to unlock posting anonymously.
+                  </p>
+                </>
+              )}
             </div>
           ) : (
             <div>
               <div className="flex items-center justify-between mb-4">
                 <h3 className="font-semibold text-gray-900">Add New Company</h3>
-                {companies.length > 0 && (
+                {(companies.length > 0) && (
                   <button
                     onClick={() => setShowAddCompany(false)}
                     className="text-sm text-blue-600 hover:text-blue-700"
@@ -998,20 +1160,31 @@ Posted Date: ${new Date().toISOString().split('T')[0]}`;
             </div>
           )}
         </section>
+        </div>
       </div>
 
       {/* Footer Submit Button */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 px-4 py-3 border-t bg-white safe-area-bottom">
+      <div className="fixed bottom-0 left-0 right-0 z-40 px-4 py-3 border-t bg-white/95 backdrop-blur-sm safe-area-bottom shadow-[0_-4px_16px_rgba(0,0,0,0.05)]">
+        <div className="max-w-3xl mx-auto">
         <Button
           onClick={handleSubmit}
-          disabled={isLoading}
+          disabled={activeTab === 'paste' ? isParsing : isLoading}
           className="w-full py-3 text-lg font-semibold"
           style={{
-            backgroundColor: isLoading ? theme.colors.text.secondary : theme.colors.primary.DEFAULT,
+            backgroundColor: (activeTab === 'paste' ? isParsing : isLoading) ? theme.colors.text.secondary : theme.colors.primary.DEFAULT,
             color: theme.colors.primary.foreground,
           }}
         >
-          {isLoading ? (
+          {activeTab === 'paste' ? (
+            isParsing ? (
+              <span>Parsing...</span>
+            ) : (
+              <>
+                <Sparkles size={20} className="mr-2" />
+                Parse &amp; Continue to Form
+              </>
+            )
+          ) : isLoading ? (
             <span>Submitting...</span>
           ) : (
             <>
@@ -1020,35 +1193,63 @@ Posted Date: ${new Date().toISOString().split('T')[0]}`;
             </>
           )}
         </Button>
+        </div>
       </div>
 
       {/* Success Modal */}
       <Dialog open={showSuccessModal} onOpenChange={setShowSuccessModal}>
         <DialogContent style={{ backgroundColor: theme.colors.card.DEFAULT, borderColor: theme.colors.border.DEFAULT }}>
           <DialogHeader>
-            <div className="text-center mb-4">
-              <div className="text-5xl mb-4">✅</div>
-              <DialogTitle className="text-2xl font-bold" style={{ color: theme.colors.text.primary }}>
-                Job Submitted
+            <div className="text-center mb-2">
+              <div
+                className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4"
+                style={{ backgroundColor: theme.colors.primary.DEFAULT + '15' }}
+              >
+                <CheckCircle size={28} style={{ color: theme.colors.primary.DEFAULT }} />
+              </div>
+              <DialogTitle className="text-xl font-bold" style={{ color: theme.colors.text.primary }}>
+                Job submitted for review
               </DialogTitle>
               <DialogDescription className="mt-2" style={{ color: theme.colors.text.secondary }}>
-                Your job posting has been submitted for approval.
+                We'll review it shortly and publish it once approved. You can track its status from your jobs list.
               </DialogDescription>
             </div>
           </DialogHeader>
-          <Button
-            onClick={() => {
-              setShowSuccessModal(false);
-              router.push('/jobs');
-            }}
-            className="w-full mt-4"
-            style={{
-              backgroundColor: theme.colors.primary.DEFAULT,
-              color: theme.colors.primary.foreground,
-            }}
-          >
-            Done
-          </Button>
+          <div className="flex flex-col gap-2 mt-2">
+            <Button
+              onClick={() => {
+                setShowSuccessModal(false);
+                router.push('/dashboard/recruiter');
+              }}
+              className="w-full"
+              style={{
+                backgroundColor: theme.colors.primary.DEFAULT,
+                color: theme.colors.primary.foreground,
+              }}
+            >
+              View my jobs
+            </Button>
+            <Button
+              onClick={() => {
+                setShowSuccessModal(false);
+                setJobData({
+                  title: '', sector: '', companyName: '', companyWebsite: '',
+                  city: '', state: '', remote: false, employmentType: '',
+                  skills: '', experienceLevel: '', salaryMin: '', salaryMax: '',
+                  currency: 'NGN', period: 'annually', description: '',
+                  responsibilities: '', qualifications: '', benefits: '',
+                  applicationUrl: '', applicationEmail: '', applicationPhone: '', deadline: '',
+                });
+                setPastedContent('');
+                setSubmissionNotes('');
+                setActiveTab('form');
+              }}
+              variant="outline"
+              className="w-full"
+            >
+              Post another job
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

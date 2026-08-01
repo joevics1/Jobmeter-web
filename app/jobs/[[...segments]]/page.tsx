@@ -13,7 +13,7 @@ const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 const COMPANIES_URL = 'https://jobs-api.joevicspro.workers.dev/companies';
 
-const JOBS_TABLE = 'jobs_nigeria';
+const JOBS_TABLE = 'jobs'; // was jobs_nigeria mirror - doesn't carry apply_in_app/screening columns
 
 // ─── Parse segments into { country, slug } ───────────────────────────────────
 // /jobs                        → segments = undefined
