@@ -14,8 +14,8 @@ export default function NYSCFinderPage() {
         style={{ backgroundColor: theme.colors.primary.DEFAULT }}
       >
         <div className="max-w-7xl mx-auto">
-          <a href="/resource" className="text-sm text-white/80 hover:text-white transition-colors self-start inline-block mb-2">
-            ← Back to Resources
+          <a href="/tools" className="text-sm text-white/80 hover:text-white transition-colors self-start inline-block mb-2">
+            ← Back to Tools
           </a>
           <div className="flex items-center gap-3 mb-2">
             <Award size={32} />

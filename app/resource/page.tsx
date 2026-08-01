@@ -3,18 +3,11 @@
 import React from 'react';
 import Link from 'next/link';
 import { 
-  Briefcase, 
   Building2, 
   Newspaper,
   MapPin,
   ArrowRight,
-  Laptop,
-  GraduationCap,
-  Home,
-  Globe,
-  Rocket,
-  ClipboardList,
-  Award
+  Wrench,
 } from 'lucide-react';
 import { theme } from '@/lib/theme';
 import AdUnit from '@/components/ads/AdUnit';
@@ -46,68 +39,12 @@ export default function ResourcePage() {
       route: '/company',
     },
     {
-      id: 'remote-jobs',
-      title: 'Remote Jobs',
-      description: 'Find remote job opportunities in Nigeria and worldwide',
-      icon: Laptop,
-      color: '#06B6D4',
-      route: '/tools/remote-jobs-finder',
-    },
-    {
-      id: 'internship-finder',
-      title: 'Internship Finder',
-      description: 'Find internship opportunities to kickstart your career',
-      icon: GraduationCap,
-      color: '#2563EB',
-      route: '/tools/internship-finder',
-    },
-    {
-      id: 'nysc-finder',
-      title: 'NYSC Jobs',
-      description: 'Find job opportunities for NYSC corpers',
-      icon: Award,
-      color: '#10B981',
-      route: '/tools/nysc-finder',
-    },
-    {
-      id: 'accommodation-finder',
-      title: 'Jobs with Accommodation',
-      description: 'Find jobs that offer accommodation benefits',
-      icon: Home,
-      color: '#14B8A6',
-      route: '/tools/accommodation-finder',
-    },
-    {
-      id: 'visa-finder',
-      title: 'Jobs with Visa Sponsorship',
-      description: 'Find jobs that offer visa sponsorship and work permits',
-      icon: Globe,
+      id: 'tools',
+      title: 'Tools',
+      description: 'Job finders, calculators, CV review, interview prep, and more',
+      icon: Wrench,
       color: '#3B82F6',
-      route: '/tools/visa-finder',
-    },
-    {
-      id: 'graduate-trainee-finder',
-      title: 'Graduate & Trainee Jobs',
-      description: 'Find graduate programs and trainee positions for fresh graduates',
-      icon: GraduationCap,
-      color: '#2563EB',
-      route: '/tools/graduate-trainee-finder',
-    },
-    {
-      id: 'entry-level-finder',
-      title: 'Entry Level Jobs',
-      description: 'Find entry-level jobs for beginners starting their career',
-      icon: Rocket,
-      color: '#2563EB',
-      route: '/tools/entry-level-finder',
-    },
-    {
-      id: 'quiz',
-      title: 'Recruitment Assessment Practice Tests',
-      description: 'Practice aptitude tests and theory questions',
-      icon: ClipboardList,
-      color: '#2563EB',
-      route: '/tools/quiz',
+      route: '/tools',
     },
   ];
 
