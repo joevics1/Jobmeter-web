@@ -3,14 +3,14 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Briefcase, Bookmark, BookOpen, Wrench, Settings } from 'lucide-react';
+import { Briefcase, FileText, BookOpen, Wrench, Settings } from 'lucide-react';
 import { theme } from '@/lib/theme';
 
 export default function BottomNavigation() {
   const pathname = usePathname();
 
   // Pages that should show bottom menu
-  const allowedPaths = ['/jobs', '/saved', '/tools', '/resource', '/settings'];
+  const allowedPaths = ['/jobs', '/documents', '/tools', '/resource', '/settings'];
 
   // Check if current page is EXACTLY one of the bottom menu pages
   const shouldShow = allowedPaths.includes(pathname);
@@ -19,7 +19,7 @@ export default function BottomNavigation() {
 
   const navItems = [
     { label: 'Jobs', href: '/jobs', icon: Briefcase },
-    { label: 'Saved', href: '/saved', icon: Bookmark },
+    { label: 'Documents', href: '/documents', icon: FileText },
     { label: 'Tools', href: '/tools', icon: Wrench },
     { label: 'Resources', href: '/resource', icon: BookOpen },
     { label: 'Settings', href: '/settings', icon: Settings },

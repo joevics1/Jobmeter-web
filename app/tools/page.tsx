@@ -3,7 +3,7 @@ import Link from 'next/link';
 import {
   FileText, FileCheck, Search, Shield, Calculator, MessageCircle, GraduationCap, ArrowRight, Briefcase, Brain,
   Globe, MapPin, DollarSign, Plane, Home, BookOpen, Award, BarChart2, Users, RefreshCw, CreditCard, Landmark,
-  Star, TrendingUp, ClipboardList, CheckSquare, Navigation, Flag, Wallet, Wifi, Rocket
+  Star, TrendingUp, ClipboardList, CheckSquare, Navigation, Flag, Wallet, Wifi, Rocket, FileSignature, Sparkles
 } from 'lucide-react';
 import { theme } from '@/lib/theme';
 import { Metadata } from 'next';
@@ -117,6 +117,13 @@ export default function ToolsPage() {
         { id: 'kuwait-civil-id-cost-calculator', title: 'Kuwait Civil ID Cost Calculator', description: 'Calculate your Kuwait residency and Civil ID costs by sponsor category', icon: Star, color: '#065F46', route: '/tools/kuwait-civil-id-cost-calculator', gulf: true },
         { id: 'bahrain-cpr-cost-calculator', title: 'Bahrain CPR Cost Calculator', description: 'Calculate your Bahrain work permit and CPR renewal costs', icon: Star, color: '#B91C1C', route: '/tools/bahrain-cpr-cost-calculator', gulf: true },
         { id: 'oman-resident-card-cost-calculator', title: 'Oman Resident Card Cost Calculator', description: 'Calculate your Oman resident card renewal cost by validity period', icon: Star, color: '#C2410C', route: '/tools/oman-resident-card-cost-calculator', gulf: true },
+      ],
+    },
+    {
+      id: 'document-templates', title: 'Document Templates', description: 'Generate and download ready-to-use documents', icon: FileSignature, color: '#0EA5E9',
+      tools: [
+        { id: 'documents', title: 'Free Document Templates', description: 'Ready-made, country-specific document templates — fill in your details and download as PDF or Word', icon: FileCheck, color: '#0EA5E9', route: '/documents' },
+        { id: 'document-generator', title: 'AI Document Generator', description: 'Pick a document type and country — AI researches the legal requirements and drafts a complete document', icon: Sparkles, color: '#10B981', route: '/tools/document-generator' },
       ],
     },
   ];

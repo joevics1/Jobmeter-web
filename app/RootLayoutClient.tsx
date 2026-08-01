@@ -17,7 +17,7 @@ export default function RootLayoutClient({
   const pathname = usePathname();
   
   // Bottom nav pages that show bottom navigation
-  const bottomNavPages = ['/jobs', '/saved', '/cv', '/tools', '/settings'];
+  const bottomNavPages = ['/jobs', '/documents', '/cv', '/tools', '/settings'];
   
   // Hide bottom nav on job details pages and auth/onboarding pages
   const hideBottomNav = 
