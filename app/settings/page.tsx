@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
-import { User, Bell, LogOut, ChevronRight, Mail, Shield, HelpCircle, LogIn, Info, Trash2, RefreshCw, CheckCircle, AlertTriangle, Briefcase, Send, LayoutDashboard, ExternalLink, Bookmark, PlusCircle, FileText } from 'lucide-react';
+import { User, Bell, LogOut, ChevronRight, Mail, Shield, HelpCircle, LogIn, Info, Trash2, RefreshCw, CheckCircle, AlertTriangle, Briefcase, Send, LayoutDashboard, ExternalLink, Bookmark, PlusCircle, FileText, Edit3 } from 'lucide-react';
 import { theme } from '@/lib/theme';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -561,7 +561,17 @@ export default function SettingsPage() {
         {user && (
           <div className="mb-6">
             <h2 className="text-base font-semibold mb-2 px-1 text-gray-700">Account</h2>
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden divide-y divide-gray-100">
+              <Link href="/settings/edit-profile" className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors">
+                <div className="flex items-center gap-3">
+                  <Edit3 size={20} className="text-gray-600" />
+                  <div className="text-left">
+                    <h3 className="font-semibold text-gray-900">Edit CV Profile</h3>
+                    <p className="text-xs text-gray-600">Update the details used to generate your CVs</p>
+                  </div>
+                </div>
+                <ChevronRight size={20} className="text-gray-400" />
+              </Link>
               <button onClick={handleSignOut} className="w-full flex items-center justify-between p-4 hover:bg-red-50 transition-colors">
                 <div className="flex items-center gap-3">
                   <LogOut size={20} style={{ color: theme.colors.error }} />

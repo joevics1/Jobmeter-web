@@ -96,3 +96,58 @@ export function mapOnboardingToCVData(row: any): CVData {
       : undefined,
   };
 }
+
+// Reverse of mapOnboardingToCVData — used by the Settings "Edit Profile"
+// page to save edits back. Converts our normalized CVData shape back into
+// onboarding_data's actual column shapes (title/duration/description for
+// work experience, etc.) rather than inventing a new schema.
+export function mapCVDataToOnboardingUpdate(data: CVData): Record<string, any> {
+  return {
+    cv_name: data.personalDetails.name || null,
+    cv_email: data.personalDetails.email || null,
+    cv_phone: data.personalDetails.phone || null,
+    cv_location: data.personalDetails.location || null,
+    cv_linkedin: data.personalDetails.linkedin || null,
+    cv_github: data.personalDetails.github || null,
+    cv_portfolio: data.personalDetails.portfolio || null,
+    cv_summary: data.summary || null,
+    cv_roles: data.roles?.length ? data.roles : null,
+    cv_skills: data.skills?.length ? data.skills : null,
+    cv_work_experience: data.experience?.length
+      ? data.experience.map((e) => ({
+          title: e.role,
+          company: e.company,
+          duration: e.years,
+          description: (e.bullets || []).join('. '),
+        }))
+      : null,
+    cv_education: data.education?.length
+      ? data.education.map((e) => ({ degree: e.degree, institution: e.institution, year: e.years }))
+      : null,
+    cv_projects: data.projects?.length ? data.projects : null,
+    cv_accomplishments: data.accomplishments?.length ? data.accomplishments : null,
+    cv_awards: data.awards?.length
+      ? data.awards.map((a) => [a.title, a.year, a.issuer].filter(Boolean).join(', '))
+      : null,
+    cv_certifications: data.certifications?.length ? data.certifications : null,
+    cv_languages: data.languages?.length ? data.languages : null,
+    cv_interests: data.interests?.length ? data.interests : null,
+    cv_publications: data.publications?.length
+      ? data.publications.map((p) => ({ title: p.title, venue: p.journal, year: p.year }))
+      : null,
+    cv_volunteer_work: data.volunteerWork?.length
+      ? data.volunteerWork.map((v) => ({ organization: v.organization, role: v.role, period: v.duration, description: v.description }))
+      : null,
+    cv_additional_sections: data.additionalSections?.length ? data.additionalSections : null,
+  };
+}
+
+export async function updateOnboardingData(userId: string, updates: Record<string, any>): Promise<{ success: boolean; error?: string }> {
+  const { error } = await supabase
+    .from('onboarding_data')
+    .update(updates)
+    .eq('user_id', userId);
+
+  if (error) return { success: false, error: error.message };
+  return { success: true };
+}
