@@ -13,6 +13,35 @@ function shuffle<T>(arr: T[]): T[] {
   return a;
 }
 
+// Finds the most specific role group for this job (sector + role/title match),
+// so a broad sector like "Healthcare & Medical" doesn't hand a nurse the same
+// questions as a doctor. Falls back to sector-wide (no group) if nothing matches.
+async function findMatchingRoleGroup(
+  supabase: any,
+  sector: string,
+  jobTitle: string,
+  jobRoleCategory: string
+) {
+  const { data: groups } = await supabase
+    .from('role_groups')
+    .select('id, roles')
+    .eq('sector', sector);
+
+  if (!groups || groups.length === 0) return null;
+
+  const haystacks = [jobTitle, jobRoleCategory].filter(Boolean).map((s) => s.toLowerCase());
+  if (haystacks.length === 0) return null;
+
+  for (const group of groups as any[]) {
+    const roles: string[] = group.roles || [];
+    const matched = roles.some((role) =>
+      haystacks.some((h) => h.includes(role.toLowerCase()) || role.toLowerCase().includes(h))
+    );
+    if (matched) return group.id as string;
+  }
+  return null;
+}
+
 export async function GET(
   req: NextRequest,
   { params }: { params: { jobId: string } }
@@ -24,7 +53,7 @@ export async function GET(
     const { data: job, error: jobError } = await supabase
       .from('jobs')
       .select(
-        'id, sector, apply_in_app, screening_enabled, screening_mode, screening_pass_mark, screening_mcq_count, screening_duration_minutes, screening_includes_written, screening_written_count'
+        'id, sector, title, role_category, apply_in_app, screening_enabled, screening_mode, screening_pass_mark, screening_mcq_count, screening_duration_minutes, screening_includes_written, screening_written_count'
       )
       .eq('id', jobId)
       .maybeSingle();
@@ -40,30 +69,41 @@ export async function GET(
       );
     }
 
-    const { data: mcqPool, error: mcqError } = await supabase
-      .from('screening_questions')
-      .select('id, question_text, option_a, option_b, option_c, option_d')
-      .eq('sector', job.sector)
-      .eq('question_type', 'mcq')
-      .eq('is_active', true);
+    const roleGroupId = await findMatchingRoleGroup(
+      supabase,
+      job.sector,
+      job.title || '',
+      job.role_category || ''
+    );
 
-    if (mcqError) {
-      return NextResponse.json({ error: 'Failed to load quiz questions' }, { status: 500 });
+    // Fetch a question pool for a given type: try the matched role group first,
+    // fall back to sector-wide (role_group_id null) if that group has none yet.
+    async function fetchPool(questionType: 'mcq' | 'written', columns: string) {
+      if (roleGroupId) {
+        const { data } = await supabase
+          .from('screening_questions')
+          .select(columns)
+          .eq('sector', job!.sector)
+          .eq('question_type', questionType)
+          .eq('role_group_id', roleGroupId)
+          .eq('is_active', true);
+        if (data && data.length > 0) return data;
+      }
+      const { data: fallback } = await supabase
+        .from('screening_questions')
+        .select(columns)
+        .eq('sector', job!.sector)
+        .eq('question_type', questionType)
+        .is('role_group_id', null)
+        .eq('is_active', true);
+      return fallback || [];
     }
+
+    const mcqPool = await fetchPool('mcq', 'id, question_text, option_a, option_b, option_c, option_d');
 
     let writtenPool: any[] = [];
     if (job.screening_includes_written) {
-      const { data, error: writtenError } = await supabase
-        .from('screening_questions')
-        .select('id, question_text')
-        .eq('sector', job.sector)
-        .eq('question_type', 'written')
-        .eq('is_active', true);
-
-      if (writtenError) {
-        return NextResponse.json({ error: 'Failed to load quiz questions' }, { status: 500 });
-      }
-      writtenPool = data || [];
+      writtenPool = await fetchPool('written', 'id, question_text');
     }
 
     if (!mcqPool || mcqPool.length === 0) {
