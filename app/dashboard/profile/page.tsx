@@ -84,7 +84,7 @@ export default function JobseekerProfileTest() {
           {error}
         </pre>
         <button 
-          onClick={() => window.location.href = '/login'} 
+          onClick={() => window.location.href = '/auth'} 
           className="px-8 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700"
         >
           Go to Login Page

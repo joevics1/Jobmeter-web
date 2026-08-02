@@ -30,7 +30,7 @@ export default function AuthCallback() {
     // Safety fallback: if no SIGNED_IN fires within 5s, go to login
     const timeout = setTimeout(() => {
       subscription.unsubscribe();
-      router.replace("/login");
+      router.replace("/auth");
     }, 5000);
 
     return () => {
