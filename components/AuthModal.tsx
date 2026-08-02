@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import {
@@ -36,6 +36,8 @@ export default function AuthModal({ open, onOpenChange }: AuthModalProps) {
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [resetEmail, setResetEmail] = useState('');
   const [isResetting, setIsResetting] = useState(false);
+  const [resetEmailSent, setResetEmailSent] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
   
   // CV Upload states
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
@@ -114,6 +116,15 @@ export default function AuthModal({ open, onOpenChange }: AuthModalProps) {
     }
   };
 
+  // Countdown for the "resend email" cooldown
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const interval = setInterval(() => {
+      setResendCooldown((prev) => (prev <= 1 ? 0 : prev - 1));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [resendCooldown]);
+
   const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsResetting(true);
@@ -139,14 +150,31 @@ export default function AuthModal({ open, onOpenChange }: AuthModalProps) {
       if (error) throw error;
 
       showMessage('Password reset email sent! Please check your inbox.', 'success');
-      setResetEmail('');
-      setTimeout(() => {
-        setShowForgotPassword(false);
-      }, 2000);
+      setResetEmailSent(true);
+      setResendCooldown(30);
 
     } catch (error: any) {
       console.error('Password reset error:', error);
       showMessage(error.message || 'Failed to send reset email', 'error');
+    } finally {
+      setIsResetting(false);
+    }
+  };
+
+  const handleResendResetEmail = async () => {
+    if (resendCooldown > 0 || !resetEmail.trim()) return;
+    setIsResetting(true);
+    setMessage('');
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(resetEmail.trim(), {
+        redirectTo: `${window.location.origin}/auth/reset-password`,
+      });
+      if (error) throw error;
+      showMessage('Email resent! Please check your inbox.', 'success');
+      setResendCooldown(30);
+    } catch (error: any) {
+      console.error('Resend reset email error:', error);
+      showMessage(error.message || 'Failed to resend email', 'error');
     } finally {
       setIsResetting(false);
     }
@@ -157,6 +185,8 @@ export default function AuthModal({ open, onOpenChange }: AuthModalProps) {
     setSignInData({ email: '', password: '' });
     setResetEmail('');
     setShowForgotPassword(false);
+    setResetEmailSent(false);
+    setResendCooldown(0);
     setShowSignIn(false);
     setMessage('');
     setActiveTab('signup');
@@ -667,6 +697,8 @@ export default function AuthModal({ open, onOpenChange }: AuthModalProps) {
                     onClick={() => {
                       setShowForgotPassword(false);
                       setResetEmail('');
+                      setResetEmailSent(false);
+                      setResendCooldown(0);
                     }}
                     className="text-sm hover:underline"
                     style={{ color: theme.colors.primary.DEFAULT }}
@@ -691,6 +723,21 @@ export default function AuthModal({ open, onOpenChange }: AuthModalProps) {
                     'Send Reset Link'
                   )}
                 </Button>
+
+                {resetEmailSent && (
+                  <div className="text-center">
+                    <p className="text-xs text-gray-500 mb-1">Didn't get the email? Check your spam folder, or</p>
+                    <button
+                      type="button"
+                      onClick={handleResendResetEmail}
+                      disabled={resendCooldown > 0 || isResetting}
+                      className="text-sm font-medium hover:underline disabled:text-gray-400 disabled:no-underline disabled:cursor-not-allowed"
+                      style={{ color: resendCooldown > 0 ? undefined : theme.colors.primary.DEFAULT }}
+                    >
+                      {resendCooldown > 0 ? `Resend email in ${resendCooldown}s` : 'Resend email'}
+                    </button>
+                  </div>
+                )}
               </form>
 )}
           </>

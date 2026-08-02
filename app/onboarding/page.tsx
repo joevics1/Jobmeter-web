@@ -418,11 +418,103 @@ export default function OnboardingPage() {
     'Environment & Sustainability', 'Product Management & Operations', 'Data & Analytics',
   ];
 
+  // Merge CV roles + AI-suggested roles + any custom roles the user has already
+  // picked into one flat, deduped list — avoids duplicate entries/keys across
+  // separate lists, which is what made the chips jump around when toggled.
+  const suggestedRoles = React.useMemo(() => {
+    const seen = new Set<string>();
+    const merged: string[] = [];
+    [...(extractedData.roles || []), ...(extractedData.cvAiSuggestedRoles || []), ...selectedRoles].forEach((role) => {
+      const key = role.trim().toLowerCase();
+      if (key && !seen.has(key)) {
+        seen.add(key);
+        merged.push(role);
+      }
+    });
+    return merged;
+  }, [extractedData.roles, extractedData.cvAiSuggestedRoles, selectedRoles]);
+
+  const onboardingStep = !extractedData.name ? 1 : selectedRoles.length === 0 ? 2 : 3;
+  const onboardingSteps = [
+    { label: 'Upload CV', icon: Upload },
+    { label: 'Target Roles', icon: Briefcase },
+    { label: 'Preferences', icon: MapPin },
+  ];
+
   return (
     <>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Serif+Display&display=swap'); .ob-page, .ob-page * { font-family: 'DM Sans', sans-serif; } .ob-page h1,.ob-page h2,.ob-page h3,.ob-page .ob-serif { font-family: 'DM Serif Display', serif; }`}</style>
     <div className="ob-page min-h-screen p-4 md:p-8" style={{ backgroundColor: theme.colors.background.muted }}>
       <div className="max-w-6xl mx-auto space-y-6 pb-16">
+
+        {/* ── HEADER ── */}
+        <div className="text-center pt-2 pb-2">
+          <div className="inline-flex items-center gap-2 mb-4">
+            <div
+              className="p-2 rounded-lg"
+              style={{ backgroundColor: theme.colors.primary.DEFAULT }}
+            >
+              <Briefcase className="h-5 w-5 text-white" />
+            </div>
+            <span className="text-xl font-bold" style={{ color: theme.colors.text.primary }}>
+              JobMeter
+            </span>
+          </div>
+          <h1 className="ob-serif text-2xl md:text-3xl mb-2" style={{ color: theme.colors.text.primary }}>
+            Let's build your profile
+          </h1>
+          <p className="text-sm md:text-base max-w-md mx-auto" style={{ color: theme.colors.text.secondary }}>
+            Upload your CV, pick your target roles, and tell us your preferences —
+            we'll start matching you with jobs right away.
+          </p>
+
+          {/* Step progress */}
+          <div className="flex items-center justify-center gap-2 md:gap-3 mt-6">
+            {onboardingSteps.map((step, i) => {
+              const stepNum = i + 1;
+              const isComplete = stepNum < onboardingStep;
+              const isActive = stepNum === onboardingStep;
+              const StepIcon = step.icon;
+              return (
+                <React.Fragment key={step.label}>
+                  <div className="flex flex-col items-center gap-1.5">
+                    <div
+                      className="h-9 w-9 rounded-full flex items-center justify-center border-2 transition-colors"
+                      style={
+                        isComplete
+                          ? { backgroundColor: theme.colors.primary.DEFAULT, borderColor: theme.colors.primary.DEFAULT }
+                          : isActive
+                          ? { backgroundColor: '#fff', borderColor: theme.colors.primary.DEFAULT }
+                          : { backgroundColor: '#fff', borderColor: theme.colors.border.DEFAULT }
+                      }
+                    >
+                      {isComplete ? (
+                        <Check className="h-4 w-4 text-white" />
+                      ) : (
+                        <StepIcon
+                          className="h-4 w-4"
+                          style={{ color: isActive ? theme.colors.primary.DEFAULT : theme.colors.text.muted }}
+                        />
+                      )}
+                    </div>
+                    <span
+                      className="text-xs font-medium hidden sm:block"
+                      style={{ color: isActive || isComplete ? theme.colors.text.primary : theme.colors.text.muted }}
+                    >
+                      {step.label}
+                    </span>
+                  </div>
+                  {stepNum < onboardingSteps.length && (
+                    <div
+                      className="h-0.5 w-8 md:w-14 rounded-full -mt-5 sm:-mt-5"
+                      style={{ backgroundColor: isComplete ? theme.colors.primary.DEFAULT : theme.colors.border.DEFAULT }}
+                    />
+                  )}
+                </React.Fragment>
+              );
+            })}
+          </div>
+        </div>
 
         {/* ── SECTION 1: CV Upload ── */}
         <Card className="border bg-white" style={{ borderColor: theme.colors.border.DEFAULT, boxShadow: theme.shadows.md }}>
@@ -486,73 +578,49 @@ export default function OnboardingPage() {
           </button>
 
           {rolesExpanded && (
-            <CardContent className="space-y-6 pt-0">
-              {/* Roles from CV */}
+            <CardContent className="space-y-5 pt-0">
+              {/* Suggested roles — merged CV + AI, deduped, one simple list */}
               <div>
                 <div className="flex items-center gap-2 mb-3">
                   <Sparkles className="h-4 w-4" style={{ color: theme.colors.success }} />
-                  <h3 className="font-medium text-sm" style={{ color: theme.colors.text.primary }}>From your CV</h3>
+                  <h3 className="font-medium text-sm" style={{ color: theme.colors.text.primary }}>
+                    Suggested for you
+                  </h3>
+                  <span className="text-xs" style={{ color: theme.colors.text.muted }}>
+                    tap to select
+                  </span>
                 </div>
-                <div className="flex flex-wrap gap-2">
-                  {extractedData.roles && extractedData.roles.length > 0 ? (
-                    extractedData.roles.map((role) => (
-                      <Badge
-                        key={role}
-                        variant={selectedRoles.includes(role) ? 'default' : 'outline'}
-                        className="cursor-pointer px-3 py-2 transition-all"
-                        style={selectedRoles.includes(role)
-                          ? { backgroundColor: theme.colors.primary.DEFAULT, borderColor: theme.colors.primary.DEFAULT, color: '#fff' }
-                          : { backgroundColor: theme.colors.background.muted, borderColor: theme.colors.border.DEFAULT }}
-                        onClick={() => handleRoleToggle(role)}
-                      >
-                        {role}
-                        {selectedRoles.includes(role) ? <Check className="h-3 w-3 ml-1" /> : <Plus className="h-3 w-3 ml-1" />}
-                      </Badge>
-                    ))
+                <div className="flex flex-wrap gap-2 min-h-[2.5rem]">
+                  {suggestedRoles.length > 0 ? (
+                    suggestedRoles.map((role) => {
+                      const isSelected = selectedRoles.includes(role);
+                      return (
+                        <button
+                          key={role}
+                          type="button"
+                          onClick={() => handleRoleToggle(role)}
+                          className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors"
+                          style={isSelected
+                            ? { backgroundColor: theme.colors.primary.DEFAULT, borderColor: theme.colors.primary.DEFAULT, color: '#fff' }
+                            : { backgroundColor: theme.colors.background.muted, borderColor: theme.colors.border.DEFAULT, color: theme.colors.text.primary }}
+                        >
+                          {isSelected ? <Check className="h-3.5 w-3.5 shrink-0" /> : <Plus className="h-3.5 w-3.5 shrink-0" />}
+                          {role}
+                        </button>
+                      );
+                    })
                   ) : (
-                    <p className="text-sm text-gray-500">No roles found in CV — upload your CV first</p>
-                  )}
-                </div>
-              </div>
-
-              {/* AI Suggested Roles */}
-              <div>
-                <div className="flex items-center gap-2 mb-3">
-                  <Brain className="h-4 w-4" style={{ color: theme.colors.success }} />
-                  <h3 className="font-medium text-sm" style={{ color: theme.colors.text.primary }}>AI Recommended</h3>
-                  <div className="flex items-center gap-1 rounded px-2 py-0.5" style={{ backgroundColor: theme.colors.success + '15', border: `1px solid ${theme.colors.success}40` }}>
-                    <Star className="h-3 w-3" style={{ color: theme.colors.success }} />
-                    <span className="text-xs font-medium" style={{ color: theme.colors.success }}>Smart Match</span>
-                  </div>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {extractedData.cvAiSuggestedRoles && extractedData.cvAiSuggestedRoles.length > 0 ? (
-                    extractedData.cvAiSuggestedRoles.map((role) => (
-                      <Badge
-                        key={role}
-                        variant={selectedRoles.includes(role) ? 'default' : 'outline'}
-                        className="cursor-pointer px-3 py-2 transition-all"
-                        style={selectedRoles.includes(role)
-                          ? { backgroundColor: theme.colors.primary.DEFAULT, borderColor: theme.colors.primary.DEFAULT, color: '#fff' }
-                          : { backgroundColor: theme.colors.success + '15', borderColor: theme.colors.success + '40' }}
-                        onClick={() => handleRoleToggle(role)}
-                      >
-                        {role}
-                        {selectedRoles.includes(role) ? <Check className="h-3 w-3 ml-1" /> : <Plus className="h-3 w-3 ml-1" />}
-                      </Badge>
-                    ))
-                  ) : (
-                    <p className="text-sm text-gray-500">Upload your CV to get AI role suggestions</p>
+                    <p className="text-sm text-gray-500">Upload your CV to see role suggestions</p>
                   )}
                 </div>
               </div>
 
               {/* Custom Role */}
               <div>
-                <h3 className="font-medium text-sm mb-2" style={{ color: theme.colors.text.primary }}>Add Custom Role</h3>
+                <h3 className="font-medium text-sm mb-2" style={{ color: theme.colors.text.primary }}>Add a different role</h3>
                 <div className="flex gap-2">
                   <Input
-                    placeholder="Enter a job role..."
+                    placeholder="e.g. Product Manager"
                     value={newRole}
                     onChange={(e) => setNewRole(e.target.value)}
                     onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addCustomRole(); } }}
@@ -568,23 +636,6 @@ export default function OnboardingPage() {
                   </Button>
                 </div>
               </div>
-
-              {/* Selected summary */}
-              {selectedRoles.length > 0 && (
-                <div className="bg-white border border-slate-200 rounded-lg p-4">
-                  <h3 className="font-medium text-slate-900 mb-3">Selected ({selectedRoles.length})</h3>
-                  <div className="space-y-2">
-                    {selectedRoles.map((role) => (
-                      <div key={role} className="flex items-center justify-between rounded px-3 py-2" style={{ backgroundColor: theme.colors.background.muted, border: `1px solid ${theme.colors.border.DEFAULT}` }}>
-                        <span className="text-sm font-medium" style={{ color: theme.colors.text.primary }}>{role}</span>
-                        <Button variant="ghost" size="sm" onClick={() => handleRoleToggle(role)} className="h-6 w-6 p-0 hover:bg-red-100">
-                          <X className="h-4 w-4 text-red-600" />
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
             </CardContent>
           )}
         </Card>
