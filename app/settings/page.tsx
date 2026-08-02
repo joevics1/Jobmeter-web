@@ -3,11 +3,24 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
-import { User, Bell, LogOut, ChevronRight, Mail, Shield, HelpCircle, LogIn, Info, Trash2, RefreshCw, CheckCircle, AlertTriangle, Briefcase, Send, LayoutDashboard, ExternalLink, Bookmark, PlusCircle, FileText, Edit3 } from 'lucide-react';
+import { User, Bell, LogOut, ChevronRight, Mail, Shield, HelpCircle, LogIn, Info, Trash2, RefreshCw, CheckCircle, AlertTriangle, Briefcase, Send, LayoutDashboard, ExternalLink, Bookmark, PlusCircle, FileText } from 'lucide-react';
 import { theme } from '@/lib/theme';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import AuthModal from '@/components/AuthModal';
+import CVFieldsEditor from '@/app/cv-templates/_components/cv-fields-editor';
+import { fetchOnboardingData, mapOnboardingToCVData, mapCVDataToOnboardingUpdate, updateOnboardingData } from '@/lib/cv-template-pages/onboarding-fetch';
+import type { CVData } from '@/lib/cv-template-pages/cv-data-types';
+
+function emptyCVProfile(): CVData {
+  return {
+    personalDetails: { name: '', title: '', email: '', phone: '', location: '' },
+    summary: '',
+    skills: [],
+    experience: [],
+    education: [],
+  };
+}
 
 interface ProfileData {
   full_name: string | null;
@@ -35,6 +48,9 @@ export default function SettingsPage() {
   const [emailUpdates, setEmailUpdates] = useState(false);
   const [showProfileEdit, setShowProfileEdit] = useState(false);
   const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [cvProfileData, setCvProfileData] = useState<CVData | null>(null);
+  const [cvProfileLoading, setCvProfileLoading] = useState(false);
+  const [savingProfile, setSavingProfile] = useState(false);
 
   // Admin panel state
   const [isAdmin, setIsAdmin] = useState(false);
@@ -131,6 +147,7 @@ export default function SettingsPage() {
 
   const handleSaveProfile = async () => {
     if (!user || !profileData) return;
+    setSavingProfile(true);
     try {
       const { error } = await supabase.from('profiles').upsert(
         { id: user.id, full_name: profileData.full_name, email: profileData.email, updated_at: new Date().toISOString() },
@@ -141,10 +158,29 @@ export default function SettingsPage() {
         const { error: updateError } = await supabase.auth.updateUser({ email: profileData.email });
         if (updateError) console.error('Error updating auth email:', updateError);
       }
+      if (cvProfileData) {
+        const updates = mapCVDataToOnboardingUpdate(cvProfileData);
+        const cvResult = await updateOnboardingData(user.id, updates);
+        if (!cvResult.success) console.error('Error updating CV profile:', cvResult.error);
+      }
       setShowProfileEdit(false);
       alert('Profile updated successfully!');
     } catch (error: any) {
       alert('Failed to update profile: ' + (error.message || 'Unknown error'));
+    } finally {
+      setSavingProfile(false);
+    }
+  };
+
+  const toggleProfileEdit = () => {
+    const opening = !showProfileEdit;
+    setShowProfileEdit(opening);
+    if (opening && user && !cvProfileData) {
+      setCvProfileLoading(true);
+      fetchOnboardingData(user.id).then((row) => {
+        setCvProfileData(row ? mapOnboardingToCVData(row) : emptyCVProfile());
+        setCvProfileLoading(false);
+      });
     }
   };
 
@@ -264,7 +300,7 @@ export default function SettingsPage() {
                 {profileData?.email && <p className="text-sm text-gray-600 truncate">{profileData.email}</p>}
               </div>
             </div>
-            <button onClick={() => setShowProfileEdit(!showProfileEdit)}
+            <button onClick={toggleProfileEdit}
               className="px-4 py-2 rounded-lg border text-sm font-semibold transition-colors"
               style={{ backgroundColor: theme.colors.primary.light + '20', borderColor: theme.colors.primary.DEFAULT, color: theme.colors.primary.DEFAULT }}>
               {showProfileEdit ? 'Cancel' : 'Edit'}
@@ -298,8 +334,19 @@ export default function SettingsPage() {
                   onChange={(e) => { if (profileData) setProfileData({ ...profileData, email: e.target.value }); }}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Enter your email" />
               </div>
-              <button onClick={handleSaveProfile} className="w-full px-4 py-3 rounded-lg font-semibold text-sm text-white" style={{ backgroundColor: theme.colors.primary.DEFAULT }}>
-                Save Changes
+
+              <div className="pt-2 border-t">
+                <h3 className="text-sm font-semibold text-gray-700 mt-3 mb-2">CV Details</h3>
+                <p className="text-xs text-gray-500 mb-3">Used to fill and tailor CVs across JobMeter.</p>
+                {cvProfileLoading ? (
+                  <p className="text-sm text-gray-400">Loading your CV details…</p>
+                ) : cvProfileData ? (
+                  <CVFieldsEditor cvData={cvProfileData} setCvData={setCvProfileData as React.Dispatch<React.SetStateAction<CVData>>} defaultOpenSections={['personal']} />
+                ) : null}
+              </div>
+
+              <button onClick={handleSaveProfile} disabled={savingProfile} className="w-full px-4 py-3 rounded-lg font-semibold text-sm text-white disabled:opacity-50" style={{ backgroundColor: theme.colors.primary.DEFAULT }}>
+                {savingProfile ? 'Saving…' : 'Save Changes'}
               </button>
             </div>
           </div>
@@ -561,17 +608,7 @@ export default function SettingsPage() {
         {user && (
           <div className="mb-6">
             <h2 className="text-base font-semibold mb-2 px-1 text-gray-700">Account</h2>
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden divide-y divide-gray-100">
-              <Link href="/settings/edit-profile" className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors">
-                <div className="flex items-center gap-3">
-                  <Edit3 size={20} className="text-gray-600" />
-                  <div className="text-left">
-                    <h3 className="font-semibold text-gray-900">Edit CV Profile</h3>
-                    <p className="text-xs text-gray-600">Update the details used to generate your CVs</p>
-                  </div>
-                </div>
-                <ChevronRight size={20} className="text-gray-400" />
-              </Link>
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
               <button onClick={handleSignOut} className="w-full flex items-center justify-between p-4 hover:bg-red-50 transition-colors">
                 <div className="flex items-center gap-3">
                   <LogOut size={20} style={{ color: theme.colors.error }} />

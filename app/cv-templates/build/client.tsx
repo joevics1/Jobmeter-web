@@ -77,18 +77,7 @@ export default function BuildClient({
         setIsOverflowing(false);
         return;
       }
-      // The renderer now shrinks content to fit via a CSS transform when it
-      // overflows — scrollHeight stays unchanged after a transform (it's
-      // paint-only), so read the applied scale instead of raw overflow.
-      const match = content.style.transform.match(/scale\(([\d.]+)\)/);
-      if (match) {
-        const scale = parseFloat(match[1]);
-        // It was shrunk to fit — only flag if the shrink is drastic enough
-        // to hurt readability, not just because shrinking happened at all.
-        setIsOverflowing(scale < 0.82);
-      } else {
-        setIsOverflowing(content.scrollHeight > content.clientHeight + 3);
-      }
+      setIsOverflowing(content.scrollHeight > content.clientHeight + 3);
     } catch {
       setIsOverflowing(false);
     }
@@ -327,7 +316,7 @@ export default function BuildClient({
             {isOverflowing && (
               <div className="flex items-start gap-2 text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mb-3">
                 <span>⚠️</span>
-                <span>This CV has a lot of content, so text has been shrunk to fit one page. For better readability, consider trimming a bullet point or shortening a section.</span>
+                <span>This CV looks longer than one page — some content at the bottom may be cut off. Try trimming a bullet point or shortening a section, then check again.</span>
               </div>
             )}
             <div className="border rounded-lg overflow-hidden shadow-sm bg-gray-50 mb-3">
