@@ -1489,6 +1489,33 @@ function renderResponsiveTemplate6(data: CVData): string {
 
 // Main renderer function
 export function renderCVTemplate(templateId: string, data: CVData, mode: 'view' | 'pdf' = 'pdf'): string {
+  const html = renderCVTemplateRaw(templateId, data, mode);
+  // scrollHeight on .content correctly reports the true, unclipped content
+  // height even with overflow:hidden active — height/overflow constraints
+  // don't affect how block children lay themselves out internally. So this
+  // measures real overflow and shrinks proportionally to fit, instead of
+  // letting the existing overflow:hidden silently clip the bottom.
+  const SHRINK_TO_FIT_SCRIPT = `
+<script>
+(function () {
+  try {
+    var content = document.querySelector('.content');
+    if (!content) return;
+    var available = content.clientHeight;
+    var natural = content.scrollHeight;
+    if (natural > available && available > 0) {
+      var scale = available / natural;
+      content.style.transformOrigin = 'top left';
+      content.style.transform = 'scale(' + scale + ')';
+      content.style.width = (100 / scale) + '%';
+    }
+  } catch (e) { /* fail silently — worst case, existing overflow:hidden still applies */ }
+})();
+</script>`;
+  return html.replace('</body>', SHRINK_TO_FIT_SCRIPT + '</body>');
+}
+
+function renderCVTemplateRaw(templateId: string, data: CVData, mode: 'view' | 'pdf' = 'pdf'): string {
   if (mode === 'view') {
     switch (templateId) {
       case 'template-1': return renderResponsiveTemplate1(data);

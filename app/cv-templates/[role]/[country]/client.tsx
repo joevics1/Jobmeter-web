@@ -32,7 +32,12 @@ export default function RolePageClient({ page }: { page: ContentRolePage }) {
       const doc = previewFrameRef.current?.contentDocument;
       const content = doc?.querySelector('.content') as HTMLElement | null;
       if (!content) { setIsOverflowing(false); return; }
-      setIsOverflowing(content.scrollHeight > content.clientHeight + 3);
+      const match = content.style.transform.match(/scale\(([\d.]+)\)/);
+      if (match) {
+        setIsOverflowing(parseFloat(match[1]) < 0.82);
+      } else {
+        setIsOverflowing(content.scrollHeight > content.clientHeight + 3);
+      }
     } catch {
       setIsOverflowing(false);
     }
@@ -96,7 +101,7 @@ export default function RolePageClient({ page }: { page: ContentRolePage }) {
             </div>
             {isOverflowing && process.env.NODE_ENV !== 'production' && (
               <p className="text-xs text-amber-600 mt-1">
-                Dev note: this sample CV overflows one page for the "{selectedDesign}" design — worth trimming the seed content.
+                Dev note: this sample CV needed heavy shrinking to fit one page for the "{selectedDesign}" design — worth trimming the seed content.
               </p>
             )}
           </section>
