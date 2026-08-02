@@ -7,7 +7,7 @@
 // CVData, then shows one screen (CVFieldsEditor) with a paste-to-parse box
 // at the top, then the render/download step.
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import { renderCVTemplate } from '@/lib/cv-template-pages/cv-renderer';
@@ -66,6 +66,23 @@ export default function BuildClient({
 
   const [pasteText, setPasteText] = useState('');
   const [parsing, setParsing] = useState(false);
+  const previewFrameRef = useRef<HTMLIFrameElement>(null);
+  const [isOverflowing, setIsOverflowing] = useState(false);
+
+  function checkOverflow() {
+    try {
+      const doc = previewFrameRef.current?.contentDocument;
+      const content = doc?.querySelector('.content') as HTMLElement | null;
+      if (!content) {
+        setIsOverflowing(false);
+        return;
+      }
+      // Small tolerance for sub-pixel rounding.
+      setIsOverflowing(content.scrollHeight > content.clientHeight + 3);
+    } catch {
+      setIsOverflowing(false);
+    }
+  }
 
   function finishAndShowResult(data: CVData, designId: string) {
     saveToHistory({
@@ -297,8 +314,22 @@ export default function BuildClient({
                 </button>
               ))}
             </div>
+            {isOverflowing && (
+              <div className="flex items-start gap-2 text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mb-3">
+                <span>⚠️</span>
+                <span>This CV looks longer than one page — some content at the bottom may be cut off. Try trimming a bullet point or shortening a section, then check again.</span>
+              </div>
+            )}
             <div className="border rounded-lg overflow-hidden shadow-sm bg-gray-50 mb-3">
-              <iframe id="cv-preview-frame" title="CV preview" srcDoc={previewHtml} className="w-full" style={{ height: '900px', border: 'none' }} />
+              <iframe
+                ref={previewFrameRef}
+                id="cv-preview-frame"
+                title="CV preview"
+                srcDoc={previewHtml}
+                onLoad={checkOverflow}
+                className="w-full"
+                style={{ height: '900px', border: 'none' }}
+              />
             </div>
             <div className="flex gap-3 flex-wrap">
               <button onClick={() => setStage('form')} className="border px-4 py-2 rounded-lg font-medium">Edit</button>

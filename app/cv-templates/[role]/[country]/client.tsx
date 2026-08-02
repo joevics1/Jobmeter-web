@@ -5,7 +5,7 @@
 // bar that goes straight into the form (2 buttons signed-out, 3 signed-in).
 // No generic "Build your CV" CTA — the entry points ARE the action bar.
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import type { ContentRolePage } from '@/lib/cv-template-pages/data';
 import { CV_PAGE_DESIGNS } from '@/lib/cv-template-pages/design-list';
@@ -24,6 +24,19 @@ export default function RolePageClient({ page }: { page: ContentRolePage }) {
       setAuthChecked(true);
     });
   }, []);
+
+  const previewFrameRef = useRef<HTMLIFrameElement>(null);
+  const [isOverflowing, setIsOverflowing] = useState(false);
+  function checkOverflow() {
+    try {
+      const doc = previewFrameRef.current?.contentDocument;
+      const content = doc?.querySelector('.content') as HTMLElement | null;
+      if (!content) { setIsOverflowing(false); return; }
+      setIsOverflowing(content.scrollHeight > content.clientHeight + 3);
+    } catch {
+      setIsOverflowing(false);
+    }
+  }
 
   const previewHtml = useMemo(() => {
     if (!page.preview_cv_data) return null;
@@ -69,12 +82,23 @@ export default function RolePageClient({ page }: { page: ContentRolePage }) {
 
             <div className="border rounded-lg overflow-hidden shadow-sm bg-gray-50">
               <iframe
+                ref={previewFrameRef}
                 title={`${page.role_label} CV preview — ${selectedDesign}`}
                 srcDoc={previewHtml}
+                onLoad={() => {
+                  checkOverflow();
+                  // This is our own seed content, not user-editable — surface
+                  // it to us in dev console rather than to the visitor.
+                }}
                 className="w-full"
                 style={{ height: '900px', border: 'none' }}
               />
             </div>
+            {isOverflowing && process.env.NODE_ENV !== 'production' && (
+              <p className="text-xs text-amber-600 mt-1">
+                Dev note: this sample CV overflows one page for the "{selectedDesign}" design — worth trimming the seed content.
+              </p>
+            )}
           </section>
         )}
 
