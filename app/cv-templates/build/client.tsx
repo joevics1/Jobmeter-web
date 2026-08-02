@@ -1,9 +1,11 @@
 'use client';
 
 // app/cv-templates/build/client.tsx
-// Full CV creation flow, as a multi-screen wizard (one section per screen,
-// not one long page). Isolated: only imports from lib/cv-template-pages/*
-// and the generic app-wide lib/supabase client.
+// Entry point is decided on the role/country page now (the static action
+// bar) via ?start=quick|fetch|blank|sample — this page no longer shows a
+// chooser. It resolves the initial CVData immediately, then shows ONE
+// screen with expandable/collapsible sections (not a paginated wizard),
+// then the render/download step.
 
 import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
@@ -13,9 +15,10 @@ import { downloadCVAsDocx } from '@/lib/cv-template-pages/cv-docx-export';
 import { fetchOnboardingData, mapOnboardingToCVData } from '@/lib/cv-template-pages/onboarding-fetch';
 import type { CVData } from '@/lib/cv-template-pages/cv-data-types';
 
-type Stage = 'chooser' | 'form' | 'result';
+type Stage = 'loading' | 'form' | 'result';
+type StartMode = 'quick' | 'fetch' | 'blank' | 'sample';
 
-const FORM_SCREENS = [
+const SECTIONS = [
   { key: 'personal', label: 'Personal Details' },
   { key: 'summary', label: 'Summary' },
   { key: 'skills', label: 'Skills & Languages' },
@@ -34,7 +37,6 @@ function emptyCV(roleLabel: string): CVData {
     education: [],
   };
 }
-
 function csv(value?: string[]): string {
   return (value || []).join(', ');
 }
@@ -48,93 +50,114 @@ export default function BuildClient({
   roleLabel,
   countryLabel,
   sampleCvData,
+  start,
 }: {
   roleSlug: string;
   countryCode: string;
   roleLabel: string;
   countryLabel: string;
   sampleCvData: CVData | null;
+  start: StartMode;
 }) {
-  const [stage, setStage] = useState<Stage>('chooser');
-  const [screenIndex, setScreenIndex] = useState(0);
-  const [userId, setUserId] = useState<string | null>(null);
-  const [authChecked, setAuthChecked] = useState(false);
-  const [loadingChoice, setLoadingChoice] = useState<string | null>(null);
+  const [stage, setStage] = useState<Stage>('loading');
   const [error, setError] = useState<string | null>(null);
-
+  const [userId, setUserId] = useState<string | null>(null);
   const [cvData, setCvData] = useState<CVData>(emptyCV(roleLabel));
+  const [openSections, setOpenSections] = useState<Set<string>>(new Set(['personal', 'summary']));
+
   const [selectedDesign, setSelectedDesign] = useState(CV_PAGE_DESIGNS[0]?.id ?? 'template-1');
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [downloadingDocx, setDownloadingDocx] = useState(false);
 
+  // Resolve the initial CVData based on ?start= as soon as we land.
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      setUserId(data.session?.user?.id ?? null);
-      setAuthChecked(true);
-    });
+    let cancelled = false;
+
+    async function resolve() {
+      const { data } = await supabase.auth.getSession();
+      const uid = data.session?.user?.id ?? null;
+      if (cancelled) return;
+      setUserId(uid);
+
+      if (start === 'sample') {
+        setCvData(sampleCvData || emptyCV(roleLabel));
+        setStage('form');
+        return;
+      }
+
+      if (start === 'fetch') {
+        if (!uid) {
+          setError('Please log in to fetch your details.');
+          setCvData(emptyCV(roleLabel));
+          setStage('form');
+          return;
+        }
+        const row = await fetchOnboardingData(uid);
+        if (cancelled) return;
+        if (!row) {
+          setError('No saved profile found. Try Quick Create later, or fill the form manually.');
+          setCvData(emptyCV(roleLabel));
+        } else {
+          setCvData(mapOnboardingToCVData(row));
+          // With real data pulled in, keep the form collapsed by default — this is
+          // the "expandable sections" review case, not a blank-form fill.
+          setOpenSections(new Set(['personal']));
+        }
+        setStage('form');
+        return;
+      }
+
+      if (start === 'quick') {
+        if (!uid) {
+          setError('Please log in to use Quick Create.');
+          setCvData(emptyCV(roleLabel));
+          setStage('form');
+          return;
+        }
+        try {
+          const { data: fnData, error: fnError } = await supabase.functions.invoke('tailor-cv-template-page', {
+            body: { userId: uid, roleLabel, countryLabel },
+          });
+          if (cancelled) return;
+          if (fnError) throw new Error(fnError.message);
+          if (!fnData?.success || !fnData?.data) throw new Error(fnData?.error || 'Quick Create failed.');
+          setCvData(fnData.data as CVData);
+          setOpenSections(new Set(['personal']));
+        } catch (err: any) {
+          if (!cancelled) {
+            setError(err.message || 'Quick Create failed. You can fill the form manually instead.');
+            setCvData(emptyCV(roleLabel));
+          }
+        }
+        setStage('form');
+        return;
+      }
+
+      // start === 'blank'
+      setCvData(emptyCV(roleLabel));
+      setStage('form');
+    }
+
+    resolve();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ── Chooser actions ──────────────────────────────────────────────
-
-  function startForm() {
-    setScreenIndex(0);
-    setStage('form');
+  function toggleSection(key: string) {
+    setOpenSections((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
   }
 
-  function chooseFillBlank() {
-    setCvData(emptyCV(roleLabel));
-    startForm();
-  }
-
-  function chooseEditSample() {
-    setCvData(sampleCvData || emptyCV(roleLabel));
-    startForm();
-  }
-
-  async function chooseFetchDetails() {
-    if (!userId) return;
-    setLoadingChoice('fetch');
-    setError(null);
-    try {
-      const row = await fetchOnboardingData(userId);
-      if (!row) {
-        setError('No saved profile found. Try Quick Create later, or fill the form manually.');
-        setCvData(emptyCV(roleLabel));
-      } else {
-        setCvData(mapOnboardingToCVData(row));
-      }
-      startForm();
-    } finally {
-      setLoadingChoice(null);
-    }
-  }
-
-  async function chooseQuickCreate() {
-    if (!userId) return;
-    setLoadingChoice('quick');
-    setError(null);
-    try {
-      const { data, error: fnError } = await supabase.functions.invoke('tailor-cv-template-page', {
-        body: { userId, roleLabel, countryLabel },
-      });
-      if (fnError) throw new Error(fnError.message);
-      if (!data?.success || !data?.data) throw new Error(data?.error || 'Quick Create failed.');
-      setCvData(data.data as CVData);
-      startForm();
-    } catch (err: any) {
-      setError(err.message || 'Quick Create failed. You can fill the form manually instead.');
-    } finally {
-      setLoadingChoice(null);
-    }
-  }
-
-  // ── Field helpers ────────────────────────────────────────────────
+  // ── Field helpers (same as before) ──────────────────────────────
 
   function updatePersonal<K extends keyof CVData['personalDetails']>(key: K, value: string) {
     setCvData((prev) => ({ ...prev, personalDetails: { ...prev.personalDetails, [key]: value } }));
   }
-
   function updateExperience(index: number, field: 'role' | 'company' | 'years', value: string) {
     setCvData((prev) => {
       const experience = [...(prev.experience || [])];
@@ -291,16 +314,18 @@ export default function BuildClient({
     }
   }
 
-  const currentScreen = FORM_SCREENS[screenIndex];
-  const isLastScreen = screenIndex === FORM_SCREENS.length - 1;
-
-  function goNext() {
-    if (isLastScreen) setStage('result');
-    else setScreenIndex((i) => i + 1);
-  }
-  function goBack() {
-    if (screenIndex === 0) setStage('chooser');
-    else setScreenIndex((i) => i - 1);
+  function SectionShell({ sectionKey, label, children }: { sectionKey: string; label: string; children: React.ReactNode }) {
+    const isOpen = openSections.has(sectionKey);
+    return (
+      <div className="border rounded-lg mb-3 overflow-hidden">
+        <button type="button" onClick={() => toggleSection(sectionKey)}
+          className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 text-left font-semibold">
+          {label}
+          <span className="text-gray-400">{isOpen ? '−' : '+'}</span>
+        </button>
+        {isOpen && <div className="p-4 space-y-3">{children}</div>}
+      </div>
+    );
   }
 
   return (
@@ -310,231 +335,167 @@ export default function BuildClient({
 
       {error && <p className="text-red-600 text-sm mb-4">{error}</p>}
 
-      {stage === 'chooser' && (
-        <div className="grid sm:grid-cols-2 gap-4">
-          {!authChecked ? (
-            <p className="text-gray-400">Checking your account…</p>
-          ) : userId ? (
-            <>
-              <button onClick={chooseQuickCreate} disabled={!!loadingChoice} className="border rounded-lg p-5 text-left hover:border-purple-600 disabled:opacity-50">
-                <h3 className="font-semibold mb-1">{loadingChoice === 'quick' ? 'Generating…' : 'Quick Create'}</h3>
-                <p className="text-sm text-gray-500">Use your saved profile, tailored to this role automatically</p>
-              </button>
-              <button onClick={chooseFetchDetails} disabled={!!loadingChoice} className="border rounded-lg p-5 text-left hover:border-purple-600 disabled:opacity-50">
-                <h3 className="font-semibold mb-1">{loadingChoice === 'fetch' ? 'Fetching…' : 'Fetch My Details'}</h3>
-                <p className="text-sm text-gray-500">Pull your saved profile in as-is, then edit it yourself</p>
-              </button>
-              <button onClick={chooseFillBlank} disabled={!!loadingChoice} className="border rounded-lg p-5 text-left hover:border-purple-600 disabled:opacity-50">
-                <h3 className="font-semibold mb-1">Fill Out Form</h3>
-                <p className="text-sm text-gray-500">Start from a blank form</p>
-              </button>
-            </>
-          ) : (
-            <>
-              <button onClick={chooseEditSample} className="border rounded-lg p-5 text-left hover:border-purple-600">
-                <h3 className="font-semibold mb-1">Edit Sample Document</h3>
-                <p className="text-sm text-gray-500">Start from this page's example CV and edit it</p>
-              </button>
-              <button onClick={chooseFillBlank} className="border rounded-lg p-5 text-left hover:border-purple-600">
-                <h3 className="font-semibold mb-1">Empty Form</h3>
-                <p className="text-sm text-gray-500">Start from scratch</p>
-              </button>
-              <p className="sm:col-span-2 text-sm text-gray-500 mt-1">
-                <a href={`/auth/login?redirect=${encodeURIComponent(`/cv-templates/build?role=${roleSlug}&country=${countryCode}`)}`} className="text-purple-700 font-medium">Log in</a> to fetch your saved profile or use Quick Create.
-              </p>
-            </>
-          )}
-        </div>
-      )}
+      {stage === 'loading' && <p className="text-gray-400">Preparing your form…</p>}
 
       {stage === 'form' && (
         <div>
-          {/* Progress */}
-          <div className="flex items-center gap-2 mb-6 text-sm text-gray-500">
-            Step {screenIndex + 1} of {FORM_SCREENS.length} — <span className="font-semibold text-gray-800">{currentScreen.label}</span>
-          </div>
+          <SectionShell sectionKey="personal" label="Personal Details">
+            <div className="grid grid-cols-2 gap-3">
+              <input className="border rounded px-3 py-2" placeholder="Full name" value={cvData.personalDetails.name} onChange={(e) => updatePersonal('name', e.target.value)} />
+              <input className="border rounded px-3 py-2" placeholder="Title" value={cvData.personalDetails.title} onChange={(e) => updatePersonal('title', e.target.value)} />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <input className="border rounded px-3 py-2" placeholder="Email" value={cvData.personalDetails.email} onChange={(e) => updatePersonal('email', e.target.value)} />
+              <input className="border rounded px-3 py-2" placeholder="Phone" value={cvData.personalDetails.phone} onChange={(e) => updatePersonal('phone', e.target.value)} />
+            </div>
+            <input className="border rounded px-3 py-2 w-full" placeholder="Location" value={cvData.personalDetails.location} onChange={(e) => updatePersonal('location', e.target.value)} />
+            <input className="border rounded px-3 py-2 w-full" placeholder="LinkedIn (optional)" value={cvData.personalDetails.linkedin || ''} onChange={(e) => updatePersonal('linkedin', e.target.value)} />
+            <input className="border rounded px-3 py-2 w-full" placeholder="GitHub (optional)" value={cvData.personalDetails.github || ''} onChange={(e) => updatePersonal('github', e.target.value)} />
+            <input className="border rounded px-3 py-2 w-full" placeholder="Portfolio (optional)" value={cvData.personalDetails.portfolio || ''} onChange={(e) => updatePersonal('portfolio', e.target.value)} />
+          </SectionShell>
 
-          {currentScreen.key === 'personal' && (
-            <div className="space-y-3">
-              <div className="grid grid-cols-2 gap-3">
-                <input className="border rounded px-3 py-2" placeholder="Full name" value={cvData.personalDetails.name} onChange={(e) => updatePersonal('name', e.target.value)} />
-                <input className="border rounded px-3 py-2" placeholder="Title" value={cvData.personalDetails.title} onChange={(e) => updatePersonal('title', e.target.value)} />
+          <SectionShell sectionKey="summary" label="Summary">
+            <textarea className="border rounded px-3 py-2 w-full" rows={5} placeholder="Professional summary"
+              value={cvData.summary} onChange={(e) => setCvData((p) => ({ ...p, summary: e.target.value }))} />
+            <input className="border rounded px-3 py-2 w-full" placeholder="Professional roles (comma separated, optional)"
+              value={csv(cvData.roles)} onChange={(e) => setCvData((p) => ({ ...p, roles: fromCsv(e.target.value) }))} />
+          </SectionShell>
+
+          <SectionShell sectionKey="skills" label="Skills & Languages">
+            <input className="border rounded px-3 py-2 w-full" placeholder="Skills (comma separated)"
+              value={csv(cvData.skills)} onChange={(e) => setCvData((p) => ({ ...p, skills: fromCsv(e.target.value) }))} />
+            <input className="border rounded px-3 py-2 w-full" placeholder="Languages (comma separated, optional)"
+              value={csv(cvData.languages)} onChange={(e) => setCvData((p) => ({ ...p, languages: fromCsv(e.target.value) }))} />
+            <input className="border rounded px-3 py-2 w-full" placeholder="Interests (comma separated, optional)"
+              value={csv(cvData.interests)} onChange={(e) => setCvData((p) => ({ ...p, interests: fromCsv(e.target.value) }))} />
+          </SectionShell>
+
+          <SectionShell sectionKey="experience" label={`Experience${(cvData.experience || []).length ? ` (${cvData.experience!.length})` : ''}`}>
+            <button onClick={addExperience} type="button" className="text-sm text-purple-700 font-medium">+ Add role</button>
+            {(cvData.experience || []).map((exp, i) => (
+              <div key={i} className="border rounded p-3 space-y-2">
+                <div className="grid grid-cols-2 gap-2">
+                  <input className="border rounded px-2 py-1.5 text-sm" placeholder="Role" value={exp.role} onChange={(e) => updateExperience(i, 'role', e.target.value)} />
+                  <input className="border rounded px-2 py-1.5 text-sm" placeholder="Company" value={exp.company} onChange={(e) => updateExperience(i, 'company', e.target.value)} />
+                </div>
+                <input className="border rounded px-2 py-1.5 text-sm w-full" placeholder="Years (e.g. 2022 - Present)" value={exp.years} onChange={(e) => updateExperience(i, 'years', e.target.value)} />
+                <textarea className="border rounded px-2 py-1.5 text-sm w-full" rows={3} placeholder="One bullet per line" value={(exp.bullets || []).join('\n')} onChange={(e) => updateExperienceBullets(i, e.target.value)} />
+                <button onClick={() => removeExperience(i)} type="button" className="text-xs text-red-600">Remove</button>
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <input className="border rounded px-3 py-2" placeholder="Email" value={cvData.personalDetails.email} onChange={(e) => updatePersonal('email', e.target.value)} />
-                <input className="border rounded px-3 py-2" placeholder="Phone" value={cvData.personalDetails.phone} onChange={(e) => updatePersonal('phone', e.target.value)} />
+            ))}
+          </SectionShell>
+
+          <SectionShell sectionKey="education" label={`Education${(cvData.education || []).length ? ` (${cvData.education!.length})` : ''}`}>
+            <button onClick={addEducation} type="button" className="text-sm text-purple-700 font-medium">+ Add education</button>
+            {(cvData.education || []).map((edu, i) => (
+              <div key={i} className="border rounded p-3 space-y-2">
+                <input className="border rounded px-2 py-1.5 text-sm w-full" placeholder="Degree" value={edu.degree} onChange={(e) => updateEducation(i, 'degree', e.target.value)} />
+                <div className="grid grid-cols-2 gap-2">
+                  <input className="border rounded px-2 py-1.5 text-sm" placeholder="Institution" value={edu.institution} onChange={(e) => updateEducation(i, 'institution', e.target.value)} />
+                  <input className="border rounded px-2 py-1.5 text-sm" placeholder="Years" value={edu.years} onChange={(e) => updateEducation(i, 'years', e.target.value)} />
+                </div>
+                <button onClick={() => removeEducation(i)} type="button" className="text-xs text-red-600">Remove</button>
               </div>
-              <input className="border rounded px-3 py-2 w-full" placeholder="Location" value={cvData.personalDetails.location} onChange={(e) => updatePersonal('location', e.target.value)} />
-              <input className="border rounded px-3 py-2 w-full" placeholder="LinkedIn (optional)" value={cvData.personalDetails.linkedin || ''} onChange={(e) => updatePersonal('linkedin', e.target.value)} />
-              <input className="border rounded px-3 py-2 w-full" placeholder="GitHub (optional)" value={cvData.personalDetails.github || ''} onChange={(e) => updatePersonal('github', e.target.value)} />
-              <input className="border rounded px-3 py-2 w-full" placeholder="Portfolio (optional)" value={cvData.personalDetails.portfolio || ''} onChange={(e) => updatePersonal('portfolio', e.target.value)} />
-            </div>
-          )}
+            ))}
+          </SectionShell>
 
-          {currentScreen.key === 'summary' && (
-            <div className="space-y-3">
-              <textarea className="border rounded px-3 py-2 w-full" rows={5} placeholder="Professional summary"
-                value={cvData.summary} onChange={(e) => setCvData((p) => ({ ...p, summary: e.target.value }))} />
-              <input className="border rounded px-3 py-2 w-full" placeholder="Professional roles (comma separated, optional)"
-                value={csv(cvData.roles)} onChange={(e) => setCvData((p) => ({ ...p, roles: fromCsv(e.target.value) }))} />
-            </div>
-          )}
-
-          {currentScreen.key === 'skills' && (
-            <div className="space-y-3">
-              <input className="border rounded px-3 py-2 w-full" placeholder="Skills (comma separated)"
-                value={csv(cvData.skills)} onChange={(e) => setCvData((p) => ({ ...p, skills: fromCsv(e.target.value) }))} />
-              <input className="border rounded px-3 py-2 w-full" placeholder="Languages (comma separated, optional)"
-                value={csv(cvData.languages)} onChange={(e) => setCvData((p) => ({ ...p, languages: fromCsv(e.target.value) }))} />
-              <input className="border rounded px-3 py-2 w-full" placeholder="Interests (comma separated, optional)"
-                value={csv(cvData.interests)} onChange={(e) => setCvData((p) => ({ ...p, interests: fromCsv(e.target.value) }))} />
-            </div>
-          )}
-
-          {currentScreen.key === 'experience' && (
+          <SectionShell sectionKey="achievements" label="Achievements">
             <div>
-              <button onClick={addExperience} type="button" className="text-sm text-purple-700 font-medium mb-3">+ Add role</button>
-              {(cvData.experience || []).map((exp, i) => (
-                <div key={i} className="border rounded p-3 mb-3 space-y-2">
+              <h4 className="text-sm font-semibold mb-1">Accomplishments</h4>
+              <textarea className="border rounded px-3 py-2 w-full text-sm" rows={2} placeholder="One per line"
+                value={(cvData.accomplishments || []).join('\n')}
+                onChange={(e) => setCvData((p) => ({ ...p, accomplishments: e.target.value.split('\n').map((s) => s.trim()).filter(Boolean) }))} />
+            </div>
+            <div>
+              <div className="flex items-center justify-between mb-1"><h4 className="text-sm font-semibold">Awards</h4><button onClick={addAward} type="button" className="text-sm text-purple-700 font-medium">+ Add</button></div>
+              {(cvData.awards || []).map((a, i) => (
+                <div key={i} className="border rounded p-3 mb-2 space-y-2">
+                  <input className="border rounded px-2 py-1.5 text-sm w-full" placeholder="Award title" value={a.title} onChange={(e) => updateAward(i, 'title', e.target.value)} />
                   <div className="grid grid-cols-2 gap-2">
-                    <input className="border rounded px-2 py-1.5 text-sm" placeholder="Role" value={exp.role} onChange={(e) => updateExperience(i, 'role', e.target.value)} />
-                    <input className="border rounded px-2 py-1.5 text-sm" placeholder="Company" value={exp.company} onChange={(e) => updateExperience(i, 'company', e.target.value)} />
+                    <input className="border rounded px-2 py-1.5 text-sm" placeholder="Issuer (optional)" value={a.issuer || ''} onChange={(e) => updateAward(i, 'issuer', e.target.value)} />
+                    <input className="border rounded px-2 py-1.5 text-sm" placeholder="Year (optional)" value={a.year || ''} onChange={(e) => updateAward(i, 'year', e.target.value)} />
                   </div>
-                  <input className="border rounded px-2 py-1.5 text-sm w-full" placeholder="Years (e.g. 2022 - Present)" value={exp.years} onChange={(e) => updateExperience(i, 'years', e.target.value)} />
-                  <textarea className="border rounded px-2 py-1.5 text-sm w-full" rows={3} placeholder="One bullet per line" value={(exp.bullets || []).join('\n')} onChange={(e) => updateExperienceBullets(i, e.target.value)} />
-                  <button onClick={() => removeExperience(i)} type="button" className="text-xs text-red-600">Remove</button>
+                  <button onClick={() => removeAward(i)} type="button" className="text-xs text-red-600">Remove</button>
                 </div>
               ))}
-              {(cvData.experience || []).length === 0 && <p className="text-sm text-gray-400">No experience added yet.</p>}
             </div>
-          )}
-
-          {currentScreen.key === 'education' && (
             <div>
-              <button onClick={addEducation} type="button" className="text-sm text-purple-700 font-medium mb-3">+ Add education</button>
-              {(cvData.education || []).map((edu, i) => (
-                <div key={i} className="border rounded p-3 mb-3 space-y-2">
-                  <input className="border rounded px-2 py-1.5 text-sm w-full" placeholder="Degree" value={edu.degree} onChange={(e) => updateEducation(i, 'degree', e.target.value)} />
+              <div className="flex items-center justify-between mb-1"><h4 className="text-sm font-semibold">Certifications</h4><button onClick={addCertification} type="button" className="text-sm text-purple-700 font-medium">+ Add</button></div>
+              {(cvData.certifications || []).map((c, i) => (
+                <div key={i} className="border rounded p-3 mb-2 space-y-2">
+                  <input className="border rounded px-2 py-1.5 text-sm w-full" placeholder="Certification name" value={c.name} onChange={(e) => updateCertification(i, 'name', e.target.value)} />
                   <div className="grid grid-cols-2 gap-2">
-                    <input className="border rounded px-2 py-1.5 text-sm" placeholder="Institution" value={edu.institution} onChange={(e) => updateEducation(i, 'institution', e.target.value)} />
-                    <input className="border rounded px-2 py-1.5 text-sm" placeholder="Years" value={edu.years} onChange={(e) => updateEducation(i, 'years', e.target.value)} />
+                    <input className="border rounded px-2 py-1.5 text-sm" placeholder="Issuer (optional)" value={c.issuer || ''} onChange={(e) => updateCertification(i, 'issuer', e.target.value)} />
+                    <input className="border rounded px-2 py-1.5 text-sm" placeholder="Year (optional)" value={c.year || ''} onChange={(e) => updateCertification(i, 'year', e.target.value)} />
                   </div>
-                  <button onClick={() => removeEducation(i)} type="button" className="text-xs text-red-600">Remove</button>
+                  <button onClick={() => removeCertification(i)} type="button" className="text-xs text-red-600">Remove</button>
                 </div>
               ))}
-              {(cvData.education || []).length === 0 && <p className="text-sm text-gray-400">No education added yet.</p>}
             </div>
-          )}
-
-          {currentScreen.key === 'achievements' && (
-            <div className="space-y-6">
-              <div>
-                <h3 className="font-semibold mb-2">Accomplishments</h3>
-                <textarea className="border rounded px-3 py-2 w-full text-sm" rows={2} placeholder="One per line"
-                  value={(cvData.accomplishments || []).join('\n')}
-                  onChange={(e) => setCvData((p) => ({ ...p, accomplishments: e.target.value.split('\n').map((s) => s.trim()).filter(Boolean) }))} />
-              </div>
-
-              <div>
-                <div className="flex items-center justify-between mb-2"><h3 className="font-semibold">Awards</h3><button onClick={addAward} type="button" className="text-sm text-purple-700 font-medium">+ Add</button></div>
-                {(cvData.awards || []).map((a, i) => (
-                  <div key={i} className="border rounded p-3 mb-2 space-y-2">
-                    <input className="border rounded px-2 py-1.5 text-sm w-full" placeholder="Award title" value={a.title} onChange={(e) => updateAward(i, 'title', e.target.value)} />
-                    <div className="grid grid-cols-2 gap-2">
-                      <input className="border rounded px-2 py-1.5 text-sm" placeholder="Issuer (optional)" value={a.issuer || ''} onChange={(e) => updateAward(i, 'issuer', e.target.value)} />
-                      <input className="border rounded px-2 py-1.5 text-sm" placeholder="Year (optional)" value={a.year || ''} onChange={(e) => updateAward(i, 'year', e.target.value)} />
-                    </div>
-                    <button onClick={() => removeAward(i)} type="button" className="text-xs text-red-600">Remove</button>
+            <div>
+              <div className="flex items-center justify-between mb-1"><h4 className="text-sm font-semibold">Publications</h4><button onClick={addPublication} type="button" className="text-sm text-purple-700 font-medium">+ Add</button></div>
+              {(cvData.publications || []).map((p, i) => (
+                <div key={i} className="border rounded p-3 mb-2 space-y-2">
+                  <input className="border rounded px-2 py-1.5 text-sm w-full" placeholder="Title" value={p.title} onChange={(e) => updatePublication(i, 'title', e.target.value)} />
+                  <div className="grid grid-cols-2 gap-2">
+                    <input className="border rounded px-2 py-1.5 text-sm" placeholder="Journal/venue (optional)" value={p.journal || ''} onChange={(e) => updatePublication(i, 'journal', e.target.value)} />
+                    <input className="border rounded px-2 py-1.5 text-sm" placeholder="Year (optional)" value={p.year || ''} onChange={(e) => updatePublication(i, 'year', e.target.value)} />
                   </div>
-                ))}
-              </div>
-
-              <div>
-                <div className="flex items-center justify-between mb-2"><h3 className="font-semibold">Certifications</h3><button onClick={addCertification} type="button" className="text-sm text-purple-700 font-medium">+ Add</button></div>
-                {(cvData.certifications || []).map((c, i) => (
-                  <div key={i} className="border rounded p-3 mb-2 space-y-2">
-                    <input className="border rounded px-2 py-1.5 text-sm w-full" placeholder="Certification name" value={c.name} onChange={(e) => updateCertification(i, 'name', e.target.value)} />
-                    <div className="grid grid-cols-2 gap-2">
-                      <input className="border rounded px-2 py-1.5 text-sm" placeholder="Issuer (optional)" value={c.issuer || ''} onChange={(e) => updateCertification(i, 'issuer', e.target.value)} />
-                      <input className="border rounded px-2 py-1.5 text-sm" placeholder="Year (optional)" value={c.year || ''} onChange={(e) => updateCertification(i, 'year', e.target.value)} />
-                    </div>
-                    <button onClick={() => removeCertification(i)} type="button" className="text-xs text-red-600">Remove</button>
-                  </div>
-                ))}
-              </div>
-
-              <div>
-                <div className="flex items-center justify-between mb-2"><h3 className="font-semibold">Publications</h3><button onClick={addPublication} type="button" className="text-sm text-purple-700 font-medium">+ Add</button></div>
-                {(cvData.publications || []).map((p, i) => (
-                  <div key={i} className="border rounded p-3 mb-2 space-y-2">
-                    <input className="border rounded px-2 py-1.5 text-sm w-full" placeholder="Title" value={p.title} onChange={(e) => updatePublication(i, 'title', e.target.value)} />
-                    <div className="grid grid-cols-2 gap-2">
-                      <input className="border rounded px-2 py-1.5 text-sm" placeholder="Journal/venue (optional)" value={p.journal || ''} onChange={(e) => updatePublication(i, 'journal', e.target.value)} />
-                      <input className="border rounded px-2 py-1.5 text-sm" placeholder="Year (optional)" value={p.year || ''} onChange={(e) => updatePublication(i, 'year', e.target.value)} />
-                    </div>
-                    <button onClick={() => removePublication(i)} type="button" className="text-xs text-red-600">Remove</button>
-                  </div>
-                ))}
-              </div>
+                  <button onClick={() => removePublication(i)} type="button" className="text-xs text-red-600">Remove</button>
+                </div>
+              ))}
             </div>
-          )}
+          </SectionShell>
 
-          {currentScreen.key === 'more' && (
-            <div className="space-y-6">
-              <div>
-                <div className="flex items-center justify-between mb-2"><h3 className="font-semibold">Projects</h3><button onClick={addProject} type="button" className="text-sm text-purple-700 font-medium">+ Add</button></div>
-                {(cvData.projects || []).map((p, i) => (
-                  <div key={i} className="border rounded p-3 mb-2 space-y-2">
-                    <input className="border rounded px-2 py-1.5 text-sm w-full" placeholder="Project title" value={p.title} onChange={(e) => updateProject(i, 'title', e.target.value)} />
-                    <textarea className="border rounded px-2 py-1.5 text-sm w-full" rows={2} placeholder="Description" value={p.description} onChange={(e) => updateProject(i, 'description', e.target.value)} />
-                    <button onClick={() => removeProject(i)} type="button" className="text-xs text-red-600">Remove</button>
-                  </div>
-                ))}
-              </div>
-
-              <div>
-                <div className="flex items-center justify-between mb-2"><h3 className="font-semibold">Volunteer Work</h3><button onClick={addVolunteer} type="button" className="text-sm text-purple-700 font-medium">+ Add</button></div>
-                {(cvData.volunteerWork || []).map((v, i) => (
-                  <div key={i} className="border rounded p-3 mb-2 space-y-2">
-                    <input className="border rounded px-2 py-1.5 text-sm w-full" placeholder="Organization" value={v.organization} onChange={(e) => updateVolunteer(i, 'organization', e.target.value)} />
-                    <div className="grid grid-cols-2 gap-2">
-                      <input className="border rounded px-2 py-1.5 text-sm" placeholder="Role (optional)" value={v.role || ''} onChange={(e) => updateVolunteer(i, 'role', e.target.value)} />
-                      <input className="border rounded px-2 py-1.5 text-sm" placeholder="Duration (optional)" value={v.duration || ''} onChange={(e) => updateVolunteer(i, 'duration', e.target.value)} />
-                    </div>
-                    <textarea className="border rounded px-2 py-1.5 text-sm w-full" rows={2} placeholder="Description (optional)" value={v.description || ''} onChange={(e) => updateVolunteer(i, 'description', e.target.value)} />
-                    <button onClick={() => removeVolunteer(i)} type="button" className="text-xs text-red-600">Remove</button>
-                  </div>
-                ))}
-              </div>
-
-              <div>
-                <div className="flex items-center justify-between mb-2"><h3 className="font-semibold">Additional Sections</h3><button onClick={addAdditionalSection} type="button" className="text-sm text-purple-700 font-medium">+ Add</button></div>
-                {(cvData.additionalSections || []).map((s, i) => (
-                  <div key={i} className="border rounded p-3 mb-2 space-y-2">
-                    <input className="border rounded px-2 py-1.5 text-sm w-full" placeholder="Section name (e.g. Publications, References)" value={s.sectionName} onChange={(e) => updateAdditionalSection(i, 'sectionName', e.target.value)} />
-                    <textarea className="border rounded px-2 py-1.5 text-sm w-full" rows={2} placeholder="Content" value={s.content} onChange={(e) => updateAdditionalSection(i, 'content', e.target.value)} />
-                    <button onClick={() => removeAdditionalSection(i)} type="button" className="text-xs text-red-600">Remove</button>
-                  </div>
-                ))}
-              </div>
+          <SectionShell sectionKey="more" label="Projects & More">
+            <div>
+              <div className="flex items-center justify-between mb-1"><h4 className="text-sm font-semibold">Projects</h4><button onClick={addProject} type="button" className="text-sm text-purple-700 font-medium">+ Add</button></div>
+              {(cvData.projects || []).map((p, i) => (
+                <div key={i} className="border rounded p-3 mb-2 space-y-2">
+                  <input className="border rounded px-2 py-1.5 text-sm w-full" placeholder="Project title" value={p.title} onChange={(e) => updateProject(i, 'title', e.target.value)} />
+                  <textarea className="border rounded px-2 py-1.5 text-sm w-full" rows={2} placeholder="Description" value={p.description} onChange={(e) => updateProject(i, 'description', e.target.value)} />
+                  <button onClick={() => removeProject(i)} type="button" className="text-xs text-red-600">Remove</button>
+                </div>
+              ))}
             </div>
-          )}
+            <div>
+              <div className="flex items-center justify-between mb-1"><h4 className="text-sm font-semibold">Volunteer Work</h4><button onClick={addVolunteer} type="button" className="text-sm text-purple-700 font-medium">+ Add</button></div>
+              {(cvData.volunteerWork || []).map((v, i) => (
+                <div key={i} className="border rounded p-3 mb-2 space-y-2">
+                  <input className="border rounded px-2 py-1.5 text-sm w-full" placeholder="Organization" value={v.organization} onChange={(e) => updateVolunteer(i, 'organization', e.target.value)} />
+                  <div className="grid grid-cols-2 gap-2">
+                    <input className="border rounded px-2 py-1.5 text-sm" placeholder="Role (optional)" value={v.role || ''} onChange={(e) => updateVolunteer(i, 'role', e.target.value)} />
+                    <input className="border rounded px-2 py-1.5 text-sm" placeholder="Duration (optional)" value={v.duration || ''} onChange={(e) => updateVolunteer(i, 'duration', e.target.value)} />
+                  </div>
+                  <textarea className="border rounded px-2 py-1.5 text-sm w-full" rows={2} placeholder="Description (optional)" value={v.description || ''} onChange={(e) => updateVolunteer(i, 'description', e.target.value)} />
+                  <button onClick={() => removeVolunteer(i)} type="button" className="text-xs text-red-600">Remove</button>
+                </div>
+              ))}
+            </div>
+            <div>
+              <div className="flex items-center justify-between mb-1"><h4 className="text-sm font-semibold">Additional Sections</h4><button onClick={addAdditionalSection} type="button" className="text-sm text-purple-700 font-medium">+ Add</button></div>
+              {(cvData.additionalSections || []).map((s, i) => (
+                <div key={i} className="border rounded p-3 mb-2 space-y-2">
+                  <input className="border rounded px-2 py-1.5 text-sm w-full" placeholder="Section name" value={s.sectionName} onChange={(e) => updateAdditionalSection(i, 'sectionName', e.target.value)} />
+                  <textarea className="border rounded px-2 py-1.5 text-sm w-full" rows={2} placeholder="Content" value={s.content} onChange={(e) => updateAdditionalSection(i, 'content', e.target.value)} />
+                  <button onClick={() => removeAdditionalSection(i)} type="button" className="text-xs text-red-600">Remove</button>
+                </div>
+              ))}
+            </div>
+          </SectionShell>
 
-          <div className="flex gap-3 mt-6">
-            <button onClick={goBack} type="button" className="border px-4 py-2 rounded-lg font-medium">Back</button>
-            <button onClick={goNext} type="button" className="bg-purple-700 text-white px-6 py-2 rounded-lg font-semibold">
-              {isLastScreen ? 'Generate CV' : 'Next'}
-            </button>
-          </div>
+          <button onClick={() => setStage('result')} type="button" className="bg-purple-700 text-white px-6 py-3 rounded-lg font-semibold w-full mt-2">
+            Generate CV
+          </button>
         </div>
       )}
 
       {stage === 'result' && (
         <div>
-          <div className="flex gap-2 mb-3 flex-wrap">
+          <div className="flex gap-2 mb-3 overflow-x-auto flex-nowrap pb-1">
             {CV_PAGE_DESIGNS.map((d) => (
               <button key={d.id} onClick={() => setSelectedDesign(d.id)}
-                className={`px-3 py-1.5 rounded-full text-sm border ${selectedDesign === d.id ? 'bg-purple-700 text-white border-purple-700' : 'bg-white text-gray-700 border-gray-300'}`}>
+                className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-full text-sm border ${selectedDesign === d.id ? 'bg-purple-700 text-white border-purple-700' : 'bg-white text-gray-700 border-gray-300'}`}>
                 {d.name}
               </button>
             ))}
@@ -543,7 +504,7 @@ export default function BuildClient({
             <iframe id="cv-preview-frame" title="CV preview" srcDoc={previewHtml} className="w-full" style={{ height: '900px', border: 'none' }} />
           </div>
           <div className="flex gap-3 flex-wrap">
-            <button onClick={() => { setScreenIndex(0); setStage('form'); }} className="border px-4 py-2 rounded-lg font-medium">Edit</button>
+            <button onClick={() => setStage('form')} className="border px-4 py-2 rounded-lg font-medium">Edit</button>
             <button onClick={handlePrint} className="border px-4 py-2 rounded-lg font-medium">Print / Save as PDF</button>
             <button onClick={handleDownloadDocx} disabled={downloadingDocx} className="border px-4 py-2 rounded-lg font-medium disabled:opacity-50">
               {downloadingDocx ? 'Preparing…' : 'Download as Word'}

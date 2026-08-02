@@ -14,10 +14,11 @@ export const metadata = {
 export default async function BuildPage({
   searchParams,
 }: {
-  searchParams: { role?: string; country?: string };
+  searchParams: { role?: string; country?: string; start?: string };
 }) {
   const roleSlug = searchParams.role || '';
   const countryCode = searchParams.country || '';
+  const start = searchParams.start || 'blank';
 
   const rolePage = roleSlug && countryCode ? await getRolePage('cv', roleSlug, countryCode) : null;
 
@@ -28,6 +29,7 @@ export default async function BuildPage({
       roleLabel={rolePage?.role_label || roleSlug.replace(/-/g, ' ')}
       countryLabel={rolePage?.country_label || countryCode.toUpperCase()}
       sampleCvData={rolePage?.preview_cv_data || null}
+      start={start as 'quick' | 'fetch' | 'blank' | 'sample'}
     />
   );
 }
