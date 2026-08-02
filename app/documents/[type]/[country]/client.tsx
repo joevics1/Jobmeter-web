@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { ChevronRight, Home, FileCheck2, Wand2, History } from 'lucide-react';
+import { ChevronRight, Home, FileCheck2, Wand2, History, ArrowLeft } from 'lucide-react';
 import { DocumentTemplateRow, fillTemplate } from '@/lib/document-templates-data';
 import { DocumentTypeDef, DocumentCountryDef, HIGH_RISK_DOCUMENT_TYPES } from '@/lib/document-types';
 import { GeneratedDocument } from '@/lib/document-format';
@@ -19,11 +19,19 @@ interface TemplateDocumentClientProps {
 }
 
 export default function TemplateDocumentClient({ template, docType, docCountry }: TemplateDocumentClientProps) {
+  // Two screens ahead of the result: 'preview' (placeholder-filled template,
+  // the default landing view) → 'form' (fill in your details). The result
+  // screen below is gated on generatedDocument, same as before.
+  const [screen, setScreen] = useState<'preview' | 'form'>('preview');
   const [values, setValues] = useState<Record<string, string>>({});
   const [usePlaceholders, setUsePlaceholders] = useState(false);
   const [generatedDocument, setGeneratedDocument] = useState<GeneratedDocument | null>(null);
 
   const isHighRisk = HIGH_RISK_DOCUMENT_TYPES.has(docType.slug);
+
+  // Always placeholder-filled, independent of the form's own "Use placeholder
+  // details" toggle — this is what Screen 1 shows by default.
+  const previewDoc = fillTemplate(template, {}, template.fields, true);
 
   const handleFieldChange = (id: string, value: string) => {
     setValues(v => ({ ...v, [id]: value }));
@@ -56,12 +64,13 @@ export default function TemplateDocumentClient({ template, docType, docCountry }
     setGeneratedDocument(null);
     setValues({});
     setUsePlaceholders(false);
+    setScreen('form'); // editing again goes straight back to the form, not the preview
   };
 
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-screen-md mx-auto px-4 sm:px-6 py-6 space-y-6">
-        {/* Breadcrumb */}
+        {/* Breadcrumb — same on both screens */}
         <div className="flex items-center justify-between gap-3 no-print flex-wrap">
           <nav className="flex items-center gap-1.5 text-sm text-muted-foreground flex-wrap">
             <Link href="/" className="hover:text-foreground flex items-center gap-1"><Home className="h-3.5 w-3.5" />Home</Link>
@@ -79,7 +88,8 @@ export default function TemplateDocumentClient({ template, docType, docCountry }
           </Link>
         </div>
 
-        {!generatedDocument && (
+        {/* ── Screen 1: Preview ─────────────────────────────────────── */}
+        {!generatedDocument && screen === 'preview' && (
           <>
             <div>
               <div className="flex items-center gap-2 mb-2">
@@ -99,7 +109,66 @@ export default function TemplateDocumentClient({ template, docType, docCountry }
 
             <p className="text-xs text-muted-foreground/80">{SHORT_DISCLAIMER}</p>
 
-            {/* Fill-in form */}
+            {/* Placeholder-filled preview — same "paper" look as the real result */}
+            <div className="bg-white text-black mx-auto max-w-[210mm] shadow-lg rounded-sm p-[15mm] sm:p-[20mm]">
+              <h2 className="text-xl sm:text-2xl font-bold text-center mb-6">{previewDoc.title}</h2>
+
+              {previewDoc.intro && (
+                <p className="text-sm leading-relaxed mb-6">{previewDoc.intro}</p>
+              )}
+
+              {previewDoc.sections.map((section, i) => (
+                <div key={i} className="mb-5">
+                  <h3 className="text-sm font-bold mb-1.5">{section.heading}</h3>
+                  <div className="text-sm leading-relaxed whitespace-pre-wrap">{section.body}</div>
+                </div>
+              ))}
+
+              <div className="mt-10 pt-6 border-t border-gray-300">
+                <p className="text-sm font-bold mb-6">SIGNATURES</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
+                  {template.signatures.map((sig, i) => (
+                    <div key={i}>
+                      <div className="border-b border-gray-400 h-10" />
+                      <p className="text-xs text-gray-600 mt-1">{sig.role} — Signature</p>
+                      <p className="text-xs mt-3">Printed Name: ________________________</p>
+                      <p className="text-xs mt-2">Date: ______________</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <button
+              onClick={() => setScreen('form')}
+              className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-lg py-3 transition-colors"
+            >
+              <Wand2 className="h-4 w-4" />
+              Create
+            </button>
+
+            {/* SEO article content */}
+            {template.seo_intro && (
+              <div className="prose-sm text-muted-foreground leading-relaxed border-t border-border pt-6">
+                <p>{template.seo_intro}</p>
+              </div>
+            )}
+          </>
+        )}
+
+        {/* ── Screen 2: Form ────────────────────────────────────────── */}
+        {!generatedDocument && screen === 'form' && (
+          <>
+            <button
+              onClick={() => setScreen('preview')}
+              className="no-print flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Back to preview
+            </button>
+
+            <p className="text-xs text-muted-foreground/80">{SHORT_DISCLAIMER}</p>
+
             <div className="bg-card border border-border rounded-xl p-5 space-y-4">
               <div className="flex items-center justify-between">
                 <h2 className="text-sm font-semibold text-foreground">Fill in your details</h2>
@@ -158,16 +227,10 @@ export default function TemplateDocumentClient({ template, docType, docCountry }
                 Fill Document
               </button>
             </div>
-
-            {/* SEO article content — moved below the form */}
-            {template.seo_intro && (
-              <div className="prose-sm text-muted-foreground leading-relaxed border-t border-border pt-6">
-                <p>{template.seo_intro}</p>
-              </div>
-            )}
           </>
         )}
 
+        {/* ── Screen 3: Result (unchanged) ──────────────────────────── */}
         {generatedDocument && (
           <DocumentEditor
             document={generatedDocument}
