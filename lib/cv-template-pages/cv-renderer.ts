@@ -1591,7 +1591,7 @@ function renderTemplate7(data: CVData): string {
                 <div class="section">
                     <div class="section-title">EDUCATION</div>
                     <div class="section-content">
-                        ${education.map(edu => `
+                        ${(education || []).map(edu => `
                             <div class="education-entry">
                                 <div class="education-degree">${edu.degree}</div>
                                 <div class="education-dates">${edu.years}</div>
@@ -1648,7 +1648,7 @@ function renderTemplate7(data: CVData): string {
                 <div class="section">
                     <div class="section-title">WORK EXPERIENCE</div>
                     <div class="section-content">
-                        ${experience.map(exp => `
+                        ${(experience || []).map(exp => `
                             <div class="work-entry">
                                 <div class="work-header">
                                     <div class="company-name">${exp.company}</div>
