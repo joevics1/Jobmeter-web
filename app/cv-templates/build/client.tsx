@@ -8,15 +8,18 @@
 // then the render/download step.
 
 import { useState, useEffect, useMemo } from 'react';
+import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import { renderCVTemplate } from '@/lib/cv-template-pages/cv-renderer';
 import { CV_PAGE_DESIGNS } from '@/lib/cv-template-pages/design-list';
 import { downloadCVAsDocx } from '@/lib/cv-template-pages/cv-docx-export';
 import { fetchOnboardingData, mapOnboardingToCVData } from '@/lib/cv-template-pages/onboarding-fetch';
+import { getHistoryEntry, saveToHistory } from '@/lib/cv-template-pages/cv-history';
 import type { CVData } from '@/lib/cv-template-pages/cv-data-types';
+import BackButton from '../_components/back-button';
 
 type Stage = 'loading' | 'form' | 'result';
-type StartMode = 'quick' | 'fetch' | 'blank' | 'sample';
+type StartMode = 'quick' | 'fetch' | 'blank' | 'sample' | 'history';
 
 const SECTIONS = [
   { key: 'personal', label: 'Personal Details' },
@@ -51,6 +54,7 @@ export default function BuildClient({
   countryLabel,
   sampleCvData,
   start,
+  historyId,
 }: {
   roleSlug: string;
   countryCode: string;
@@ -58,6 +62,7 @@ export default function BuildClient({
   countryLabel: string;
   sampleCvData: CVData | null;
   start: StartMode;
+  historyId?: string;
 }) {
   const [stage, setStage] = useState<Stage>('loading');
   const [error, setError] = useState<string | null>(null);
@@ -79,6 +84,20 @@ export default function BuildClient({
       const uid = data.session?.user?.id ?? null;
       if (cancelled) return;
       setUserId(uid);
+
+      if (start === 'history') {
+        const entry = historyId ? getHistoryEntry(historyId) : null;
+        if (!entry) {
+          setError('That saved CV could not be found on this device.');
+          setCvData(emptyCV(roleLabel));
+          setStage('form');
+          return;
+        }
+        setCvData(entry.cvData);
+        setSelectedDesign(entry.designId);
+        setStage('result');
+        return;
+      }
 
       if (start === 'sample') {
         setCvData(sampleCvData || emptyCV(roleLabel));
@@ -329,9 +348,13 @@ export default function BuildClient({
   }
 
   return (
-    <main className="max-w-3xl mx-auto px-4 py-10">
-      <h1 className="text-2xl font-bold mb-1">Build Your {roleLabel} CV</h1>
-      <p className="text-gray-500 mb-6">{countryLabel}</p>
+    <>
+      <BackButton title={`Build Your ${roleLabel} CV`} href={roleSlug && countryCode ? `/cv-templates/${roleSlug}/${countryCode}` : '/cv-templates'} />
+      <main className="max-w-3xl mx-auto px-4 py-6">
+        <div className="flex items-center justify-between mb-4">
+          <p className="text-gray-500 text-sm">{countryLabel}</p>
+          <Link href="/cv-templates/history" className="text-sm text-blue-700 font-medium">CV History</Link>
+        </div>
 
       {error && <p className="text-red-600 text-sm mb-4">{error}</p>}
 
@@ -371,7 +394,7 @@ export default function BuildClient({
           </SectionShell>
 
           <SectionShell sectionKey="experience" label={`Experience${(cvData.experience || []).length ? ` (${cvData.experience!.length})` : ''}`}>
-            <button onClick={addExperience} type="button" className="text-sm text-purple-700 font-medium">+ Add role</button>
+            <button onClick={addExperience} type="button" className="text-sm text-blue-700 font-medium">+ Add role</button>
             {(cvData.experience || []).map((exp, i) => (
               <div key={i} className="border rounded p-3 space-y-2">
                 <div className="grid grid-cols-2 gap-2">
@@ -386,7 +409,7 @@ export default function BuildClient({
           </SectionShell>
 
           <SectionShell sectionKey="education" label={`Education${(cvData.education || []).length ? ` (${cvData.education!.length})` : ''}`}>
-            <button onClick={addEducation} type="button" className="text-sm text-purple-700 font-medium">+ Add education</button>
+            <button onClick={addEducation} type="button" className="text-sm text-blue-700 font-medium">+ Add education</button>
             {(cvData.education || []).map((edu, i) => (
               <div key={i} className="border rounded p-3 space-y-2">
                 <input className="border rounded px-2 py-1.5 text-sm w-full" placeholder="Degree" value={edu.degree} onChange={(e) => updateEducation(i, 'degree', e.target.value)} />
@@ -407,7 +430,7 @@ export default function BuildClient({
                 onChange={(e) => setCvData((p) => ({ ...p, accomplishments: e.target.value.split('\n').map((s) => s.trim()).filter(Boolean) }))} />
             </div>
             <div>
-              <div className="flex items-center justify-between mb-1"><h4 className="text-sm font-semibold">Awards</h4><button onClick={addAward} type="button" className="text-sm text-purple-700 font-medium">+ Add</button></div>
+              <div className="flex items-center justify-between mb-1"><h4 className="text-sm font-semibold">Awards</h4><button onClick={addAward} type="button" className="text-sm text-blue-700 font-medium">+ Add</button></div>
               {(cvData.awards || []).map((a, i) => (
                 <div key={i} className="border rounded p-3 mb-2 space-y-2">
                   <input className="border rounded px-2 py-1.5 text-sm w-full" placeholder="Award title" value={a.title} onChange={(e) => updateAward(i, 'title', e.target.value)} />
@@ -420,7 +443,7 @@ export default function BuildClient({
               ))}
             </div>
             <div>
-              <div className="flex items-center justify-between mb-1"><h4 className="text-sm font-semibold">Certifications</h4><button onClick={addCertification} type="button" className="text-sm text-purple-700 font-medium">+ Add</button></div>
+              <div className="flex items-center justify-between mb-1"><h4 className="text-sm font-semibold">Certifications</h4><button onClick={addCertification} type="button" className="text-sm text-blue-700 font-medium">+ Add</button></div>
               {(cvData.certifications || []).map((c, i) => (
                 <div key={i} className="border rounded p-3 mb-2 space-y-2">
                   <input className="border rounded px-2 py-1.5 text-sm w-full" placeholder="Certification name" value={c.name} onChange={(e) => updateCertification(i, 'name', e.target.value)} />
@@ -433,7 +456,7 @@ export default function BuildClient({
               ))}
             </div>
             <div>
-              <div className="flex items-center justify-between mb-1"><h4 className="text-sm font-semibold">Publications</h4><button onClick={addPublication} type="button" className="text-sm text-purple-700 font-medium">+ Add</button></div>
+              <div className="flex items-center justify-between mb-1"><h4 className="text-sm font-semibold">Publications</h4><button onClick={addPublication} type="button" className="text-sm text-blue-700 font-medium">+ Add</button></div>
               {(cvData.publications || []).map((p, i) => (
                 <div key={i} className="border rounded p-3 mb-2 space-y-2">
                   <input className="border rounded px-2 py-1.5 text-sm w-full" placeholder="Title" value={p.title} onChange={(e) => updatePublication(i, 'title', e.target.value)} />
@@ -449,7 +472,7 @@ export default function BuildClient({
 
           <SectionShell sectionKey="more" label="Projects & More">
             <div>
-              <div className="flex items-center justify-between mb-1"><h4 className="text-sm font-semibold">Projects</h4><button onClick={addProject} type="button" className="text-sm text-purple-700 font-medium">+ Add</button></div>
+              <div className="flex items-center justify-between mb-1"><h4 className="text-sm font-semibold">Projects</h4><button onClick={addProject} type="button" className="text-sm text-blue-700 font-medium">+ Add</button></div>
               {(cvData.projects || []).map((p, i) => (
                 <div key={i} className="border rounded p-3 mb-2 space-y-2">
                   <input className="border rounded px-2 py-1.5 text-sm w-full" placeholder="Project title" value={p.title} onChange={(e) => updateProject(i, 'title', e.target.value)} />
@@ -459,7 +482,7 @@ export default function BuildClient({
               ))}
             </div>
             <div>
-              <div className="flex items-center justify-between mb-1"><h4 className="text-sm font-semibold">Volunteer Work</h4><button onClick={addVolunteer} type="button" className="text-sm text-purple-700 font-medium">+ Add</button></div>
+              <div className="flex items-center justify-between mb-1"><h4 className="text-sm font-semibold">Volunteer Work</h4><button onClick={addVolunteer} type="button" className="text-sm text-blue-700 font-medium">+ Add</button></div>
               {(cvData.volunteerWork || []).map((v, i) => (
                 <div key={i} className="border rounded p-3 mb-2 space-y-2">
                   <input className="border rounded px-2 py-1.5 text-sm w-full" placeholder="Organization" value={v.organization} onChange={(e) => updateVolunteer(i, 'organization', e.target.value)} />
@@ -473,7 +496,7 @@ export default function BuildClient({
               ))}
             </div>
             <div>
-              <div className="flex items-center justify-between mb-1"><h4 className="text-sm font-semibold">Additional Sections</h4><button onClick={addAdditionalSection} type="button" className="text-sm text-purple-700 font-medium">+ Add</button></div>
+              <div className="flex items-center justify-between mb-1"><h4 className="text-sm font-semibold">Additional Sections</h4><button onClick={addAdditionalSection} type="button" className="text-sm text-blue-700 font-medium">+ Add</button></div>
               {(cvData.additionalSections || []).map((s, i) => (
                 <div key={i} className="border rounded p-3 mb-2 space-y-2">
                   <input className="border rounded px-2 py-1.5 text-sm w-full" placeholder="Section name" value={s.sectionName} onChange={(e) => updateAdditionalSection(i, 'sectionName', e.target.value)} />
@@ -484,7 +507,17 @@ export default function BuildClient({
             </div>
           </SectionShell>
 
-          <button onClick={() => setStage('result')} type="button" className="bg-purple-700 text-white px-6 py-3 rounded-lg font-semibold w-full mt-2">
+          <button onClick={() => {
+            saveToHistory({
+              roleSlug: roleSlug || roleLabel.toLowerCase().replace(/\s+/g, '-'),
+              roleLabel,
+              countryCode: countryCode || countryLabel.toLowerCase(),
+              countryLabel,
+              designId: selectedDesign,
+              cvData,
+            });
+            setStage('result');
+          }} type="button" className="bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold w-full mt-2">
             Generate CV
           </button>
         </div>
@@ -495,7 +528,7 @@ export default function BuildClient({
           <div className="flex gap-2 mb-3 overflow-x-auto flex-nowrap pb-1">
             {CV_PAGE_DESIGNS.map((d) => (
               <button key={d.id} onClick={() => setSelectedDesign(d.id)}
-                className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-full text-sm border ${selectedDesign === d.id ? 'bg-purple-700 text-white border-purple-700' : 'bg-white text-gray-700 border-gray-300'}`}>
+                className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-full text-sm border ${selectedDesign === d.id ? 'bg-blue-700 text-white border-blue-700' : 'bg-white text-gray-700 border-gray-300'}`}>
                 {d.name}
               </button>
             ))}
@@ -515,6 +548,7 @@ export default function BuildClient({
           </div>
         </div>
       )}
-    </main>
+      </main>
+    </>
   );
 }

@@ -11,6 +11,7 @@ import type { ContentRolePage } from '@/lib/cv-template-pages/data';
 import { CV_PAGE_DESIGNS } from '@/lib/cv-template-pages/design-list';
 import { renderCVTemplate } from '@/lib/cv-template-pages/cv-renderer';
 import { supabase } from '@/lib/supabase';
+import BackButton from '../../_components/back-button';
 
 export default function RolePageClient({ page }: { page: ContentRolePage }) {
   const [selectedDesign, setSelectedDesign] = useState(CV_PAGE_DESIGNS[0]?.id ?? 'template-1');
@@ -34,10 +35,12 @@ export default function RolePageClient({ page }: { page: ContentRolePage }) {
 
   return (
     <>
-      <main className="max-w-5xl mx-auto px-4 py-10 pb-28">
-        <nav className="text-sm text-gray-500 mb-4">
-          <Link href="/cv-templates">CV Templates</Link> / {page.role_label} / {page.country_label}
-        </nav>
+      <BackButton title={`${page.role_label} — ${page.country_label}`} href="/cv-templates" />
+      <main className="max-w-5xl mx-auto px-4 py-6 pb-28">
+        <div className="flex items-center justify-between mb-4 text-sm text-gray-500">
+          <span>{page.role_label} / {page.country_label}</span>
+          <Link href="/cv-templates/history" className="text-blue-700 font-medium">CV History</Link>
+        </div>
 
         <h1 className="text-3xl font-bold mb-4">
           {page.role_label} CV Template for {page.country_label}
@@ -55,7 +58,7 @@ export default function RolePageClient({ page }: { page: ContentRolePage }) {
                   onClick={() => setSelectedDesign(d.id)}
                   className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-full text-sm border ${
                     selectedDesign === d.id
-                      ? 'bg-purple-700 text-white border-purple-700'
+                      ? 'bg-blue-700 text-white border-blue-700'
                       : 'bg-white text-gray-700 border-gray-300'
                   }`}
                 >
@@ -103,10 +106,10 @@ export default function RolePageClient({ page }: { page: ContentRolePage }) {
             <div className="h-11" />
           ) : userId ? (
             <div className="grid grid-cols-3 gap-2">
-              <Link href={`${base}&start=quick`} className="text-center bg-purple-700 text-white rounded-lg py-2.5 px-2 text-sm font-semibold">
+              <Link href={`${base}&start=quick`} className="text-center bg-blue-700 text-white rounded-lg py-2.5 px-2 text-sm font-semibold">
                 Quick Create
               </Link>
-              <Link href={`${base}&start=fetch`} className="text-center border border-purple-700 text-purple-700 rounded-lg py-2.5 px-2 text-sm font-semibold">
+              <Link href={`${base}&start=fetch`} className="text-center border border-blue-700 text-blue-700 rounded-lg py-2.5 px-2 text-sm font-semibold">
                 Edit
               </Link>
               <Link href={`${base}&start=blank`} className="text-center border rounded-lg py-2.5 px-2 text-sm font-semibold text-gray-700">
@@ -116,10 +119,10 @@ export default function RolePageClient({ page }: { page: ContentRolePage }) {
           ) : (
             <div>
               <p className="text-xs text-gray-500 text-center mb-1.5">
-                <Link href={loginRedirect} className="text-purple-700 font-medium">Log in</Link> for Quick Create &amp; Edit
+                <Link href={loginRedirect} className="text-blue-700 font-medium">Log in</Link> for Quick Create &amp; Edit
               </p>
               <div className="grid grid-cols-2 gap-2">
-                <Link href={`${base}&start=sample`} className="text-center bg-purple-700 text-white rounded-lg py-2.5 px-2 text-sm font-semibold">
+                <Link href={`${base}&start=sample`} className="text-center bg-blue-700 text-white rounded-lg py-2.5 px-2 text-sm font-semibold">
                   Edit
                 </Link>
                 <Link href={`${base}&start=blank`} className="text-center border rounded-lg py-2.5 px-2 text-sm font-semibold text-gray-700">
