@@ -8,19 +8,6 @@ import { theme } from '@/lib/theme';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import AuthModal from '@/components/AuthModal';
-import CVFieldsEditor from '@/app/cv-templates/_components/cv-fields-editor';
-import { fetchOnboardingData, mapOnboardingToCVData, mapCVDataToOnboardingUpdate, updateOnboardingData } from '@/lib/cv-template-pages/onboarding-fetch';
-import type { CVData } from '@/lib/cv-template-pages/cv-data-types';
-
-function emptyCVProfile(): CVData {
-  return {
-    personalDetails: { name: '', title: '', email: '', phone: '', location: '' },
-    summary: '',
-    skills: [],
-    experience: [],
-    education: [],
-  };
-}
 
 interface ProfileData {
   full_name: string | null;
@@ -46,11 +33,7 @@ export default function SettingsPage() {
   const [loading, setLoading] = useState(true);
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [emailUpdates, setEmailUpdates] = useState(false);
-  const [showProfileEdit, setShowProfileEdit] = useState(false);
   const [authModalOpen, setAuthModalOpen] = useState(false);
-  const [cvProfileData, setCvProfileData] = useState<CVData | null>(null);
-  const [cvProfileLoading, setCvProfileLoading] = useState(false);
-  const [savingProfile, setSavingProfile] = useState(false);
 
   // Admin panel state
   const [isAdmin, setIsAdmin] = useState(false);
@@ -142,45 +125,6 @@ export default function SettingsPage() {
     } catch (error) {
       console.error('Error signing out:', error);
       alert('Failed to sign out. Please try again.');
-    }
-  };
-
-  const handleSaveProfile = async () => {
-    if (!user || !profileData) return;
-    setSavingProfile(true);
-    try {
-      const { error } = await supabase.from('profiles').upsert(
-        { id: user.id, full_name: profileData.full_name, email: profileData.email, updated_at: new Date().toISOString() },
-        { onConflict: 'id' }
-      );
-      if (error) throw error;
-      if (profileData.email !== user.email) {
-        const { error: updateError } = await supabase.auth.updateUser({ email: profileData.email });
-        if (updateError) console.error('Error updating auth email:', updateError);
-      }
-      if (cvProfileData) {
-        const updates = mapCVDataToOnboardingUpdate(cvProfileData);
-        const cvResult = await updateOnboardingData(user.id, updates);
-        if (!cvResult.success) console.error('Error updating CV profile:', cvResult.error);
-      }
-      setShowProfileEdit(false);
-      alert('Profile updated successfully!');
-    } catch (error: any) {
-      alert('Failed to update profile: ' + (error.message || 'Unknown error'));
-    } finally {
-      setSavingProfile(false);
-    }
-  };
-
-  const toggleProfileEdit = () => {
-    const opening = !showProfileEdit;
-    setShowProfileEdit(opening);
-    if (opening && user && !cvProfileData) {
-      setCvProfileLoading(true);
-      fetchOnboardingData(user.id).then((row) => {
-        setCvProfileData(row ? mapOnboardingToCVData(row) : emptyCVProfile());
-        setCvProfileLoading(false);
-      });
     }
   };
 
@@ -300,11 +244,11 @@ export default function SettingsPage() {
                 {profileData?.email && <p className="text-sm text-gray-600 truncate">{profileData.email}</p>}
               </div>
             </div>
-            <button onClick={toggleProfileEdit}
+            <Link href="/edit"
               className="px-4 py-2 rounded-lg border text-sm font-semibold transition-colors"
               style={{ backgroundColor: theme.colors.primary.light + '20', borderColor: theme.colors.primary.DEFAULT, color: theme.colors.primary.DEFAULT }}>
-              {showProfileEdit ? 'Cancel' : 'Edit'}
-            </button>
+              Edit
+            </Link>
           </div>
         ) : (
           <div className="mb-6 border-b" style={{ backgroundColor: theme.colors.primary.DEFAULT + '10', borderColor: theme.colors.border.DEFAULT }}>
@@ -313,41 +257,6 @@ export default function SettingsPage() {
               <Button onClick={() => setAuthModalOpen(true)} size="sm" style={{ backgroundColor: theme.colors.primary.DEFAULT }} className="flex-shrink-0">
                 <LogIn size={16} className="mr-2" />Sign Up
               </Button>
-            </div>
-          </div>
-        )}
-
-        {/* Profile edit form */}
-        {user && showProfileEdit && (
-          <div className="bg-white rounded-xl p-6 mb-6 shadow-sm border border-gray-100">
-            <h2 className="text-lg font-semibold mb-4 text-gray-900">Edit Profile</h2>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
-                <input type="text" value={profileData?.full_name || ''}
-                  onChange={(e) => { if (profileData) setProfileData({ ...profileData, full_name: e.target.value }); }}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Enter your full name" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                <input type="email" value={profileData?.email || ''}
-                  onChange={(e) => { if (profileData) setProfileData({ ...profileData, email: e.target.value }); }}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Enter your email" />
-              </div>
-
-              <div className="pt-2 border-t">
-                <h3 className="text-sm font-semibold text-gray-700 mt-3 mb-2">CV Details</h3>
-                <p className="text-xs text-gray-500 mb-3">Used to fill and tailor CVs across JobMeter.</p>
-                {cvProfileLoading ? (
-                  <p className="text-sm text-gray-400">Loading your CV details…</p>
-                ) : cvProfileData ? (
-                  <CVFieldsEditor cvData={cvProfileData} setCvData={setCvProfileData as React.Dispatch<React.SetStateAction<CVData>>} defaultOpenSections={['personal']} />
-                ) : null}
-              </div>
-
-              <button onClick={handleSaveProfile} disabled={savingProfile} className="w-full px-4 py-3 rounded-lg font-semibold text-sm text-white disabled:opacity-50" style={{ backgroundColor: theme.colors.primary.DEFAULT }}>
-                {savingProfile ? 'Saving…' : 'Save Changes'}
-              </button>
             </div>
           </div>
         )}
