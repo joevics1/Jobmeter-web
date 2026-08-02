@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef, useState } from 'react';
-import { Loader2, Download, FileDown, RotateCcw, AlertTriangle } from 'lucide-react';
+import { Loader2, Download, FileDown, Pencil, AlertTriangle } from 'lucide-react';
 import { GeneratedDocument, sanitizeDocument } from '@/lib/document-format';
 
 interface DocumentEditorProps {
@@ -118,7 +118,7 @@ export default function DocumentEditor({
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 pb-24">
       {/* Print styles — only #doc-print-area is visible when printing */}
       <style jsx global>{`
         @media print {
@@ -128,32 +128,6 @@ export default function DocumentEditor({
           .no-print { display: none !important; }
         }
       `}</style>
-
-      <div className="flex flex-wrap items-center gap-2 no-print">
-        <button
-          onClick={downloadPdf}
-          disabled={!!downloading}
-          className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white text-sm font-semibold rounded-lg px-4 py-2.5 transition-colors"
-        >
-          {downloading === 'pdf' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
-          Download PDF
-        </button>
-        <button
-          onClick={downloadDocx}
-          disabled={!!downloading}
-          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white text-sm font-semibold rounded-lg px-4 py-2.5 transition-colors"
-        >
-          {downloading === 'docx' ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileDown className="h-4 w-4" />}
-          Download Word
-        </button>
-        <button
-          onClick={onReset}
-          className="flex items-center gap-2 text-muted-foreground hover:text-foreground text-sm font-medium px-4 py-2.5 transition-colors ml-auto"
-        >
-          <RotateCcw className="h-4 w-4" />
-          {resetLabel}
-        </button>
-      </div>
 
       {error && <p className="text-sm text-red-500 no-print">{error}</p>}
 
@@ -227,6 +201,35 @@ export default function DocumentEditor({
               </div>
             ))}
           </div>
+        </div>
+      </div>
+
+      {/* Fixed bottom action bar — stays put while the document scrolls */}
+      <div className="no-print fixed bottom-0 left-0 right-0 z-40 bg-background border-t border-border">
+        <div className="max-w-screen-md mx-auto px-4 sm:px-6 py-3 flex items-center gap-2">
+          <button
+            onClick={onReset}
+            className="flex-1 flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold rounded-lg py-3 transition-colors"
+          >
+            <Pencil className="h-4 w-4" />
+            {resetLabel}
+          </button>
+          <button
+            onClick={downloadPdf}
+            disabled={!!downloading}
+            className="flex-1 flex items-center justify-center gap-2 border border-border bg-card hover:bg-muted disabled:opacity-50 text-foreground text-sm font-semibold rounded-lg py-3 transition-colors"
+          >
+            {downloading === 'pdf' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4 text-emerald-600" />}
+            <span className="hidden sm:inline">Download PDF</span>
+          </button>
+          <button
+            onClick={downloadDocx}
+            disabled={!!downloading}
+            className="flex-1 flex items-center justify-center gap-2 border border-border bg-card hover:bg-muted disabled:opacity-50 text-foreground text-sm font-semibold rounded-lg py-3 transition-colors"
+          >
+            {downloading === 'docx' ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileDown className="h-4 w-4 text-blue-600" />}
+            <span className="hidden sm:inline">Download Word</span>
+          </button>
         </div>
       </div>
     </div>

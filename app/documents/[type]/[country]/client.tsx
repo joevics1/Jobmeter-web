@@ -91,6 +91,7 @@ export default function TemplateDocumentClient({ template, docType, docCountry }
         {/* ── Screen 1: Preview ─────────────────────────────────────── */}
         {!generatedDocument && screen === 'preview' && (
           <>
+            <div className="pb-24 space-y-6">
             <div>
               <div className="flex items-center gap-2 mb-2">
                 <FileCheck2 className="h-4 w-4 text-blue-500" />
@@ -139,20 +140,26 @@ export default function TemplateDocumentClient({ template, docType, docCountry }
               </div>
             </div>
 
-            <button
-              onClick={() => setScreen('form')}
-              className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-lg py-3 transition-colors"
-            >
-              <Wand2 className="h-4 w-4" />
-              Create
-            </button>
-
             {/* SEO article content */}
             {template.seo_intro && (
               <div className="prose-sm text-muted-foreground leading-relaxed border-t border-border pt-6">
                 <p>{template.seo_intro}</p>
               </div>
             )}
+            </div>
+
+            {/* Fixed bottom action bar — stays put while the preview scrolls */}
+            <div className="no-print fixed bottom-0 left-0 right-0 z-40 bg-background border-t border-border">
+              <div className="max-w-screen-md mx-auto px-4 sm:px-6 py-3">
+                <button
+                  onClick={() => setScreen('form')}
+                  className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-lg py-3 transition-colors"
+                >
+                  <Wand2 className="h-4 w-4" />
+                  Create
+                </button>
+              </div>
+            </div>
           </>
         )}
 
