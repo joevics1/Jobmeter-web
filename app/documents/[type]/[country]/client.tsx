@@ -6,9 +6,8 @@ import { ChevronRight, Home, FileCheck2, Wand2, History } from 'lucide-react';
 import { DocumentTemplateRow, fillTemplate } from '@/lib/document-templates-data';
 import { DocumentTypeDef, DocumentCountryDef, HIGH_RISK_DOCUMENT_TYPES } from '@/lib/document-types';
 import { GeneratedDocument } from '@/lib/document-format';
-import { DocumentHistoryEntry, saveToHistory } from '@/lib/document-history';
+import { saveToHistory } from '@/lib/document-history';
 import DocumentEditor from '@/components/documents/DocumentEditor';
-import DocumentHistoryList from '@/components/documents/DocumentHistoryList';
 
 const SHORT_DISCLAIMER =
   'Informational only, not legal advice. Have high-value or high-risk agreements reviewed by a licensed attorney.';
@@ -53,10 +52,6 @@ export default function TemplateDocumentClient({ template, docType, docCountry }
     });
   };
 
-  const handleOpenHistoryEntry = (entry: DocumentHistoryEntry) => {
-    setGeneratedDocument(entry.document);
-  };
-
   const handleReset = () => {
     setGeneratedDocument(null);
     setValues({});
@@ -77,7 +72,7 @@ export default function TemplateDocumentClient({ template, docType, docCountry }
           </nav>
           <Link
             href="/documents/my-documents"
-            className="inline-flex items-center gap-1.5 bg-card border border-border hover:border-blue-500/40 hover:text-blue-500 text-xs font-semibold text-foreground rounded-lg px-3 py-1.5 transition-colors flex-shrink-0"
+            className="inline-flex items-center gap-1.5 bg-blue-600 hover:bg-blue-500 border border-blue-600 text-white text-xs font-semibold rounded-lg px-3 py-1.5 transition-colors flex-shrink-0"
           >
             <History className="h-3.5 w-3.5" />
             My Documents
@@ -103,8 +98,6 @@ export default function TemplateDocumentClient({ template, docType, docCountry }
             )}
 
             <p className="text-xs text-muted-foreground/80">{SHORT_DISCLAIMER}</p>
-
-            <DocumentHistoryList filterSource="template" onOpen={handleOpenHistoryEntry} />
 
             {/* Fill-in form */}
             <div className="bg-card border border-border rounded-xl p-5 space-y-4">

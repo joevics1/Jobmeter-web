@@ -73,7 +73,7 @@ export default function DocumentsIndexClient({ templates }: DocumentsIndexClient
       <div className="flex justify-end">
         <Link
           href="/documents/my-documents"
-          className="inline-flex items-center gap-2 bg-card border border-border hover:border-blue-500/40 hover:text-blue-500 text-sm font-semibold text-foreground rounded-lg px-4 py-2 transition-colors"
+          className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-500 border border-blue-600 text-white text-sm font-semibold rounded-lg px-4 py-2 transition-colors"
         >
           <History className="h-4 w-4" />
           My Documents
