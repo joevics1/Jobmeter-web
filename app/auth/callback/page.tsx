@@ -8,6 +8,12 @@ export default function AuthCallback() {
   const router = useRouter();
 
   useEffect(() => {
+    // Recruiters are routed here too (RecruiterAuthModal passes ?role=recruiter
+    // through the OAuth redirect) since Google doesn't let us attach custom
+    // metadata to the sign-in request itself.
+    const params = new URLSearchParams(window.location.search);
+    const role = params.get("role");
+
     // With implicit flow, Supabase automatically parses the hash fragment
     // (#access_token=...) because detectSessionInUrl: true is set in supabase.ts.
     // We just need to wait for the SIGNED_IN event, then redirect.
@@ -15,6 +21,31 @@ export default function AuthCallback() {
       async (event, session) => {
         if (event === "SIGNED_IN" && session?.user) {
           subscription.unsubscribe();
+
+          if (role === "recruiter") {
+            // Best-effort: make sure a recruiter profile row exists, same as
+            // the password sign-up flow. Never blocks the redirect if it fails.
+            try {
+              const { data: existingProfile } = await supabase
+                .from("profiles")
+                .select("id")
+                .eq("id", session.user.id)
+                .single();
+
+              if (!existingProfile) {
+                await supabase.from("profiles").insert([{
+                  id: session.user.id,
+                  email: session.user.email,
+                  user_type: "recruiter",
+                }]);
+              }
+            } catch (err) {
+              console.error("Recruiter profile setup error:", err);
+            }
+
+            router.replace("/submit");
+            return;
+          }
 
           const { data: onboarding } = await supabase
             .from("onboarding_data")
@@ -27,10 +58,10 @@ export default function AuthCallback() {
       }
     );
 
-    // Safety fallback: if no SIGNED_IN fires within 5s, go to login
+    // Safety fallback: if no SIGNED_IN fires within 5s, go back to sign in
     const timeout = setTimeout(() => {
       subscription.unsubscribe();
-      router.replace("/auth");
+      router.replace(role === "recruiter" ? "/" : "/auth");
     }, 5000);
 
     return () => {
