@@ -107,23 +107,23 @@ export default function RolePageClient({ page }: { page: ContentRolePage }) {
                 Quick Create
               </Link>
               <Link href={`${base}&start=fetch`} className="text-center border border-purple-700 text-purple-700 rounded-lg py-2.5 px-2 text-sm font-semibold">
-                Fetch My Details
+                Edit
               </Link>
               <Link href={`${base}&start=blank`} className="text-center border rounded-lg py-2.5 px-2 text-sm font-semibold text-gray-700">
-                Fill Out Form
+                Clear
               </Link>
             </div>
           ) : (
             <div>
               <p className="text-xs text-gray-500 text-center mb-1.5">
-                <Link href={loginRedirect} className="text-purple-700 font-medium">Log in</Link> for Quick Create &amp; Fetch My Details
+                <Link href={loginRedirect} className="text-purple-700 font-medium">Log in</Link> for Quick Create &amp; Edit
               </p>
               <div className="grid grid-cols-2 gap-2">
                 <Link href={`${base}&start=sample`} className="text-center bg-purple-700 text-white rounded-lg py-2.5 px-2 text-sm font-semibold">
-                  Edit Sample Document
+                  Edit
                 </Link>
                 <Link href={`${base}&start=blank`} className="text-center border rounded-lg py-2.5 px-2 text-sm font-semibold text-gray-700">
-                  Empty Form
+                  Clear
                 </Link>
               </div>
             </div>
