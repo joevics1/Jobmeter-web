@@ -1,8 +1,10 @@
 'use client';
 
 import { useRef, useState } from 'react';
-import { Loader2, Download, FileDown, Pencil, AlertTriangle } from 'lucide-react';
-import { GeneratedDocument, sanitizeDocument } from '@/lib/document-format';
+import { Loader2, Pencil, AlertTriangle } from 'lucide-react';
+import { GeneratedDocument } from '@/lib/document-format';
+import { downloadDocx as downloadDocxFile } from '@/lib/document-docx-export';
+import DocumentPrintStyles from '@/components/documents/DocumentPrintStyles';
 
 interface DocumentEditorProps {
   document: GeneratedDocument;
@@ -50,65 +52,7 @@ export default function DocumentEditor({
   const downloadDocx = async () => {
     setDownloading('docx');
     try {
-      const {
-        Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType, BorderStyle,
-      } = await import('docx');
-
-      const doc = sanitizeDocument(generatedDocument);
-      const children: any[] = [
-        new Paragraph({
-          text: doc.title,
-          heading: HeadingLevel.TITLE,
-          alignment: AlignmentType.CENTER,
-          spacing: { after: 300 },
-        }),
-      ];
-
-      if (doc.intro) {
-        children.push(new Paragraph({ text: doc.intro, spacing: { after: 300 } }));
-      }
-
-      for (const section of doc.sections) {
-        children.push(new Paragraph({
-          text: section.heading,
-          heading: HeadingLevel.HEADING_2,
-          spacing: { before: 300, after: 150 },
-        }));
-        for (const para of section.body.split(/\n\n+/)) {
-          if (para.trim()) {
-            children.push(new Paragraph({ text: para.trim(), spacing: { after: 150 } }));
-          }
-        }
-      }
-
-      children.push(new Paragraph({
-        text: 'SIGNATURES',
-        heading: HeadingLevel.HEADING_2,
-        spacing: { before: 400, after: 300 },
-      }));
-
-      for (const sig of doc.signatures) {
-        children.push(
-          new Paragraph({
-            border: { bottom: { style: BorderStyle.SINGLE, size: 6, color: '999999' } },
-            spacing: { before: 400 },
-          }),
-          new Paragraph({
-            children: [new TextRun({ text: `${sig.role} — Signature`, size: 18, color: '666666' })],
-            spacing: { after: 300 },
-          }),
-          new Paragraph({ text: `${sig.role} — Printed Name: ________________________   Date: ______________`, spacing: { after: 300 } }),
-        );
-      }
-
-      const docxDoc = new Document({ sections: [{ children }] });
-      const blob = await Packer.toBlob(docxDoc);
-      const url = URL.createObjectURL(blob);
-      const a = window.document.createElement('a');
-      a.href = url;
-      a.download = `${fileNamePrefix.replace(/\s+/g, '-').toLowerCase()}.docx`;
-      a.click();
-      URL.revokeObjectURL(url);
+      await downloadDocxFile(generatedDocument, fileNamePrefix);
     } catch (err) {
       console.error(err);
       setError('Could not build the Word file. Please try again.');
@@ -119,15 +63,7 @@ export default function DocumentEditor({
 
   return (
     <div className="space-y-4 pb-24">
-      {/* Print styles — only #doc-print-area is visible when printing */}
-      <style jsx global>{`
-        @media print {
-          body * { visibility: hidden; }
-          #doc-print-area, #doc-print-area * { visibility: visible; }
-          #doc-print-area { position: absolute; left: 0; top: 0; width: 100%; box-shadow: none !important; }
-          .no-print { display: none !important; }
-        }
-      `}</style>
+      <DocumentPrintStyles />
 
       {error && <p className="text-sm text-red-500 no-print">{error}</p>}
 
@@ -219,7 +155,7 @@ export default function DocumentEditor({
             disabled={!!downloading}
             className="flex-1 flex items-center justify-center gap-2 border border-border bg-card hover:bg-muted disabled:opacity-50 text-foreground text-sm font-semibold rounded-lg py-3 transition-colors"
           >
-            {downloading === 'pdf' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4 text-emerald-600" />}
+            {downloading === 'pdf' ? <Loader2 className="h-4 w-4 animate-spin" /> : <img src="/pdf.png" alt="" className="h-5 w-5" />}
             <span className="hidden sm:inline">Download PDF</span>
           </button>
           <button
@@ -227,7 +163,7 @@ export default function DocumentEditor({
             disabled={!!downloading}
             className="flex-1 flex items-center justify-center gap-2 border border-border bg-card hover:bg-muted disabled:opacity-50 text-foreground text-sm font-semibold rounded-lg py-3 transition-colors"
           >
-            {downloading === 'docx' ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileDown className="h-4 w-4 text-blue-600" />}
+            {downloading === 'docx' ? <Loader2 className="h-4 w-4 animate-spin" /> : <img src="/docx.png" alt="" className="h-5 w-5" />}
             <span className="hidden sm:inline">Download Word</span>
           </button>
         </div>
