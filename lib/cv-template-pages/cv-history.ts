@@ -15,8 +15,8 @@ export interface CVHistoryEntry {
   createdAt: string; // ISO
   roleSlug: string;
   roleLabel: string;
-  countryCode: string;
-  countryLabel: string;
+  countryCode?: string;
+  countryLabel?: string;
   designId: string;
   cvData: CVData;
 }

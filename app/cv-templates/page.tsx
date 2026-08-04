@@ -6,8 +6,8 @@ import { getAllPublishedRolePages } from '@/lib/cv-template-pages/data';
 import BackButton from './_components/back-button';
 
 export const metadata = {
-  title: 'Free CV Templates by Role & Country | JobMeter',
-  description: 'Browse free, role-specific CV templates tailored for job seekers across different countries.',
+  title: 'Free CV Templates by Role | JobMeter',
+  description: 'Browse free, role-specific CV templates tailored for job seekers.',
 };
 
 export const dynamic = 'force-dynamic';
@@ -20,7 +20,7 @@ export default async function CVTemplatesHub() {
       <BackButton title="Free CV Templates" href="/" />
       <main className="max-w-5xl mx-auto px-4 py-6">
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold">Browse by Role & Country</h1>
+          <h1 className="text-2xl font-bold">Browse by Role</h1>
           <Link href="/cv-templates/history" className="text-sm text-blue-700 font-medium">CV History</Link>
         </div>
         {pages.length === 0 ? (
@@ -30,10 +30,10 @@ export default async function CVTemplatesHub() {
             {pages.map((p) => (
               <li key={p.id}>
                 <Link
-                  href={`/cv-templates/${p.role_slug}/${p.country_code}`}
+                  href={`/cv-templates/${p.role_slug}`}
                   className="block border rounded-lg p-4 hover:border-blue-600"
                 >
-                  <span className="font-semibold">{p.role_label}</span> — {p.country_label}
+                  <span className="font-semibold">{p.role_label}</span>
                 </Link>
               </li>
             ))}

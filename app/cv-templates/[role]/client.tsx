@@ -1,9 +1,11 @@
 'use client';
 
-// app/cv-templates/[role]/[country]/client.tsx
+// app/cv-templates/[role]/client.tsx
 // SEO copy + horizontally-scrolling design preview + a static bottom action
 // bar that goes straight into the form (2 buttons signed-out, 3 signed-in).
 // No generic "Build your CV" CTA — the entry points ARE the action bar.
+//
+// Country is omitted from the URL/UI for now — see lib/cv-template-pages/data.ts.
 
 import { useState, useMemo, useEffect, useRef } from 'react';
 import Link from 'next/link';
@@ -11,7 +13,7 @@ import type { ContentRolePage } from '@/lib/cv-template-pages/data';
 import { CV_PAGE_DESIGNS } from '@/lib/cv-template-pages/design-list';
 import { renderCVTemplate } from '@/lib/cv-template-pages/cv-renderer';
 import { supabase } from '@/lib/supabase';
-import BackButton from '../../_components/back-button';
+import BackButton from '../_components/back-button';
 
 export default function RolePageClient({ page }: { page: ContentRolePage }) {
   const [selectedDesign, setSelectedDesign] = useState(CV_PAGE_DESIGNS[0]?.id ?? 'template-1');
@@ -43,20 +45,20 @@ export default function RolePageClient({ page }: { page: ContentRolePage }) {
     return renderCVTemplate(selectedDesign, page.preview_cv_data, 'view');
   }, [selectedDesign, page.preview_cv_data]);
 
-  const base = `/cv-templates/build?role=${encodeURIComponent(page.role_slug)}&country=${encodeURIComponent(page.country_code)}`;
+  const base = `/cv-templates/build?role=${encodeURIComponent(page.role_slug)}`;
   const loginRedirect = `/auth/login?redirect=${encodeURIComponent(base)}`;
 
   return (
     <>
-      <BackButton title={`${page.role_label} — ${page.country_label}`} href="/cv-templates" />
+      <BackButton title={page.role_label} href="/cv-templates" />
       <main className="max-w-5xl mx-auto px-4 py-6 pb-28">
         <div className="flex items-center justify-between mb-4 text-sm text-gray-500">
-          <span>{page.role_label} / {page.country_label}</span>
+          <span>{page.role_label}</span>
           <Link href="/cv-templates/history" className="text-blue-700 font-medium">CV History</Link>
         </div>
 
         <h1 className="text-3xl font-bold mb-4">
-          {page.role_label} CV Template for {page.country_label}
+          {page.role_label} CV Template
         </h1>
 
         {page.seo_intro && <p className="text-lg text-gray-700 mb-6">{page.seo_intro}</p>}

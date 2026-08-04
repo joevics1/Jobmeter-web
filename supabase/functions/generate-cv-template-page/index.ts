@@ -14,7 +14,6 @@ const corsHeaders = {
 
 interface RequestBody {
   roleLabel: string;
-  countryLabel: string;
   fullName: string;
   email?: string;
   phone?: string;
@@ -26,7 +25,7 @@ interface RequestBody {
 
 const SYSTEM_PROMPT = `You are an expert CV writer. Build a professional, realistic CV that:
 1. Fits EXACTLY on ONE A4 page
-2. Is tailored to the target role and country given
+2. Is tailored to the target role given
 3. Uses ONLY the information provided — do NOT invent employers, dates, or credentials beyond what's given
 4. Where detail is thin (e.g. no work history provided), keep sections concise rather than fabricating specifics
 5. Writes a compelling 3-4 sentence professional summary
@@ -90,11 +89,11 @@ serve(async (req) => {
 
   try {
     const body: RequestBody = await req.json();
-    const { roleLabel, countryLabel, fullName, email, phone, yearsExperience, summaryHint, skills, userId } = body;
+    const { roleLabel, fullName, email, phone, yearsExperience, summaryHint, skills, userId } = body;
 
-    if (!roleLabel || !countryLabel || !fullName) {
+    if (!roleLabel || !fullName) {
       return new Response(
-        JSON.stringify({ error: 'Missing required fields: roleLabel, countryLabel, fullName' }),
+        JSON.stringify({ error: 'Missing required fields: roleLabel, fullName' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -119,7 +118,6 @@ serve(async (req) => {
     }
 
     const prompt = `**TARGET ROLE**: ${roleLabel}
-**TARGET COUNTRY**: ${countryLabel}
 **FULL NAME**: ${fullName}
 **EMAIL**: ${email || 'not provided'}
 **PHONE**: ${phone || 'not provided'}

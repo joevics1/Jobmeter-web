@@ -8,7 +8,7 @@ export async function GET() {
   const urls = pages
     .map(
       (p) => `  <url>
-    <loc>https://jobmeter.app/cv-templates/${p.role_slug}/${p.country_code}</loc>
+    <loc>https://jobmeter.app/cv-templates/${p.role_slug}</loc>
     <lastmod>${p.updated_at}</lastmod>
   </url>`
     )

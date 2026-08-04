@@ -38,17 +38,13 @@ const FETCH_MESSAGES = ['Fetching your saved details…'];
 
 export default function BuildClient({
   roleSlug,
-  countryCode,
   roleLabel,
-  countryLabel,
   sampleCvData,
   start,
   historyId,
 }: {
   roleSlug: string;
-  countryCode: string;
   roleLabel: string;
-  countryLabel: string;
   sampleCvData: CVData | null;
   start: StartMode;
   historyId?: string;
@@ -87,8 +83,6 @@ export default function BuildClient({
     saveToHistory({
       roleSlug: roleSlug || roleLabel.toLowerCase().replace(/\s+/g, '-'),
       roleLabel,
-      countryCode: countryCode || countryLabel.toLowerCase(),
-      countryLabel,
       designId,
       cvData: data,
     });
@@ -154,7 +148,7 @@ export default function BuildClient({
         }
         try {
           const { data: fnData, error: fnError } = await supabase.functions.invoke('tailor-cv-template-page', {
-            body: { userId: uid, roleLabel, countryLabel },
+            body: { userId: uid, roleLabel },
           });
           if (cancelled) return;
           if (fnError) throw new Error(fnError.message);
@@ -246,7 +240,7 @@ export default function BuildClient({
       const { error: insertError } = await supabase.from('cv_template_generations').insert({
         user_id: userId,
         role_slug: roleSlug || roleLabel.toLowerCase().replace(/\s+/g, '-'),
-        country_code: countryCode || countryLabel.toLowerCase(),
+        country_code: '', // country omitted from the UI for now; column is NOT NULL
         design_id: selectedDesign,
         cv_data: cvData,
       });
@@ -261,10 +255,9 @@ export default function BuildClient({
 
   return (
     <>
-      <BackButton title={`Build Your ${roleLabel} CV`} href={roleSlug && countryCode ? `/cv-templates/${roleSlug}/${countryCode}` : '/cv-templates'} />
+      <BackButton title={`Build Your ${roleLabel} CV`} href={roleSlug ? `/cv-templates/${roleSlug}` : '/cv-templates'} />
       <main className="max-w-3xl mx-auto px-4 py-6">
-        <div className="flex items-center justify-between mb-4">
-          <p className="text-gray-500 text-sm">{countryLabel}</p>
+        <div className="flex items-center justify-end mb-4">
           <Link href="/cv-templates/history" className="text-sm text-blue-700 font-medium">CV History</Link>
         </div>
 

@@ -388,7 +388,7 @@ export default function SettingsPage() {
                 </div>
                 <div className="text-left">
                   <h3 className="font-semibold text-gray-900">CV Templates (Beta)</h3>
-                  <p className="text-xs text-gray-500">Role &amp; country CV pages — testing the new builder</p>
+                  <p className="text-xs text-gray-500">Role-based CV pages — testing the new builder</p>
                 </div>
               </div>
               <ChevronRight size={20} className="text-gray-400" />

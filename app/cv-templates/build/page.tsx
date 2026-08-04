@@ -1,7 +1,9 @@
 // app/cv-templates/build/page.tsx
-// Shared entry point for CV creation, reached via ?role=&country= from any
-// role/country landing page. Fetches that page's sample CV (for the
-// signed-out "Edit Sample Document" path) — isolated data layer only.
+// Shared entry point for CV creation, reached via ?role= from any role
+// landing page. Fetches that page's sample CV (for the signed-out "Edit
+// Sample Document" path) — isolated data layer only.
+//
+// Country is omitted for now — see lib/cv-template-pages/data.ts.
 
 import { getRolePage } from '@/lib/cv-template-pages/data';
 import BuildClient from './client';
@@ -14,21 +16,18 @@ export const metadata = {
 export default async function BuildPage({
   searchParams,
 }: {
-  searchParams: { role?: string; country?: string; start?: string; historyId?: string };
+  searchParams: { role?: string; start?: string; historyId?: string };
 }) {
   const roleSlug = searchParams.role || '';
-  const countryCode = searchParams.country || '';
   const start = searchParams.start || 'blank';
   const historyId = searchParams.historyId || '';
 
-  const rolePage = roleSlug && countryCode ? await getRolePage('cv', roleSlug, countryCode) : null;
+  const rolePage = roleSlug ? await getRolePage('cv', roleSlug) : null;
 
   return (
     <BuildClient
       roleSlug={roleSlug}
-      countryCode={countryCode}
       roleLabel={rolePage?.role_label || roleSlug.replace(/-/g, ' ')}
-      countryLabel={rolePage?.country_label || countryCode.toUpperCase()}
       sampleCvData={rolePage?.preview_cv_data || null}
       start={start as 'quick' | 'fetch' | 'blank' | 'sample' | 'history'}
       historyId={historyId}

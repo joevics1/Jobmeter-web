@@ -15,7 +15,6 @@ const corsHeaders = {
 interface RequestBody {
   userId: string;
   roleLabel: string;
-  countryLabel: string;
 }
 
 const TAILOR_PROMPT = `You are tailoring an existing CV to a target role. Rules:
@@ -74,9 +73,9 @@ serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
 
   try {
-    const { userId, roleLabel, countryLabel }: RequestBody = await req.json();
-    if (!userId || !roleLabel || !countryLabel) {
-      return new Response(JSON.stringify({ error: 'Missing userId, roleLabel, or countryLabel' }), {
+    const { userId, roleLabel }: RequestBody = await req.json();
+    if (!userId || !roleLabel) {
+      return new Response(JSON.stringify({ error: 'Missing userId or roleLabel' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -102,7 +101,6 @@ serve(async (req) => {
     }
 
     const prompt = `**TARGET ROLE**: ${roleLabel}
-**TARGET COUNTRY**: ${countryLabel}
 
 **USER PROFILE DATA**:
 ${JSON.stringify(onboarding, null, 2)}

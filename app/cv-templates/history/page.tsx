@@ -20,7 +20,7 @@ export default function CVHistoryPage() {
   }, []);
 
   function openEntry(entry: CVHistoryEntry) {
-    router.push(`/cv-templates/build?role=${entry.roleSlug}&country=${entry.countryCode}&start=history&historyId=${entry.id}`);
+    router.push(`/cv-templates/build?role=${entry.roleSlug}&start=history&historyId=${entry.id}`);
   }
 
   return (
@@ -46,7 +46,7 @@ export default function CVHistoryPage() {
               {entries.map((entry) => (
                 <div key={entry.id} className="flex items-center justify-between gap-3 border rounded-lg px-3 py-2.5 hover:border-gray-400 transition-colors">
                   <button onClick={() => openEntry(entry)} className="flex-1 text-left min-w-0">
-                    <p className="text-sm font-medium text-gray-900 truncate">{entry.roleLabel} — {entry.countryLabel}</p>
+                    <p className="text-sm font-medium text-gray-900 truncate">{entry.roleLabel}</p>
                     <p className="text-xs text-gray-500">
                       {new Date(entry.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
                     </p>

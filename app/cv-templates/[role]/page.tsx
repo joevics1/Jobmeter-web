@@ -1,7 +1,9 @@
-// app/cv-templates/[role]/[country]/page.tsx
+// app/cv-templates/[role]/page.tsx
 // New, isolated route for the CV Templates SEO pages. Only depends on
 // lib/cv-template-pages/* (fresh table + copied types/renderer) — does not
 // touch or import the existing /cv/create builder code.
+//
+// Country is omitted from the URL for now — see lib/cv-template-pages/data.ts.
 
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
@@ -16,16 +18,16 @@ export async function generateStaticParams() {
 export const dynamic = 'force-dynamic';
 
 export async function generateMetadata(
-  { params }: { params: { role: string; country: string } }
+  { params }: { params: { role: string } }
 ): Promise<Metadata> {
-  const page = await getRolePage('cv', params.role, params.country);
+  const page = await getRolePage('cv', params.role);
   if (!page) return { title: 'Not Found' };
 
-  const title = page.meta_title || `${page.role_label} CV Template for ${page.country_label} (Free) | JobMeter`;
+  const title = page.meta_title || `${page.role_label} CV Template (Free) | JobMeter`;
   const description =
     page.meta_description ||
-    `Free ${page.role_label} CV template for ${page.country_label}. Fill in your details, switch designs, and download — no sign-up required.`;
-  const url = `https://jobmeter.app/cv-templates/${params.role}/${params.country}`;
+    `Free ${page.role_label} CV template. Fill in your details, switch designs, and download — no sign-up required.`;
+  const url = `https://jobmeter.app/cv-templates/${params.role}`;
 
   return {
     title,
@@ -42,7 +44,7 @@ function buildSchema(page: NonNullable<Awaited<ReturnType<typeof getRolePage>>>,
       '@context': 'https://schema.org',
       '@type': 'WebPage',
       '@id': url,
-      name: `${page.role_label} CV Template for ${page.country_label}`,
+      name: `${page.role_label} CV Template`,
       url,
       isPartOf: { '@type': 'WebSite', name: 'JobMeter', url: 'https://jobmeter.app' },
     },
@@ -52,7 +54,7 @@ function buildSchema(page: NonNullable<Awaited<ReturnType<typeof getRolePage>>>,
       itemListElement: [
         { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://jobmeter.app' },
         { '@type': 'ListItem', position: 2, name: 'CV Templates', item: 'https://jobmeter.app/cv-templates' },
-        { '@type': 'ListItem', position: 3, name: `${page.role_label} — ${page.country_label}`, item: url },
+        { '@type': 'ListItem', position: 3, name: page.role_label, item: url },
       ],
     },
   ];
@@ -73,12 +75,12 @@ function buildSchema(page: NonNullable<Awaited<ReturnType<typeof getRolePage>>>,
 }
 
 export default async function CVRolePage(
-  { params }: { params: { role: string; country: string } }
+  { params }: { params: { role: string } }
 ) {
-  const page = await getRolePage('cv', params.role, params.country);
+  const page = await getRolePage('cv', params.role);
   if (!page) notFound();
 
-  const url = `https://jobmeter.app/cv-templates/${params.role}/${params.country}`;
+  const url = `https://jobmeter.app/cv-templates/${params.role}`;
   const schemas = buildSchema(page, url);
 
   return (
