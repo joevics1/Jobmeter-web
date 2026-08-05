@@ -40,7 +40,8 @@ Return ONLY this JSON shape, no markdown, no explanation (omit any field/section
   "interests": ["string"],
   "publications": [{ "title": "string", "journal": "string", "year": "string" }],
   "volunteerWork": [{ "organization": "string", "role": "string", "duration": "string", "description": "string" }],
-  "additionalSections": [{ "sectionName": "string", "content": "string" }]
+  "additionalSections": [{ "sectionName": "string", "content": "string" }],
+  "references": [{ "name": "string", "title": "string", "company": "string", "phone": "string", "email": "string" }]
 }`;
 
 async function callGemini(prompt: string): Promise<string> {

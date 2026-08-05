@@ -100,6 +100,21 @@ export async function downloadCVAsDocx(data: CVData, fileNamePrefix: string) {
     );
   }
 
+  if (data.references?.length) {
+    children.push(new Paragraph({ text: 'REFERENCES', heading: HeadingLevel.HEADING_2, spacing: { before: 200, after: 100 } }));
+    for (const ref of data.references) {
+      children.push(
+        new Paragraph({
+          spacing: { after: 50 },
+          children: [
+            new TextRun({ text: [ref.name, ref.title, ref.company].filter(Boolean).join(', '), bold: true }),
+          ],
+        }),
+        new Paragraph({ text: [ref.phone, ref.email].filter(Boolean).join('  |  '), spacing: { after: 100 } }),
+      );
+    }
+  }
+
   // A subtle divider before the end, matching naira-autos' visual convention
   children.push(new Paragraph({ border: { top: { style: BorderStyle.SINGLE, size: 4, color: 'CCCCCC' } }, spacing: { before: 300 } }));
 

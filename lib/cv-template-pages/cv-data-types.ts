@@ -57,6 +57,13 @@ export interface CVData {
     sectionName: string;
     content: string;
   }>;
+  references?: Array<{
+    name: string;
+    title?: string;
+    company?: string;
+    phone?: string;
+    email?: string;
+  }>;
 }
 
 export interface CVTemplate {

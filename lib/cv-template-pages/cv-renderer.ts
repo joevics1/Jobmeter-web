@@ -230,481 +230,7 @@ function calculateSpacing(data: CVData): { spacing: number; useDistribution: boo
   return { spacing: Math.round(spacing), useDistribution };
 }
 
-// ==================== TEMPLATE 1: Purple Classic (FIXED) ====================
-function renderTemplate1(data: CVData): string {
-  const { spacing, useDistribution } = calculateSpacing(data);
-  const contentJustify = useDistribution ? 'justify-content: space-between;' : 'justify-content: flex-start;';
-  
-  const css = `
-    ${baseCss}
-    .page { padding: 12mm 10mm; }
-    .header { text-align: center; border-bottom: 2px solid #7c3aed; padding-bottom: 8mm; margin-bottom: 8mm; }
-    .name { font-size: 28pt; font-weight: bold; color: #7c3aed; margin-bottom: 4mm; }
-    .title { font-size: 14pt; color: #666; margin-bottom: 3mm; }
-    .contact { font-size: 10pt; color: #555; }
-    .content {
-      --section-spacing: ${spacing}mm;
-      height: 207mm;
-      max-height: 207mm;
-      display: flex;
-      flex-direction: column;
-      ${contentJustify}
-      overflow: hidden;
-    }
-    .section { margin-bottom: var(--section-spacing); page-break-inside: avoid; }
-    .section:last-child { margin-bottom: 0; }
-    .section-title { font-size: 14pt; font-weight: bold; color: #7c3aed; border-bottom: 1px solid #e5e7eb; padding-bottom: 2mm; margin-bottom: 4mm; }
-    .experience-item, .education-item { margin-bottom: 4mm; }
-    .item-header { font-weight: bold; font-size: 11pt; color: #333; margin-bottom: 1mm; }
-    .item-subheader { font-size: 10pt; color: #666; margin-bottom: 2mm; }
-    ul { margin-left: 5mm; margin-top: 2mm; }
-    li { font-size: 10pt; line-height: 1.4; margin-bottom: 1mm; }
-    .skills { display: flex; flex-wrap: wrap; gap: 2mm; }
-    .skill { background: #f3f4f6; padding: 2mm 4mm; border-radius: 3mm; font-size: 10pt; }
-  `;
-
-  const contactInfo = [
-    data.personalDetails.email,
-    data.personalDetails.phone,
-    data.personalDetails.location
-  ].filter(Boolean).map(htmlEscape).join(' | ');
-
-  return `<!DOCTYPE html><html><head><meta charset="utf-8"/><style>${css}</style></head><body>
-    <div class="page">
-      <div class="header">
-        <div class="name">${htmlEscape(data.personalDetails.name)}</div>
-        <div class="title">${htmlEscape(data.personalDetails.title)}</div>
-        <div class="contact">${contactInfo}</div>
-      </div>
-      
-      <div class="content">
-        ${data.summary ? `<div class="section"><div class="section-title">Professional Summary</div><div style="font-size: 10pt; line-height: 1.5; text-align: justify;">${htmlEscape(data.summary)}</div></div>` : ''}
-      
-      ${data.roles && data.roles.length > 0 ? `<div class="section">
-        <div class="section-title">Professional Roles</div>
-        <div style="font-size: 10pt; line-height: 1.6;">
-          ${data.roles.map(role => `<div style="margin-bottom: 2mm;">• ${htmlEscape(role)}</div>`).join('')}
-        </div>
-      </div>` : ''}
-      
-      ${data.experience && data.experience.length > 0 ? `<div class="section">
-        <div class="section-title">Work Experience</div>
-        ${data.experience.map(exp => `
-          <div class="experience-item">
-            <div class="item-header">${htmlEscape(exp.role)}</div>
-            <div class="item-subheader">${htmlEscape(exp.company)} | ${htmlEscape(exp.years)}</div>
-            <ul>${formatBullets(exp.bullets)}</ul>
-          </div>
-        `).join('')}
-      </div>` : ''}
-      
-      ${data.education && data.education.length > 0 ? `<div class="section">
-        <div class="section-title">Education</div>
-        ${data.education.map(edu => `
-          <div class="education-item">
-            <div class="item-header">${htmlEscape(edu.degree)}</div>
-            <div class="item-subheader">${htmlEscape(edu.institution)} | ${htmlEscape(edu.years)}</div>
-          </div>
-        `).join('')}
-      </div>` : ''}
-      
-      ${data.projects && data.projects.length > 0 ? `<div class="section">
-        <div class="section-title">Projects</div>
-        ${data.projects.map(proj => `
-          <div class="experience-item">
-            <div class="item-header">${htmlEscape(proj.title)}</div>
-            <div style="font-size: 10pt; line-height: 1.5; margin-top: 2mm;">${htmlEscape(proj.description)}</div>
-          </div>
-        `).join('')}
-      </div>` : ''}
-      
-      ${data.accomplishments && data.accomplishments.length > 0 ? `<div class="section">
-        <div class="section-title">Key Accomplishments</div>
-        <ul style="margin-left: 5mm;">${data.accomplishments.map(acc => `<li style="font-size: 10pt; line-height: 1.5; margin-bottom: 2mm;">${htmlEscape(acc)}</li>`).join('')}</ul>
-      </div>` : ''}
-      
-      ${data.awards && data.awards.length > 0 ? `<div class="section">
-        <div class="section-title">Awards</div>
-        ${data.awards.map(award => `
-          <div class="education-item">
-            <div class="item-header">${htmlEscape(award.title)}${award.issuer ? ` - ${htmlEscape(award.issuer)}` : ''}${award.year ? ` (${htmlEscape(award.year)})` : ''}</div>
-          </div>
-        `).join('')}
-      </div>` : ''}
-      
-      ${data.certifications && data.certifications.length > 0 ? `<div class="section">
-        <div class="section-title">Certifications</div>
-        ${data.certifications.map(cert => `
-          <div class="education-item">
-            <div class="item-header">${htmlEscape(cert.name)}${cert.issuer ? ` - ${htmlEscape(cert.issuer)}` : ''}${cert.year ? ` (${htmlEscape(cert.year)})` : ''}</div>
-          </div>
-        `).join('')}
-      </div>` : ''}
-      
-      ${data.skills && data.skills.length > 0 ? `<div class="section">
-        <div class="section-title">Skills</div>
-        <div class="skills">${data.skills.slice(0, 15).map(skill => `<span class="skill">${htmlEscape(skill)}</span>`).join('')}</div>
-      </div>` : ''}
-      
-      ${data.languages && data.languages.length > 0 ? `<div class="section">
-        <div class="section-title">Languages</div>
-        <div class="skills">${data.languages.map(lang => `<span class="skill">${htmlEscape(lang)}</span>`).join('')}</div>
-      </div>` : ''}
-      
-      ${data.interests && data.interests.length > 0 ? `<div class="section">
-        <div class="section-title">Interests</div>
-        <div class="skills">${data.interests.map(int => `<span class="skill">${htmlEscape(int)}</span>`).join('')}</div>
-      </div>` : ''}
-      
-      ${data.publications && data.publications.length > 0 ? `<div class="section">
-        <div class="section-title">Publications</div>
-        ${data.publications.map(pub => `
-          <div class="education-item">
-            <div class="item-header">${htmlEscape(pub.title)}${pub.journal ? ` - ${htmlEscape(pub.journal)}` : ''}${pub.year ? ` (${htmlEscape(pub.year)})` : ''}</div>
-          </div>
-        `).join('')}
-      </div>` : ''}
-      
-      ${data.volunteerWork && data.volunteerWork.length > 0 ? `<div class="section">
-        <div class="section-title">Volunteer Work</div>
-        ${data.volunteerWork.map(vol => `
-          <div class="experience-item">
-            <div class="item-header">${htmlEscape(vol.role || 'Volunteer')}${vol.organization ? ` - ${htmlEscape(vol.organization)}` : ''}</div>
-            ${vol.duration ? `<div class="item-subheader">${htmlEscape(vol.duration)}</div>` : ''}
-            ${vol.description ? `<div style="font-size: 10pt; line-height: 1.5; margin-top: 2mm;">${htmlEscape(vol.description)}</div>` : ''}
-          </div>
-        `).join('')}
-      </div>` : ''}
-      
-      ${data.additionalSections && data.additionalSections.length > 0 ? data.additionalSections.map(section => `
-        <div class="section">
-          <div class="section-title">${htmlEscape(section.sectionName)}</div>
-          <div style="font-size: 10pt; line-height: 1.5;">${htmlEscape(section.content)}</div>
-        </div>
-      `).join('') : ''}
-      </div>
-    </div>
-  </body></html>`;
-}
-
-// ==================== TEMPLATE 2: Burgundy Elegant ====================
-function renderTemplate2(data: CVData): string {
-  const { spacing, useDistribution } = calculateSpacing(data);
-  const contentJustify = useDistribution ? 'justify-content: space-between;' : 'justify-content: flex-start;';
-  
-  const css = `
-    ${baseCss}
-    .page { padding: 12mm 10mm; }
-    .header { border-bottom: 3px solid #800020; padding-bottom: 8mm; margin-bottom: 8mm; }
-    .header-left { display: flex; flex-direction: column; }
-    .name { font-size: 32pt; font-weight: bold; color: #800020; margin-bottom: 3mm; }
-    .title { font-size: 13pt; color: #666; margin-bottom: 4mm; font-style: italic; }
-    .contact { font-size: 9.5pt; color: #555; display: flex; flex-wrap: wrap; gap: 4mm; }
-    .content {
-      --section-spacing: ${spacing}mm;
-      height: 207mm;
-      max-height: 207mm;
-      display: flex;
-      flex-direction: column;
-      ${contentJustify}
-      overflow: hidden;
-    }
-    .section { margin-bottom: var(--section-spacing); page-break-inside: avoid; }
-    .section:last-child { margin-bottom: 0; }
-    .section-title { font-size: 15pt; font-weight: bold; color: #800020; border-bottom: 2px solid #800020; padding-bottom: 2mm; margin-bottom: 4mm; text-transform: uppercase; letter-spacing: 0.5pt; }
-    .experience-item, .education-item { margin-bottom: 4mm; padding-left: 3mm; border-left: 2px solid #e5e7eb; padding-left: 5mm; }
-    .item-header { font-weight: bold; font-size: 11.5pt; color: #333; margin-bottom: 1mm; }
-    .item-subheader { font-size: 10pt; color: #666; margin-bottom: 2mm; font-style: italic; }
-    ul { margin-left: 5mm; margin-top: 2mm; }
-    li { font-size: 10pt; line-height: 1.4; margin-bottom: 1mm; }
-    .skills { display: flex; flex-wrap: wrap; gap: 2mm; }
-    .skill { background: #f9fafb; border: 1px solid #800020; padding: 2mm 4mm; border-radius: 3mm; font-size: 9.5pt; color: #800020; }
-  `;
-
-  const contactInfo = [
-    data.personalDetails.email,
-    data.personalDetails.phone,
-    data.personalDetails.location
-  ].filter(Boolean).map(htmlEscape).join(' • ');
-
-  return `<!DOCTYPE html><html><head><meta charset="utf-8"/><style>${css}</style></head><body>
-    <div class="page">
-      <div class="header">
-        <div class="header-left">
-          <div class="name">${htmlEscape(data.personalDetails.name)}</div>
-          <div class="title">${htmlEscape(data.personalDetails.title)}</div>
-          <div class="contact">${contactInfo}</div>
-        </div>
-      </div>
-      
-      <div class="content">
-        ${data.summary ? `<div class="section"><div class="section-title">Professional Summary</div><div style="font-size: 10pt; line-height: 1.5; text-align: justify;">${htmlEscape(data.summary)}</div></div>` : ''}
-      
-      ${data.roles && data.roles.length > 0 ? `<div class="section">
-        <div class="section-title">Professional Roles</div>
-        <div style="font-size: 10pt; line-height: 1.6;">
-          ${data.roles.map(role => `<div style="margin-bottom: 2mm;">• ${htmlEscape(role)}</div>`).join('')}
-        </div>
-      </div>` : ''}
-      
-      ${data.experience && data.experience.length > 0 ? `<div class="section">
-        <div class="section-title">Work Experience</div>
-        ${data.experience.map(exp => `
-          <div class="experience-item">
-            <div class="item-header">${htmlEscape(exp.role)}</div>
-            <div class="item-subheader">${htmlEscape(exp.company)} | ${htmlEscape(exp.years)}</div>
-            <ul>${formatBullets(exp.bullets)}</ul>
-          </div>
-        `).join('')}
-      </div>` : ''}
-      
-      ${data.education && data.education.length > 0 ? `<div class="section">
-        <div class="section-title">Education</div>
-        ${data.education.map(edu => `
-          <div class="education-item">
-            <div class="item-header">${htmlEscape(edu.degree)}</div>
-            <div class="item-subheader">${htmlEscape(edu.institution)} | ${htmlEscape(edu.years)}</div>
-          </div>
-        `).join('')}
-      </div>` : ''}
-      
-      ${data.projects && data.projects.length > 0 ? `<div class="section">
-        <div class="section-title">Projects</div>
-        ${data.projects.map(proj => `
-          <div class="experience-item">
-            <div class="item-header">${htmlEscape(proj.title)}</div>
-            <div style="font-size: 10pt; line-height: 1.5; margin-top: 2mm;">${htmlEscape(proj.description)}</div>
-          </div>
-        `).join('')}
-      </div>` : ''}
-      
-      ${data.accomplishments && data.accomplishments.length > 0 ? `<div class="section">
-        <div class="section-title">Key Accomplishments</div>
-        <ul style="margin-left: 5mm;">${data.accomplishments.map(acc => `<li style="font-size: 10pt; line-height: 1.5; margin-bottom: 2mm;">${htmlEscape(acc)}</li>`).join('')}</ul>
-      </div>` : ''}
-      
-      ${data.awards && data.awards.length > 0 ? `<div class="section">
-        <div class="section-title">Awards</div>
-        ${data.awards.map(award => `
-          <div class="education-item">
-            <div class="item-header">${htmlEscape(award.title)}${award.issuer ? ` - ${htmlEscape(award.issuer)}` : ''}${award.year ? ` (${htmlEscape(award.year)})` : ''}</div>
-          </div>
-        `).join('')}
-      </div>` : ''}
-      
-      ${data.certifications && data.certifications.length > 0 ? `<div class="section">
-        <div class="section-title">Certifications</div>
-        ${data.certifications.map(cert => `
-          <div class="education-item">
-            <div class="item-header">${htmlEscape(cert.name)}${cert.issuer ? ` - ${htmlEscape(cert.issuer)}` : ''}${cert.year ? ` (${htmlEscape(cert.year)})` : ''}</div>
-          </div>
-        `).join('')}
-      </div>` : ''}
-      
-      ${data.skills && data.skills.length > 0 ? `<div class="section">
-        <div class="section-title">Skills</div>
-        <div class="skills">${data.skills.slice(0, 15).map(skill => `<span class="skill">${htmlEscape(skill)}</span>`).join('')}</div>
-      </div>` : ''}
-      
-      ${data.languages && data.languages.length > 0 ? `<div class="section">
-        <div class="section-title">Languages</div>
-        <div class="skills">${data.languages.map(lang => `<span class="skill">${htmlEscape(lang)}</span>`).join('')}</div>
-      </div>` : ''}
-      
-      ${data.interests && data.interests.length > 0 ? `<div class="section">
-        <div class="section-title">Interests</div>
-        <div class="skills">${data.interests.map(int => `<span class="skill">${htmlEscape(int)}</span>`).join('')}</div>
-      </div>` : ''}
-      
-      ${data.publications && data.publications.length > 0 ? `<div class="section">
-        <div class="section-title">Publications</div>
-        ${data.publications.map(pub => `
-          <div class="education-item">
-            <div class="item-header">${htmlEscape(pub.title)}${pub.journal ? ` - ${htmlEscape(pub.journal)}` : ''}${pub.year ? ` (${htmlEscape(pub.year)})` : ''}</div>
-          </div>
-        `).join('')}
-      </div>` : ''}
-      
-      ${data.volunteerWork && data.volunteerWork.length > 0 ? `<div class="section">
-        <div class="section-title">Volunteer Work</div>
-        ${data.volunteerWork.map(vol => `
-          <div class="experience-item">
-            <div class="item-header">${htmlEscape(vol.role || 'Volunteer')}${vol.organization ? ` - ${htmlEscape(vol.organization)}` : ''}</div>
-            ${vol.duration ? `<div class="item-subheader">${htmlEscape(vol.duration)}</div>` : ''}
-            ${vol.description ? `<div style="font-size: 10pt; line-height: 1.5; margin-top: 2mm;">${htmlEscape(vol.description)}</div>` : ''}
-          </div>
-        `).join('')}
-      </div>` : ''}
-      
-      ${data.additionalSections && data.additionalSections.length > 0 ? data.additionalSections.map(section => `
-        <div class="section">
-          <div class="section-title">${htmlEscape(section.sectionName)}</div>
-          <div style="font-size: 10pt; line-height: 1.5;">${htmlEscape(section.content)}</div>
-        </div>
-      `).join('') : ''}
-      </div>
-    </div>
-  </body></html>`;
-}
-
-// ==================== TEMPLATE 3: Purple Modern (Minimal) ====================
-function renderTemplate3(data: CVData): string {
-  const { spacing, useDistribution } = calculateSpacing(data);
-  const contentJustify = useDistribution ? 'justify-content: space-between;' : 'justify-content: flex-start;';
-  
-  const css = `
-    ${baseCss}
-    .page { padding: 15mm 12mm; }
-    .header { text-align: left; margin-bottom: 10mm; }
-    .name { font-size: 30pt; font-weight: 300; color: #6b21a8; margin-bottom: 2mm; letter-spacing: 1pt; }
-    .title { font-size: 12pt; color: #9ca3af; margin-bottom: 3mm; font-weight: 300; }
-    .contact { font-size: 9pt; color: #6b7280; line-height: 1.8; }
-    .content {
-      --section-spacing: ${spacing}mm;
-      height: 197mm;
-      max-height: 197mm;
-      display: flex;
-      flex-direction: column;
-      ${contentJustify}
-      overflow: hidden;
-    }
-    .section { margin-bottom: var(--section-spacing); page-break-inside: avoid; }
-    .section:last-child { margin-bottom: 0; }
-    .section-title { font-size: 11pt; font-weight: 600; color: #6b21a8; text-transform: uppercase; letter-spacing: 2pt; margin-bottom: 4mm; border-bottom: 1px solid #e5e7eb; padding-bottom: 1mm; }
-    .experience-item, .education-item { margin-bottom: 5mm; }
-    .item-header { font-weight: 600; font-size: 10.5pt; color: #111827; margin-bottom: 1mm; }
-    .item-subheader { font-size: 9.5pt; color: #6b7280; margin-bottom: 2mm; }
-    ul { margin-left: 4mm; margin-top: 2mm; }
-    li { font-size: 9.5pt; line-height: 1.5; margin-bottom: 1mm; color: #374151; }
-    .skills { display: flex; flex-wrap: wrap; gap: 2mm; }
-    .skill { background: transparent; border: 1px solid #d1d5db; padding: 1.5mm 3.5mm; border-radius: 2mm; font-size: 9pt; color: #4b5563; }
-  `;
-
-  const contactInfo = [
-    data.personalDetails.email,
-    data.personalDetails.phone,
-    data.personalDetails.location
-  ].filter(Boolean).map(htmlEscape).join(' / ');
-
-  return `<!DOCTYPE html><html><head><meta charset="utf-8"/><style>${css}</style></head><body>
-    <div class="page">
-      <div class="header">
-        <div class="name">${htmlEscape(data.personalDetails.name)}</div>
-        <div class="title">${htmlEscape(data.personalDetails.title)}</div>
-        <div class="contact">${contactInfo}</div>
-      </div>
-      
-      <div class="content">
-        ${data.summary ? `<div class="section"><div class="section-title">Summary</div><div style="font-size: 9.5pt; line-height: 1.6; text-align: left; color: #374151;">${htmlEscape(data.summary)}</div></div>` : ''}
-      
-      ${data.roles && data.roles.length > 0 ? `<div class="section">
-        <div class="section-title">Roles</div>
-        <div style="font-size: 9.5pt; line-height: 1.8; color: #374151;">
-          ${data.roles.map(role => `<div style="margin-bottom: 1.5mm;">${htmlEscape(role)}</div>`).join('')}
-        </div>
-      </div>` : ''}
-      
-      ${data.experience && data.experience.length > 0 ? `<div class="section">
-        <div class="section-title">Experience</div>
-        ${data.experience.map(exp => `
-          <div class="experience-item">
-            <div class="item-header">${htmlEscape(exp.role)}</div>
-            <div class="item-subheader">${htmlEscape(exp.company)} • ${htmlEscape(exp.years)}</div>
-            <ul>${formatBullets(exp.bullets)}</ul>
-          </div>
-        `).join('')}
-      </div>` : ''}
-      
-      ${data.education && data.education.length > 0 ? `<div class="section">
-        <div class="section-title">Education</div>
-        ${data.education.map(edu => `
-          <div class="education-item">
-            <div class="item-header">${htmlEscape(edu.degree)}</div>
-            <div class="item-subheader">${htmlEscape(edu.institution)} • ${htmlEscape(edu.years)}</div>
-          </div>
-        `).join('')}
-      </div>` : ''}
-      
-      ${data.projects && data.projects.length > 0 ? `<div class="section">
-        <div class="section-title">Projects</div>
-        ${data.projects.map(proj => `
-          <div class="experience-item">
-            <div class="item-header">${htmlEscape(proj.title)}</div>
-            <div style="font-size: 9.5pt; line-height: 1.6; margin-top: 1.5mm; color: #374151;">${htmlEscape(proj.description)}</div>
-          </div>
-        `).join('')}
-      </div>` : ''}
-      
-      ${data.accomplishments && data.accomplishments.length > 0 ? `<div class="section">
-        <div class="section-title">Accomplishments</div>
-        <ul style="margin-left: 4mm;">${data.accomplishments.map(acc => `<li style="font-size: 9.5pt; line-height: 1.6; margin-bottom: 1.5mm; color: #374151;">${htmlEscape(acc)}</li>`).join('')}</ul>
-      </div>` : ''}
-      
-      ${data.awards && data.awards.length > 0 ? `<div class="section">
-        <div class="section-title">Awards</div>
-        ${data.awards.map(award => `
-          <div class="education-item">
-            <div class="item-header">${htmlEscape(award.title)}${award.issuer ? ` • ${htmlEscape(award.issuer)}` : ''}${award.year ? ` (${htmlEscape(award.year)})` : ''}</div>
-          </div>
-        `).join('')}
-      </div>` : ''}
-      
-      ${data.certifications && data.certifications.length > 0 ? `<div class="section">
-        <div class="section-title">Certifications</div>
-        ${data.certifications.map(cert => `
-          <div class="education-item">
-            <div class="item-header">${htmlEscape(cert.name)}${cert.issuer ? ` • ${htmlEscape(cert.issuer)}` : ''}${cert.year ? ` (${htmlEscape(cert.year)})` : ''}</div>
-          </div>
-        `).join('')}
-      </div>` : ''}
-      
-      ${data.skills && data.skills.length > 0 ? `<div class="section">
-        <div class="section-title">Skills</div>
-        <div class="skills">${data.skills.slice(0, 15).map(skill => `<span class="skill">${htmlEscape(skill)}</span>`).join('')}</div>
-      </div>` : ''}
-      
-      ${data.languages && data.languages.length > 0 ? `<div class="section">
-        <div class="section-title">Languages</div>
-        <div class="skills">${data.languages.map(lang => `<span class="skill">${htmlEscape(lang)}</span>`).join('')}</div>
-      </div>` : ''}
-      
-      ${data.interests && data.interests.length > 0 ? `<div class="section">
-        <div class="section-title">Interests</div>
-        <div class="skills">${data.interests.map(int => `<span class="skill">${htmlEscape(int)}</span>`).join('')}</div>
-      </div>` : ''}
-      
-      ${data.publications && data.publications.length > 0 ? `<div class="section">
-        <div class="section-title">Publications</div>
-        ${data.publications.map(pub => `
-          <div class="education-item">
-            <div class="item-header">${htmlEscape(pub.title)}${pub.journal ? ` • ${htmlEscape(pub.journal)}` : ''}${pub.year ? ` (${htmlEscape(pub.year)})` : ''}</div>
-          </div>
-        `).join('')}
-      </div>` : ''}
-      
-      ${data.volunteerWork && data.volunteerWork.length > 0 ? `<div class="section">
-        <div class="section-title">Volunteer Work</div>
-        ${data.volunteerWork.map(vol => `
-          <div class="experience-item">
-            <div class="item-header">${htmlEscape(vol.role || 'Volunteer')}${vol.organization ? ` • ${htmlEscape(vol.organization)}` : ''}</div>
-            ${vol.duration ? `<div class="item-subheader">${htmlEscape(vol.duration)}</div>` : ''}
-            ${vol.description ? `<div style="font-size: 9.5pt; line-height: 1.6; margin-top: 1.5mm; color: #374151;">${htmlEscape(vol.description)}</div>` : ''}
-          </div>
-        `).join('')}
-      </div>` : ''}
-      
-      ${data.additionalSections && data.additionalSections.length > 0 ? data.additionalSections.map(section => `
-        <div class="section">
-          <div class="section-title">${htmlEscape(section.sectionName)}</div>
-          <div style="font-size: 9.5pt; line-height: 1.6; color: #374151;">${htmlEscape(section.content)}</div>
-        </div>
-      `).join('') : ''}
-      </div>
-    </div>
-  </body></html>`;
-}
-
-// ==================== TEMPLATE 5: Academic Single Column ====================
+// ==================== TEMPLATE 5: Blue Professional ====================
 function renderTemplate5(data: CVData): string {
   const { 
     personalDetails, 
@@ -752,7 +278,7 @@ function renderTemplate5(data: CVData): string {
             min-height: 297mm;
             margin: 0 auto;
             background: white;
-            padding: 20mm 18mm;
+            padding: 14mm 18mm 16mm;
         }
 
         .header {
@@ -1063,6 +589,16 @@ function renderTemplate5(data: CVData): string {
             </ul>
         </div>
         ` : ''}
+
+        <!-- References -->
+        ${data.references && data.references.length > 0 ? `
+        <div class="section">
+            <div class="section-title">References</div>
+            <ul class="achievements-list">
+                ${data.references.map(r => `<li><strong>${htmlEscape(r.name)}</strong>${r.title || r.company ? `, ${htmlEscape([r.title, r.company].filter(Boolean).join(', '))}` : ''}${r.phone || r.email ? ` — ${htmlEscape([r.phone, r.email].filter(Boolean).join(' | '))}` : ''}</li>`).join('')}
+            </ul>
+        </div>
+        ` : ''}
     </div>
 </body>
 </html>`;
@@ -1116,7 +652,7 @@ function renderTemplate6(data: CVData): string {
             min-height: 297mm;
             margin: 0 auto;
             background: white;
-            padding: 15mm 12mm;
+            padding: 10mm 12mm 12mm;
         }
 
         .header {
@@ -1389,6 +925,15 @@ function renderTemplate6(data: CVData): string {
                     </div>
                 </div>
                 ` : ''}
+                <!-- References -->
+                ${data.references && data.references.length > 0 ? `
+                <div class="section">
+                    <h2 class="section-title">REFERENCES</h2>
+                    <div class="additional-info">
+                        ${data.references.map(r => `<p><strong>${htmlEscape(r.name)}</strong>${r.title || r.company ? `, ${htmlEscape([r.title, r.company].filter(Boolean).join(', '))}` : ''}${r.phone || r.email ? `<br>${htmlEscape([r.phone, r.email].filter(Boolean).join(' | '))}` : ''}</p>`).join('')}
+                    </div>
+                </div>
+                ` : ''}
             </div>
 
             <!-- Right Column -->
@@ -1467,18 +1012,6 @@ function renderTemplate6(data: CVData): string {
 
 // ==================== RESPONSIVE TEMPLATES (for view mode) ====================
 // Simple fallback responsive versions (you can expand these later with full responsive logic)
-function renderResponsiveTemplate1(data: CVData): string {
-  return renderTemplate1(data); // Reuse PDF version for now as responsive fallback
-}
-
-function renderResponsiveTemplate2(data: CVData): string {
-  return renderTemplate2(data);
-}
-
-function renderResponsiveTemplate3(data: CVData): string {
-  return renderTemplate3(data);
-}
-
 function renderResponsiveTemplate5(data: CVData): string {
   return renderTemplate5(data);
 }
@@ -1508,7 +1041,7 @@ function renderTemplate7(data: CVData): string {
         * { margin: 0; padding: 0; box-sizing: border-box; }
         @page { size: A4; margin: 0; }
         body { font-family: 'Arial', 'Helvetica', sans-serif; background: white; margin: 0; padding: 0; }
-        .page { width: 210mm; height: 297mm; max-height: 297mm; background: white; margin: 0; padding: 15mm 0; position: relative; overflow: hidden; }
+        .page { width: 210mm; height: 297mm; max-height: 297mm; background: white; margin: 0; padding: 10mm 0 8mm; position: relative; overflow: hidden; }
         .header { text-align: center; margin-bottom: 15px; padding-bottom: 12px; border-bottom: 3px solid #000; }
         .name { font-size: 32px; font-weight: bold; color: #000; letter-spacing: 6px; text-transform: uppercase; margin-bottom: 6px; }
         .job-title { font-size: 12px; color: #000; text-transform: uppercase; letter-spacing: 1.5px; }
@@ -1731,6 +1264,14 @@ function renderTemplate7(data: CVData): string {
                     </div>
                 </div>
                 `).join('') : ''}
+                ${data.references && data.references.length > 0 ? `
+                <div class="section">
+                    <div class="section-title">REFERENCES</div>
+                    <div class="section-content">
+                        ${data.references.map(r => `<div class="list-item"><strong>${r.name}</strong>${r.title || r.company ? `, ${[r.title, r.company].filter(Boolean).join(', ')}` : ''}${r.phone || r.email ? ` — ${[r.phone, r.email].filter(Boolean).join(' | ')}` : ''}</div>`).join('')}
+                    </div>
+                </div>
+                ` : ''}
             </div>
         </div>
     </div>
@@ -1739,7 +1280,7 @@ function renderTemplate7(data: CVData): string {
 }
 
 function renderTemplate8(data: CVData): string {
-  const { personalDetails, summary, experience, education, skills, projects, accomplishments, awards, certifications, languages, interests, publications, volunteerWork } = data;
+  const { personalDetails, summary, experience, education, skills, projects, accomplishments, awards, certifications, languages, interests, publications, volunteerWork, additionalSections, references } = data;
   
   const nameParts = (personalDetails.name || '').split(' ');
   const firstName = nameParts[0] || '';
@@ -1774,7 +1315,7 @@ function renderTemplate8(data: CVData): string {
             max-height: 297mm;
             background: white;
             margin: 0;
-            padding: 15mm 0;
+            padding: 10mm 0 8mm;
             overflow: hidden;
             position: relative;
         }
@@ -1885,6 +1426,31 @@ function renderTemplate8(data: CVData): string {
                     <div class="section-content">${languages.join(' • ')}</div>
                 </div>
                 ` : ''}
+                ${(accomplishments && accomplishments.length > 0) || (awards && awards.length > 0) || (certifications && certifications.length > 0) || (publications && publications.length > 0) ? `
+                <div class="section">
+                    <div class="section-title">Achievements</div>
+                    <div class="section-content">
+                        ${(accomplishments || []).map(a => `<div style="margin-bottom: 3px;">• ${a}</div>`).join('')}
+                        ${(awards || []).map(a => `<div style="margin-bottom: 3px;">• ${[a.title, a.issuer, a.year].filter(Boolean).join(', ')}</div>`).join('')}
+                        ${(certifications || []).map(c => `<div style="margin-bottom: 3px;">• ${[c.name, c.issuer, c.year].filter(Boolean).join(', ')}</div>`).join('')}
+                        ${(publications || []).map(p => `<div style="margin-bottom: 3px;">• ${[p.title, p.journal, p.year].filter(Boolean).join(', ')}</div>`).join('')}
+                    </div>
+                </div>
+                ` : ''}
+                ${references && references.length > 0 ? `
+                <div class="section">
+                    <div class="section-title">References</div>
+                    <div class="section-content">
+                        ${references.map(r => `
+                            <div style="margin-bottom: 8px;">
+                                <div style="font-weight: bold;">${r.name}</div>
+                                ${r.title || r.company ? `<div style="font-size: 10px;">${[r.title, r.company].filter(Boolean).join(', ')}</div>` : ''}
+                                ${r.phone || r.email ? `<div style="font-size: 10px; color: #666;">${[r.phone, r.email].filter(Boolean).join(' | ')}</div>` : ''}
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+                ` : ''}
             </div>
             <div class="vertical-divider"></div>
             <div class="right-column">
@@ -1907,16 +1473,23 @@ function renderTemplate8(data: CVData): string {
                     </div>
                 </div>
                 ` : ''}
-                ${projects && projects.length > 0 ? `
+                ${(projects && projects.length > 0) || (volunteerWork && volunteerWork.length > 0) || (additionalSections && additionalSections.length > 0) ? `
                 <div class="section">
-                    <div class="section-title">Projects</div>
+                    <div class="section-title">Projects & More</div>
                     <div class="section-content">
-                        ${projects.map(proj => `
+                        ${(projects || []).map(proj => `
                             <div class="work-entry">
                                 <div class="work-role">${proj.title}</div>
                                 <div class="work-company">${proj.description}</div>
                             </div>
                         `).join('')}
+                        ${(volunteerWork || []).map(v => `
+                            <div class="work-entry">
+                                <div class="work-role">${v.organization}${v.role ? ` — ${v.role}` : ''}</div>
+                                ${v.description ? `<div class="work-company">${v.description}</div>` : ''}
+                            </div>
+                        `).join('')}
+                        ${(additionalSections || []).map(s => `<div style="margin-bottom: 6px;"><strong>${s.sectionName}:</strong> ${s.content}</div>`).join('')}
                     </div>
                 </div>
                 ` : ''}
@@ -1929,7 +1502,7 @@ function renderTemplate8(data: CVData): string {
 }
 
 function renderTemplate9(data: CVData): string {
-  const { personalDetails, summary, experience, education, skills, projects, accomplishments, awards, certifications, languages } = data;
+  const { personalDetails, summary, experience, education, skills, projects, accomplishments, awards, certifications, publications, languages, volunteerWork, additionalSections, references } = data;
   
   const contactInfo = [
     personalDetails.location,
@@ -1960,7 +1533,7 @@ function renderTemplate9(data: CVData): string {
             max-height: 297mm;
             background: white;
             margin: 0;
-            padding: 15mm 0;
+            padding: 10mm 0 8mm;
             overflow: hidden;
             position: relative;
         }
@@ -2048,12 +1621,48 @@ function renderTemplate9(data: CVData): string {
         ${skills && skills.length > 0 ? `
         <div class="section">
             <div class="section-title-container">
-                <div class="section-title">Skills</div>
+                <div class="section-title">Skills & Languages</div>
             </div>
             <div class="section-content">
                 <div class="skills-list">
                     ${skills.map(skill => `<span class="skill-item">${skill}</span>`).join('')}
                 </div>
+                ${languages && languages.length > 0 ? `<div style="margin-top: 8px; font-size: 10px; color: #555;">${languages.join(' • ')}</div>` : ''}
+            </div>
+        </div>
+        ` : ''}
+        ${(accomplishments && accomplishments.length > 0) || (awards && awards.length > 0) || (certifications && certifications.length > 0) || (publications && publications.length > 0) ? `
+        <div class="section">
+            <div class="section-title-container">
+                <div class="section-title">Achievements</div>
+            </div>
+            <div class="section-content" style="font-size: 10px; line-height: 1.6;">
+                ${(accomplishments || []).map(a => `<div>• ${a}</div>`).join('')}
+                ${(awards || []).map(a => `<div>• ${[a.title, a.issuer, a.year].filter(Boolean).join(', ')}</div>`).join('')}
+                ${(certifications || []).map(c => `<div>• ${[c.name, c.issuer, c.year].filter(Boolean).join(', ')}</div>`).join('')}
+                ${(publications || []).map(p => `<div>• ${[p.title, p.journal, p.year].filter(Boolean).join(', ')}</div>`).join('')}
+            </div>
+        </div>
+        ` : ''}
+        ${(projects && projects.length > 0) || (volunteerWork && volunteerWork.length > 0) || (additionalSections && additionalSections.length > 0) ? `
+        <div class="section">
+            <div class="section-title-container">
+                <div class="section-title">Projects & More</div>
+            </div>
+            <div class="section-content" style="font-size: 10px; line-height: 1.5;">
+                ${(projects || []).map(p => `<div style="margin-bottom: 4px;"><strong>${p.title}</strong>${p.description ? ` — ${p.description}` : ''}</div>`).join('')}
+                ${(volunteerWork || []).map(v => `<div style="margin-bottom: 4px;"><strong>${v.organization}</strong>${v.role ? ` — ${v.role}` : ''}${v.duration ? `, ${v.duration}` : ''}</div>`).join('')}
+                ${(additionalSections || []).map(s => `<div style="margin-bottom: 4px;"><strong>${s.sectionName}:</strong> ${s.content}</div>`).join('')}
+            </div>
+        </div>
+        ` : ''}
+        ${references && references.length > 0 ? `
+        <div class="section">
+            <div class="section-title-container">
+                <div class="section-title">References</div>
+            </div>
+            <div class="section-content" style="font-size: 10px; line-height: 1.5;">
+                ${references.map(r => `<div style="margin-bottom: 4px;"><strong>${r.name}</strong>${r.title ? `, ${r.title}` : ''}${r.company ? `, ${r.company}` : ''}${r.phone || r.email ? ` — ${[r.phone, r.email].filter(Boolean).join(' | ')}` : ''}</div>`).join('')}
             </div>
         </div>
         ` : ''}
@@ -2064,9 +1673,8 @@ function renderTemplate9(data: CVData): string {
 }
 
 function renderTemplate10(data: CVData): string {
-  const { personalDetails, summary, experience, education, skills, projects, certifications, languages } = data;
+  const { personalDetails, summary, experience, education, skills, projects, accomplishments, awards, certifications, publications, languages, volunteerWork, additionalSections, references } = data;
   
-  const nameInitials = (personalDetails.name || '').split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -2089,7 +1697,7 @@ function renderTemplate10(data: CVData): string {
             max-height: 297mm;
             background: white;
             margin: 0;
-            padding: 15mm 10mm;
+            padding: 10mm 10mm 12mm;
             display: grid;
             grid-template-columns: 280px 1fr;
             position: relative;
@@ -2109,21 +1717,9 @@ function renderTemplate10(data: CVData): string {
         .stripe3 { width: 35%; background: #4a5f73; }
         .sidebar {
             background: white;
-            padding: 80px 30px 30px 30px;
+            padding: 55px 30px 30px 30px;
             position: relative;
             z-index: 1;
-        }
-        .profile-photo {
-            width: 220px;
-            height: 280px;
-            background: linear-gradient(135deg, #4a5f73 0%, #2c5f73 100%);
-            margin-bottom: 30px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 80px;
-            color: white;
-            font-weight: bold;
         }
         .sidebar-section { margin-bottom: 25px; }
         .sidebar-title {
@@ -2180,7 +1776,6 @@ function renderTemplate10(data: CVData): string {
             <div class="stripe stripe3"></div>
         </div>
         <div class="sidebar">
-            <div class="profile-photo">${nameInitials}</div>
             <div class="sidebar-section">
                 <div class="sidebar-title">Contact</div>
                 <div class="sidebar-content-text">
@@ -2206,9 +1801,24 @@ function renderTemplate10(data: CVData): string {
             ` : ''}
             ${skills && skills.length > 0 ? `
             <div class="sidebar-section">
-                <div class="sidebar-title">Skills</div>
+                <div class="sidebar-title">Skills & Languages</div>
                 <div class="sidebar-content-text">
                     ${skills.map(skill => `<div class="skill-item">${skill}</div>`).join('')}
+                    ${languages && languages.length > 0 ? `<div style="margin-top: 8px; font-size: 9px; color: #666;">${languages.join(' • ')}</div>` : ''}
+                </div>
+            </div>
+            ` : ''}
+            ${references && references.length > 0 ? `
+            <div class="sidebar-section">
+                <div class="sidebar-title">References</div>
+                <div class="sidebar-content-text">
+                    ${references.map(r => `
+                        <div style="margin-bottom: 10px;">
+                            <div style="font-weight: bold;">${r.name}</div>
+                            ${r.title || r.company ? `<div>${[r.title, r.company].filter(Boolean).join(', ')}</div>` : ''}
+                            ${r.phone || r.email ? `<div style="font-size: 9px; color: #666;">${[r.phone, r.email].filter(Boolean).join(' | ')}</div>` : ''}
+                        </div>
+                    `).join('')}
                 </div>
             </div>
             ` : ''}
@@ -2242,16 +1852,34 @@ function renderTemplate10(data: CVData): string {
                 </div>
             </div>
             ` : ''}
-            ${projects && projects.length > 0 ? `
+            ${(accomplishments && accomplishments.length > 0) || (awards && awards.length > 0) || (certifications && certifications.length > 0) || (publications && publications.length > 0) ? `
             <div class="section">
-                <div class="section-title">Projects</div>
+                <div class="section-title">Achievements</div>
                 <div class="section-content">
-                    ${projects.map(proj => `
+                    ${(accomplishments || []).map(a => `<div style="margin-bottom: 3px;">• ${a}</div>`).join('')}
+                    ${(awards || []).map(a => `<div style="margin-bottom: 3px;">• ${[a.title, a.issuer, a.year].filter(Boolean).join(', ')}</div>`).join('')}
+                    ${(certifications || []).map(c => `<div style="margin-bottom: 3px;">• ${[c.name, c.issuer, c.year].filter(Boolean).join(', ')}</div>`).join('')}
+                    ${(publications || []).map(p => `<div style="margin-bottom: 3px;">• ${[p.title, p.journal, p.year].filter(Boolean).join(', ')}</div>`).join('')}
+                </div>
+            </div>
+            ` : ''}
+            ${(projects && projects.length > 0) || (volunteerWork && volunteerWork.length > 0) || (additionalSections && additionalSections.length > 0) ? `
+            <div class="section">
+                <div class="section-title">Projects & More</div>
+                <div class="section-content">
+                    ${(projects || []).map(proj => `
                         <div class="work-entry">
                             <div class="work-role">${proj.title}</div>
                             <div class="work-company">${proj.description}</div>
                         </div>
                     `).join('')}
+                    ${(volunteerWork || []).map(v => `
+                        <div class="work-entry">
+                            <div class="work-role">${v.organization}${v.role ? ` — ${v.role}` : ''}</div>
+                            ${v.description ? `<div class="work-company">${v.description}</div>` : ''}
+                        </div>
+                    `).join('')}
+                    ${(additionalSections || []).map(s => `<div style="margin-bottom: 6px;"><strong>${s.sectionName}:</strong> ${s.content}</div>`).join('')}
                 </div>
             </div>
             ` : ''}
@@ -2263,10 +1891,8 @@ function renderTemplate10(data: CVData): string {
 }
 
 function renderTemplate11(data: CVData): string {
-  const { personalDetails, summary, experience, education, skills, projects, certifications, languages } = data;
+  const { personalDetails, summary, experience, education, skills, projects, accomplishments, awards, certifications, publications, languages, volunteerWork, additionalSections, references } = data;
   
-  const nameInitials = (personalDetails.name || '').split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
-
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -2288,7 +1914,7 @@ function renderTemplate11(data: CVData): string {
             max-height: 297mm;
             background: white;
             margin: 0;
-            padding: 15mm 0;
+            padding: 10mm 0 8mm;
             display: grid;
             grid-template-columns: 315px 1fr;
             overflow: hidden;
@@ -2300,22 +1926,8 @@ function renderTemplate11(data: CVData): string {
             padding: 0 10mm;
         }
         .profile-section {
-            padding: 50px 40px 30px 40px;
+            padding: 40px 40px 30px 40px;
             text-align: center;
-        }
-        .profile-photo {
-            width: 200px;
-            height: 200px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #4a90a4 0%, #2c5f73 100%);
-            margin: 0 auto 30px auto;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 70px;
-            color: white;
-            font-weight: bold;
-            border: 8px solid white;
         }
         .name { font-size: 28px; font-weight: bold; color: white; margin-bottom: 8px; }
         .job-title { font-size: 14px; color: #a0c4d0; margin-bottom: 20px; }
@@ -2368,7 +1980,6 @@ function renderTemplate11(data: CVData): string {
     <div class="page">
         <div class="sidebar">
             <div class="profile-section">
-                <div class="profile-photo">${nameInitials}</div>
                 <div class="name">${personalDetails.name || ''}</div>
                 <div class="job-title">${personalDetails.title || ''}</div>
             </div>
@@ -2398,9 +2009,24 @@ function renderTemplate11(data: CVData): string {
                 ` : ''}
                 ${skills && skills.length > 0 ? `
                 <div class="sidebar-section">
-                    <div class="sidebar-title">Skills</div>
+                    <div class="sidebar-title">Skills & Languages</div>
                     <div class="sidebar-content-text">
                         ${skills.map(skill => `<div style="margin-bottom: 5px;">${skill}</div>`).join('')}
+                        ${languages && languages.length > 0 ? `<div style="margin-top: 8px; font-size: 10px; opacity: 0.85;">${languages.join(' • ')}</div>` : ''}
+                    </div>
+                </div>
+                ` : ''}
+                ${references && references.length > 0 ? `
+                <div class="sidebar-section">
+                    <div class="sidebar-title">References</div>
+                    <div class="sidebar-content-text">
+                        ${references.map(r => `
+                            <div style="margin-bottom: 10px;">
+                                <div style="font-weight: bold;">${r.name}</div>
+                                ${r.title || r.company ? `<div style="font-size: 10px;">${[r.title, r.company].filter(Boolean).join(', ')}</div>` : ''}
+                                ${r.phone || r.email ? `<div style="font-size: 10px; opacity: 0.8;">${[r.phone, r.email].filter(Boolean).join(' | ')}</div>` : ''}
+                            </div>
+                        `).join('')}
                     </div>
                 </div>
                 ` : ''}
@@ -2433,16 +2059,34 @@ function renderTemplate11(data: CVData): string {
                 </div>
             </div>
             ` : ''}
-            ${projects && projects.length > 0 ? `
+            ${(accomplishments && accomplishments.length > 0) || (awards && awards.length > 0) || (certifications && certifications.length > 0) || (publications && publications.length > 0) ? `
             <div class="section">
-                <div class="section-title">Projects</div>
+                <div class="section-title">Achievements</div>
                 <div class="section-content">
-                    ${projects.map(proj => `
+                    ${(accomplishments || []).map(a => `<div style="margin-bottom: 3px;">• ${a}</div>`).join('')}
+                    ${(awards || []).map(a => `<div style="margin-bottom: 3px;">• ${[a.title, a.issuer, a.year].filter(Boolean).join(', ')}</div>`).join('')}
+                    ${(certifications || []).map(c => `<div style="margin-bottom: 3px;">• ${[c.name, c.issuer, c.year].filter(Boolean).join(', ')}</div>`).join('')}
+                    ${(publications || []).map(p => `<div style="margin-bottom: 3px;">• ${[p.title, p.journal, p.year].filter(Boolean).join(', ')}</div>`).join('')}
+                </div>
+            </div>
+            ` : ''}
+            ${(projects && projects.length > 0) || (volunteerWork && volunteerWork.length > 0) || (additionalSections && additionalSections.length > 0) ? `
+            <div class="section">
+                <div class="section-title">Projects & More</div>
+                <div class="section-content">
+                    ${(projects || []).map(proj => `
                         <div class="work-entry">
                             <div class="work-role">${proj.title}</div>
                             <div class="work-company">${proj.description}</div>
                         </div>
                     `).join('')}
+                    ${(volunteerWork || []).map(v => `
+                        <div class="work-entry">
+                            <div class="work-role">${v.organization}${v.role ? ` — ${v.role}` : ''}</div>
+                            ${v.description ? `<div class="work-company">${v.description}</div>` : ''}
+                        </div>
+                    `).join('')}
+                    ${(additionalSections || []).map(s => `<div style="margin-bottom: 6px;"><strong>${s.sectionName}:</strong> ${s.content}</div>`).join('')}
                 </div>
             </div>
             ` : ''}
@@ -2454,7 +2098,7 @@ function renderTemplate11(data: CVData): string {
 }
 
 function renderTemplate12(data: CVData): string {
-  const { personalDetails, summary, experience, education, skills, projects, certifications, languages } = data;
+  const { personalDetails, summary, experience, education, skills, projects, accomplishments, awards, certifications, languages, publications, volunteerWork, additionalSections, references } = data;
   
   const nameInitials = (personalDetails.name || '').split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
 
@@ -2479,7 +2123,7 @@ function renderTemplate12(data: CVData): string {
             max-height: 297mm;
             background: white;
             margin: 0;
-            padding: 15mm 0;
+            padding: 10mm 0 8mm;
             overflow: hidden;
             position: relative;
         }
@@ -2603,9 +2247,35 @@ function renderTemplate12(data: CVData): string {
                 ` : ''}
                 ${skills && skills.length > 0 ? `
                 <div class="section">
-                    <div class="section-title">Skills</div>
+                    <div class="section-title">Skills & Languages</div>
                     <div class="section-content">
                         ${skills.map(skill => `<div class="skill-item">${skill}</div>`).join('')}
+                        ${languages && languages.length > 0 ? `<div style="margin-top: 6px; font-size: 10px; color: #666;">${languages.join(' • ')}</div>` : ''}
+                    </div>
+                </div>
+                ` : ''}
+                ${(accomplishments && accomplishments.length > 0) || (awards && awards.length > 0) || (certifications && certifications.length > 0) || (publications && publications.length > 0) ? `
+                <div class="section">
+                    <div class="section-title">Achievements</div>
+                    <div class="section-content">
+                        ${(accomplishments || []).map(a => `<div style="margin-bottom: 3px;">• ${a}</div>`).join('')}
+                        ${(awards || []).map(a => `<div style="margin-bottom: 3px;">• ${[a.title, a.issuer, a.year].filter(Boolean).join(', ')}</div>`).join('')}
+                        ${(certifications || []).map(c => `<div style="margin-bottom: 3px;">• ${[c.name, c.issuer, c.year].filter(Boolean).join(', ')}</div>`).join('')}
+                        ${(publications || []).map(p => `<div style="margin-bottom: 3px;">• ${[p.title, p.journal, p.year].filter(Boolean).join(', ')}</div>`).join('')}
+                    </div>
+                </div>
+                ` : ''}
+                ${references && references.length > 0 ? `
+                <div class="section">
+                    <div class="section-title">References</div>
+                    <div class="section-content">
+                        ${references.map(r => `
+                            <div style="margin-bottom: 8px;">
+                                <div style="font-weight: bold;">${r.name}</div>
+                                ${r.title || r.company ? `<div style="font-size: 10px;">${[r.title, r.company].filter(Boolean).join(', ')}</div>` : ''}
+                                ${r.phone || r.email ? `<div style="font-size: 10px; color: #666;">${[r.phone, r.email].filter(Boolean).join(' | ')}</div>` : ''}
+                            </div>
+                        `).join('')}
                     </div>
                 </div>
                 ` : ''}
@@ -2630,16 +2300,23 @@ function renderTemplate12(data: CVData): string {
                     </div>
                 </div>
                 ` : ''}
-                ${projects && projects.length > 0 ? `
+                ${(projects && projects.length > 0) || (volunteerWork && volunteerWork.length > 0) || (additionalSections && additionalSections.length > 0) ? `
                 <div class="section">
-                    <div class="section-title">Projects</div>
+                    <div class="section-title">Projects & More</div>
                     <div class="section-content">
-                        ${projects.map(proj => `
+                        ${(projects || []).map(proj => `
                             <div class="work-entry">
                                 <div class="work-role">${proj.title}</div>
                                 <div class="work-company">${proj.description}</div>
                             </div>
                         `).join('')}
+                        ${(volunteerWork || []).map(v => `
+                            <div class="work-entry">
+                                <div class="work-role">${v.organization}${v.role ? ` — ${v.role}` : ''}</div>
+                                ${v.description ? `<div class="work-company">${v.description}</div>` : ''}
+                            </div>
+                        `).join('')}
+                        ${(additionalSections || []).map(s => `<div style="margin-bottom: 6px;"><strong>${s.sectionName}:</strong> ${s.content}</div>`).join('')}
                     </div>
                 </div>
                 ` : ''}
@@ -2650,12 +2327,44 @@ function renderTemplate12(data: CVData): string {
 </html>`;
 }
 
-export function renderCVTemplate(templateId: string, data: CVData, mode: 'view' | 'pdf' = 'pdf'): string {
+// Hard caps applied to every template, regardless of which path produced the
+// data (manual form, Quick Create, Fetch My Details, or Parse). AI prompts
+// already ask for these limits, but prompts can drift — this is the actual
+// guarantee. Summary/skills/experience/education are capped here; nothing
+// else is trimmed, so achievements/projects/etc. stay as entered.
+function capCVDataForRender(data: CVData): CVData {
+  const capped: CVData = { ...data };
+
+  if (capped.summary) {
+    const words = capped.summary.trim().split(/\s+/);
+    if (words.length > 60) {
+      capped.summary = words.slice(0, 60).join(' ').replace(/[,;:]$/, '') + '.';
+    }
+  }
+
+  if (capped.skills?.length) {
+    capped.skills = capped.skills.slice(0, 10);
+  }
+
+  if (capped.experience?.length) {
+    capped.experience = capped.experience.slice(0, 4).map((exp) => ({
+      ...exp,
+      bullets: exp.bullets?.length ? exp.bullets.slice(0, 4) : exp.bullets,
+    }));
+  }
+
+  if (capped.education?.length) {
+    capped.education = capped.education.slice(0, 3);
+  }
+
+  return capped;
+}
+
+export function renderCVTemplate(templateId: string, rawData: CVData, mode: 'view' | 'pdf' = 'pdf'): string {
+  const data = capCVDataForRender(rawData);
+
   if (mode === 'view') {
     switch (templateId) {
-      case 'template-1': return renderResponsiveTemplate1(data);
-      case 'template-2': return renderResponsiveTemplate2(data);
-      case 'template-3': return renderResponsiveTemplate3(data);
       case 'template-5': return renderResponsiveTemplate5(data);
       case 'template-6': return renderResponsiveTemplate6(data);
       // Templates 7-12 don't have a separate responsive/on-screen variant
@@ -2666,15 +2375,12 @@ export function renderCVTemplate(templateId: string, data: CVData, mode: 'view' 
       case 'template-10': return renderTemplate10(data);
       case 'template-11': return renderTemplate11(data);
       case 'template-12': return renderTemplate12(data);
-      default: return renderResponsiveTemplate1(data);
+      default: return renderResponsiveTemplate5(data);
     }
   }
   
   // PDF mode - strict 1-page enforcement
   switch (templateId) {
-    case 'template-1': return renderTemplate1(data);
-    case 'template-2': return renderTemplate2(data);
-    case 'template-3': return renderTemplate3(data);
     case 'template-5': return renderTemplate5(data);
     case 'template-6': return renderTemplate6(data);
     case 'template-7': return renderTemplate7(data);
@@ -2683,6 +2389,6 @@ export function renderCVTemplate(templateId: string, data: CVData, mode: 'view' 
     case 'template-10': return renderTemplate10(data);
     case 'template-11': return renderTemplate11(data);
     case 'template-12': return renderTemplate12(data);
-    default: return renderTemplate1(data);
+    default: return renderTemplate5(data);
   }
 }
