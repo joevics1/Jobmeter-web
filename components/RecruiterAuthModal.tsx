@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
 import { 
@@ -42,6 +42,20 @@ export default function RecruiterAuthModal({ open, onOpenChange }: RecruiterAuth
     confirmPassword: ''
   });
 
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [resetEmail, setResetEmail] = useState('');
+  const [isResetting, setIsResetting] = useState(false);
+  const [resetEmailSent, setResetEmailSent] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
+
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const interval = setInterval(() => {
+      setResendCooldown((prev) => (prev <= 1 ? 0 : prev - 1));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [resendCooldown]);
+
   const showMessage = (msg: string, type: 'success' | 'error') => {
     setMessage(msg);
     setMessageType(type);
@@ -51,7 +65,54 @@ export default function RecruiterAuthModal({ open, onOpenChange }: RecruiterAuth
   const handleClose = () => {
     onOpenChange(false);
     setFormData({ email: '', password: '', confirmPassword: '' });
+    setShowForgotPassword(false);
+    setResetEmail('');
+    setResetEmailSent(false);
+    setResendCooldown(0);
     setMessage('');
+  };
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!resetEmail.trim()) {
+      showMessage('Please enter your email', 'error');
+      return;
+    }
+    setIsResetting(true);
+    setMessage('');
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(resetEmail.trim(), {
+        redirectTo: `${window.location.origin}/auth/reset-password`,
+      });
+      if (error) throw error;
+      showMessage('Password reset email sent! Please check your inbox.', 'success');
+      setResetEmailSent(true);
+      setResendCooldown(30);
+    } catch (error: any) {
+      console.error('Password reset error:', error);
+      showMessage(error.message || 'Failed to send reset email', 'error');
+    } finally {
+      setIsResetting(false);
+    }
+  };
+
+  const handleResendResetEmail = async () => {
+    if (resendCooldown > 0 || !resetEmail.trim()) return;
+    setIsResetting(true);
+    setMessage('');
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(resetEmail.trim(), {
+        redirectTo: `${window.location.origin}/auth/reset-password`,
+      });
+      if (error) throw error;
+      showMessage('Email resent! Please check your inbox.', 'success');
+      setResendCooldown(30);
+    } catch (error: any) {
+      console.error('Resend reset email error:', error);
+      showMessage(error.message || 'Failed to resend email', 'error');
+    } finally {
+      setIsResetting(false);
+    }
   };
 
   const handleGoogleSignIn = async () => {
@@ -182,7 +243,7 @@ export default function RecruiterAuthModal({ open, onOpenChange }: RecruiterAuth
               <Briefcase className="h-5 w-5 text-white" />
             </div>
             <DialogTitle className="text-2xl font-bold">
-              {mode === 'signup' ? 'Recruiter Sign Up' : 'Recruiter Sign In'}
+              {showForgotPassword ? 'Reset Password' : mode === 'signup' ? 'Recruiter Sign Up' : 'Recruiter Sign In'}
             </DialogTitle>
           </div>
         </DialogHeader>
@@ -202,7 +263,9 @@ export default function RecruiterAuthModal({ open, onOpenChange }: RecruiterAuth
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={showForgotPassword ? handleForgotPassword : handleSubmit} className="space-y-4">
+          {!showForgotPassword ? (
+          <>
           <div className="space-y-2">
             <Label htmlFor="recruiter-email">Email</Label>
             <div className="relative">
@@ -270,6 +333,19 @@ export default function RecruiterAuthModal({ open, onOpenChange }: RecruiterAuth
             </div>
           )}
           
+          {mode === 'signin' && (
+            <div className="flex items-center justify-end">
+              <button
+                type="button"
+                onClick={() => setShowForgotPassword(true)}
+                className="text-sm text-green-600 hover:text-green-700 hover:underline"
+                disabled={isLoading}
+              >
+                Forgot password?
+              </button>
+            </div>
+          )}
+
           <Button 
             type="submit"
             disabled={isLoading}
@@ -334,6 +410,76 @@ export default function RecruiterAuthModal({ open, onOpenChange }: RecruiterAuth
               </>
             )}
           </div>
+          </>
+          ) : (
+          <>
+            <p className="text-sm text-gray-600">
+              Enter your email and we'll send you a link to reset your password.
+            </p>
+
+            <div className="space-y-2">
+              <Label htmlFor="recruiter-reset-email">Email</Label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
+                <Input
+                  id="recruiter-reset-email"
+                  type="email"
+                  placeholder="you@company.com"
+                  className="pl-10 h-11"
+                  value={resetEmail}
+                  onChange={(e) => setResetEmail(e.target.value)}
+                  required
+                  disabled={isResetting}
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowForgotPassword(false);
+                  setResetEmail('');
+                  setResetEmailSent(false);
+                  setResendCooldown(0);
+                }}
+                className="text-sm text-green-600 hover:text-green-700 hover:underline"
+                disabled={isResetting}
+              >
+                Back to sign in
+              </button>
+            </div>
+
+            <Button
+              type="submit"
+              disabled={isResetting}
+              className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white h-11 disabled:opacity-50"
+            >
+              {isResetting ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Sending...
+                </>
+              ) : (
+                'Send Reset Link'
+              )}
+            </Button>
+
+            {resetEmailSent && (
+              <div className="text-center">
+                <p className="text-xs text-gray-500 mb-1">Didn't get the email? Check your spam folder, or</p>
+                <button
+                  type="button"
+                  onClick={handleResendResetEmail}
+                  disabled={resendCooldown > 0 || isResetting}
+                  className="text-sm font-medium text-green-600 hover:text-green-700 hover:underline disabled:text-gray-400 disabled:no-underline disabled:cursor-not-allowed"
+                >
+                  {resendCooldown > 0 ? `Resend email in ${resendCooldown}s` : 'Resend email'}
+                </button>
+              </div>
+            )}
+          </>
+          )}
         </form>
       </DialogContent>
     </Dialog>
