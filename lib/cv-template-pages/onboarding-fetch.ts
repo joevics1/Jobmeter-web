@@ -151,3 +151,14 @@ export async function updateOnboardingData(userId: string, updates: Record<strin
   if (error) return { success: false, error: error.message };
   return { success: true };
 }
+
+// For a brand-new user (e.g. just signed up via the parse-and-signup gate)
+// who has no onboarding_data row yet — plain insert, not update.
+export async function insertOnboardingData(userId: string, fields: Record<string, any>): Promise<{ success: boolean; error?: string }> {
+  const { error } = await supabase
+    .from('onboarding_data')
+    .insert({ user_id: userId, ...fields });
+
+  if (error) return { success: false, error: error.message };
+  return { success: true };
+}

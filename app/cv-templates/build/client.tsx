@@ -13,15 +13,15 @@ import { supabase } from '@/lib/supabase';
 import { renderCVTemplate } from '@/lib/cv-template-pages/cv-renderer';
 import { CV_PAGE_DESIGNS } from '@/lib/cv-template-pages/design-list';
 import { downloadCVAsDocx } from '@/lib/cv-template-pages/cv-docx-export';
-import { fetchOnboardingData, mapOnboardingToCVData } from '@/lib/cv-template-pages/onboarding-fetch';
+import { mapCVDataToOnboardingUpdate, insertOnboardingData } from '@/lib/cv-template-pages/onboarding-fetch';
 import { getHistoryEntry, saveToHistory } from '@/lib/cv-template-pages/cv-history';
 import type { CVData } from '@/lib/cv-template-pages/cv-data-types';
 import BackButton from '../_components/back-button';
 import CVFieldsEditor from '../_components/cv-fields-editor';
 import GeneratingAnimation from '../_components/generating-animation';
 
-type Stage = 'loading' | 'form' | 'result';
-type StartMode = 'quick' | 'fetch' | 'blank' | 'sample' | 'history';
+type Stage = 'loading' | 'form' | 'signup-gate' | 'result';
+type StartMode = 'quick' | 'sample' | 'blank' | 'history';
 
 function emptyCV(roleLabel: string): CVData {
   return {
@@ -62,6 +62,9 @@ export default function BuildClient({
 
   const [pasteText, setPasteText] = useState('');
   const [parsing, setParsing] = useState(false);
+  const [gateEmail, setGateEmail] = useState('');
+  const [gatePassword, setGatePassword] = useState('');
+  const [gateLoading, setGateLoading] = useState(false);
   const previewFrameRef = useRef<HTMLIFrameElement>(null);
   const [isOverflowing, setIsOverflowing] = useState(false);
 
@@ -115,26 +118,6 @@ export default function BuildClient({
 
       if (start === 'sample') {
         setCvData(sampleCvData || emptyCV(roleLabel));
-        setStage('form');
-        return;
-      }
-
-      if (start === 'fetch') {
-        if (!uid) {
-          setError('Please log in to fetch your details.');
-          setCvData(emptyCV(roleLabel));
-          setStage('form');
-          return;
-        }
-        const row = await fetchOnboardingData(uid);
-        if (cancelled) return;
-        if (!row) {
-          setError('No saved profile found. Try Quick Create later, or fill the form manually.');
-          setCvData(emptyCV(roleLabel));
-        } else {
-          setCvData(mapOnboardingToCVData(row));
-          setDefaultOpen(['personal']);
-        }
         setStage('form');
         return;
       }
@@ -207,12 +190,45 @@ export default function BuildClient({
         experience: p.experience?.length ? p.experience : prev.experience,
         education: p.education?.length ? p.education : prev.education,
       }));
-      setDefaultOpen(['personal']);
       setPasteText('');
+      if (userId) {
+        setDefaultOpen(['personal']);
+      } else {
+        // Not signed in — the parsed CV is ready, but stays hidden until
+        // they create an account.
+        setStage('signup-gate');
+      }
     } catch (err: any) {
       setError(err.message || 'Could not parse that text.');
     } finally {
       setParsing(false);
+    }
+  }
+
+  async function handleGateSignup(e: React.FormEvent) {
+    e.preventDefault();
+    setGateLoading(true);
+    setError(null);
+    try {
+      const { data, error: signUpError } = await supabase.auth.signUp({
+        email: gateEmail.trim(),
+        password: gatePassword,
+      });
+      if (signUpError) throw signUpError;
+      const newUserId = data.user?.id;
+      if (!newUserId) throw new Error('Could not create your account. Please try again.');
+
+      setUserId(newUserId);
+      const updates = mapCVDataToOnboardingUpdate(cvData);
+      const result = await insertOnboardingData(newUserId, updates);
+      if (!result.success) throw new Error(result.error || 'Account created, but saving your CV failed.');
+
+      setDefaultOpen(['personal']);
+      setStage('form');
+    } catch (err: any) {
+      setError(err.message || 'Sign up failed. Please try again.');
+    } finally {
+      setGateLoading(false);
     }
   }
 
@@ -269,12 +285,13 @@ export default function BuildClient({
 
         {stage === 'form' && (
           <div>
-            {/* Paste-to-parse — for people building a CV for someone else */}
+            {/* Autofill from an existing CV — for people building a CV for someone else */}
             <div className="border rounded-lg p-3 mb-4 bg-gray-50">
+              <p className="text-sm font-semibold text-gray-700 mb-2">Autofill from a CV</p>
               <textarea
                 className="border rounded px-3 py-2 w-full text-sm bg-white"
                 rows={3}
-                placeholder="Paste CV details here to auto-fill the form below (optional)"
+                placeholder="Paste CV or resume text here to auto-fill the form below (optional)"
                 value={pasteText}
                 onChange={(e) => setPasteText(e.target.value)}
               />
@@ -284,7 +301,7 @@ export default function BuildClient({
                 type="button"
                 className="mt-2 text-sm bg-blue-700 text-white px-4 py-1.5 rounded-lg font-medium disabled:opacity-50"
               >
-                {parsing ? 'Parsing…' : 'Parse & Fill'}
+                {parsing ? 'Reading…' : 'Autofill'}
               </button>
             </div>
 
@@ -294,6 +311,38 @@ export default function BuildClient({
               Generate CV
             </button>
           </div>
+        )}
+
+        {stage === 'signup-gate' && (
+          <form onSubmit={handleGateSignup} className="max-w-sm mx-auto pt-10">
+            <h2 className="text-xl font-bold text-center mb-6">Sign up to view CV/Resume</h2>
+            <div className="space-y-3">
+              <input
+                type="email"
+                required
+                placeholder="Email"
+                value={gateEmail}
+                onChange={(e) => setGateEmail(e.target.value)}
+                className="border rounded px-3 py-2 w-full"
+              />
+              <input
+                type="password"
+                required
+                minLength={6}
+                placeholder="Password"
+                value={gatePassword}
+                onChange={(e) => setGatePassword(e.target.value)}
+                className="border rounded px-3 py-2 w-full"
+              />
+              <button
+                type="submit"
+                disabled={gateLoading}
+                className="bg-blue-700 text-white px-4 py-2.5 rounded-lg font-semibold w-full disabled:opacity-50"
+              >
+                {gateLoading ? 'Creating account…' : 'Sign Up'}
+              </button>
+            </div>
+          </form>
         )}
 
         {stage === 'result' && (
@@ -323,19 +372,25 @@ export default function BuildClient({
                 style={{ height: '900px', border: 'none' }}
               />
             </div>
-            <div className="flex gap-3 flex-wrap">
-              <button onClick={() => setStage('form')} className="border px-4 py-2 rounded-lg font-medium">Edit</button>
-              <button onClick={handlePrint} className="border px-4 py-2 rounded-lg font-medium">Print / Save as PDF</button>
-              <button onClick={handleDownloadDocx} disabled={downloadingDocx} className="border px-4 py-2 rounded-lg font-medium disabled:opacity-50">
-                {downloadingDocx ? 'Preparing…' : 'Download as Word'}
-              </button>
-              <button onClick={handleSave} disabled={saving} className="border px-4 py-2 rounded-lg font-medium disabled:opacity-50">
-                {saving ? 'Saving…' : saved ? 'Saved ✓' : 'Save this CV'}
-              </button>
-            </div>
+            <div className="h-20" />
           </div>
         )}
       </main>
+
+      {stage === 'result' && (
+        <div className="fixed bottom-0 left-0 right-0 bg-white border-t shadow-lg z-50">
+          <div className="max-w-3xl mx-auto px-4 py-3 flex gap-2 overflow-x-auto flex-nowrap">
+            <button onClick={() => setStage('form')} className="shrink-0 border px-4 py-2 rounded-lg font-medium text-sm">Edit</button>
+            <button onClick={handlePrint} className="shrink-0 border px-4 py-2 rounded-lg font-medium text-sm">Print / PDF</button>
+            <button onClick={handleDownloadDocx} disabled={downloadingDocx} className="shrink-0 border px-4 py-2 rounded-lg font-medium text-sm disabled:opacity-50">
+              {downloadingDocx ? 'Preparing…' : 'Download as Word'}
+            </button>
+            <button onClick={handleSave} disabled={saving} className="shrink-0 border px-4 py-2 rounded-lg font-medium text-sm disabled:opacity-50">
+              {saving ? 'Saving…' : saved ? 'Saved ✓' : 'Save this CV'}
+            </button>
+          </div>
+        </div>
+      )}
     </>
   );
 }

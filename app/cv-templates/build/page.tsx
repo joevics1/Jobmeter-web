@@ -29,7 +29,7 @@ export default async function BuildPage({
       roleSlug={roleSlug}
       roleLabel={rolePage?.role_label || roleSlug.replace(/-/g, ' ')}
       sampleCvData={rolePage?.preview_cv_data || null}
-      start={start as 'quick' | 'fetch' | 'blank' | 'sample' | 'history'}
+      start={start as 'quick' | 'blank' | 'sample' | 'history'}
       historyId={historyId}
     />
   );

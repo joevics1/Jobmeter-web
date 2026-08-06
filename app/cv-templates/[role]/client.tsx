@@ -130,31 +130,17 @@ export default function RolePageClient({ page }: { page: ContentRolePage }) {
         <div className="max-w-5xl mx-auto px-4 py-3">
           {!authChecked ? (
             <div className="h-11" />
-          ) : userId ? (
+          ) : (
             <div className="grid grid-cols-3 gap-2">
-              <Link href={`${base}&start=quick`} className="text-center bg-blue-700 text-white rounded-lg py-2.5 px-2 text-sm font-semibold">
+              <Link href={userId ? `${base}&start=quick` : loginRedirect} className="text-center bg-blue-700 text-white rounded-lg py-2.5 px-2 text-sm font-semibold">
                 Quick Create
               </Link>
-              <Link href={`${base}&start=fetch`} className="text-center border border-blue-700 text-blue-700 rounded-lg py-2.5 px-2 text-sm font-semibold">
+              <Link href={`${base}&start=sample`} className="text-center border border-blue-700 text-blue-700 rounded-lg py-2.5 px-2 text-sm font-semibold">
                 Edit
               </Link>
               <Link href={`${base}&start=blank`} className="text-center border rounded-lg py-2.5 px-2 text-sm font-semibold text-gray-700">
                 Clear
               </Link>
-            </div>
-          ) : (
-            <div>
-              <p className="text-xs text-gray-500 text-center mb-1.5">
-                <Link href={loginRedirect} className="text-blue-700 font-medium">Log in</Link> for Quick Create &amp; Edit
-              </p>
-              <div className="grid grid-cols-2 gap-2">
-                <Link href={`${base}&start=sample`} className="text-center bg-blue-700 text-white rounded-lg py-2.5 px-2 text-sm font-semibold">
-                  Edit
-                </Link>
-                <Link href={`${base}&start=blank`} className="text-center border rounded-lg py-2.5 px-2 text-sm font-semibold text-gray-700">
-                  Clear
-                </Link>
-              </div>
             </div>
           )}
         </div>
