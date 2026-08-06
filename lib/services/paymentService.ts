@@ -185,6 +185,50 @@ export async function handleSuccessfulPayment(paymentData: any) {
   }
   // --- End idempotency check ---
 
+  // Talent Pool "unlimited" recruiter subscription — ₦10,000 for 30 days
+  // of unlimited talent-profile views. Separate from the job-seeker
+  // credits model below, so it's handled and returned early here.
+  if (planType === 'talent_unlimited') {
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + 30);
+
+    const { data: existingSub } = await supabaseAdmin
+      .from('user_subscriptions')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('plan_type', 'talent_unlimited')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (existingSub) {
+      const { error: subUpdateError } = await supabaseAdmin
+        .from('user_subscriptions')
+        .update({ is_active: true, started_at: new Date().toISOString(), expires_at: expiresAt.toISOString(), canceled_at: null })
+        .eq('id', existingSub.id);
+      if (subUpdateError) throw new Error(`Subscription update failed: ${subUpdateError.message}`);
+    } else {
+      const { error: subInsertError } = await supabaseAdmin
+        .from('user_subscriptions')
+        .insert({
+          user_id: userId,
+          plan_type: 'talent_unlimited',
+          is_active: true,
+          started_at: new Date().toISOString(),
+          expires_at: expiresAt.toISOString(),
+        });
+      if (subInsertError) throw new Error(`Subscription insert failed: ${subInsertError.message}`);
+    }
+
+    const { error: txError } = await supabaseAdmin
+      .from('payment_transactions')
+      .update({ status: 'completed' })
+      .eq('reference', paymentData.reference);
+    if (txError) console.error('[handleSuccessfulPayment] Transaction status update failed:', txError);
+
+    return { success: true };
+  }
+
   let creditsToAdd = 0;
   let allocation = 5;
 

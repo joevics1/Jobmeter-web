@@ -18,6 +18,7 @@ import {
 import type { CVData } from '@/lib/cv-template-pages/cv-data-types';
 import CVFieldsEditor from '@/app/cv-templates/_components/cv-fields-editor';
 import BackButton from '@/app/cv-templates/_components/back-button';
+import { computeNextMonday } from '@/lib/talent';
 
 interface ProfileData {
   full_name: string | null;
@@ -41,6 +42,8 @@ export default function EditProfilePage() {
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [profileData, setProfileData] = useState<ProfileData>({ full_name: '', email: '' });
   const [cvData, setCvData] = useState<CVData>(emptyCVProfile());
+  const [talentPool, setTalentPool] = useState(false);
+  const [wasTalentPool, setWasTalentPool] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -62,6 +65,8 @@ export default function EditProfilePage() {
 
       setProfileData({ full_name: profile?.full_name || null, email: profile?.email || authUser.email || '' });
       setCvData(onboardingRow ? mapOnboardingToCVData(onboardingRow) : emptyCVProfile());
+      setTalentPool(!!onboardingRow?.talent_pool);
+      setWasTalentPool(!!onboardingRow?.talent_pool);
       setLoading(false);
     })();
   }, [router]);
@@ -84,9 +89,19 @@ export default function EditProfilePage() {
       }
 
       const updates = mapCVDataToOnboardingUpdate(cvData);
-      const cvResult = await updateOnboardingData(userId, updates);
+      // Only stamp a new visibility date the moment someone turns this on —
+      // that's what makes the list update in a weekly Monday batch instead
+      // of live per opt-in. Turning it off just hides them again immediately.
+      const talentUpdates: Record<string, any> = { talent_pool: talentPool };
+      if (talentPool && !wasTalentPool) {
+        talentUpdates.talent_visible_from = computeNextMonday().toISOString();
+      } else if (!talentPool) {
+        talentUpdates.talent_visible_from = null;
+      }
+      const cvResult = await updateOnboardingData(userId, { ...updates, ...talentUpdates });
       if (!cvResult.success) throw new Error(cvResult.error || 'Could not save your CV details.');
 
+      setWasTalentPool(talentPool);
       setSaved(true);
     } catch (err: any) {
       setError(err.message || 'Could not save your profile.');
@@ -131,6 +146,24 @@ export default function EditProfilePage() {
             <h2 className="text-sm font-semibold text-gray-700 mb-2 px-1">CV Details</h2>
             <p className="text-xs text-gray-500 mb-3 px-1">Used to fill and tailor CVs across JobMeter.</p>
             <CVFieldsEditor cvData={cvData} setCvData={setCvData} defaultOpenSections={['personal']} />
+
+            <div className="bg-white rounded-xl border border-gray-100 p-4 mt-4 flex items-start gap-3">
+              <input
+                type="checkbox"
+                id="edit-talent-pool"
+                checked={talentPool}
+                onChange={(e) => setTalentPool(e.target.checked)}
+                className="h-5 w-5 rounded cursor-pointer mt-0.5 accent-blue-600"
+              />
+              <div>
+                <label htmlFor="edit-talent-pool" className="font-semibold text-sm cursor-pointer text-gray-900">
+                  Join the Talent Pool
+                </label>
+                <p className="text-xs text-gray-500 mt-0.5">
+                  Join the Talent Pool and let verified recruiters find and contact you directly for job opportunities.
+                </p>
+              </div>
+            </div>
           </>
         )}
       </main>

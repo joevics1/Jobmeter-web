@@ -3,12 +3,13 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Menu, X, Briefcase, FileText, BookOpen, Wrench, Settings, ChevronRight, Send } from 'lucide-react';
+import { Menu, X, Briefcase, FileText, BookOpen, Wrench, Settings, ChevronRight, Send, Users } from 'lucide-react';
 import { theme } from '@/lib/theme';
 
 const navItems = [
   { label: 'Jobs', href: '/jobs', icon: Briefcase },
   { label: 'Post Job', href: '/submit', icon: Send },
+  { label: 'Talent', href: '/talent', icon: Users },
   { label: 'Documents', href: '/documents', icon: FileText },
   { label: 'Tools', href: '/tools', icon: Wrench },
   { label: 'Resources', href: '/resource', icon: BookOpen },
