@@ -359,7 +359,7 @@ export default function SettingsPage() {
         {/* ── My Activity — Saved Jobs moved here from the bottom nav ── */}
         <div className="mb-6">
           <h2 className="text-base font-semibold mb-2 px-1 text-gray-700">My Activity</h2>
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden divide-y divide-gray-100">
             <Link href="/saved" className="flex items-center justify-between p-4 hover:bg-gray-50 transition-colors">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
@@ -369,6 +369,19 @@ export default function SettingsPage() {
                 <div className="text-left">
                   <h3 className="font-semibold text-gray-900">Saved Jobs</h3>
                   <p className="text-xs text-gray-500">Jobs you've bookmarked to review later</p>
+                </div>
+              </div>
+              <ChevronRight size={20} className="text-gray-400" />
+            </Link>
+            <Link href="/invitations" className="flex items-center justify-between p-4 hover:bg-gray-50 transition-colors">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
+                  style={{ backgroundColor: theme.colors.primary.DEFAULT + '15' }}>
+                  <Mail size={20} style={{ color: theme.colors.primary.DEFAULT }} />
+                </div>
+                <div className="text-left">
+                  <h3 className="font-semibold text-gray-900">Invitations</h3>
+                  <p className="text-xs text-gray-500">Jobs recruiters have invited you to apply for</p>
                 </div>
               </div>
               <ChevronRight size={20} className="text-gray-400" />
