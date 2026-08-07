@@ -17,6 +17,7 @@ import { mapCVDataToOnboardingUpdate, insertOnboardingData } from '@/lib/cv-temp
 import { getHistoryEntry, saveToHistory } from '@/lib/cv-template-pages/cv-history';
 import type { CVData } from '@/lib/cv-template-pages/cv-data-types';
 import BackButton from '../_components/back-button';
+import CVPreviewFrame from '../_components/cv-preview-frame';
 import CVFieldsEditor from '../_components/cv-fields-editor';
 import GeneratingAnimation from '../_components/generating-animation';
 
@@ -62,6 +63,9 @@ export default function BuildClient({
 
   const [pasteText, setPasteText] = useState('');
   const [parsing, setParsing] = useState(false);
+  const [activeTab, setActiveTab] = useState<'autofill' | 'customize'>('autofill');
+  const [jobDescText, setJobDescText] = useState('');
+  const [customizing, setCustomizing] = useState(false);
   const [gateEmail, setGateEmail] = useState('');
   const [gatePassword, setGatePassword] = useState('');
   const [gateLoading, setGateLoading] = useState(false);
@@ -205,6 +209,35 @@ export default function BuildClient({
     }
   }
 
+  async function handleCustomizeForJob() {
+    if (jobDescText.trim().length < 20) {
+      setError('Paste a fuller job description before customizing.');
+      return;
+    }
+    setCustomizing(true);
+    setError(null);
+    try {
+      const { data, error: fnError } = await supabase.functions.invoke('customize-cv-for-job', {
+        body: { cvData, jobDescription: jobDescText },
+      });
+      if (fnError) throw new Error(fnError.message);
+      if (!data?.success || !data?.data) throw new Error(data?.error || 'Could not customize for that job.');
+      setCvData(data.data as CVData);
+      setJobDescText('');
+      if (userId) {
+        setDefaultOpen(['personal']);
+      } else {
+        // Not signed in — the customized CV is ready, but stays hidden
+        // until they create an account, same as autofill.
+        setStage('signup-gate');
+      }
+    } catch (err: any) {
+      setError(err.message || 'Could not customize for that job.');
+    } finally {
+      setCustomizing(false);
+    }
+  }
+
   async function handleGateSignup(e: React.FormEvent) {
     e.preventDefault();
     setGateLoading(true);
@@ -237,8 +270,7 @@ export default function BuildClient({
   const previewHtml = useMemo(() => renderCVTemplate(selectedDesign, cvData, 'view'), [cvData, selectedDesign]);
 
   function handlePrint() {
-    const iframe = document.getElementById('cv-preview-frame') as HTMLIFrameElement | null;
-    iframe?.contentWindow?.print();
+    previewFrameRef.current?.contentWindow?.print();
   }
   async function handleDownloadDocx() {
     setDownloadingDocx(true);
@@ -285,24 +317,64 @@ export default function BuildClient({
 
         {stage === 'form' && (
           <div>
-            {/* Autofill from an existing CV — for people building a CV for someone else */}
-            <div className="border rounded-lg p-3 mb-4 bg-gray-50">
-              <p className="text-sm font-semibold text-gray-700 mb-2">Autofill from a CV</p>
-              <textarea
-                className="border rounded px-3 py-2 w-full text-sm bg-white"
-                rows={3}
-                placeholder="Paste CV or resume text here to auto-fill the form below (optional)"
-                value={pasteText}
-                onChange={(e) => setPasteText(e.target.value)}
-              />
-              <button
-                onClick={handleParse}
-                disabled={parsing || pasteText.trim().length === 0}
-                type="button"
-                className="mt-2 text-sm bg-blue-700 text-white px-4 py-1.5 rounded-lg font-medium disabled:opacity-50"
-              >
-                {parsing ? 'Reading…' : 'Autofill'}
-              </button>
+            {/* Autofill from a CV, or customize toward a specific job — two tabs */}
+            <div className="border rounded-lg mb-4 bg-gray-50 overflow-hidden">
+              <div className="flex border-b">
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('autofill')}
+                  className={`flex-1 py-2.5 text-sm font-semibold ${activeTab === 'autofill' ? 'bg-white text-blue-700 border-b-2 border-blue-700' : 'text-gray-500'}`}
+                >
+                  Autofill from a CV
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('customize')}
+                  className={`flex-1 py-2.5 text-sm font-semibold ${activeTab === 'customize' ? 'bg-white text-blue-700 border-b-2 border-blue-700' : 'text-gray-500'}`}
+                >
+                  Customize for a Job
+                </button>
+              </div>
+
+              {activeTab === 'autofill' && (
+                <div className="p-3">
+                  <textarea
+                    className="border rounded px-3 py-2 w-full text-sm bg-white"
+                    rows={3}
+                    placeholder="Paste CV or resume text here to auto-fill the form below (optional)"
+                    value={pasteText}
+                    onChange={(e) => setPasteText(e.target.value)}
+                  />
+                  <button
+                    onClick={handleParse}
+                    disabled={parsing || pasteText.trim().length === 0}
+                    type="button"
+                    className="mt-2 text-sm bg-blue-700 text-white px-4 py-1.5 rounded-lg font-medium disabled:opacity-50"
+                  >
+                    {parsing ? 'Reading…' : 'Autofill'}
+                  </button>
+                </div>
+              )}
+
+              {activeTab === 'customize' && (
+                <div className="p-3">
+                  <textarea
+                    className="border rounded px-3 py-2 w-full text-sm bg-white"
+                    rows={3}
+                    placeholder="Paste the job description here to tailor your summary and experience toward it (optional)"
+                    value={jobDescText}
+                    onChange={(e) => setJobDescText(e.target.value)}
+                  />
+                  <button
+                    onClick={handleCustomizeForJob}
+                    disabled={customizing || jobDescText.trim().length === 0}
+                    type="button"
+                    className="mt-2 text-sm bg-blue-700 text-white px-4 py-1.5 rounded-lg font-medium disabled:opacity-50"
+                  >
+                    {customizing ? 'Customizing…' : 'Customize'}
+                  </button>
+                </div>
+              )}
             </div>
 
             <CVFieldsEditor cvData={cvData} setCvData={setCvData} defaultOpenSections={defaultOpen} />
@@ -362,15 +434,7 @@ export default function BuildClient({
               </div>
             )}
             <div className="border rounded-lg overflow-hidden shadow-sm bg-gray-50 mb-3">
-              <iframe
-                ref={previewFrameRef}
-                id="cv-preview-frame"
-                title="CV preview"
-                srcDoc={previewHtml}
-                onLoad={checkOverflow}
-                className="w-full"
-                style={{ height: '900px', border: 'none' }}
-              />
+              <CVPreviewFrame ref={previewFrameRef} title="CV preview" html={previewHtml} onLoad={checkOverflow} />
             </div>
             <div className="h-20" />
           </div>

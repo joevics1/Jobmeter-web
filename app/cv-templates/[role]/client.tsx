@@ -14,6 +14,7 @@ import { CV_PAGE_DESIGNS } from '@/lib/cv-template-pages/design-list';
 import { renderCVTemplate } from '@/lib/cv-template-pages/cv-renderer';
 import { supabase } from '@/lib/supabase';
 import BackButton from '../_components/back-button';
+import CVPreviewFrame from '../_components/cv-preview-frame';
 
 export default function RolePageClient({ page }: { page: ContentRolePage }) {
   const [selectedDesign, setSelectedDesign] = useState(CV_PAGE_DESIGNS[0]?.id ?? 'template-1');
@@ -83,17 +84,11 @@ export default function RolePageClient({ page }: { page: ContentRolePage }) {
             </div>
 
             <div className="border rounded-lg overflow-hidden shadow-sm bg-gray-50">
-              <iframe
+              <CVPreviewFrame
                 ref={previewFrameRef}
                 title={`${page.role_label} CV preview — ${selectedDesign}`}
-                srcDoc={previewHtml}
-                onLoad={() => {
-                  checkOverflow();
-                  // This is our own seed content, not user-editable — surface
-                  // it to us in dev console rather than to the visitor.
-                }}
-                className="w-full"
-                style={{ height: '900px', border: 'none' }}
+                html={previewHtml}
+                onLoad={checkOverflow}
               />
             </div>
             {isOverflowing && process.env.NODE_ENV !== 'production' && (

@@ -216,12 +216,20 @@ function calculateSpacing(data: CVData): { spacing: number; useDistribution: boo
   if (extraSpace < 0) {
     spacing = 8;
     useDistribution = false;
-  } else if (extraSpace > 100 && activeSections < 6) {
+  } else if (extraSpace > 80) {
+    // Previously this required activeSections < 6 to spread content across
+    // the page — but supporting all 6 section groups on every template
+    // (Skills & Languages, Experience, Education, Achievements, Projects &
+    // More, References) means most real CVs now have 6+ active sections,
+    // which silently disabled fill-the-page distribution for exactly the
+    // content-rich CVs it should help most. Section count shouldn't gate
+    // this — how much actual empty space there is should.
     useDistribution = true;
-    spacing = Math.max(15, Math.min(40, extraSpace / gapsBetweenSections));
-  } else if (extraSpace > 50) {
-    spacing = Math.max(15, Math.min(25, extraSpace / gapsBetweenSections));
-  } else if (extraSpace > 20) {
+    spacing = Math.max(15, Math.min(55, extraSpace / gapsBetweenSections));
+  } else if (extraSpace > 40) {
+    useDistribution = true;
+    spacing = Math.max(14, Math.min(32, extraSpace / gapsBetweenSections));
+  } else if (extraSpace > 15) {
     spacing = Math.max(12, extraSpace / gapsBetweenSections);
   } else {
     spacing = 10;
@@ -278,7 +286,7 @@ function renderTemplate5(data: CVData): string {
             min-height: 297mm;
             margin: 0 auto;
             background: white;
-            padding: 14mm 18mm 16mm;
+            padding: 14mm 9mm 16mm;
         }
 
         .header {
@@ -304,7 +312,7 @@ function renderTemplate5(data: CVData): string {
         }
 
         .section {
-            margin-bottom: 16px;
+            margin-bottom: 26px;
         }
 
         .section-title {
@@ -652,7 +660,7 @@ function renderTemplate6(data: CVData): string {
             min-height: 297mm;
             margin: 0 auto;
             background: white;
-            padding: 10mm 12mm 12mm;
+            padding: 10mm 6mm 12mm;
         }
 
         .header {
@@ -680,7 +688,7 @@ function renderTemplate6(data: CVData): string {
         }
 
         .section {
-            margin-bottom: 22px;
+            margin-bottom: 32px;
         }
 
         .section-title {
@@ -1342,7 +1350,7 @@ function renderTemplate8(data: CVData): string {
             height: calc(297mm - 140px);
             max-height: calc(297mm - 140px);
             overflow: hidden;
-            padding: 0 10mm;
+            padding: 0 5mm;
         }
         .two-column-layout { 
             display: grid; 
@@ -1356,7 +1364,7 @@ function renderTemplate8(data: CVData): string {
             height: 100%;
         }
         .vertical-divider { background: #5a5a5a; width: 3px; }
-        .section { margin-bottom: 20px; }
+        .section { margin-bottom: 30px; }
         .section-title { font-size: 13px; font-weight: normal; text-transform: uppercase; letter-spacing: 2px; color: #4a4a4a; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 2px solid #5a5a5a; }
         .section-content { font-size: 11px; line-height: 1.6; color: #4a4a4a; }
         .work-entry, .education-entry { margin-bottom: 12px; }
@@ -1546,9 +1554,9 @@ function renderTemplate9(data: CVData): string {
             max-height: calc(297mm - 160px);
             overflow-y: auto;
             overflow-x: hidden;
-            padding: 0 10mm;
+            padding: 0 5mm;
         }
-        .section { margin-bottom: 20px; }
+        .section { margin-bottom: 30px; }
         .section-title-container { background: #d4d4d4; padding: 8px 15px; margin-bottom: 12px; border-radius: 20px; }
         .section-title { font-size: 12px; font-weight: bold; color: #2d2d2d; text-transform: uppercase; font-style: italic; letter-spacing: 1px; }
         .section-content { font-size: 11px; line-height: 1.5; color: #2d2d2d; }
@@ -1697,7 +1705,7 @@ function renderTemplate10(data: CVData): string {
             max-height: 297mm;
             background: white;
             margin: 0;
-            padding: 10mm 10mm 12mm;
+            padding: 10mm 5mm 12mm;
             display: grid;
             grid-template-columns: 280px 1fr;
             position: relative;
@@ -1733,7 +1741,7 @@ function renderTemplate10(data: CVData): string {
         .sidebar-content-text { font-size: 10px; line-height: 1.5; color: #4a4a4a; }
         .sidebar { overflow-y: auto; overflow-x: hidden; height: 100%; }
         .main-content {
-            padding: 80px 40px 40px 40px;
+            padding: 80px 20px 40px 20px;
             position: relative;
             z-index: 1;
             height: 100%;
@@ -1748,7 +1756,7 @@ function renderTemplate10(data: CVData): string {
         }
         .name { font-size: 36px; font-weight: bold; color: #2d3e4a; margin-bottom: 8px; }
         .job-title { font-size: 16px; color: #4a5f73; margin-bottom: 15px; }
-        .section { margin-bottom: 20px; }
+        .section { margin-bottom: 30px; }
         .section-title {
             font-size: 14px;
             font-weight: bold;
@@ -1923,15 +1931,15 @@ function renderTemplate11(data: CVData): string {
         .sidebar {
             background: #1e3d52;
             color: white;
-            padding: 0 10mm;
+            padding: 0 5mm;
         }
         .profile-section {
-            padding: 40px 40px 30px 40px;
+            padding: 40px 20px 30px 20px;
             text-align: center;
         }
         .name { font-size: 28px; font-weight: bold; color: white; margin-bottom: 8px; }
         .job-title { font-size: 14px; color: #a0c4d0; margin-bottom: 20px; }
-        .sidebar-content { padding: 0 40px 40px 40px; overflow-y: auto; overflow-x: hidden; height: calc(297mm - 280px); max-height: calc(297mm - 280px); }
+        .sidebar-content { padding: 0 20px 40px 20px; overflow-y: auto; overflow-x: hidden; height: calc(297mm - 280px); max-height: calc(297mm - 280px); }
         .sidebar-section { margin-bottom: 25px; }
         .sidebar-title {
             font-size: 14px;
@@ -1945,7 +1953,7 @@ function renderTemplate11(data: CVData): string {
         .sidebar-content-text { font-size: 11px; line-height: 1.5; }
         .sidebar { overflow-y: auto; overflow-x: hidden; height: 100%; }
         .main-content {
-            padding: 50px 40px 40px 40px;
+            padding: 50px 20px 40px 20px;
             height: 100%;
             overflow-y: auto;
             overflow-x: hidden;
@@ -1956,7 +1964,7 @@ function renderTemplate11(data: CVData): string {
             overflow-y: auto;
             overflow-x: hidden;
         }
-        .section { margin-bottom: 20px; }
+        .section { margin-bottom: 30px; }
         .section-title {
             font-size: 16px;
             font-weight: bold;
@@ -2171,10 +2179,10 @@ function renderTemplate12(data: CVData): string {
             height: calc(297mm - 150px);
             max-height: calc(297mm - 150px);
             overflow: hidden;
-            padding: 0 10mm;
+            padding: 0 5mm;
         }
         .left-column { 
-            padding-right: 20px; 
+            padding-right: 10px; 
             overflow-y: auto;
             overflow-x: hidden;
             height: 100%;
@@ -2184,7 +2192,7 @@ function renderTemplate12(data: CVData): string {
             overflow-x: hidden;
             height: 100%;
         }
-        .section { margin-bottom: 18px; }
+        .section { margin-bottom: 28px; }
         .section-title {
             font-size: 14px;
             font-weight: bold;
