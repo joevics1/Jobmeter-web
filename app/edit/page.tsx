@@ -49,7 +49,7 @@ export default function EditProfilePage() {
     (async () => {
       const { data: { user: authUser } } = await supabase.auth.getUser();
       if (!authUser) {
-        router.push(`/auth/login?redirect=${encodeURIComponent('/edit')}`);
+        router.push('/settings');
         return;
       }
       setUserId(authUser.id);

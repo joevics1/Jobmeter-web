@@ -8,6 +8,7 @@
 // Country is omitted from the URL/UI for now — see lib/cv-template-pages/data.ts.
 
 import { useState, useMemo, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import type { ContentRolePage } from '@/lib/cv-template-pages/data';
 import { CV_PAGE_DESIGNS } from '@/lib/cv-template-pages/design-list';
@@ -15,9 +16,12 @@ import { renderCVTemplate } from '@/lib/cv-template-pages/cv-renderer';
 import { supabase } from '@/lib/supabase';
 import BackButton from '../_components/back-button';
 import CVPreviewFrame from '../_components/cv-preview-frame';
+import AuthModal from '@/components/AuthModal';
 
 export default function RolePageClient({ page }: { page: ContentRolePage }) {
+  const router = useRouter();
   const [selectedDesign, setSelectedDesign] = useState(CV_PAGE_DESIGNS[0]?.id ?? 'template-1');
+  const [authModalOpen, setAuthModalOpen] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const [authChecked, setAuthChecked] = useState(false);
 
@@ -47,7 +51,6 @@ export default function RolePageClient({ page }: { page: ContentRolePage }) {
   }, [selectedDesign, page.preview_cv_data]);
 
   const base = `/cv-templates/build?role=${encodeURIComponent(page.role_slug)}`;
-  const loginRedirect = `/auth/login?redirect=${encodeURIComponent(base)}`;
 
   return (
     <>
@@ -127,9 +130,13 @@ export default function RolePageClient({ page }: { page: ContentRolePage }) {
             <div className="h-11" />
           ) : (
             <div className="grid grid-cols-3 gap-2">
-              <Link href={userId ? `${base}&start=quick` : loginRedirect} className="text-center bg-blue-700 text-white rounded-lg py-2.5 px-2 text-sm font-semibold">
+              <button
+                onClick={() => userId ? router.push(`${base}&start=quick`) : setAuthModalOpen(true)}
+                type="button"
+                className="text-center bg-blue-700 text-white rounded-lg py-2.5 px-2 text-sm font-semibold"
+              >
                 Quick Create
-              </Link>
+              </button>
               <Link href={`${base}&start=sample`} className="text-center border border-blue-700 text-blue-700 rounded-lg py-2.5 px-2 text-sm font-semibold">
                 Edit
               </Link>
@@ -140,6 +147,7 @@ export default function RolePageClient({ page }: { page: ContentRolePage }) {
           )}
         </div>
       </div>
+      <AuthModal open={authModalOpen} onOpenChange={setAuthModalOpen} />
     </>
   );
 }
