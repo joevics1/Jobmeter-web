@@ -3,69 +3,16 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { callGeminiText } from "../_shared/gemini.ts";
 
 interface RequestBody {
   userId: string;
 }
 
-const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models';
-
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
-
-// Call Gemini API with retry logic and model fallback
-async function callGeminiAPI(prompt: string, apiKey: string): Promise<any> {
-  const models = ['gemini-2.0-flash-lite', 'gemini-2.0-flash', 'gemini-1.5-flash'];
-  
-  for (const model of models) {
-    try {
-      const url = `${GEMINI_API_URL}/${model}:generateContent?key=${apiKey}`;
-      
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          contents: [{
-            parts: [{
-              text: prompt
-            }]
-          }],
-          generationConfig: {
-            temperature: 0.7,
-            maxOutputTokens: 8192,
-          }
-        }),
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error(`Model ${model} failed:`, errorText);
-        if (response.status === 429 || response.status >= 500) {
-          continue;
-        }
-        throw new Error(`Gemini API error: ${response.status} ${errorText}`);
-      }
-
-      const data = await response.json();
-      const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-      
-      if (text) {
-        return text;
-      }
-    } catch (error) {
-      console.error(`Error with model ${model}:`, error);
-      if (model === models[models.length - 1]) {
-        throw error;
-      }
-    }
-  }
-
-  throw new Error('All Gemini models failed');
-}
 
 const CAREER_COACH_SYSTEM_PROMPT = `You are an expert career coach and professional development advisor. Analyze the user's profile and provide comprehensive career guidance.
 
@@ -241,7 +188,7 @@ Analyze this user's profile and provide comprehensive career guidance.`;
       );
     }
 
-    const responseText = await callGeminiAPI(prompt, apiKey);
+    const responseText = await callGeminiText(prompt, apiKey, { temperature: 0.7, maxTokens: 8192 });
 
     // Parse JSON response
     let analysisResult;

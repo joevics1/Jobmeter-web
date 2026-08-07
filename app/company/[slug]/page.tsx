@@ -13,7 +13,12 @@ import { getCompanyName } from '@/lib/utils/companyUtils';
 import MarkdownRenderer from '@/components/MarkdownRenderer';
 import AdUnit from '@/components/ads/AdUnit';
 
-export const revalidate = false;
+// Was `false` (cache forever). That meant once a company page was rendered and
+// crawled, it kept serving as "published" indefinitely even after is_published
+// flipped to false in Supabase -- nothing ever told the cache to re-check.
+// Match the sitemap's cadence (3600s) so unpublished companies actually 404
+// again within an hour instead of staying indexed forever.
+export const revalidate = 3600;
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -88,7 +93,7 @@ async function getCompanyJobs(companyName: string) {
       .from('jobs')
       .select('*')
       .eq('status', 'active')
-      .ilike('company', `%${companyName}%`)
+      .ilike('company->>name', `%${companyName}%`)
       .order('posted_date', { ascending: false })
       .limit(10);
     if (error || !data) return [];

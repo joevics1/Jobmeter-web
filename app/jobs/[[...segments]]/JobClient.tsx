@@ -465,7 +465,7 @@ export default function JobClient({ job, relatedJobs, companies }: {
                       <>
                         {matchedCompany?.slug ? (
                           <a
-                            href={`/companies/${matchedCompany.slug}`}
+                            href={`/company/${matchedCompany.slug}`}
                             className="hover:underline transition-colors"
                             style={{ color: theme.colors.primary.DEFAULT }}
                           >

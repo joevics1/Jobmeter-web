@@ -58,18 +58,14 @@ BULLET HIGHLIGHTS:
 
 CRITICAL PAGE LIMIT: The cover letter MUST fit on exactly ONE page. Be concise and focused.`;
 
-async function callGeminiAPI(prompt: string, model: string = 'gemini-2.5-flash-lite'): Promise<string> {
+async function callGeminiAPI(prompt: string): Promise<string> {
   const apiKey = Deno.env.get('GEMINI_API_KEY');
   if (!apiKey) {
     throw new Error('GEMINI_API_KEY environment variable is not set');
   }
 
-  const models = [
-    'gemini-2.5-flash-lite',
-    'gemini-1.5-flash',
-    'gemini-2.0-flash',
-    'gemini-1.5-pro'
-  ];
+  // Kept in sync with supabase/functions/_shared/gemini.ts GEMINI_MODELS.
+  const models = ['gemini-3.1-flash-lite', 'gemini-3-flash-preview'];
 
   for (const modelName of models) {
     try {
@@ -101,7 +97,7 @@ async function callGeminiAPI(prompt: string, model: string = 'gemini-2.5-flash-l
       if (!response.ok) {
         const errorData = await response.text();
         console.log(`Model ${modelName} failed: ${response.status}, error: ${errorData}`);
-        if (response.status === 429) {
+        if (response.status === 404 || response.status === 429 || response.status >= 500) {
           continue; // Try next model
         }
         throw new Error(`Gemini API error: ${response.status}`);

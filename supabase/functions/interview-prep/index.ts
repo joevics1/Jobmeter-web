@@ -2,6 +2,7 @@
 // Simple AI proxy - just calls Gemini API with provided prompt
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { callGeminiText } from "../_shared/gemini.ts";
 
 interface RequestBody {
   prompt: string;
@@ -9,64 +10,10 @@ interface RequestBody {
   maxTokens?: number;
 }
 
-const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models';
-
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
-
-// Call Gemini API with retry logic and model fallback
-async function callGeminiAPI(prompt: string, apiKey: string, temperature: number = 0.7, maxTokens: number = 8192): Promise<any> {
-  const models = ['gemini-2.0-flash-lite', 'gemini-2.0-flash', 'gemini-1.5-flash'];
-  
-  for (const model of models) {
-    try {
-      const url = `${GEMINI_API_URL}/${model}:generateContent?key=${apiKey}`;
-      
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          contents: [{
-            parts: [{
-              text: prompt
-            }]
-          }],
-          generationConfig: {
-            temperature,
-            maxOutputTokens: maxTokens,
-          }
-        }),
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error(`Model ${model} failed:`, errorText);
-        if (response.status === 429 || response.status >= 500) {
-          continue;
-        }
-        throw new Error(`Gemini API error: ${response.status} ${errorText}`);
-      }
-
-      const data = await response.json();
-      const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-      
-      if (text) {
-        return text;
-      }
-    } catch (error) {
-      console.error(`Error with model ${model}:`, error);
-      if (model === models[models.length - 1]) {
-        throw error;
-      }
-    }
-  }
-
-  throw new Error('All Gemini models failed');
-}
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -97,7 +44,7 @@ serve(async (req) => {
     }
 
     console.log('Calling Gemini API for interview prep...');
-    const responseText = await callGeminiAPI(prompt, apiKey, temperature || 0.7, maxTokens || 4096);
+    const responseText = await callGeminiText(prompt, apiKey, { temperature: temperature || 0.7, maxTokens: maxTokens || 4096 });
     console.log('Gemini API response length:', responseText?.length);
     console.log('Gemini API response preview:', responseText?.substring(0, 200));
 

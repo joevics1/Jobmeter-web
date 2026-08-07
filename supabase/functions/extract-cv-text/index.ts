@@ -33,15 +33,10 @@ async function extractTextWithGemini(fileBuffer: Uint8Array, mimeType: string, b
   // Prepare the prompt for text extraction
   const prompt = `Extract all text from this ${fileFormat.includes('image') ? 'image' : 'PDF document'}. Return the complete text content exactly as it appears, preserving all structure, formatting, and layout. Include headers, paragraphs, lists, tables, and any other text elements. Do not summarize or modify the content - extract it verbatim.`;
 
-  // Use specified Gemini models - prioritize faster models first
-  // gemini-2.0-flash-exp is good for multimodal, gemini-1.5-flash is stable
-  const models = [
-    'gemini-2.0-flash-exp',  // Best for multimodal tasks
-    'gemini-1.5-flash',      // Stable fallback
-    'gemini-1.5-pro',        // More capable fallback
-    'gemini-2.5-flash-lite', // Last resort
-    'gemini-2.5-flash'       // Last resort
-  ];
+  // Kept in sync with supabase/functions/_shared/gemini.ts GEMINI_MODELS.
+  // (Not importing the shared helper here since this function needs the
+  // multimodal inlineData request shape with its own timeout/retry tuning.)
+  const models = ['gemini-3.1-flash-lite', 'gemini-3-flash-preview'];
 
   for (const modelName of models) {
     try {
@@ -289,26 +284,6 @@ serve(async (req) => {
             error: 'Text extraction failed', 
             details: `Gemini extraction failed: ${geminiErrorMsg}. OCR.Space fallback also failed: ${errorMessage}. For files over 1MB, Gemini extraction must succeed as OCR.Space has a 1MB limit.` 
           }),
-          { 
-            status: 500,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-          }
-        );
-      }
-    }
-  } catch (error: any) {
-    console.error('Edge function error:', error);
-    return new Response(
-      JSON.stringify({ error: error?.message || 'Unexpected error' }),
-      { 
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      }
-    );
-  }
-});
-
-
           { 
             status: 500,
             headers: { ...corsHeaders, 'Content-Type': 'application/json' }

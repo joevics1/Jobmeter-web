@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { quizSupabase } from '@/lib/quizSupabase';
 import { theme } from '@/lib/theme';
-import { ArrowLeft, CheckCircle, XCircle, Loader2, X } from 'lucide-react';
+import { ArrowLeft, CheckCircle, XCircle, Loader2 } from 'lucide-react';
 import AdUnit from '@/components/ads/AdUnit';
 
 interface TheoryQuestion {
@@ -35,8 +35,6 @@ export default function TheoryQuizClient({ company }: { company: string }) {
   const [useTimer, setUseTimer] = useState(false);
   const [timeSpent, setTimeSpent] = useState(0);
   const [timerStarted, setTimerStarted] = useState(false);
-  const [isAnchorClosed, setIsAnchorClosed] = useState(false);
-  const ANCHOR_HEIGHT = 100;
 
   useEffect(() => {
     const timerParam = searchParams.get('timer');
@@ -382,37 +380,6 @@ export default function TheoryQuizClient({ company }: { company: string }) {
         </div>
       </div>
 
-      {/* Mobile anchor spacer */}
-      {!isAnchorClosed && (
-        <div className="lg:hidden" style={{ height: `${ANCHOR_HEIGHT}px` }} aria-hidden="true" />
-      )}
-
-      {/* Mobile Anchor Ad with Close Button */}
-      {!isAnchorClosed && (
-        <div
-          id="mobile-anchor-ad"
-          className="fixed bottom-0 left-0 right-0 z-40 lg:hidden bg-white border-t border-gray-100 overflow-hidden"
-          style={{ height: `${ANCHOR_HEIGHT}px` }}
-        >
-          {/* Close Button */}
-          <button
-            onClick={() => setIsAnchorClosed(true)}
-            className="absolute top-1.5 left-3 z-50 w-7 h-7 flex items-center justify-center bg-white rounded-full shadow text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition-colors"
-            aria-label="Close bottom advertisement"
-          >
-            <X size={18} />
-          </button>
-
-          {/* Ad Container */}
-          <div className="w-full" style={{ height: `${ANCHOR_HEIGHT}px` }}>
-            <AdUnit
-              slot="3349195672"
-              format="auto"
-              style={{ display: 'block', width: '100%', height: `${ANCHOR_HEIGHT}px` }}
-            />
-          </div>
-        </div>
-      )}
     </div>
   );
 }

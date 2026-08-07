@@ -82,14 +82,8 @@ async function parseCVWithGemini(cvText: string): Promise<ParsedProfile> {
     throw new Error('GEMINI_API_KEY environment variable is not set');
   }
 
-  const models = [
-    'gemini-2.5-flash',
-    'gemini-2.0-flash-lite',
-    'gemini-2.5-pro',
-    'gemini-2.5-flash-lite',
-    'gemini-1.5-flash',
-    'gemini-1.5-pro'
-  ];
+  // Kept in sync with supabase/functions/_shared/gemini.ts GEMINI_MODELS.
+  const models = ['gemini-3.1-flash-lite', 'gemini-3-flash-preview'];
 
   const prompt = `You are a professional CV parser. Analyze the CV text below and extract all information into a structured JSON format.
 
@@ -351,7 +345,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         error: errorMessage,
-        details: process.env.DENO_ENV === 'development' ? errorStack : undefined
+        details: Deno.env.get('DENO_ENV') === 'development' ? errorStack : undefined
       }),
       { 
         status: 500, 
@@ -360,9 +354,5 @@ serve(async (req) => {
     );
   }
 });
-
-
-
-
 
 

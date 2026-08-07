@@ -81,7 +81,10 @@ function groupByIndustry(companies: Company[]) {
   return Object.entries(grouped).sort((a, b) => b[1].length - a[1].length);
 }
 
-export const revalidate = false;
+// Same forever-cache problem as the [slug] page -- match the sitemap's cadence
+// so a company that gets unpublished actually disappears from the directory
+// listing within an hour instead of staying cached indefinitely.
+export const revalidate = 3600;
 
 export default async function CompanyDirectoryPage({ searchParams }: Props) {
   const companyName = searchParams?.name;
