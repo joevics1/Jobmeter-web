@@ -78,6 +78,8 @@ export default function CompanyQuizClient({
 
   /**
    * Main Handler: Auth -> Credits -> Navigate
+   * Objective quizzes (Quick Sprint / Standard) are free — no credit check,
+   * no payment popup. Theory (AI-graded) still costs a credit.
    */
   const handleQuizSelection = async (type: 'objective' | 'theory', count: number) => {
     setIsProcessing(true);
@@ -90,12 +92,14 @@ export default function CompanyQuizClient({
       return;
     }
 
-    // 2. Check/Deduct Credit
-    const result = await deductCredit(1);
-    if (!result.success) {
-      setShowPaymentModal(true);
-      setIsProcessing(false);
-      return;
+    // 2. Check/Deduct Credit — objective quizzes are free, skip entirely.
+    if (type === 'theory') {
+      const result = await deductCredit(1);
+      if (!result.success) {
+        setShowPaymentModal(true);
+        setIsProcessing(false);
+        return;
+      }
     }
 
     // 3. Proceed to Selection or Quiz
@@ -200,7 +204,7 @@ export default function CompanyQuizClient({
             title="Quick Sprint" 
             desc="10 Multiple Choice" 
             icon={<Target size={22} className="text-emerald-600" />} 
-            cost={isPro ? "Unlimited" : "1 Credit"}
+            cost="Free"
             onClick={() => handleQuizSelection('objective', 10)}
             disabled={isProcessing}
           />
@@ -208,7 +212,7 @@ export default function CompanyQuizClient({
             title="Standard" 
             desc="20 Multiple Choice" 
             icon={<ClipboardList size={22} className="text-blue-600" />} 
-            cost={isPro ? "Unlimited" : "1 Credit"}
+            cost="Free"
             onClick={() => handleQuizSelection('objective', 20)}
             disabled={isProcessing}
           />
