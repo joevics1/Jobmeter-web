@@ -1424,7 +1424,7 @@ if (filters.remote) {
 
               {!user && (
                 <button
-                  onClick={() => fileInputRef.current?.click()}
+                  onClick={() => setAuthModalOpen(true)}
                   disabled={cvStatus === 'uploading' || cvStatus === 'parsing'}
                   className="flex-1 px-3 py-2.5 rounded-lg font-medium text-sm whitespace-nowrap transition-all hover:opacity-90 active:scale-95 flex items-center justify-center gap-2 disabled:opacity-70"
                   style={{ backgroundColor: theme.colors.primary.DEFAULT, color: '#ffffff', height: '42px', minWidth: '160px' }}
