@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Menu, X, Briefcase, FileText, BookOpen, Wrench, Settings, ChevronRight, Send, Users } from 'lucide-react';
 import { theme } from '@/lib/theme';
+import { usePendingInvitationsCount } from '@/hooks/usePendingInvitationsCount';
 
 const navItems = [
   { label: 'Jobs', href: '/jobs', icon: Briefcase },
@@ -19,6 +20,7 @@ const navItems = [
 export default function Header() {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const pendingInvitations = usePendingInvitationsCount();
 
   const isActive = (href: string) => pathname === href;
 
@@ -61,7 +63,17 @@ export default function Header() {
                     color: active ? '#FFFFFF' : theme.colors.text.primary,
                   }}
                 >
-                  <Icon size={18} />
+                  <span className="relative">
+                    <Icon size={18} />
+                    {item.href === '/settings' && pendingInvitations > 0 && (
+                      <span
+                        className="absolute -top-1.5 -right-1.5 min-w-[15px] h-[15px] px-0.5 rounded-full flex items-center justify-center text-[9px] font-bold text-white"
+                        style={{ backgroundColor: '#DC2626' }}
+                      >
+                        {pendingInvitations > 9 ? '9+' : pendingInvitations}
+                      </span>
+                    )}
+                  </span>
                   <span className="text-sm font-medium">{item.label}</span>
                 </Link>
               );
@@ -132,14 +144,24 @@ export default function Header() {
                     }}
                   >
                     <div className="flex items-center gap-3">
-                      <Icon
-                        size={22}
-                        style={{
-                          color: active
-                            ? theme.colors.primary.DEFAULT
-                            : theme.colors.text.secondary,
-                        }}
-                      />
+                      <span className="relative">
+                        <Icon
+                          size={22}
+                          style={{
+                            color: active
+                              ? theme.colors.primary.DEFAULT
+                              : theme.colors.text.secondary,
+                          }}
+                        />
+                        {item.href === '/settings' && pendingInvitations > 0 && (
+                          <span
+                            className="absolute -top-1 -right-1.5 min-w-[16px] h-4 px-1 rounded-full flex items-center justify-center text-[10px] font-bold text-white"
+                            style={{ backgroundColor: '#DC2626' }}
+                          >
+                            {pendingInvitations > 9 ? '9+' : pendingInvitations}
+                          </span>
+                        )}
+                      </span>
                       <span
                         className="text-base font-medium"
                         style={{

@@ -5,9 +5,11 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Briefcase, FileText, BookOpen, Wrench, Settings } from 'lucide-react';
 import { theme } from '@/lib/theme';
+import { usePendingInvitationsCount } from '@/hooks/usePendingInvitationsCount';
 
 export default function BottomNavigation() {
   const pathname = usePathname();
+  const pendingInvitations = usePendingInvitationsCount();
 
   // Pages that should show bottom menu
   const allowedPaths = ['/jobs', '/documents', '/tools', '/resource', '/settings'];
@@ -50,15 +52,25 @@ export default function BottomNavigation() {
                 ${active ? '' : 'hover:bg-gray-50'}
               `}
             >
-              <Icon
-                size={24}
-                className="mb-1 transition-colors duration-200"
-                style={{
-                  color: active
-                    ? theme.colors.primary.DEFAULT
-                    : theme.colors.text.secondary,
-                }}
-              />
+              <span className="relative mb-1">
+                <Icon
+                  size={24}
+                  className="transition-colors duration-200"
+                  style={{
+                    color: active
+                      ? theme.colors.primary.DEFAULT
+                      : theme.colors.text.secondary,
+                  }}
+                />
+                {item.href === '/settings' && pendingInvitations > 0 && (
+                  <span
+                    className="absolute -top-1 -right-1.5 min-w-[16px] h-4 px-1 rounded-full flex items-center justify-center text-[10px] font-bold text-white"
+                    style={{ backgroundColor: '#DC2626' }}
+                  >
+                    {pendingInvitations > 9 ? '9+' : pendingInvitations}
+                  </span>
+                )}
+              </span>
 
               <span
                 className="text-xs font-medium transition-colors duration-200"

@@ -8,6 +8,7 @@ import { theme } from '@/lib/theme';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import AuthModal from '@/components/AuthModal';
+import { usePendingInvitationsCount } from '@/hooks/usePendingInvitationsCount';
 
 interface ProfileData {
   full_name: string | null;
@@ -27,6 +28,7 @@ const CLIENT_CACHE_KEYS = [
 ];
 
 export default function SettingsPage() {
+  const pendingInvitations = usePendingInvitationsCount();
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
   const [profileData, setProfileData] = useState<ProfileData | null>(null);
@@ -380,7 +382,17 @@ export default function SettingsPage() {
                   <Mail size={20} style={{ color: theme.colors.primary.DEFAULT }} />
                 </div>
                 <div className="text-left">
-                  <h3 className="font-semibold text-gray-900">Invitations</h3>
+                  <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+                    Invitations
+                    {pendingInvitations > 0 && (
+                      <span
+                        className="text-[11px] font-bold text-white rounded-full px-2 py-0.5"
+                        style={{ backgroundColor: '#DC2626' }}
+                      >
+                        {pendingInvitations} new
+                      </span>
+                    )}
+                  </h3>
                   <p className="text-xs text-gray-500">Jobs recruiters have invited you to apply for</p>
                 </div>
               </div>
