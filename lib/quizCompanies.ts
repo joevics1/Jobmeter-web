@@ -31,3 +31,31 @@ export function companyToSlug(name: string): string {
 export function slugToCompany(slug: string): string | null {
   return COMPANIES.find((c) => companyToSlug(c) === slug) ?? null;
 }
+
+// Deterministic pseudo-random shuffle seeded by a string, so each company
+// page gets a different-looking but stable set of "practice these too"
+// links (stable = doesn't change on every request, since these pages are
+// statically generated with revalidate=false — but varies company to
+// company so link equity spreads across the whole set instead of every
+// page linking the same fixed shortlist).
+function seededShuffle<T>(arr: T[], seed: string): T[] {
+  let hash = 0;
+  for (let i = 0; i < seed.length; i++) {
+    hash = (hash * 31 + seed.charCodeAt(i)) >>> 0;
+  }
+  const result = [...arr];
+  for (let i = result.length - 1; i > 0; i--) {
+    hash = (hash * 1103515245 + 12345) >>> 0;
+    const j = hash % (i + 1);
+    [result[i], result[j]] = [result[j], result[i]];
+  }
+  return result;
+}
+
+// Returns up to `count` companies other than `current`, in a stable
+// pseudo-random order seeded by `current` — used to cross-link sibling
+// quiz pages to each other instead of every page linking a fixed shortlist.
+export function getRelatedCompanies(current: string, count = 6): string[] {
+  const others = COMPANIES.filter((c) => c !== current);
+  return seededShuffle(others, current).slice(0, count);
+}

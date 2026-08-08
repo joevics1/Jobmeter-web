@@ -5,6 +5,10 @@ import CompanyQuizClient from './CompanyQuizClient';
 import { COMPANIES, companyToSlug, slugToCompany } from '@/lib/quizCompanies';
 import { quizSupabase } from '@/lib/quizSupabase';
 import AdUnit from '@/components/ads/AdUnit';
+import QuizBreadcrumb from '@/components/quiz/QuizBreadcrumb';
+import QuizCrossLinks from '@/components/quiz/QuizCrossLinks';
+
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.jobmeter.app';
 
 export const revalidate = false;
 
@@ -60,6 +64,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       'aptitude test Nigeria',
       'recruitment assessment practice',
     ],
+    alternates: { canonical: `${siteUrl}/tools/quiz/${slug}` },
   };
 }
 
@@ -70,15 +75,51 @@ export default async function CompanyQuizPage({ params }: Props) {
   if (!company) notFound();
 
   const companyData = await getCompanyData(company!);
+  const firstName = company!.split(' ')[0];
+
+  const quizSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'Quiz',
+    name: `${company} Aptitude Test Practice`,
+    about: firstName,
+    description: companyData?.description
+      ? companyData.description.replace(/<[^>]+>/g, '').slice(0, 200)
+      : `Practice aptitude test questions modeled on ${company}'s recruitment assessment.`,
+    isPartOf: {
+      '@type': 'WebApplication',
+      name: 'Quiz Platform — Aptitude Test Practice',
+      url: `${siteUrl}/tools/quiz`,
+    },
+    educationalLevel: 'Graduate / Professional',
+    provider: {
+      '@type': 'Organization',
+      name: 'JobMeter',
+      url: siteUrl,
+    },
+  };
 
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(quizSchema) }}
+      />
+      <QuizBreadcrumb items={[
+        { name: 'Home', href: '/' },
+        { name: 'Tools', href: '/tools' },
+        { name: 'Quiz Platform', href: '/tools/quiz' },
+        { name: company!, href: `/tools/quiz/${slug}` },
+      ]} />
+
       {/* ── Main content + Desktop sidebar layout ──────────────────────── */}
       <div className="flex gap-6 items-start max-w-screen-xl mx-auto">
 
         {/* ── Left / main content ────────────────────────────────────────── */}
         <div className="flex-1 min-w-0">
           <CompanyQuizClient company={company!} companyData={companyData} />
+          <div className="max-w-4xl mx-auto px-4">
+            <QuizCrossLinks currentCompany={company!} />
+          </div>
         </div>
 
         {/* ── Right: Desktop sidebar ads ──────────────────────────────── */}

@@ -7,6 +7,7 @@ import { quizSupabase } from '@/lib/quizSupabase';
 import { theme } from '@/lib/theme';
 import { ArrowLeft, CheckCircle, XCircle, Loader2 } from 'lucide-react';
 import AdUnit from '@/components/ads/AdUnit';
+import QuizCrossLinks from '@/components/quiz/QuizCrossLinks';
 
 interface TheoryQuestion {
   id: string;
@@ -276,6 +277,8 @@ export default function TheoryQuizClient({ company }: { company: string }) {
                style={{ backgroundColor: '#F0F9FF', border: '1px solid #BAE6FD' }}>
             <strong>Note:</strong> These are original practice questions crafted to match the style and difficulty of <strong>{company}</strong>'s assessments. They are not sourced from any official exam. JobMeter is an independent platform with no affiliation to {company}.
           </div>
+
+          <QuizCrossLinks currentCompany={company} />
         </div>
       </div>
     );

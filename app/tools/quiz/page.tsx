@@ -4,6 +4,7 @@ import { COMPANIES } from '@/lib/quizCompanies';
 import CompanyCard from './CompanyCard';
 import { theme } from '@/lib/theme';
 import AdUnit from '@/components/ads/AdUnit';
+import QuizBreadcrumb from '@/components/quiz/QuizBreadcrumb';
 
 export const revalidate = false;
 
@@ -129,6 +130,11 @@ export default function QuizPage() {
       />
 
       <div className="min-h-screen" style={{ backgroundColor: theme.colors.background.muted }}>
+        <QuizBreadcrumb items={[
+          { name: 'Home', href: '/' },
+          { name: 'Tools', href: '/tools' },
+          { name: 'Quiz Platform', href: '/tools/quiz' },
+        ]} />
         {/* ── Hero ─────────────────────────────────────────────────────── */}
         <div
           className="pt-12 pb-10 px-6"
@@ -183,6 +189,24 @@ export default function QuizPage() {
             <p className="text-xs text-gray-500 text-center mt-2 mb-6">
               <b>Disclaimer:</b> This quiz is for educational purposes only. JobMeter has no affiliation to any company.
             </p>
+
+            {/* Continue Prepping — cross-cluster links out of the Quiz
+                cluster entirely, since the "Related Tools" section below
+                only links within /tools/*. */}
+            <div className="flex flex-wrap gap-2 mb-8">
+              <a href="/jobs" className="inline-flex items-center px-3 py-1.5 rounded-full border border-gray-200 text-xs font-medium text-gray-700 hover:border-blue-300 hover:text-blue-600 hover:bg-blue-50 transition-all">
+                Browse jobs
+              </a>
+              <a href="/cv-templates" className="inline-flex items-center px-3 py-1.5 rounded-full border border-gray-200 text-xs font-medium text-gray-700 hover:border-blue-300 hover:text-blue-600 hover:bg-blue-50 transition-all">
+                Free CV templates
+              </a>
+              <a href="/documents" className="inline-flex items-center px-3 py-1.5 rounded-full border border-gray-200 text-xs font-medium text-gray-700 hover:border-blue-300 hover:text-blue-600 hover:bg-blue-50 transition-all">
+                Document templates
+              </a>
+              <a href="/blog" className="inline-flex items-center px-3 py-1.5 rounded-full border border-gray-200 text-xs font-medium text-gray-700 hover:border-blue-300 hover:text-blue-600 hover:bg-blue-50 transition-all">
+                Career blog
+              </a>
+            </div>
 
             {/* Related Tools */}
             <div className="border-t border-gray-200 pt-8 mb-8">

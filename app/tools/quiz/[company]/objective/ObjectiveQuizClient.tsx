@@ -7,6 +7,7 @@ import { quizSupabase } from '@/lib/quizSupabase';
 import { theme } from '@/lib/theme';
 import { ArrowLeft, Check, X, Loader2 } from 'lucide-react';
 import AdUnit from '@/components/ads/AdUnit';
+import QuizCrossLinks from '@/components/quiz/QuizCrossLinks';
 
 interface ObjectiveQuestion {
   id: string;
@@ -273,6 +274,8 @@ export default function ObjectiveQuizClient({ company }: { company: string }) {
           <p className="text-xs text-gray-500 text-center mt-6">
             This quiz is for educational purposes only. JobMeter has no affiliation to {company}.
           </p>
+
+          <QuizCrossLinks currentCompany={company} />
         </div>
       </div>
     );
