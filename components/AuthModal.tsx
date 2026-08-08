@@ -15,7 +15,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 
-import { LogIn, UserPlus, Mail, Lock, Eye, EyeOff, Loader2, CheckCircle, Briefcase, Upload, FileText, X } from 'lucide-react';
+import { LogIn, UserPlus, Mail, Lock, Eye, EyeOff, Loader2, CheckCircle, AlertCircle, Briefcase, Upload, FileText, X, Sparkles } from 'lucide-react';
 import { theme } from '@/lib/theme';
 
 interface AuthModalProps {
@@ -377,16 +377,16 @@ export default function AuthModal({ open, onOpenChange }: AuthModalProps) {
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md rounded-2xl">
         {!showSignIn ? (
           <>
             <DialogHeader>
               <div className="text-center space-y-3">
-                <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto" style={{ backgroundColor: theme.colors.primary.DEFAULT + '20' }}>
-                  <svg className="w-8 h-8" style={{ color: theme.colors.primary.DEFAULT }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                  </svg>
+                <div
+                  className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto shadow-sm"
+                  style={{ background: `linear-gradient(135deg, ${theme.colors.primary.DEFAULT}, ${theme.colors.primary.dark})` }}
+                >
+                  <Sparkles className="w-7 h-7 text-white" />
                 </div>
                 <DialogTitle className="text-xl font-bold" style={{ color: theme.colors.text.primary }}>
                   Let Top Recruiters Find You! 🎯
@@ -398,15 +398,15 @@ export default function AuthModal({ open, onOpenChange }: AuthModalProps) {
             </DialogHeader>
 
             {message && (
-              <div className={`p-3 rounded-lg flex items-center gap-3 ${
-                messageType === 'success' 
-                  ? 'bg-green-50 border border-green-200 text-green-800' 
-                  : 'bg-red-50 border border-red-200 text-red-800'
+              <div className={`p-3 rounded-xl flex items-center gap-3 border ${
+                messageType === 'success'
+                  ? 'bg-green-50 border-green-200 text-green-800'
+                  : 'bg-red-50 border-red-200 text-red-800'
               }`}>
                 {messageType === 'success' ? (
                   <CheckCircle className="h-4 w-4 text-green-600 flex-shrink-0" />
                 ) : (
-                  <div className="h-4 w-4 rounded-full border-2 border-red-600 border-t-transparent animate-spin flex-shrink-0" />
+                  <AlertCircle className="h-4 w-4 text-red-600 flex-shrink-0" />
                 )}
                 <span className="text-sm font-medium">{message}</span>
               </div>
@@ -424,36 +424,45 @@ export default function AuthModal({ open, onOpenChange }: AuthModalProps) {
                 disabled={isProcessingCV}
               />
 
-              <Button
+              <button
                 type="button"
-                className="w-full h-14 text-white font-medium shadow-md hover:shadow-lg transition-all"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={isProcessingCV}
-                style={{ backgroundColor: theme.colors.primary.DEFAULT }}
+                className={`w-full rounded-xl transition-all disabled:opacity-60 ${
+                  uploadedFile
+                    ? 'h-14 px-4 text-white shadow-md hover:shadow-lg flex items-center gap-3'
+                    : 'h-28 border-2 border-dashed flex flex-col items-center justify-center gap-1.5 hover:bg-gray-50'
+                }`}
+                style={
+                  uploadedFile
+                    ? { backgroundColor: theme.colors.primary.DEFAULT }
+                    : { borderColor: theme.colors.primary.DEFAULT + '50', color: theme.colors.primary.DEFAULT }
+                }
               >
                 {uploadedFile ? (
-                  <div className="flex items-center gap-2 w-full">
+                  <>
                     <FileText className="h-5 w-5 flex-shrink-0" />
                     <div className="flex-1 text-left min-w-0">
                       <p className="font-medium truncate">{uploadedFile.name}</p>
                       <p className="text-xs opacity-90">Click to change</p>
                     </div>
-                    <X 
-                      className="h-4 w-4 flex-shrink-0" 
+                    <X
+                      className="h-4 w-4 flex-shrink-0"
                       onClick={(e) => {
                         e.stopPropagation();
                         setUploadedFile(null);
                         setCvError('');
                       }}
                     />
-                  </div>
+                  </>
                 ) : (
                   <>
-                    <Upload className="h-5 w-5 mr-2" />
-                    Upload Your CV & Get Started
+                    <Upload className="h-6 w-6" />
+                    <span className="font-medium text-sm">Upload Your CV & Get Started</span>
+                    <span className="text-xs text-gray-400">PDF, Word, or image — click to browse</span>
                   </>
                 )}
-              </Button>
+              </button>
 
               {!uploadedFile && (
                 <div className="space-y-2">
@@ -465,7 +474,7 @@ export default function AuthModal({ open, onOpenChange }: AuthModalProps) {
                         textarea.classList.toggle('hidden');
                       }
                     }}
-                    className="text-sm text-gray-600 hover:text-gray-800 underline"
+                    className="w-full text-sm font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-50 rounded-lg py-2 transition-colors"
                     disabled={isProcessingCV}
                   >
                     Or paste your CV text instead
@@ -481,14 +490,14 @@ export default function AuthModal({ open, onOpenChange }: AuthModalProps) {
                     }}
                     rows={6}
                     disabled={isProcessingCV}
-                    className="resize-none border-2 hidden"
+                    className="resize-none border-2 rounded-xl hidden"
                     style={{ borderColor: theme.colors.primary.DEFAULT + '40' }}
                   />
 
                   {cvText.trim() && !isProcessingCV && (
                     <Button
                       onClick={handlePasteCV}
-                      className="w-full h-12 text-white font-medium shadow-md hover:shadow-lg transition-all"
+                      className="w-full h-12 text-white font-medium shadow-md hover:shadow-lg transition-all rounded-xl"
                       style={{ backgroundColor: theme.colors.primary.DEFAULT }}
                     >
                       Continue with Pasted CV
@@ -498,16 +507,16 @@ export default function AuthModal({ open, onOpenChange }: AuthModalProps) {
               )}
 
               {cvError && (
-                <div className="p-3 rounded-lg bg-red-50 border border-red-200 flex items-center gap-2">
-                  <div className="h-4 w-4 rounded-full border-2 border-red-600 border-t-transparent animate-spin flex-shrink-0" />
+                <div className="p-3 rounded-xl bg-red-50 border border-red-200 flex items-center gap-2">
+                  <AlertCircle className="h-4 w-4 text-red-600 flex-shrink-0" />
                   <span className="text-sm text-red-800">{cvError}</span>
                 </div>
               )}
 
               {isProcessingCV && (
-                <div className="p-4 rounded-lg border-2 flex items-center gap-3" style={{ 
+                <div className="p-4 rounded-xl border-2 flex items-center gap-3" style={{
                   backgroundColor: theme.colors.primary.DEFAULT + '10',
-                  borderColor: theme.colors.primary.DEFAULT 
+                  borderColor: theme.colors.primary.DEFAULT
                 }}>
                   <Loader2 className="h-6 w-6 animate-spin flex-shrink-0" style={{ color: theme.colors.primary.DEFAULT }} />
                   <div>
@@ -532,7 +541,7 @@ export default function AuthModal({ open, onOpenChange }: AuthModalProps) {
                 type="button"
                 variant="outline"
                 onClick={handleGoogleSignIn}
-                className="w-full h-12"
+                className="w-full h-12 rounded-xl"
                 disabled={isProcessingCV}
               >
                 <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
@@ -565,7 +574,7 @@ export default function AuthModal({ open, onOpenChange }: AuthModalProps) {
               <div className="flex items-center gap-3 mb-4">
                 <button
                   onClick={() => setShowSignIn(false)}
-                  className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                  className="p-2 rounded-xl hover:bg-gray-100 transition-colors"
                 >
                   <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -581,15 +590,15 @@ export default function AuthModal({ open, onOpenChange }: AuthModalProps) {
             </DialogHeader>
 
             {message && (
-              <div className={`p-3 rounded-lg flex items-center gap-3 ${
-                messageType === 'success' 
-                  ? 'bg-green-50 border border-green-200 text-green-800' 
-                  : 'bg-red-50 border border-red-200 text-red-800'
+              <div className={`p-3 rounded-xl flex items-center gap-3 border ${
+                messageType === 'success'
+                  ? 'bg-green-50 border-green-200 text-green-800'
+                  : 'bg-red-50 border-red-200 text-red-800'
               }`}>
                 {messageType === 'success' ? (
                   <CheckCircle className="h-4 w-4 text-green-600 flex-shrink-0" />
                 ) : (
-                  <div className="h-4 w-4 rounded-full border-2 border-red-600 border-t-transparent animate-spin flex-shrink-0" />
+                  <AlertCircle className="h-4 w-4 text-red-600 flex-shrink-0" />
                 )}
                 <span className="text-sm font-medium">{message}</span>
               </div>
@@ -605,7 +614,7 @@ export default function AuthModal({ open, onOpenChange }: AuthModalProps) {
                       id="signin-email" 
                       type="email" 
                       placeholder="Enter your email"
-                      className="pl-10 h-12"
+                      className="pl-10 h-12 rounded-xl"
                       value={signInData.email}
                       onChange={(e) => setSignInData({ ...signInData, email: e.target.value })}
                       required
@@ -622,7 +631,7 @@ export default function AuthModal({ open, onOpenChange }: AuthModalProps) {
                       id="signin-password" 
                       type={showPassword ? "text" : "password"}
                       placeholder="Enter your password"
-                      className="pl-10 pr-10 h-12"
+                      className="pl-10 pr-10 h-12 rounded-xl"
                       value={signInData.password}
                       onChange={(e) => setSignInData({ ...signInData, password: e.target.value })}
                       required
@@ -660,7 +669,7 @@ export default function AuthModal({ open, onOpenChange }: AuthModalProps) {
                 <Button 
                   type="submit"
                   disabled={isLoading}
-                  className="w-full h-12 text-lg text-white shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50"
+                  className="w-full h-12 text-lg text-white shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50 rounded-xl"
                   style={{ backgroundColor: theme.colors.primary.DEFAULT }}
                 >
                   {isLoading ? (
@@ -686,7 +695,7 @@ export default function AuthModal({ open, onOpenChange }: AuthModalProps) {
                   type="button"
                   variant="outline"
                   onClick={handleGoogleSignIn}
-                  className="w-full h-12"
+                  className="w-full h-12 rounded-xl"
                 >
                   <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
                     <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -707,7 +716,7 @@ export default function AuthModal({ open, onOpenChange }: AuthModalProps) {
                       id="reset-email" 
                       type="email" 
                       placeholder="Enter your email"
-                      className="pl-10 h-12"
+                      className="pl-10 h-12 rounded-xl"
                       value={resetEmail}
                       onChange={(e) => setResetEmail(e.target.value)}
                       required
@@ -736,7 +745,7 @@ export default function AuthModal({ open, onOpenChange }: AuthModalProps) {
                 <Button 
                   type="submit"
                   disabled={isResetting}
-                  className="w-full h-12 text-lg text-white shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50"
+                  className="w-full h-12 text-lg text-white shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50 rounded-xl"
                   style={{ backgroundColor: theme.colors.primary.DEFAULT }}
                 >
                   {isResetting ? (
