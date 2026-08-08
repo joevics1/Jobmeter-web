@@ -4,6 +4,10 @@ import JobClient from './JobClient';
 import JobList from '@/components/jobs/JobList';
 import { Metadata } from 'next';
 import { cache } from 'react';
+import { getAllPublishedTemplateParams } from '@/lib/document-templates-data';
+import { getDocumentType, getDocumentCountry } from '@/lib/document-types';
+import { getRolePage } from '@/lib/cv-template-pages/data';
+import { createClient as createSupabaseServerClient } from '@/lib/supabase/server';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = false;
@@ -46,6 +50,100 @@ function getJobCountrySlug(job: any): string {
   }
   return 'global';
 }
+
+// ─── Country-aware cross-links (documents + CV templates) ─────────────────────
+// Maps the country slugs produced by getJobCountrySlug() to the ISO codes the
+// /documents/[type]/[country] route and DOCUMENT_COUNTRIES list use. Only
+// needs to cover countries JobMeter actually has job listings for.
+const JOB_COUNTRY_TO_DOC_CODE: Record<string, string> = {
+  nigeria: 'ng',
+  uae: 'ae',
+  'united-arab-emirates': 'ae',
+  'saudi-arabia': 'sa',
+  saudiarabia: 'sa',
+  qatar: 'qa',
+  kuwait: 'kw',
+  bahrain: 'bh',
+  oman: 'om',
+  ghana: 'gh',
+  kenya: 'ke',
+  'south-africa': 'za',
+  uk: 'gb',
+  'united-kingdom': 'gb',
+  usa: 'us',
+  'united-states': 'us',
+  canada: 'ca',
+  egypt: 'eg',
+};
+
+export type DocumentLink = { type: string; country: string; label: string };
+
+// Up to 3 document templates relevant to the job's country, so the sidebar
+// can point at real, existing /documents/[type]/[country] pages instead of
+// only the generic /documents index.
+const getMatchingDocuments = cache(async (countrySlug: string): Promise<{ links: DocumentLink[]; countryLabel: string | null }> => {
+  const docCode = JOB_COUNTRY_TO_DOC_CODE[countrySlug];
+  if (!docCode) return { links: [], countryLabel: null };
+
+  try {
+    const allParams = await getAllPublishedTemplateParams();
+    const matches = allParams.filter((p) => p.country === docCode);
+    if (matches.length === 0) return { links: [], countryLabel: null };
+
+    const links = matches.slice(0, 3).map((m) => ({
+      type: m.type,
+      country: m.country,
+      label: getDocumentType(m.type)?.label || m.type.replace(/-/g, ' '),
+    }));
+    return { links, countryLabel: getDocumentCountry(docCode)?.name || null };
+  } catch (error) {
+    console.error('Error fetching matching document templates:', error);
+    return { links: [], countryLabel: null };
+  }
+});
+
+export type CvTemplateMatch = { slug: string; label: string };
+
+// Finds a published CV template role page matching the job's title/role, so
+// the sidebar can offer "Build a [Role] CV" instead of a generic CV link.
+// Tries an exact role_slug match first, then falls back to a loose search on
+// role_label. Returns null (not a guess) if nothing published actually
+// matches — a missing widget is better than a link to a 404.
+const getMatchingCvTemplate = cache(async (rawRole: string): Promise<CvTemplateMatch | null> => {
+  const cleaned = rawRole
+    .replace(/\bjobs?\b/gi, '')
+    .trim()
+    .toLowerCase();
+  if (!cleaned) return null;
+
+  const candidateSlug = cleaned.replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+  if (!candidateSlug) return null;
+
+  try {
+    const exact = await getRolePage('cv', candidateSlug);
+    if (exact) return { slug: exact.role_slug, label: exact.role_label };
+
+    const firstWord = cleaned.split(/\s+/)[0];
+    if (!firstWord || firstWord.length < 3) return null;
+
+    const supabase = createSupabaseServerClient();
+    const { data } = await supabase
+      .from('content_role_pages')
+      .select('role_slug, role_label')
+      .eq('kind', 'cv')
+      .eq('status', 'published')
+      .ilike('role_label', `%${firstWord}%`)
+      .order('updated_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (data) return { slug: data.role_slug, label: data.role_label };
+    return null;
+  } catch (error) {
+    console.error('Error matching CV template role:', error);
+    return null;
+  }
+});
 
 const getJob = cache(async (slug: string) => {
   const res = await fetch(
@@ -222,6 +320,12 @@ export default async function JobPage({
   const relatedJobs = await getRelatedJobs(job);
   const schema = mapJobToSchema(job);
 
+  const countrySlug = getJobCountrySlug(job);
+  const [{ links: documentLinks, countryLabel: documentsCountryLabel }, cvTemplateMatch] = await Promise.all([
+    getMatchingDocuments(countrySlug),
+    getMatchingCvTemplate(job.role || job.title || ''),
+  ]);
+
   return (
     <>
       <script
@@ -232,6 +336,9 @@ export default async function JobPage({
         job={job}
         relatedJobs={relatedJobs}
         companies={companies}
+        documentLinks={documentLinks}
+        documentsCountryLabel={documentsCountryLabel}
+        cvTemplateMatch={cvTemplateMatch}
       />
     </>
   );

@@ -31,6 +31,8 @@ import UpgradeModal from '@/components/jobs/UpgradeModal';
 import { useToast } from '@/hooks/use-toast';
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion';
 import AdUnit from '@/components/ads/AdUnit';
+import { TOOLS_NAV } from '@/lib/toolsNav';
+import type { DocumentLink, CvTemplateMatch } from './page';
 
 // ─── Ad slot IDs ───────────────────────────────────────────────────────────────
 const AD_SLOTS = {
@@ -67,7 +69,11 @@ const FEATURED_QUIZZES = [
 // ─── Blog Articles (Gulf) ─────────────────────────────────────────────────────
 // NOTE: Replace / add new blog URLs here. Remove the Nigerian-specific ones
 // and add Gulf-relevant articles. All entries are eligible for random selection.
-const ALL_BLOGS = [
+// `countries` is optional and additive: leave it off (as every entry below
+// currently is) and a post behaves exactly as before — eligible everywhere.
+// Tag a post with e.g. `countries: ['nigeria']` only if you want it to be
+// preferred for jobs in that country specifically.
+const ALL_BLOGS: { title: string; url: string; countries?: string[] }[] = [
   { title: 'Why You Are Not Getting Job Offers', url: '/blog/why-you-are-not-getting-job-offers' },
   { title: 'Master Salary Negotiation Guide', url: '/blog/master-salary-negotiation-guide' },
   { title: "Why You Don't Hear Back After Interviews", url: '/blog/why-dont-hear-back-after-interviews' },
@@ -81,6 +87,16 @@ const ALL_BLOGS = [
   { title: 'How to Identify Fake Job Offers & Scam Interviews', url: '/blog/spot-fake-jobs--scam-interviews-nigeria' },
   // ─── Add new Global-relevant blog URLs below ───────────────────────────────────
 ];
+
+// Prefers posts tagged for the job's country; falls back to the full pool
+// (today's exact behavior) the moment there are fewer than `n` country
+// matches, so this can never make the widget show fewer/emptier results
+// than before — it only narrows the pool when there's enough to fill it.
+function getCountryAwareBlogs(countrySlug: string, n: number): typeof ALL_BLOGS {
+  const tagged = ALL_BLOGS.filter((b) => b.countries?.includes(countrySlug));
+  const pool = tagged.length >= n ? tagged : ALL_BLOGS;
+  return getRandomItems(pool, n);
+}
 
 // ─── Helper ───────────────────────────────────────────────────────────────────
 function getRandomItems<T>(arr: T[], n: number): T[] {
@@ -123,10 +139,13 @@ function buildSearchUrl(keyword: string): string {
   return `/jobs?sort=match&search=${encodeURIComponent(keyword)}`;
 }
 
-export default function JobClient({ job, relatedJobs, companies }: { 
+export default function JobClient({ job, relatedJobs, companies, documentLinks, documentsCountryLabel, cvTemplateMatch }: { 
   job: any; 
   relatedJobs?: any[]; 
   companies?: any[]; 
+  documentLinks?: DocumentLink[];
+  documentsCountryLabel?: string | null;
+  cvTemplateMatch?: CvTemplateMatch | null;
 }) {
   const router = useRouter();
   const jobId = job.id;
@@ -153,8 +172,28 @@ export default function JobClient({ job, relatedJobs, companies }: {
 
   useEffect(() => {
     setIsMounted(true);
-    setRandomBlogs(getRandomItems(ALL_BLOGS, 5));
-  }, []);
+    setRandomBlogs(getCountryAwareBlogs(getJobCountrySlug(job), 5));
+  }, [job]);
+
+  // ─── Country-aware tools ────────────────────────────────────────────────────
+  // Prefers tools whose title mentions the job's country (e.g. "UAE Gratuity
+  // Calculator" for a UAE job) over the generic set. Falls back to the
+  // existing generic 3 (interview/ats-review/career) if no country-specific
+  // tools exist for this job — never fewer links than before.
+  const jobCountrySlug = getJobCountrySlug(job);
+  const COUNTRY_TOOL_KEYWORDS: Record<string, string> = {
+    nigeria: 'nigeria',
+    uae: 'uae',
+    'saudi-arabia': 'saudi',
+    qatar: 'qatar',
+    kuwait: 'kuwait',
+    bahrain: 'bahrain',
+    oman: 'oman',
+  };
+  const countryKeyword = COUNTRY_TOOL_KEYWORDS[jobCountrySlug];
+  const countryTools = countryKeyword
+    ? TOOLS_NAV.filter((t) => t.title.toLowerCase().includes(countryKeyword)).slice(0, 3)
+    : [];
 
   const handleCopy = async (text: string, label: string) => {
     await navigator.clipboard.writeText(text);
@@ -1149,6 +1188,14 @@ export default function JobClient({ job, relatedJobs, companies }: {
                         <span className="group-hover:underline">Career Coach</span>
                       </a>
                     </li>
+                    {countryTools.map((tool) => (
+                      <li key={tool.id}>
+                        <a href={tool.route} className="flex items-center gap-2 text-sm font-medium text-gray-800 hover:text-blue-600 transition-colors group">
+                          <ChevronRight size={14} className="text-gray-400 group-hover:text-blue-500 flex-shrink-0 transition-colors" />
+                          <span className="group-hover:underline">{tool.title}</span>
+                        </a>
+                      </li>
+                    ))}
                   </ul>
                   <div className="mt-4 pt-3 border-t border-gray-100">
                     <a href="/tools" className="flex items-center gap-1.5 text-sm font-semibold hover:underline" style={{ color: theme.colors.primary.DEFAULT }}>
@@ -1158,6 +1205,58 @@ export default function JobClient({ job, relatedJobs, companies }: {
                   </div>
                 </div>
               </div>
+
+              {/* Documents by country — only renders if getMatchingDocuments()
+                  found published templates for this job's country. */}
+              {documentLinks && documentLinks.length > 0 && (
+                <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+                  <div className="px-5 py-4 font-semibold text-base flex items-center gap-2" style={{ backgroundColor: `${theme.colors.primary.DEFAULT}10`, color: theme.colors.primary.DEFAULT }}>
+                    <PenTool size={16} />
+                    {documentsCountryLabel ? `Documents for ${documentsCountryLabel}` : 'Document Templates'}
+                  </div>
+                  <div className="px-5 py-4">
+                    <ul className="space-y-3">
+                      {documentLinks.map((doc) => (
+                        <li key={`${doc.type}-${doc.country}`}>
+                          <a href={`/documents/${doc.type}/${doc.country}`} className="flex items-center gap-2 text-sm font-medium text-gray-800 hover:text-blue-600 transition-colors group">
+                            <ChevronRight size={14} className="text-gray-400 group-hover:text-blue-500 flex-shrink-0 transition-colors" />
+                            <span className="group-hover:underline">{doc.label}</span>
+                          </a>
+                        </li>
+                      ))}
+                    </ul>
+                    <div className="mt-4 pt-3 border-t border-gray-100">
+                      <a href="/documents" className="flex items-center gap-1.5 text-sm font-semibold hover:underline" style={{ color: theme.colors.primary.DEFAULT }}>
+                        See all documents
+                        <ChevronRight size={14} />
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* CV template by role — only renders if getMatchingCvTemplate()
+                  found a published, matching /cv-templates/[role] page. */}
+              {cvTemplateMatch && (
+                <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+                  <div className="px-5 py-4 font-semibold text-base flex items-center gap-2" style={{ backgroundColor: `${theme.colors.primary.DEFAULT}10`, color: theme.colors.primary.DEFAULT }}>
+                    <PenTool size={16} />
+                    Build Your CV
+                  </div>
+                  <div className="px-5 py-4">
+                    <a href={`/cv-templates/${cvTemplateMatch.slug}`} className="flex items-center gap-2 text-sm font-medium text-gray-800 hover:text-blue-600 transition-colors group">
+                      <ChevronRight size={14} className="text-gray-400 group-hover:text-blue-500 flex-shrink-0 transition-colors" />
+                      <span className="group-hover:underline">Free {cvTemplateMatch.label} CV Template</span>
+                    </a>
+                    <div className="mt-4 pt-3 border-t border-gray-100">
+                      <a href="/cv-templates" className="flex items-center gap-1.5 text-sm font-semibold hover:underline" style={{ color: theme.colors.primary.DEFAULT }}>
+                        See all CV templates
+                        <ChevronRight size={14} />
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Blog Articles — 5 random picks */}
               {randomBlogs.length > 0 && (
