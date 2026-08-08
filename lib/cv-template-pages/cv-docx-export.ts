@@ -3,6 +3,11 @@
 // the pattern used by naira-autos' DocumentEditor.downloadDocx (dynamic
 // import of `docx`, build paragraphs, Packer.toBlob, trigger download).
 // Does not import or modify any existing CV/document export code.
+//
+// Section order and headings match cv-renderer.ts so the Word download
+// never has less content than the PDF/preview: Summary, Roles, Experience,
+// Education, Projects, Accomplishments, Awards, Certifications, Skills,
+// Languages, Interests, Publications, Volunteer Work, Additional Sections.
 
 import type { CVData } from './cv-data-types';
 
@@ -36,22 +41,34 @@ export async function downloadCVAsDocx(data: CVData, fileNamePrefix: string) {
     }),
   ];
 
-  if (data.summary) {
+  // Social/portfolio links — previously dropped entirely from the Word export.
+  const links = [data.personalDetails.linkedin, data.personalDetails.github, data.personalDetails.portfolio].filter(Boolean);
+  if (links.length) {
     children.push(
-      new Paragraph({ text: 'SUMMARY', heading: HeadingLevel.HEADING_2, spacing: { before: 200, after: 100 } }),
-      new Paragraph({ text: data.summary, spacing: { after: 200 } }),
+      new Paragraph({
+        alignment: AlignmentType.CENTER,
+        spacing: { after: 200 },
+        children: [new TextRun({ text: links.join('  |  '), size: 18, color: '2563EB' })],
+      }),
     );
   }
 
-  if (data.skills?.length) {
-    children.push(
-      new Paragraph({ text: 'SKILLS', heading: HeadingLevel.HEADING_2, spacing: { before: 200, after: 100 } }),
-      new Paragraph({ text: data.skills.join(', '), spacing: { after: 200 } }),
-    );
+  const heading = (text: string) =>
+    new Paragraph({ text, heading: HeadingLevel.HEADING_2, spacing: { before: 200, after: 100 } });
+
+  if (data.summary) {
+    children.push(heading('PROFESSIONAL SUMMARY'), new Paragraph({ text: data.summary, spacing: { after: 200 } }));
+  }
+
+  if (data.roles?.length) {
+    children.push(heading('PROFESSIONAL ROLES'));
+    for (const role of data.roles) {
+      children.push(new Paragraph({ text: `•  ${role}`, spacing: { after: 50 } }));
+    }
   }
 
   if (data.experience?.length) {
-    children.push(new Paragraph({ text: 'EXPERIENCE', heading: HeadingLevel.HEADING_2, spacing: { before: 200, after: 100 } }));
+    children.push(heading('WORK EXPERIENCE'));
     for (const exp of data.experience) {
       children.push(
         new Paragraph({
@@ -69,7 +86,7 @@ export async function downloadCVAsDocx(data: CVData, fileNamePrefix: string) {
   }
 
   if (data.education?.length) {
-    children.push(new Paragraph({ text: 'EDUCATION', heading: HeadingLevel.HEADING_2, spacing: { before: 200, after: 100 } }));
+    children.push(heading('EDUCATION'));
     for (const edu of data.education) {
       children.push(
         new Paragraph({
@@ -83,9 +100,43 @@ export async function downloadCVAsDocx(data: CVData, fileNamePrefix: string) {
     }
   }
 
+  if (data.projects?.length) {
+    children.push(heading('PROJECTS'));
+    for (const p of data.projects) {
+      children.push(
+        new Paragraph({ spacing: { before: 100, after: 30 }, children: [new TextRun({ text: p.title, bold: true })] }),
+      );
+      if (p.description) children.push(new Paragraph({ text: p.description, spacing: { after: 100 } }));
+    }
+  }
+
+  if (data.accomplishments?.length) {
+    children.push(heading('KEY ACCOMPLISHMENTS'));
+    for (const a of data.accomplishments) {
+      children.push(new Paragraph({ text: `•  ${a}`, spacing: { after: 50 } }));
+    }
+  }
+
+  if (data.awards?.length) {
+    children.push(heading('AWARDS'));
+    for (const a of data.awards) {
+      children.push(
+        new Paragraph({
+          spacing: { after: 50 },
+          children: [
+            new TextRun({ text: a.title, bold: true }),
+            ...(a.issuer || a.year
+              ? [new TextRun({ text: `   ${[a.issuer, a.year].filter(Boolean).join(', ')}`, italics: true, color: '666666' })]
+              : []),
+          ],
+        }),
+      );
+    }
+  }
+
   if (data.certifications?.length) {
     children.push(
-      new Paragraph({ text: 'CERTIFICATIONS', heading: HeadingLevel.HEADING_2, spacing: { before: 200, after: 100 } }),
+      heading('CERTIFICATIONS'),
       new Paragraph({
         text: data.certifications.map((c) => [c.name, c.issuer, c.year].filter(Boolean).join(', ')).join('  |  '),
         spacing: { after: 200 },
@@ -93,11 +144,55 @@ export async function downloadCVAsDocx(data: CVData, fileNamePrefix: string) {
     );
   }
 
+  if (data.skills?.length) {
+    children.push(heading('SKILLS'), new Paragraph({ text: data.skills.join(', '), spacing: { after: 200 } }));
+  }
+
   if (data.languages?.length) {
-    children.push(
-      new Paragraph({ text: 'LANGUAGES', heading: HeadingLevel.HEADING_2, spacing: { before: 200, after: 100 } }),
-      new Paragraph({ text: data.languages.join(', '), spacing: { after: 200 } }),
-    );
+    children.push(heading('LANGUAGES'), new Paragraph({ text: data.languages.join(', '), spacing: { after: 200 } }));
+  }
+
+  if (data.interests?.length) {
+    children.push(heading('INTERESTS'), new Paragraph({ text: data.interests.join(', '), spacing: { after: 200 } }));
+  }
+
+  if (data.publications?.length) {
+    children.push(heading('PUBLICATIONS'));
+    for (const p of data.publications) {
+      children.push(
+        new Paragraph({
+          spacing: { after: 50 },
+          children: [
+            new TextRun({ text: p.title, bold: true }),
+            ...(p.journal || p.year
+              ? [new TextRun({ text: `   ${[p.journal, p.year].filter(Boolean).join(', ')}`, italics: true, color: '666666' })]
+              : []),
+          ],
+        }),
+      );
+    }
+  }
+
+  if (data.volunteerWork?.length) {
+    children.push(heading('VOLUNTEER WORK'));
+    for (const v of data.volunteerWork) {
+      children.push(
+        new Paragraph({
+          spacing: { before: 100, after: 30 },
+          children: [
+            new TextRun({ text: [v.organization, v.role].filter(Boolean).join(' — '), bold: true }),
+            ...(v.duration ? [new TextRun({ text: `   ${v.duration}`, italics: true, color: '666666' })] : []),
+          ],
+        }),
+      );
+      if (v.description) children.push(new Paragraph({ text: v.description, spacing: { after: 100 } }));
+    }
+  }
+
+  if (data.additionalSections?.length) {
+    for (const s of data.additionalSections) {
+      children.push(heading(s.sectionName.toUpperCase()), new Paragraph({ text: s.content, spacing: { after: 200 } }));
+    }
   }
 
   if (data.references?.length) {
