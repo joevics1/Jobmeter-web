@@ -13,15 +13,15 @@ import { supabase } from '@/lib/supabase';
 import { renderCVTemplate } from '@/lib/cv-template-pages/cv-renderer';
 import { CV_PAGE_DESIGNS } from '@/lib/cv-template-pages/design-list';
 import { downloadCVAsDocx } from '@/lib/cv-template-pages/cv-docx-export';
-import { mapCVDataToOnboardingUpdate, insertOnboardingData } from '@/lib/cv-template-pages/onboarding-fetch';
 import { getHistoryEntry, saveToHistory } from '@/lib/cv-template-pages/cv-history';
 import type { CVData } from '@/lib/cv-template-pages/cv-data-types';
 import BackButton from '../_components/back-button';
 import CVPreviewFrame from '../_components/cv-preview-frame';
 import CVFieldsEditor from '../_components/cv-fields-editor';
 import GeneratingAnimation from '../_components/generating-animation';
+import CVOnboardingModal from '../_components/cv-onboarding-modal';
 
-type Stage = 'loading' | 'form' | 'signup-gate' | 'result';
+type Stage = 'loading' | 'form' | 'result';
 type StartMode = 'quick' | 'sample' | 'blank' | 'history';
 
 function emptyCV(roleLabel: string): CVData {
@@ -66,9 +66,7 @@ export default function BuildClient({
   const [activeTab, setActiveTab] = useState<'autofill' | 'customize'>('autofill');
   const [jobDescText, setJobDescText] = useState('');
   const [customizing, setCustomizing] = useState(false);
-  const [gateEmail, setGateEmail] = useState('');
-  const [gatePassword, setGatePassword] = useState('');
-  const [gateLoading, setGateLoading] = useState(false);
+  const [showOnboardingModal, setShowOnboardingModal] = useState(false);
   const previewFrameRef = useRef<HTMLIFrameElement>(null);
   const [isOverflowing, setIsOverflowing] = useState(false);
 
@@ -128,9 +126,9 @@ export default function BuildClient({
 
       if (start === 'quick') {
         if (!uid) {
-          setError('Please log in to use Quick Create.');
           setCvData(emptyCV(roleLabel));
           setStage('form');
+          setShowOnboardingModal(true);
           return;
         }
         try {
@@ -170,6 +168,12 @@ export default function BuildClient({
       setError('Paste a bit more detail before parsing.');
       return;
     }
+    if (!userId) {
+      // Not signed in — don't call the AI or reveal anything. Same signup
+      // gate used everywhere else in the app.
+      setShowOnboardingModal(true);
+      return;
+    }
     setParsing(true);
     setError(null);
     try {
@@ -195,13 +199,7 @@ export default function BuildClient({
         education: p.education?.length ? p.education : prev.education,
       }));
       setPasteText('');
-      if (userId) {
-        setDefaultOpen(['personal']);
-      } else {
-        // Not signed in — the parsed CV is ready, but stays hidden until
-        // they create an account.
-        setStage('signup-gate');
-      }
+      setDefaultOpen(['personal']);
     } catch (err: any) {
       setError(err.message || 'Could not parse that text.');
     } finally {
@@ -214,6 +212,10 @@ export default function BuildClient({
       setError('Paste a fuller job description before customizing.');
       return;
     }
+    if (!userId) {
+      setShowOnboardingModal(true);
+      return;
+    }
     setCustomizing(true);
     setError(null);
     try {
@@ -224,13 +226,7 @@ export default function BuildClient({
       if (!data?.success || !data?.data) throw new Error(data?.error || 'Could not customize for that job.');
       setCvData(data.data as CVData);
       setJobDescText('');
-      if (userId) {
-        setDefaultOpen(['personal']);
-      } else {
-        // Not signed in — the customized CV is ready, but stays hidden
-        // until they create an account, same as autofill.
-        setStage('signup-gate');
-      }
+      setDefaultOpen(['personal']);
     } catch (err: any) {
       setError(err.message || 'Could not customize for that job.');
     } finally {
@@ -238,33 +234,7 @@ export default function BuildClient({
     }
   }
 
-  async function handleGateSignup(e: React.FormEvent) {
-    e.preventDefault();
-    setGateLoading(true);
-    setError(null);
-    try {
-      const { data, error: signUpError } = await supabase.auth.signUp({
-        email: gateEmail.trim(),
-        password: gatePassword,
-      });
-      if (signUpError) throw signUpError;
-      const newUserId = data.user?.id;
-      if (!newUserId) throw new Error('Could not create your account. Please try again.');
-
-      setUserId(newUserId);
-      const updates = mapCVDataToOnboardingUpdate(cvData);
-      const result = await insertOnboardingData(newUserId, updates);
-      if (!result.success) throw new Error(result.error || 'Account created, but saving your CV failed.');
-
-      setDefaultOpen(['personal']);
-      setStage('form');
-    } catch (err: any) {
-      setError(err.message || 'Sign up failed. Please try again.');
-    } finally {
-      setGateLoading(false);
-    }
-  }
-
+  
   // ── Result step ──────────────────────────────────────────────────
 
   const previewHtml = useMemo(() => renderCVTemplate(selectedDesign, cvData, 'view'), [cvData, selectedDesign]);
@@ -385,37 +355,6 @@ export default function BuildClient({
           </div>
         )}
 
-        {stage === 'signup-gate' && (
-          <form onSubmit={handleGateSignup} className="max-w-sm mx-auto pt-10">
-            <h2 className="text-xl font-bold text-center mb-6">Sign up to view CV/Resume</h2>
-            <div className="space-y-3">
-              <input
-                type="email"
-                required
-                placeholder="Email"
-                value={gateEmail}
-                onChange={(e) => setGateEmail(e.target.value)}
-                className="border rounded px-3 py-2 w-full"
-              />
-              <input
-                type="password"
-                required
-                minLength={6}
-                placeholder="Password"
-                value={gatePassword}
-                onChange={(e) => setGatePassword(e.target.value)}
-                className="border rounded px-3 py-2 w-full"
-              />
-              <button
-                type="submit"
-                disabled={gateLoading}
-                className="bg-blue-700 text-white px-4 py-2.5 rounded-lg font-semibold w-full disabled:opacity-50"
-              >
-                {gateLoading ? 'Creating account…' : 'Sign Up'}
-              </button>
-            </div>
-          </form>
-        )}
 
         {stage === 'result' && (
           <div>
@@ -455,6 +394,7 @@ export default function BuildClient({
           </div>
         </div>
       )}
+      <CVOnboardingModal open={showOnboardingModal} onOpenChange={setShowOnboardingModal} />
     </>
   );
 }

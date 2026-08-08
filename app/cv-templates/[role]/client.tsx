@@ -16,7 +16,7 @@ import { renderCVTemplate } from '@/lib/cv-template-pages/cv-renderer';
 import { supabase } from '@/lib/supabase';
 import BackButton from '../_components/back-button';
 import CVPreviewFrame from '../_components/cv-preview-frame';
-import AuthModal from '@/components/AuthModal';
+import CVOnboardingModal from '../_components/cv-onboarding-modal';
 
 export default function RolePageClient({ page }: { page: ContentRolePage }) {
   const router = useRouter();
@@ -174,7 +174,7 @@ export default function RolePageClient({ page }: { page: ContentRolePage }) {
           )}
         </div>
       </div>
-      <AuthModal open={authModalOpen} onOpenChange={setAuthModalOpen} />
+      <CVOnboardingModal open={authModalOpen} onOpenChange={setAuthModalOpen} />
     </>
   );
 }
