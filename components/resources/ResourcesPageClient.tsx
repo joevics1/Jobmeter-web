@@ -70,7 +70,7 @@ export default function ResourcesPageClient({ pages }: { pages: CategoryPage[] }
   const JobCard = ({ page }: { page: CategoryPage }) => {
     const isSaved = savedJobs.includes(page.id);
     return (
-      <Link href={`/resources/${page.slug}`} className="block">
+      <Link href={`/category/${page.slug}`} className="block">
         <div
           className="bg-white rounded-2xl p-5 mb-5 shadow-sm hover:shadow-lg transition-all duration-300 border relative overflow-hidden group cursor-pointer"
           style={{ borderColor: theme.colors.border.DEFAULT, backgroundColor: theme.colors.card.DEFAULT }}

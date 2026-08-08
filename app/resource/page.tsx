@@ -8,19 +8,21 @@ import {
   MapPin,
   ArrowRight,
   Wrench,
+  FileText,
 } from 'lucide-react';
 import { theme } from '@/lib/theme';
 import AdUnit from '@/components/ads/AdUnit';
+import { FEATURED_TOOLS } from '@/lib/toolsNav';
 
 export default function ResourcePage() {
   const resources = [
     {
       id: 'locations',
-      title: 'Locations',
-      description: 'Find jobs in different cities and states',
+      title: 'Jobs by Location & Role',
+      description: 'Find jobs in different cities, states, and job categories',
       icon: MapPin,
       color: '#10B981',
-      route: '/jobs/state',
+      route: '/category',
     },
     {
       id: 'blogs',
@@ -45,6 +47,14 @@ export default function ResourcePage() {
       icon: Wrench,
       color: '#3B82F6',
       route: '/tools',
+    },
+    {
+      id: 'cv-templates',
+      title: 'CV Templates',
+      description: 'Free, role-specific CV templates you can fill in and download',
+      icon: FileText,
+      color: '#DC2626',
+      route: '/cv-templates',
     },
   ];
 
@@ -145,6 +155,24 @@ export default function ResourcePage() {
               </Link>
             );
           })}
+        </div>
+
+        {/* Popular Tools — links straight to individual tool pages so this
+            hub actually distributes link equity into the tools cluster,
+            not just down to the /tools index. */}
+        <div className="mt-10">
+          <h2 className="text-lg font-bold text-gray-900 mb-4">Popular Tools</h2>
+          <div className="flex flex-wrap gap-2">
+            {FEATURED_TOOLS.map((tool) => (
+              <Link
+                key={tool.id}
+                href={tool.route}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-gray-200 bg-white text-sm text-gray-700 hover:border-blue-300 hover:text-blue-600 hover:bg-blue-50 transition-all"
+              >
+                {tool.title}
+              </Link>
+            ))}
+          </div>
         </div>
 
         {/* ── AD 3: Bottom banner — end of page ── */}

@@ -121,6 +121,33 @@ export default function RolePageClient({ page }: { page: ContentRolePage }) {
             </div>
           </section>
         )}
+
+        {/* Cross-cluster links — this page previously had no links out to
+            the rest of the site. A finished CV is only useful with somewhere
+            to send it, so point straight at matching jobs and adjacent tools. */}
+        <section className="mb-24 pt-8 border-t border-gray-200">
+          <h2 className="text-lg font-bold mb-4">Next Steps</h2>
+          <div className="flex flex-wrap gap-3 text-sm">
+            <Link
+              href={`/jobs?search=${encodeURIComponent(page.role_label)}`}
+              className="px-4 py-2 rounded-full border border-gray-200 text-gray-700 hover:border-blue-300 hover:text-blue-600 hover:bg-blue-50 transition-all"
+            >
+              {page.role_label} jobs
+            </Link>
+            <Link href="/tools/ats-review" className="px-4 py-2 rounded-full border border-gray-200 text-gray-700 hover:border-blue-300 hover:text-blue-600 hover:bg-blue-50 transition-all">
+              Check your CV against ATS
+            </Link>
+            <Link href="/tools/interview" className="px-4 py-2 rounded-full border border-gray-200 text-gray-700 hover:border-blue-300 hover:text-blue-600 hover:bg-blue-50 transition-all">
+              Practice interview questions
+            </Link>
+            <Link href="/cv-templates" className="px-4 py-2 rounded-full border border-gray-200 text-gray-700 hover:border-blue-300 hover:text-blue-600 hover:bg-blue-50 transition-all">
+              Browse all CV templates
+            </Link>
+            <Link href="/blog" className="px-4 py-2 rounded-full border border-gray-200 text-gray-700 hover:border-blue-300 hover:text-blue-600 hover:bg-blue-50 transition-all">
+              Career advice
+            </Link>
+          </div>
+        </section>
       </main>
 
       {/* Static action bar — fixed to bottom on mobile and desktop */}

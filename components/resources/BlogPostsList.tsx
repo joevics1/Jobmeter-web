@@ -40,7 +40,7 @@ export default function BlogPostsList({ posts }: BlogPostsListProps) {
         >
           {/* Featured Image */}
           {post.featured_image_url && (
-            <Link href={`/resources/${post.slug}`}>
+            <Link href={`/blog/${post.slug}`}>
               <div className="relative w-full h-48 bg-gray-200">
                 <Image
                   src={post.featured_image_url}
@@ -62,7 +62,7 @@ export default function BlogPostsList({ posts }: BlogPostsListProps) {
             )}
 
             {/* Title */}
-            <Link href={`/resources/${post.slug}`}>
+            <Link href={`/blog/${post.slug}`}>
               <h3 className="text-xl font-bold text-gray-900 mb-2 hover:text-blue-600 transition-colors line-clamp-2">
                 {post.title}
               </h3>
@@ -104,7 +104,7 @@ export default function BlogPostsList({ posts }: BlogPostsListProps) {
                 )}
               </div>
               <Link
-                href={`/resources/${post.slug}`}
+                href={`/blog/${post.slug}`}
                 className="flex items-center gap-1 text-blue-600 hover:text-blue-700 font-medium text-sm"
               >
                 Read more

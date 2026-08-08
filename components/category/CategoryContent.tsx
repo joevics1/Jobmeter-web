@@ -214,7 +214,7 @@ export default function CategoryContent({ page }: CategoryContentProps) {
                     {page.related_categories.map((slug, index) => (
                       <Link
                         key={index}
-                        href={`/resources/${slug}`}
+                        href={`/category/${slug}`}
                         className="inline-flex items-center gap-1 px-3 py-1.5 text-sm bg-blue-50 text-blue-700 rounded-full hover:bg-blue-100 transition-colors"
                       >
                         <Briefcase size={14} />
@@ -234,7 +234,7 @@ export default function CategoryContent({ page }: CategoryContentProps) {
                     {page.related_locations.map((slug, index) => (
                       <Link
                         key={index}
-                        href={`/resources/${slug}`}
+                        href={`/category/${slug}`}
                         className="inline-flex items-center gap-1 px-3 py-1.5 text-sm bg-green-50 text-green-700 rounded-full hover:bg-green-100 transition-colors"
                       >
                         <MapPin size={14} />

@@ -763,7 +763,19 @@ export default function HomePage({ jobs: initialJobs, blogPosts, companies = [] 
           Browse Jobs
         </Link>
         <span className="text-gray-400">•</span>
-        <Link href="/resources" className="font-semibold hover:underline" style={{ color: theme.colors.primary.DEFAULT }}>
+        <Link href="/category" className="font-semibold hover:underline" style={{ color: theme.colors.primary.DEFAULT }}>
+          Browse by Category
+        </Link>
+        <span className="text-gray-400">•</span>
+        <Link href="/tools" className="font-semibold hover:underline" style={{ color: theme.colors.primary.DEFAULT }}>
+          Career Tools
+        </Link>
+        <span className="text-gray-400">•</span>
+        <Link href="/cv-templates" className="font-semibold hover:underline" style={{ color: theme.colors.primary.DEFAULT }}>
+          CV Templates
+        </Link>
+        <span className="text-gray-400">•</span>
+        <Link href="/resource" className="font-semibold hover:underline" style={{ color: theme.colors.primary.DEFAULT }}>
           Resources
         </Link>
         <span className="text-gray-400">•</span>
@@ -783,11 +795,11 @@ export default function HomePage({ jobs: initialJobs, blogPosts, companies = [] 
           Post a Job
         </Link>
         <span className="text-gray-400">•</span>
-        <Link href="/privacy" className="font-semibold hover:underline" style={{ color: theme.colors.primary.DEFAULT }}>
+        <Link href="/privacy-policy" className="font-semibold hover:underline" style={{ color: theme.colors.primary.DEFAULT }}>
           Privacy
         </Link>
         <span className="text-gray-400">•</span>
-        <Link href="/terms" className="font-semibold hover:underline" style={{ color: theme.colors.primary.DEFAULT }}>
+        <Link href="/terms-of-service" className="font-semibold hover:underline" style={{ color: theme.colors.primary.DEFAULT }}>
           Terms
         </Link>
       </div>

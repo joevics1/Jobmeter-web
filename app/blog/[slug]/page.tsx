@@ -67,6 +67,53 @@ async function getBlogPost(slug: string): Promise<BlogPost | null> {
   }
 }
 
+interface RelatedPost {
+  slug: string;
+  title: string;
+  excerpt: string | null;
+  featured_image_url: string | null;
+}
+
+// Related posts: prefer the same category, then backfill with the most
+// recent published posts so the section is never empty. This replaces the
+// previous "coming soon" placeholder, which shipped no links at all.
+async function getRelatedPosts(category: string | null, excludeSlug: string): Promise<RelatedPost[]> {
+  try {
+    const baseParams: Record<string, string> = {
+      select: 'slug,title,excerpt,featured_image_url,published_at',
+      is_published: 'eq.true',
+      country: 'eq.nigeria',
+      slug: `neq.${excludeSlug}`,
+      order: 'published_at.desc',
+      limit: '4',
+    };
+
+    if (category) {
+      const params = new URLSearchParams({ ...baseParams, category: `eq.${category}` });
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/blogs?${params.toString()}`, {
+        headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` },
+        next: { revalidate: false },
+      });
+      if (res.ok) {
+        const data: RelatedPost[] = await res.json();
+        if (data.length > 0) return data.slice(0, 4);
+      }
+    }
+
+    // Fallback: most recent posts overall, regardless of category.
+    const params = new URLSearchParams(baseParams);
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/blogs?${params.toString()}`, {
+      headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` },
+      next: { revalidate: false },
+    });
+    if (!res.ok) return [];
+    return await res.json();
+  } catch (error) {
+    console.error('Error fetching related posts:', error);
+    return [];
+  }
+}
+
 function splitContentAtMidpoint(content: string): [string, string] {
   const mid = Math.floor(content.length / 2);
   const breakIndex = content.indexOf('\n\n', mid);
@@ -143,6 +190,7 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
 
   const [contentTop, contentBottom] = splitContentAtMidpoint(post.content);
   const hasMidContent = contentBottom.trim().length > 0;
+  const relatedPosts = await getRelatedPosts(post.category, post.slug);
 
   return (
     <>
@@ -256,14 +304,58 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
             </div>
           </article>
 
-          {post.related_posts && post.related_posts.length > 0 && (
+          {relatedPosts.length > 0 && (
             <div className="mt-12">
               <h2 className="text-2xl font-bold text-gray-900 mb-6">Related Articles</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <p className="text-gray-600">Related posts coming soon...</p>
+                {relatedPosts.map((related) => (
+                  <Link
+                    key={related.slug}
+                    href={`/blog/${related.slug}`}
+                    className="group flex gap-4 bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md hover:border-blue-200 transition-all"
+                  >
+                    {related.featured_image_url && (
+                      <div className="relative w-20 h-20 flex-shrink-0 rounded overflow-hidden">
+                        <Image src={related.featured_image_url} alt={related.title} fill className="object-cover" />
+                      </div>
+                    )}
+                    <div className="min-w-0">
+                      <h3 className="font-semibold text-gray-900 group-hover:text-blue-600 transition-colors line-clamp-2 mb-1">
+                        {related.title}
+                      </h3>
+                      {related.excerpt && (
+                        <p className="text-sm text-gray-600 line-clamp-2">{related.excerpt}</p>
+                      )}
+                    </div>
+                  </Link>
+                ))}
               </div>
             </div>
           )}
+
+          {/* Cross-cluster links — keeps career content connected to the
+              rest of the site (jobs, tools, CV builder) instead of dead-ending
+              in the blog silo. */}
+          <div className="mt-10 pt-8 border-t border-gray-200">
+            <h2 className="text-lg font-bold text-gray-900 mb-4">Keep Exploring</h2>
+            <div className="flex flex-wrap gap-3 text-sm">
+              <Link href="/jobs" className="px-4 py-2 rounded-full border border-gray-200 text-gray-700 hover:border-blue-300 hover:text-blue-600 hover:bg-blue-50 transition-all">
+                Browse open jobs
+              </Link>
+              <Link href="/category" className="px-4 py-2 rounded-full border border-gray-200 text-gray-700 hover:border-blue-300 hover:text-blue-600 hover:bg-blue-50 transition-all">
+                Jobs by location & role
+              </Link>
+              <Link href="/tools/ats-review" className="px-4 py-2 rounded-full border border-gray-200 text-gray-700 hover:border-blue-300 hover:text-blue-600 hover:bg-blue-50 transition-all">
+                Free ATS CV review
+              </Link>
+              <Link href="/cv-templates" className="px-4 py-2 rounded-full border border-gray-200 text-gray-700 hover:border-blue-300 hover:text-blue-600 hover:bg-blue-50 transition-all">
+                Free CV templates
+              </Link>
+              <Link href="/tools" className="px-4 py-2 rounded-full border border-gray-200 text-gray-700 hover:border-blue-300 hover:text-blue-600 hover:bg-blue-50 transition-all">
+                All career tools
+              </Link>
+            </div>
+          </div>
         </div>
 
         <div className="fixed bottom-0 left-0 right-0 z-40 lg:hidden bg-white border-t border-gray-100" style={{ height: '60px', overflow: 'hidden' }}>
