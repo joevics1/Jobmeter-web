@@ -6,7 +6,6 @@ import { COMPANIES, companyToSlug, slugToCompany } from '@/lib/quizCompanies';
 import { quizSupabase } from '@/lib/quizSupabase';
 import AdUnit from '@/components/ads/AdUnit';
 import QuizBreadcrumb from '@/components/quiz/QuizBreadcrumb';
-import QuizCrossLinks from '@/components/quiz/QuizCrossLinks';
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.jobmeter.app';
 
@@ -117,9 +116,6 @@ export default async function CompanyQuizPage({ params }: Props) {
         {/* ── Left / main content ────────────────────────────────────────── */}
         <div className="flex-1 min-w-0">
           <CompanyQuizClient company={company!} companyData={companyData} />
-          <div className="max-w-4xl mx-auto px-4">
-            <QuizCrossLinks currentCompany={company!} />
-          </div>
         </div>
 
         {/* ── Right: Desktop sidebar ads ──────────────────────────────── */}

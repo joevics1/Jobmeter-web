@@ -11,6 +11,7 @@ import { useCredits } from '@/context/CreditContext';
 import { ApplyPaymentModal } from '@/components/payment/ApplyPaymentModal';
 import AuthModal from '@/components/AuthModal';
 import AdUnit from '@/components/ads/AdUnit';
+import QuizCrossLinks from '@/components/quiz/QuizCrossLinks';
 import {
   ClipboardList,
   FileText,
@@ -142,21 +143,40 @@ export default function CompanyQuizClient({
             <span className="text-white font-medium text-sm">{company}</span>
           </div>
         </div>
-        <div className="max-w-4xl mx-auto px-4 py-6">
-          <h2 className="text-base font-semibold text-gray-800 mb-1">Choose a Section</h2>
-          <button onClick={() => handleSectionSelect('general')} className="w-full mb-3 px-4 py-3.5 rounded-xl text-sm font-semibold text-white flex items-center justify-between" style={{ backgroundColor: theme.colors.primary.DEFAULT }}>
-            <span>⚡ General (Mixed)</span>
-            <span className="text-white/70 text-xs">Tap to start →</span>
+        <div className="max-w-4xl mx-auto px-4 py-8">
+          <h2 className="text-xl font-extrabold text-gray-900 mb-1">Choose a Section</h2>
+          <p className="text-sm text-gray-500 mb-6">Pick a topic to focus on, or take a mixed set covering everything.</p>
+
+          <button
+            onClick={() => handleSectionSelect('general')}
+            className="w-full mb-6 px-6 py-6 rounded-2xl text-white flex items-center justify-between shadow-sm hover:shadow-md transition-all active:scale-[0.99]"
+            style={{ backgroundColor: theme.colors.primary.DEFAULT }}
+          >
+            <span className="flex items-center gap-3">
+              <span className="text-2xl">⚡</span>
+              <span className="text-left">
+                <span className="block font-bold text-base">General (Mixed)</span>
+                <span className="block text-white/70 text-xs">All topics combined</span>
+              </span>
+            </span>
+            <span className="text-white/80 text-sm font-semibold">Tap to start →</span>
           </button>
-          <div className="flex flex-wrap gap-2">
+
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
             {(showAllSections ? sections : sections.slice(0, 5)).map((section) => (
-              <button key={section} onClick={() => handleSectionSelect(section)} className="px-4 py-2.5 rounded-lg text-sm font-medium bg-white text-gray-700 border border-gray-200 hover:bg-gray-50">
-                {section}
+              <button
+                key={section}
+                onClick={() => handleSectionSelect(section)}
+                className="bg-white border border-gray-200 rounded-2xl p-5 text-left hover:border-blue-300 hover:shadow-md transition-all active:scale-[0.98] flex flex-col justify-between min-h-[110px]"
+              >
+                <span className="font-bold text-gray-900 text-sm leading-snug">{section}</span>
+                <span className="text-blue-600 font-semibold text-xs mt-3">Start →</span>
               </button>
             ))}
           </div>
+
           {sections.length > 5 && (
-            <button onClick={() => setShowAllSections(prev => !prev)} className="mt-3 text-xs font-medium underline" style={{ color: theme.colors.primary.DEFAULT }}>
+            <button onClick={() => setShowAllSections(prev => !prev)} className="mt-5 text-sm font-semibold underline" style={{ color: theme.colors.primary.DEFAULT }}>
               {showAllSections ? `▴ Show less` : `▾ See all ${sections.length} sections`}
             </button>
           )}
@@ -248,6 +268,15 @@ export default function CompanyQuizClient({
             </div>
           </div>
         )}
+
+        {/* Clear ad break before the cross-link widget, so "Practice these
+            too" / "Next Steps" reads as a distinct section rather than
+            bleeding into the assessment picker above it. */}
+        <div className="mt-10 pt-8 border-t border-gray-200">
+          <AdUnit slot="9751041788" format="auto" />
+        </div>
+
+        <QuizCrossLinks currentCompany={company} />
       </div>
 
       {/* Modals */}
