@@ -39,6 +39,7 @@ import {
   Banknote,
   ChevronDown,
   ChevronUp,
+  Loader2,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
@@ -100,6 +101,84 @@ export default function OnboardingPage() {
   });
   const [locationInput, setLocationInput] = useState('');
   const [talentPool, setTalentPool] = useState<boolean | null>(null);
+
+  // Session awareness. Two ways a signed-in user can land here:
+  // (a) chose "Sign up with Google" on AuthModal's CV-upload screen —
+  //     CV is already parsed/cached, they still need to fill in roles/
+  //     preferences here, then the CTA below should save+redirect
+  //     directly instead of showing the signup modal again.
+  // (b) filled out the *entire* onboarding form unauthenticated, then
+  //     used the signup modal's own Google button to finish — in that
+  //     case everything (roles/preferences too) was cached to
+  //     pending_onboarding_data before the OAuth redirect, and should
+  //     be auto-saved the moment they land back here signed in, with
+  //     no further clicks needed.
+  const [existingUser, setExistingUser] = useState<any>(null);
+  const [autoFinishing, setAutoFinishing] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) return;
+
+      let pending: any = null;
+      try {
+        const cached = localStorage.getItem('pending_onboarding_data');
+        if (cached) pending = JSON.parse(cached);
+      } catch (e) {}
+
+      if (pending) {
+        // Case (b): everything was already filled out before the OAuth
+        // redirect. Save it now and go straight to /jobs — no need to
+        // show this page's own UI at all.
+        setAutoFinishing(true);
+        try {
+          const fullName = pending.cvData?.name?.trim() || null;
+          await supabase.from('profiles').upsert({
+            id: session.user.id, email: session.user.email, full_name: fullName,
+            phone: pending.cvData?.phone || null, location: pending.cvData?.location || null,
+          }, { onConflict: 'id' });
+
+          await supabase.from('onboarding_data').upsert({
+            user_id: session.user.id,
+            cv_name: pending.cvData?.name || null, cv_email: pending.cvData?.email || null,
+            cv_phone: pending.cvData?.phone || null, cv_location: pending.cvData?.location || null,
+            cv_summary: pending.cvData?.summary || null, cv_roles: pending.cvData?.roles || [],
+            cv_skills: pending.cvData?.skills || [], cv_experience: pending.cvData?.experience || null,
+            cv_work_experience: pending.cvData?.workExperience || null, cv_education: pending.cvData?.education || null,
+            cv_projects: pending.cvData?.projects || null, cv_accomplishments: pending.cvData?.accomplishments || [],
+            cv_awards: pending.cvData?.awards || [], cv_certifications: pending.cvData?.certifications || [],
+            cv_languages: pending.cvData?.languages || [], cv_interests: pending.cvData?.interests || [],
+            cv_linkedin: pending.cvData?.linkedin || null, cv_github: pending.cvData?.github || null,
+            cv_portfolio: pending.cvData?.portfolio || null, cv_publications: pending.cvData?.publications || [],
+            cv_volunteer_work: pending.cvData?.volunteerWork || null, cv_additional_sections: pending.cvData?.additionalSections || null,
+            target_roles: pending.selectedRoles || [], preferred_locations: pending.preferences?.locations || [],
+            salary_min: pending.preferences?.salaryMin ? parseInt(pending.preferences.salaryMin) : null,
+            salary_max: pending.preferences?.salaryMax ? parseInt(pending.preferences.salaryMax) : null,
+            experience_level: pending.preferences?.experienceLevel || null, job_type: pending.preferences?.jobType || null,
+            remote_preference: pending.preferences?.remotePreference || null, sector: pending.preferences?.sector || null,
+            cv_text: pending.cvText || null, cv_file_name: pending.cvFileName || null,
+            cv_file_type: pending.cvFileType || null, cv_file_size: pending.cvFileSize || null,
+            completed_at: new Date().toISOString(),
+            talent_pool: pending.talentPool ?? false,
+          }, { onConflict: 'user_id' });
+
+          localStorage.removeItem('pending_onboarding_data');
+          router.push('/jobs');
+        } catch (err) {
+          console.error('Auto-finish after Google signup failed:', err);
+          setAutoFinishing(false);
+          setExistingUser(session.user); // fall back to the normal in-page flow below
+        }
+        return;
+      }
+
+      // Case (a): signed in already, but still need to fill in roles/
+      // preferences on this page. Just remember the session so the CTA
+      // button skips the signup modal when they get there.
+      setExistingUser(session.user);
+    })();
+  }, [router]);
 
   // Section expand state
   const [rolesExpanded, setRolesExpanded] = useState(false);
@@ -256,7 +335,7 @@ export default function OnboardingPage() {
     setIsLoading(true);
     try {
       const onboardingCache = {
-        cvData: extractedData, selectedRoles, preferences, cvText,
+        cvData: extractedData, selectedRoles, preferences, cvText, talentPool,
         cvFileName: selectedFile?.name, cvFileType: selectedFile?.type, cvFileSize: selectedFile?.size,
         cachedAt: new Date().toISOString(),
       };
@@ -440,6 +519,17 @@ export default function OnboardingPage() {
     { label: 'Target Roles', icon: Briefcase },
     { label: 'Preferences', icon: MapPin },
   ];
+
+  if (autoFinishing) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: theme.colors.background.muted }}>
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-3" style={{ color: theme.colors.primary.DEFAULT }} />
+          <p className="text-sm" style={{ color: theme.colors.text.secondary }}>Finishing your signup...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -818,19 +908,37 @@ export default function OnboardingPage() {
         {/* ── CTA Button ── */}
         <div className="pt-2">
           <Button
-            onClick={() => {
+            onClick={async () => {
               if (!canCompleteOnboarding) {
                 setError('Please upload your CV and select at least one role before creating an account.');
                 return;
               }
               setError('');
+              if (existingUser) {
+                // Already signed in via Google earlier in this flow —
+                // just save what they filled in here and go, no need to
+                // ask them to "sign up" a second time.
+                setIsSavingData(true);
+                try {
+                  await saveOnboardingDataToSupabase(existingUser);
+                  router.push('/jobs');
+                } catch (err: any) {
+                  setError(err.message || 'Something went wrong saving your profile. Please try again.');
+                  setIsSavingData(false);
+                }
+                return;
+              }
               setShowSignupModal(true);
             }}
-            className="w-full text-white py-4 text-base font-semibold shadow-lg hover:shadow-xl transition-all"
+            disabled={isSavingData}
+            className="w-full text-white py-4 text-base font-semibold shadow-lg hover:shadow-xl transition-all disabled:opacity-70"
             style={{ backgroundColor: theme.colors.primary.DEFAULT }}
           >
-            <CheckCircle className="h-5 w-5 mr-2" />
-            Create Account & Start Job Hunting
+            {isSavingData ? (
+              <><Loader2 className="h-5 w-5 mr-2 animate-spin" />Saving your profile...</>
+            ) : (
+              <><CheckCircle className="h-5 w-5 mr-2" />Create Account & Start Job Hunting</>
+            )}
           </Button>
           {error && (
             <div className="mt-3 bg-red-50 border border-red-200 rounded-lg p-3 flex items-center gap-2">
