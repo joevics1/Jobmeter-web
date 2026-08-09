@@ -14,7 +14,19 @@ export default function RootLayoutClient({
     children: React.ReactNode;
   }) {
   const pathname = usePathname();
-  
+
+  // Force every route change to start at the top of the page. Next.js's
+  // built-in scroll-to-top on navigation only reliably fires when the
+  // matched layout segment actually remounts — pages that share a
+  // persistent layout (e.g. everything under /tools/*, which has its own
+  // layout.tsx) can otherwise keep the previous page's scroll position,
+  // landing the user mid-page or at the bottom of a long page like the
+  // quiz platform. This runs on every pathname change, site-wide, so no
+  // individual page needs its own fix.
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+
   // Bottom nav pages that show bottom navigation
   const bottomNavPages = ['/jobs', '/documents', '/cv', '/tools', '/settings'];
   
