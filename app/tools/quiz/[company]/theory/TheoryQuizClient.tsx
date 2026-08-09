@@ -9,7 +9,9 @@ import { ArrowLeft, CheckCircle, XCircle, Loader2 } from 'lucide-react';
 import AdUnit from '@/components/ads/AdUnit';
 import QuizCrossLinks from '@/components/quiz/QuizCrossLinks';
 
-const QUESTIONS_PER_AD_PAGE = 5;
+// Ad refresh checkpoints: whole attempt split into 2 checkpoints during
+// the quiz (a midpoint) plus 1 more when results load — 3 genuine page
+// views total per attempt. See identical reasoning in ObjectiveQuizClient.
 
 interface TheoryQuestion {
   id: string;
@@ -40,7 +42,8 @@ export default function TheoryQuizClient({ company }: { company: string }) {
   const [useTimer, setUseTimer] = useState(false);
   const [timeSpent, setTimeSpent] = useState(0);
   const [timerStarted, setTimerStarted] = useState(false);
-  const lastPushedAdIndex = useRef<number | null>(null);
+  const midpointPushed = useRef(false);
+  const resultsPushed = useRef(false);
 
   useEffect(() => {
     const timerParam = searchParams.get('timer');
@@ -50,21 +53,18 @@ export default function TheoryQuizClient({ company }: { company: string }) {
     }
   }, [searchParams]);
 
-  // Every 5 questions, push a real URL change (?page=N) so the mid-quiz ad
-  // gets a genuine new page-view context instead of repeating the same
-  // creative — see the identical comment in ObjectiveQuizClient. With
-  // theory sets currently fixed at 5 questions this fires once, right
-  // before the last question, but stays correct if that count ever changes.
+  // Push a real URL change (?page=2) once the user crosses the midpoint of
+  // the quiz — see identical reasoning in ObjectiveQuizClient.
+  const halfPoint = Math.ceil(questions.length / 2);
   useEffect(() => {
-    if ((currentIndex + 1) % QUESTIONS_PER_AD_PAGE !== 0) return;
-    if (lastPushedAdIndex.current === currentIndex) return;
-    lastPushedAdIndex.current = currentIndex;
+    if (questions.length === 0 || midpointPushed.current) return;
+    if (currentIndex < halfPoint) return;
+    midpointPushed.current = true;
 
-    const adPage = Math.floor(currentIndex / QUESTIONS_PER_AD_PAGE) + 1;
     const params = new URLSearchParams(searchParams.toString());
-    params.set('page', String(adPage));
+    params.set('page', '2');
     router.push(`${pathname}?${params.toString()}`, { scroll: false });
-  }, [currentIndex]);
+  }, [currentIndex, questions.length]);
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -163,6 +163,15 @@ export default function TheoryQuizClient({ company }: { company: string }) {
     setResults(gradingResults);
     setSubmitting(false);
     setShowResults(true);
+
+    // Results is a genuinely different page, so give it its own page-view
+    // checkpoint too — same reasoning as the midpoint push above.
+    if (!resultsPushed.current) {
+      resultsPushed.current = true;
+      const params = new URLSearchParams(searchParams.toString());
+      params.set('page', 'results');
+      router.push(`${pathname}?${params.toString()}`, { scroll: false });
+    }
   };
 
   const restartQuiz = () => {
@@ -172,6 +181,8 @@ export default function TheoryQuizClient({ company }: { company: string }) {
     setTimeSpent(0);
     setTimerStarted(false);
     setCurrentIndex(0);
+    midpointPushed.current = false;
+    resultsPushed.current = false;
     fetchQuestions();
   };
 
@@ -365,14 +376,12 @@ export default function TheoryQuizClient({ company }: { company: string }) {
           />
         </div>
 
-        {/* Mid-quiz ad: every 5th question. Keyed on the boundary so React
-            unmounts/remounts a fresh <ins> here — paired with the real URL
-            change above, this is a genuine new ad request, not a repeat. */}
-        {(currentIndex + 1) % 5 === 0 && (
-          <div className="mb-4">
-            <AdUnit key={Math.floor(currentIndex / 5)} slot="4198231153" format="auto" />
-          </div>
-        )}
+        {/* Ad always visible at the bottom of every question. The <ins>
+            itself only remounts (fresh ad request) when the segment changes
+            at the midpoint push above. */}
+        <div className="mb-4">
+          <AdUnit key={`quiz-${currentIndex < halfPoint ? 1 : 2}`} slot="4198231153" format="auto" />
+        </div>
 
         {/* Navigation */}
         <div className="flex gap-3">

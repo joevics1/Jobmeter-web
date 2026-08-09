@@ -9,7 +9,12 @@ import { ArrowLeft, Check, X, Loader2 } from 'lucide-react';
 import AdUnit from '@/components/ads/AdUnit';
 import QuizCrossLinks from '@/components/quiz/QuizCrossLinks';
 
-const QUESTIONS_PER_AD_PAGE = 5;
+// Ad refresh checkpoints: instead of tying refreshes to a fixed question
+// count (which produced a different number of page-views depending on
+// quiz length), the whole attempt is split into exactly 2 checkpoints
+// during the quiz (a midpoint) plus 1 more when results load — 3 genuine
+// page views total per attempt, regardless of whether it's a 10 or 20
+// question quiz.
 
 interface ObjectiveQuestion {
   id: string;
@@ -44,7 +49,8 @@ export default function ObjectiveQuizClient({ company }: { company: string }) {
   const [timerStarted, setTimerStarted] = useState(false);
   const [selectedSection, setSelectedSection] = useState<string>('general');
   const [questionCount, setQuestionCount] = useState(20);
-  const lastPushedAdIndex = useRef<number | null>(null);
+  const midpointPushed = useRef(false);
+  const resultsPushed = useRef(false);
 
   useEffect(() => {
     const sectionParam = searchParams.get('section');
@@ -62,24 +68,22 @@ export default function ObjectiveQuizClient({ company }: { company: string }) {
     }
   }, [searchParams]);
 
-  // Every 5 questions, push a real URL change (?page=N) instead of just
-  // updating local state. A genuine navigation gives Google AdSense a real
-  // new page-view context, so the ad below actually refreshes instead of
-  // repeating the same creative it served on page load — which is what
-  // was happening when this whole quiz was effectively one static page.
-  // Fires exactly when the ad becomes visible (5th, 10th, 15th... question),
-  // not a question late. Answers/progress stay intact since this is a
-  // client-side searchParams update on the same route, not a full reload.
+  // Push a real URL change (?page=2) once the user crosses the midpoint of
+  // the quiz. A genuine navigation gives Google AdSense a real new
+  // page-view context, so the always-visible ad below actually refreshes
+  // there instead of showing the same creative for the whole attempt.
+  // Answers/progress stay intact — this is a client-side searchParams
+  // update on the same route, not a full reload.
+  const halfPoint = Math.ceil(questions.length / 2);
   useEffect(() => {
-    if ((currentIndex + 1) % QUESTIONS_PER_AD_PAGE !== 0) return;
-    if (lastPushedAdIndex.current === currentIndex) return;
-    lastPushedAdIndex.current = currentIndex;
+    if (questions.length === 0 || midpointPushed.current) return;
+    if (currentIndex < halfPoint) return;
+    midpointPushed.current = true;
 
-    const adPage = Math.floor(currentIndex / QUESTIONS_PER_AD_PAGE) + 1;
     const params = new URLSearchParams(searchParams.toString());
-    params.set('page', String(adPage));
+    params.set('page', '2');
     router.push(`${pathname}?${params.toString()}`, { scroll: false });
-  }, [currentIndex]);
+  }, [currentIndex, questions.length]);
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -166,6 +170,17 @@ export default function ObjectiveQuizClient({ company }: { company: string }) {
     setScore({ correct, total: questions.length });
     setSubmitting(false);
     setShowResults(true);
+
+    // Results is a genuinely different page (score summary + full review),
+    // so give it its own page-view checkpoint too — same reasoning as the
+    // midpoint push above, just triggered by submitting instead of scrolling
+    // through questions.
+    if (!resultsPushed.current) {
+      resultsPushed.current = true;
+      const params = new URLSearchParams(searchParams.toString());
+      params.set('page', 'results');
+      router.push(`${pathname}?${params.toString()}`, { scroll: false });
+    }
   };
 
   const restartQuiz = () => {
@@ -175,6 +190,8 @@ export default function ObjectiveQuizClient({ company }: { company: string }) {
     setTimeSpent(0);
     setTimerStarted(false);
     setCurrentIndex(0);
+    midpointPushed.current = false;
+    resultsPushed.current = false;
     fetchQuestions();
   };
 
@@ -375,14 +392,14 @@ export default function ObjectiveQuizClient({ company }: { company: string }) {
           </div>
         </div>
 
-        {/* Mid-quiz ad: every 5th question. Keyed on the boundary so React
-            unmounts/remounts a fresh <ins> here — paired with the real URL
-            change above, this is a genuine new ad request, not a repeat. */}
-        {(currentIndex + 1) % 5 === 0 && (
-          <div className="mb-4">
-            <AdUnit key={Math.floor(currentIndex / 5)} slot="4198231153" format="auto" />
-          </div>
-        )}
+        {/* Ad always visible at the bottom of every question. The <ins>
+            itself only remounts (fresh ad request) when adSegment changes
+            at the midpoint push above — otherwise it's the same mounted
+            instance across questions, which is the correct behavior (no
+            refresh without a genuine new page view). */}
+        <div className="mb-4">
+          <AdUnit key={`quiz-${currentIndex < halfPoint ? 1 : 2}`} slot="4198231153" format="auto" />
+        </div>
 
         <div className="flex gap-3">
           <button
