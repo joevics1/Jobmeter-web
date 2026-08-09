@@ -24,6 +24,25 @@ import CVOnboardingModal from '../_components/cv-onboarding-modal';
 type Stage = 'loading' | 'form' | 'result';
 type StartMode = 'quick' | 'sample' | 'blank' | 'history';
 
+// supabase-js's functions.invoke() does NOT automatically parse the JSON
+// body of a non-2xx response into fnError.message — it just gives a
+// generic "Edge Function returned a non-2xx status code" string. Our
+// functions return a real, specific { error: "..." } body (e.g. "No
+// profile data found — complete onboarding first"), which was getting
+// silently swallowed everywhere we did `throw new Error(fnError.message)`.
+// This actually reads the response body first.
+async function getFnErrorMessage(fnError: any, fallback: string): Promise<string> {
+  try {
+    if (fnError?.context?.json) {
+      const body = await fnError.context.json();
+      if (body?.error) return body.error;
+    }
+  } catch {
+    // fall through to generic message below
+  }
+  return fnError?.message || fallback;
+}
+
 function emptyCV(roleLabel: string): CVData {
   return {
     personalDetails: { name: '', title: roleLabel || '', email: '', phone: '', location: '' },
@@ -136,7 +155,7 @@ export default function BuildClient({
             body: { userId: uid, roleLabel },
           });
           if (cancelled) return;
-          if (fnError) throw new Error(fnError.message);
+          if (fnError) throw new Error(await getFnErrorMessage(fnError, 'Quick Create failed.'));
           if (!fnData?.success || !fnData?.data) throw new Error(fnData?.error || 'Quick Create failed.');
           const generated = fnData.data as CVData;
           setCvData(generated);
@@ -180,7 +199,7 @@ export default function BuildClient({
       const { data, error: fnError } = await supabase.functions.invoke('parse-cv-template-form', {
         body: { rawText: pasteText },
       });
-      if (fnError) throw new Error(fnError.message);
+      if (fnError) throw new Error(await getFnErrorMessage(fnError, 'Could not parse that text.'));
       if (!data?.success || !data?.data) throw new Error(data?.error || 'Could not parse that text.');
       const p = data.data;
       setCvData((prev) => ({
@@ -222,7 +241,7 @@ export default function BuildClient({
       const { data, error: fnError } = await supabase.functions.invoke('customize-cv-for-job', {
         body: { cvData, jobDescription: jobDescText },
       });
-      if (fnError) throw new Error(fnError.message);
+      if (fnError) throw new Error(await getFnErrorMessage(fnError, 'Could not customize for that job.'));
       if (!data?.success || !data?.data) throw new Error(data?.error || 'Could not customize for that job.');
       setCvData(data.data as CVData);
       setJobDescText('');
