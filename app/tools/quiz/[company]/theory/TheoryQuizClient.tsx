@@ -1,13 +1,15 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
+import React, { useEffect, useRef, useState } from 'react';
+import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { quizSupabase } from '@/lib/quizSupabase';
 import { theme } from '@/lib/theme';
 import { ArrowLeft, CheckCircle, XCircle, Loader2 } from 'lucide-react';
 import AdUnit from '@/components/ads/AdUnit';
 import QuizCrossLinks from '@/components/quiz/QuizCrossLinks';
+
+const QUESTIONS_PER_AD_PAGE = 5;
 
 interface TheoryQuestion {
   id: string;
@@ -25,6 +27,8 @@ interface GradingResult {
 }
 
 export default function TheoryQuizClient({ company }: { company: string }) {
+  const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const [questions, setQuestions] = useState<TheoryQuestion[]>([]);
   const [answers, setAnswers] = useState<{ [key: string]: string }>({});
@@ -36,6 +40,7 @@ export default function TheoryQuizClient({ company }: { company: string }) {
   const [useTimer, setUseTimer] = useState(false);
   const [timeSpent, setTimeSpent] = useState(0);
   const [timerStarted, setTimerStarted] = useState(false);
+  const lastPushedAdIndex = useRef<number | null>(null);
 
   useEffect(() => {
     const timerParam = searchParams.get('timer');
@@ -44,6 +49,22 @@ export default function TheoryQuizClient({ company }: { company: string }) {
       setTimerStarted(true);
     }
   }, [searchParams]);
+
+  // Every 5 questions, push a real URL change (?page=N) so the mid-quiz ad
+  // gets a genuine new page-view context instead of repeating the same
+  // creative — see the identical comment in ObjectiveQuizClient. With
+  // theory sets currently fixed at 5 questions this fires once, right
+  // before the last question, but stays correct if that count ever changes.
+  useEffect(() => {
+    if ((currentIndex + 1) % QUESTIONS_PER_AD_PAGE !== 0) return;
+    if (lastPushedAdIndex.current === currentIndex) return;
+    lastPushedAdIndex.current = currentIndex;
+
+    const adPage = Math.floor(currentIndex / QUESTIONS_PER_AD_PAGE) + 1;
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('page', String(adPage));
+    router.push(`${pathname}?${params.toString()}`, { scroll: false });
+  }, [currentIndex]);
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -344,10 +365,12 @@ export default function TheoryQuizClient({ company }: { company: string }) {
           />
         </div>
 
-        {/* Mid-quiz ad: show on every 5th question */}
+        {/* Mid-quiz ad: every 5th question. Keyed on the boundary so React
+            unmounts/remounts a fresh <ins> here — paired with the real URL
+            change above, this is a genuine new ad request, not a repeat. */}
         {(currentIndex + 1) % 5 === 0 && (
           <div className="mb-4">
-            <AdUnit slot="4198231153" format="auto" />
+            <AdUnit key={Math.floor(currentIndex / 5)} slot="4198231153" format="auto" />
           </div>
         )}
 

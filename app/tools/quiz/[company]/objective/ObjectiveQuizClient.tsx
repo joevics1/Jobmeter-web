@@ -1,13 +1,15 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import React, { useEffect, useRef, useState } from 'react';
+import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { quizSupabase } from '@/lib/quizSupabase';
 import { theme } from '@/lib/theme';
 import { ArrowLeft, Check, X, Loader2 } from 'lucide-react';
 import AdUnit from '@/components/ads/AdUnit';
 import QuizCrossLinks from '@/components/quiz/QuizCrossLinks';
+
+const QUESTIONS_PER_AD_PAGE = 5;
 
 interface ObjectiveQuestion {
   id: string;
@@ -27,6 +29,7 @@ interface ObjectiveQuestion {
 
 export default function ObjectiveQuizClient({ company }: { company: string }) {
   const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const [questions, setQuestions] = useState<ObjectiveQuestion[]>([]);
   const [answers, setAnswers] = useState<{ [key: string]: string }>({});
@@ -41,6 +44,7 @@ export default function ObjectiveQuizClient({ company }: { company: string }) {
   const [timerStarted, setTimerStarted] = useState(false);
   const [selectedSection, setSelectedSection] = useState<string>('general');
   const [questionCount, setQuestionCount] = useState(20);
+  const lastPushedAdIndex = useRef<number | null>(null);
 
   useEffect(() => {
     const sectionParam = searchParams.get('section');
@@ -57,6 +61,25 @@ export default function ObjectiveQuizClient({ company }: { company: string }) {
       setTimerStarted(true);
     }
   }, [searchParams]);
+
+  // Every 5 questions, push a real URL change (?page=N) instead of just
+  // updating local state. A genuine navigation gives Google AdSense a real
+  // new page-view context, so the ad below actually refreshes instead of
+  // repeating the same creative it served on page load — which is what
+  // was happening when this whole quiz was effectively one static page.
+  // Fires exactly when the ad becomes visible (5th, 10th, 15th... question),
+  // not a question late. Answers/progress stay intact since this is a
+  // client-side searchParams update on the same route, not a full reload.
+  useEffect(() => {
+    if ((currentIndex + 1) % QUESTIONS_PER_AD_PAGE !== 0) return;
+    if (lastPushedAdIndex.current === currentIndex) return;
+    lastPushedAdIndex.current = currentIndex;
+
+    const adPage = Math.floor(currentIndex / QUESTIONS_PER_AD_PAGE) + 1;
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('page', String(adPage));
+    router.push(`${pathname}?${params.toString()}`, { scroll: false });
+  }, [currentIndex]);
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -352,10 +375,12 @@ export default function ObjectiveQuizClient({ company }: { company: string }) {
           </div>
         </div>
 
-        {/* Mid-quiz ad: show between every 5th question */}
+        {/* Mid-quiz ad: every 5th question. Keyed on the boundary so React
+            unmounts/remounts a fresh <ins> here — paired with the real URL
+            change above, this is a genuine new ad request, not a repeat. */}
         {(currentIndex + 1) % 5 === 0 && (
           <div className="mb-4">
-            <AdUnit slot="4198231153" format="auto" />
+            <AdUnit key={Math.floor(currentIndex / 5)} slot="4198231153" format="auto" />
           </div>
         )}
 
