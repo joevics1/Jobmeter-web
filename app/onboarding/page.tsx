@@ -100,7 +100,7 @@ export default function OnboardingPage() {
     sector: '',
   });
   const [locationInput, setLocationInput] = useState('');
-  const [talentPool, setTalentPool] = useState<boolean | null>(null);
+  const [talentPool, setTalentPool] = useState<boolean | null>(true);
 
   // Session awareness. Two ways a signed-in user can land here:
   // (a) chose "Sign up with Google" on AuthModal's CV-upload screen —
@@ -164,7 +164,7 @@ export default function OnboardingPage() {
           }, { onConflict: 'user_id' });
 
           localStorage.removeItem('pending_onboarding_data');
-          router.push('/jobs');
+          router.push('/settings');
         } catch (err) {
           console.error('Auto-finish after Google signup failed:', err);
           setAutoFinishing(false);
@@ -342,7 +342,7 @@ export default function OnboardingPage() {
       localStorage.setItem('pending_onboarding_data', JSON.stringify(onboardingCache));
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
-        options: { redirectTo: `${window.location.origin}/auth/callback?next=/jobs` },
+        options: { redirectTo: `${window.location.origin}/auth/callback?next=/settings` },
       });
       if (error) { showMsg(error.message || 'Failed to sign in with Google', 'error'); setIsLoading(false); }
     } catch (err: any) {
@@ -468,7 +468,7 @@ export default function OnboardingPage() {
             await saveOnboardingDataToSupabase(data.user);
             showMsg('Account created and data saved! Redirecting...', 'success');
             localStorage.removeItem('pending_onboarding_data');
-            setTimeout(() => { router.push('/jobs'); }, 1500);
+            setTimeout(() => { router.push('/settings'); }, 1500);
           } catch (saveError: any) {
             showMsg('Account created, but there was an issue saving your data. Please contact support.', 'error');
           } finally {
@@ -921,7 +921,7 @@ export default function OnboardingPage() {
                 setIsSavingData(true);
                 try {
                   await saveOnboardingDataToSupabase(existingUser);
-                  router.push('/jobs');
+                  router.push('/settings');
                 } catch (err: any) {
                   setError(err.message || 'Something went wrong saving your profile. Please try again.');
                   setIsSavingData(false);

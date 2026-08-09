@@ -53,7 +53,7 @@ export default function AuthCallback() {
             .eq("user_id", session.user.id)
             .single();
 
-          router.replace(onboarding ? "/jobs" : "/onboarding");
+          router.replace(onboarding ? "/settings" : "/onboarding");
         }
       }
     );
