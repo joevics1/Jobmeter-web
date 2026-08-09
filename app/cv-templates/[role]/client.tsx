@@ -87,7 +87,7 @@ export default function RolePageClient({ page }: { page: ContentRolePage }) {
             </div>
             {isOverflowing && process.env.NODE_ENV !== 'production' && (
               <p className="text-xs text-amber-600 mt-1">
-                Dev note: this sample CV still overflows one page for the "{selectedDesign}" design even at reduced size — worth trimming the seed content.
+                Dev note: this sample CV overflows one page for the "{selectedDesign}" design — worth trimming the seed content.
               </p>
             )}
           </section>

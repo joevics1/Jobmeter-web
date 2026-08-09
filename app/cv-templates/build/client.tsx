@@ -390,7 +390,7 @@ export default function BuildClient({
             {isOverflowing && (
               <div className="flex items-start gap-2 text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mb-3">
                 <span>⚠️</span>
-                <span>This CV has more content than fits comfortably on one page, even at reduced size. Try trimming a bullet point or shortening a section.</span>
+                <span>This CV looks longer than one page — some content at the bottom may be cut off. Try trimming a bullet point or shortening a section, then check again.</span>
               </div>
             )}
             <div className="border border-border rounded-lg overflow-hidden shadow-sm bg-muted mb-3">

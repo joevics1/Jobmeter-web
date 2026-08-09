@@ -334,17 +334,17 @@ export default function CVFieldsEditor({
       </SectionShell>
 
       <SectionShell sectionKey="references" label={`References${(cvData.references || []).length ? ` (${cvData.references!.length})` : ''}`}>
-        <button onClick={addReference} type="button" className="text-sm text-blue-700 font-medium">+ Add reference</button>
+        <button onClick={addReference} type="button" className="text-sm text-blue-600 font-medium">+ Add reference</button>
         {(cvData.references || []).map((r, i) => (
-          <div key={i} className="border rounded p-3 space-y-2">
+          <div key={i} className="border border-border rounded p-3 space-y-2">
             <div className="grid grid-cols-2 gap-2">
-              <input className="border rounded px-2 py-1.5 text-sm" placeholder="Name" value={r.name} onChange={(e) => updateReference(i, 'name', e.target.value)} />
-              <input className="border rounded px-2 py-1.5 text-sm" placeholder="Title (optional)" value={r.title || ''} onChange={(e) => updateReference(i, 'title', e.target.value)} />
+              <input className="border border-border rounded px-2 py-1.5 text-sm" placeholder="Name" value={r.name} onChange={(e) => updateReference(i, 'name', e.target.value)} />
+              <input className="border border-border rounded px-2 py-1.5 text-sm" placeholder="Title (optional)" value={r.title || ''} onChange={(e) => updateReference(i, 'title', e.target.value)} />
             </div>
-            <input className="border rounded px-2 py-1.5 text-sm w-full" placeholder="Company (optional)" value={r.company || ''} onChange={(e) => updateReference(i, 'company', e.target.value)} />
+            <input className="border border-border rounded px-2 py-1.5 text-sm w-full" placeholder="Company (optional)" value={r.company || ''} onChange={(e) => updateReference(i, 'company', e.target.value)} />
             <div className="grid grid-cols-2 gap-2">
-              <input className="border rounded px-2 py-1.5 text-sm" placeholder="Phone (optional)" value={r.phone || ''} onChange={(e) => updateReference(i, 'phone', e.target.value)} />
-              <input className="border rounded px-2 py-1.5 text-sm" placeholder="Email (optional)" value={r.email || ''} onChange={(e) => updateReference(i, 'email', e.target.value)} />
+              <input className="border border-border rounded px-2 py-1.5 text-sm" placeholder="Phone (optional)" value={r.phone || ''} onChange={(e) => updateReference(i, 'phone', e.target.value)} />
+              <input className="border border-border rounded px-2 py-1.5 text-sm" placeholder="Email (optional)" value={r.email || ''} onChange={(e) => updateReference(i, 'email', e.target.value)} />
             </div>
             <button onClick={() => removeReference(i)} type="button" className="text-xs text-red-600">Remove</button>
           </div>
