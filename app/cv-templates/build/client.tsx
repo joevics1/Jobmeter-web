@@ -298,7 +298,14 @@ export default function BuildClient({
           <Link href="/cv-templates/history" className="text-sm text-blue-700 font-medium">CV History</Link>
         </div>
 
-        {error && <p className="text-red-600 text-sm mb-4">{error}</p>}
+        {error && (
+          <p className="text-red-600 text-sm mb-4">
+            {error}
+            {error.includes('No profile data found') && (
+              <> <Link href="/edit" className="underline font-medium">Complete your profile</Link> to use Quick Create.</>
+            )}
+          </p>
+        )}
 
         {stage === 'loading' && (
           <GeneratingAnimation messages={start === 'quick' ? QUICK_CREATE_MESSAGES : FETCH_MESSAGES} />
