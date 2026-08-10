@@ -384,15 +384,25 @@ export default function HomePage({ jobs: initialJobs, blogPosts, companies = [] 
                     </p>
                   </div>
                 </div>
-                <button
-                  onClick={() => handleCTAClick('seeker')}
-                  className="w-full py-3 px-6 rounded-lg font-semibold text-white transition-all hover:shadow-lg"
-                  style={{ backgroundColor: theme.colors.primary.DEFAULT }}
-                  aria-label="Browse all jobs"
-                >
-                  Browse Jobs
-                  <ArrowRight className="inline ml-2" size={18} />
-                </button>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => handleCTAClick('seeker')}
+                    className="flex-1 py-3 px-6 rounded-lg font-semibold text-white transition-all hover:shadow-lg"
+                    style={{ backgroundColor: theme.colors.primary.DEFAULT }}
+                    aria-label="Browse all jobs"
+                  >
+                    Browse Jobs
+                    <ArrowRight className="inline ml-2" size={18} />
+                  </button>
+                  <button
+                    onClick={() => setAuthModalOpen(true)}
+                    className="py-3 px-5 rounded-lg font-semibold border-2 transition-all hover:bg-gray-50 whitespace-nowrap"
+                    style={{ borderColor: theme.colors.primary.DEFAULT, color: theme.colors.primary.DEFAULT }}
+                    aria-label="Log in or sign up"
+                  >
+                    Log In
+                  </button>
+                </div>
               </div>
             ) : (
               <div className="bg-white rounded-2xl shadow-xl p-8 max-w-2xl mx-auto">
