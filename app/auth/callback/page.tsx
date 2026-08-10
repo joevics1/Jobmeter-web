@@ -53,16 +53,23 @@ export default function AuthCallback() {
             .eq("user_id", session.user.id)
             .single();
 
-          router.replace(onboarding ? "/jobs" : "/onboarding");
+          router.replace(onboarding ? "/settings" : "/onboarding");
         }
       }
     );
 
-    // Safety fallback: if no SIGNED_IN fires within 5s, go back to sign in
+    // Safety fallback: if no SIGNED_IN fires in time, go back to the
+    // homepage so they can retry — /auth doesn't exist (it was a dead,
+    // unused page, since removed). Widened from 5s to 10s: this timeout
+    // was firing on real signups even when the OAuth login itself
+    // succeeded, most likely because heavy third-party ad scripts
+    // (AdSense/AdMaven, loaded site-wide including on this page) can
+    // delay JS execution enough to blow past a tight 5s window before
+    // Supabase's client-side SIGNED_IN event ever fires.
     const timeout = setTimeout(() => {
       subscription.unsubscribe();
-      router.replace(role === "recruiter" ? "/" : "/auth");
-    }, 5000);
+      router.replace("/");
+    }, 10000);
 
     return () => {
       subscription.unsubscribe();

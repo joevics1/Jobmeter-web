@@ -18,10 +18,10 @@ export default function GeneratingAnimation({ messages }: { messages: string[] }
     <div className="flex flex-col items-center justify-center py-20 text-center">
       <div className="relative w-14 h-14 mb-5">
         <div className="absolute inset-0 rounded-full border-4 border-blue-100" />
-        <div className="absolute inset-0 rounded-full border-4 border-blue-700 border-t-transparent animate-spin" />
-        <Sparkles size={20} className="absolute inset-0 m-auto text-blue-700" />
+        <div className="absolute inset-0 rounded-full border-4 border-blue-600 border-t-transparent animate-spin" />
+        <Sparkles size={20} className="absolute inset-0 m-auto text-blue-600" />
       </div>
-      <p className="text-gray-600 font-medium transition-opacity duration-300">{messages[index]}</p>
+      <p className="text-muted-foreground font-medium transition-opacity duration-300">{messages[index]}</p>
     </div>
   );
 }

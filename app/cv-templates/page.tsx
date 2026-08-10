@@ -21,10 +21,10 @@ export default async function CVTemplatesHub() {
       <main className="max-w-5xl mx-auto px-4 py-6">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-bold">Browse by Role</h1>
-          <Link href="/cv-templates/history" className="text-sm text-blue-700 font-medium">CV History</Link>
+          <Link href="/cv-templates/history" className="text-sm text-blue-600 font-medium">CV History</Link>
         </div>
         {pages.length === 0 ? (
-          <p className="text-gray-500">No templates published yet.</p>
+          <p className="text-muted-foreground">No templates published yet.</p>
         ) : (
           <ul className="grid sm:grid-cols-2 gap-4">
             {pages.map((p) => (

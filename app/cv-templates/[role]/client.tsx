@@ -1,18 +1,20 @@
 'use client';
 
 // app/cv-templates/[role]/client.tsx
-// SEO copy + horizontally-scrolling design preview + a static bottom action
-// bar that goes straight into the form (2 buttons signed-out, 3 signed-in).
-// No generic "Build your CV" CTA — the entry points ARE the action bar.
+// SEO copy + horizontally-scrolling design preview + a static 3-button
+// bottom action bar (Quick Create | Edit | Clear). Quick Create opens
+// AuthModal if signed out instead of navigating anywhere — there's no
+// /auth/login page in this app.
 //
 // Country is omitted from the URL/UI for now — see lib/cv-template-pages/data.ts.
 
-import { useState, useMemo, useEffect, useRef } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import type { ContentRolePage } from '@/lib/cv-template-pages/data';
 import { CV_PAGE_DESIGNS } from '@/lib/cv-template-pages/design-list';
 import { renderCVTemplate } from '@/lib/cv-template-pages/cv-renderer';
+import { useCvOverflowCheck } from '@/lib/cv-template-pages/use-cv-overflow';
 import { supabase } from '@/lib/supabase';
 import BackButton from '../_components/back-button';
 import CVPreviewFrame from '../_components/cv-preview-frame';
@@ -32,18 +34,7 @@ export default function RolePageClient({ page }: { page: ContentRolePage }) {
     });
   }, []);
 
-  const previewFrameRef = useRef<HTMLIFrameElement>(null);
-  const [isOverflowing, setIsOverflowing] = useState(false);
-  function checkOverflow() {
-    try {
-      const doc = previewFrameRef.current?.contentDocument;
-      const content = doc?.querySelector('.content') as HTMLElement | null;
-      if (!content) { setIsOverflowing(false); return; }
-      setIsOverflowing(content.scrollHeight > content.clientHeight + 3);
-    } catch {
-      setIsOverflowing(false);
-    }
-  }
+  const { previewFrameRef, isOverflowing, checkOverflow } = useCvOverflowCheck();
 
   const previewHtml = useMemo(() => {
     if (!page.preview_cv_data) return null;
@@ -56,16 +47,16 @@ export default function RolePageClient({ page }: { page: ContentRolePage }) {
     <>
       <BackButton title={page.role_label} href="/cv-templates" />
       <main className="max-w-5xl mx-auto px-4 py-6 pb-28">
-        <div className="flex items-center justify-between mb-4 text-sm text-gray-500">
+        <div className="flex items-center justify-between mb-4 text-sm text-muted-foreground">
           <span>{page.role_label}</span>
-          <Link href="/cv-templates/history" className="text-blue-700 font-medium">CV History</Link>
+          <Link href="/cv-templates/history" className="text-blue-600 font-medium">CV History</Link>
         </div>
 
         <h1 className="text-3xl font-bold mb-4">
           {page.role_label} CV Template
         </h1>
 
-        {page.seo_intro && <p className="text-lg text-gray-700 mb-6">{page.seo_intro}</p>}
+        {page.seo_intro && <p className="text-lg text-foreground mb-6">{page.seo_intro}</p>}
 
         {previewHtml && (
           <section className="mb-10">
@@ -77,8 +68,8 @@ export default function RolePageClient({ page }: { page: ContentRolePage }) {
                   onClick={() => setSelectedDesign(d.id)}
                   className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-full text-sm border ${
                     selectedDesign === d.id
-                      ? 'bg-blue-700 text-white border-blue-700'
-                      : 'bg-white text-gray-700 border-gray-300'
+                      ? 'bg-blue-600 text-white border-blue-600'
+                      : 'bg-card text-foreground border-border'
                   }`}
                 >
                   {d.name}
@@ -86,7 +77,7 @@ export default function RolePageClient({ page }: { page: ContentRolePage }) {
               ))}
             </div>
 
-            <div className="border rounded-lg overflow-hidden shadow-sm bg-gray-50">
+            <div className="border border-border rounded-lg overflow-hidden shadow-sm bg-muted">
               <CVPreviewFrame
                 ref={previewFrameRef}
                 title={`${page.role_label} CV preview — ${selectedDesign}`}
@@ -115,7 +106,7 @@ export default function RolePageClient({ page }: { page: ContentRolePage }) {
               {page.faqs.map((f, i) => (
                 <div key={i}>
                   <h3 className="font-semibold">{f.q}</h3>
-                  <p className="text-gray-700">{f.a}</p>
+                  <p className="text-foreground">{f.a}</p>
                 </div>
               ))}
             </div>
@@ -125,25 +116,25 @@ export default function RolePageClient({ page }: { page: ContentRolePage }) {
         {/* Cross-cluster links — this page previously had no links out to
             the rest of the site. A finished CV is only useful with somewhere
             to send it, so point straight at matching jobs and adjacent tools. */}
-        <section className="mb-24 pt-8 border-t border-gray-200">
+        <section className="mb-24 pt-8 border-t border-border">
           <h2 className="text-lg font-bold mb-4">Next Steps</h2>
           <div className="flex flex-wrap gap-3 text-sm">
             <Link
               href={`/jobs?search=${encodeURIComponent(page.role_label)}`}
-              className="px-4 py-2 rounded-full border border-gray-200 text-gray-700 hover:border-blue-300 hover:text-blue-600 hover:bg-blue-50 transition-all"
+              className="px-4 py-2 rounded-full border border-border text-muted-foreground hover:border-blue-300 hover:text-blue-600 hover:bg-blue-50 transition-all"
             >
               {page.role_label} jobs
             </Link>
-            <Link href="/tools/ats-review" className="px-4 py-2 rounded-full border border-gray-200 text-gray-700 hover:border-blue-300 hover:text-blue-600 hover:bg-blue-50 transition-all">
+            <Link href="/tools/ats-review" className="px-4 py-2 rounded-full border border-border text-muted-foreground hover:border-blue-300 hover:text-blue-600 hover:bg-blue-50 transition-all">
               Check your CV against ATS
             </Link>
-            <Link href="/tools/interview" className="px-4 py-2 rounded-full border border-gray-200 text-gray-700 hover:border-blue-300 hover:text-blue-600 hover:bg-blue-50 transition-all">
+            <Link href="/tools/interview" className="px-4 py-2 rounded-full border border-border text-muted-foreground hover:border-blue-300 hover:text-blue-600 hover:bg-blue-50 transition-all">
               Practice interview questions
             </Link>
-            <Link href="/cv-templates" className="px-4 py-2 rounded-full border border-gray-200 text-gray-700 hover:border-blue-300 hover:text-blue-600 hover:bg-blue-50 transition-all">
+            <Link href="/cv-templates" className="px-4 py-2 rounded-full border border-border text-muted-foreground hover:border-blue-300 hover:text-blue-600 hover:bg-blue-50 transition-all">
               Browse all CV templates
             </Link>
-            <Link href="/blog" className="px-4 py-2 rounded-full border border-gray-200 text-gray-700 hover:border-blue-300 hover:text-blue-600 hover:bg-blue-50 transition-all">
+            <Link href="/blog" className="px-4 py-2 rounded-full border border-border text-muted-foreground hover:border-blue-300 hover:text-blue-600 hover:bg-blue-50 transition-all">
               Career advice
             </Link>
           </div>
@@ -151,7 +142,7 @@ export default function RolePageClient({ page }: { page: ContentRolePage }) {
       </main>
 
       {/* Static action bar — fixed to bottom on mobile and desktop */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t shadow-lg z-50">
+      <div className="fixed bottom-0 left-0 right-0 bg-card border-t shadow-lg z-50">
         <div className="max-w-5xl mx-auto px-4 py-3">
           {!authChecked ? (
             <div className="h-11" />
@@ -160,14 +151,14 @@ export default function RolePageClient({ page }: { page: ContentRolePage }) {
               <button
                 onClick={() => userId ? router.push(`${base}&start=quick`) : setAuthModalOpen(true)}
                 type="button"
-                className="text-center bg-blue-700 text-white rounded-lg py-2.5 px-2 text-sm font-semibold"
+                className="text-center bg-blue-600 text-white rounded-lg py-2.5 px-2 text-sm font-semibold"
               >
                 Quick Create
               </button>
-              <Link href={`${base}&start=sample`} className="text-center border border-blue-700 text-blue-700 rounded-lg py-2.5 px-2 text-sm font-semibold">
+              <Link href={`${base}&start=sample`} className="text-center border border-blue-600 text-blue-600 rounded-lg py-2.5 px-2 text-sm font-semibold">
                 Edit
               </Link>
-              <Link href={`${base}&start=blank`} className="text-center border rounded-lg py-2.5 px-2 text-sm font-semibold text-gray-700">
+              <Link href={`${base}&start=blank`} className="text-center border border-border rounded-lg py-2.5 px-2 text-sm font-semibold text-foreground">
                 Clear
               </Link>
             </div>

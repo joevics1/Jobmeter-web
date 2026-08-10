@@ -403,7 +403,7 @@ export default function CVOnboardingModal({ open, onOpenChange }: CVOnboardingMo
                 <DialogTitle className="text-xl font-bold" style={{ color: theme.colors.text.primary }}>
                   Sign Up to Build Your CV 📄
                 </DialogTitle>
-                <DialogDescription className="text-sm text-gray-600">
+                <DialogDescription className="text-sm text-muted-foreground">
                   Upload your CV once — we'll use it to build and tailor CVs for any role, instantly
                 </DialogDescription>
               </div>
@@ -443,7 +443,7 @@ export default function CVOnboardingModal({ open, onOpenChange }: CVOnboardingMo
                 className={`w-full rounded-xl transition-all disabled:opacity-60 ${
                   uploadedFile
                     ? 'h-14 px-4 text-white shadow-md hover:shadow-lg flex items-center gap-3'
-                    : 'h-28 border-2 border-dashed flex flex-col items-center justify-center gap-1.5 hover:bg-gray-50'
+                    : 'h-28 border-2 border-dashed flex flex-col items-center justify-center gap-1.5 hover:bg-muted'
                 }`}
                 style={
                   uploadedFile
@@ -471,7 +471,7 @@ export default function CVOnboardingModal({ open, onOpenChange }: CVOnboardingMo
                   <>
                     <Upload className="h-6 w-6" />
                     <span className="font-medium text-sm">Upload Your CV & Get Started</span>
-                    <span className="text-xs text-gray-400">PDF, Word, or image — click to browse</span>
+                    <span className="text-xs text-muted-foreground">PDF, Word, or image — click to browse</span>
                   </>
                 )}
               </button>
@@ -486,7 +486,7 @@ export default function CVOnboardingModal({ open, onOpenChange }: CVOnboardingMo
                         textarea.classList.toggle('hidden');
                       }
                     }}
-                    className="w-full text-sm font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-50 rounded-lg py-2 transition-colors"
+                    className="w-full text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg py-2 transition-colors"
                     disabled={isProcessingCV}
                   >
                     Or paste your CV text instead
@@ -545,7 +545,7 @@ export default function CVOnboardingModal({ open, onOpenChange }: CVOnboardingMo
                   <span className="w-full border-t" />
                 </div>
                 <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-white px-2 text-gray-500">Or</span>
+                  <span className="bg-card px-2 text-muted-foreground">Or</span>
                 </div>
               </div>
 
@@ -567,7 +567,7 @@ export default function CVOnboardingModal({ open, onOpenChange }: CVOnboardingMo
 
               {/* Sign In Link */}
               <div className="text-center pt-2">
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-muted-foreground">
                   Already have an account?{' '}
                   <button
                     onClick={() => setShowSignIn(true)}
@@ -586,9 +586,9 @@ export default function CVOnboardingModal({ open, onOpenChange }: CVOnboardingMo
               <div className="flex items-center gap-3 mb-4">
                 <button
                   onClick={() => setShowSignIn(false)}
-                  className="p-2 rounded-xl hover:bg-gray-100 transition-colors"
+                  className="p-2 rounded-xl hover:bg-muted transition-colors"
                 >
-                  <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-5 h-5 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                   </svg>
                 </button>
@@ -596,7 +596,7 @@ export default function CVOnboardingModal({ open, onOpenChange }: CVOnboardingMo
                   Welcome Back! 👋
                 </DialogTitle>
               </div>
-              <DialogDescription className="text-sm text-gray-600">
+              <DialogDescription className="text-sm text-muted-foreground">
                 Sign in to build and manage your CVs
               </DialogDescription>
             </DialogHeader>
@@ -699,7 +699,7 @@ export default function CVOnboardingModal({ open, onOpenChange }: CVOnboardingMo
                     <span className="w-full border-t" />
                   </div>
                   <div className="relative flex justify-center text-xs uppercase">
-                    <span className="bg-white px-2 text-gray-500">Or</span>
+                    <span className="bg-card px-2 text-muted-foreground">Or</span>
                   </div>
                 </div>
 
@@ -772,12 +772,12 @@ export default function CVOnboardingModal({ open, onOpenChange }: CVOnboardingMo
 
                 {resetEmailSent && (
                   <div className="text-center">
-                    <p className="text-xs text-gray-500 mb-1">Didn't get the email? Check your spam folder, or</p>
+                    <p className="text-xs text-muted-foreground mb-1">Didn't get the email? Check your spam folder, or</p>
                     <button
                       type="button"
                       onClick={handleResendResetEmail}
                       disabled={resendCooldown > 0 || isResetting}
-                      className="text-sm font-medium hover:underline disabled:text-gray-400 disabled:no-underline disabled:cursor-not-allowed"
+                      className="text-sm font-medium hover:underline disabled:text-muted-foreground disabled:no-underline disabled:cursor-not-allowed"
                       style={{ color: resendCooldown > 0 ? undefined : theme.colors.primary.DEFAULT }}
                     >
                       {resendCooldown > 0 ? `Resend email in ${resendCooldown}s` : 'Resend email'}

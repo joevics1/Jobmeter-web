@@ -7,13 +7,14 @@
 // CVData, then shows one screen (CVFieldsEditor) with a paste-to-parse box
 // at the top, then the render/download step.
 
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import { renderCVTemplate } from '@/lib/cv-template-pages/cv-renderer';
 import { CV_PAGE_DESIGNS } from '@/lib/cv-template-pages/design-list';
 import { downloadCVAsDocx } from '@/lib/cv-template-pages/cv-docx-export';
 import { getHistoryEntry, saveToHistory } from '@/lib/cv-template-pages/cv-history';
+import { useCvOverflowCheck } from '@/lib/cv-template-pages/use-cv-overflow';
 import type { CVData } from '@/lib/cv-template-pages/cv-data-types';
 import BackButton from '../_components/back-button';
 import CVPreviewFrame from '../_components/cv-preview-frame';
@@ -23,6 +24,25 @@ import CVOnboardingModal from '../_components/cv-onboarding-modal';
 
 type Stage = 'loading' | 'form' | 'result';
 type StartMode = 'quick' | 'sample' | 'blank' | 'history';
+
+// supabase-js's functions.invoke() does NOT automatically parse the JSON
+// body of a non-2xx response into fnError.message — it just gives a
+// generic "Edge Function returned a non-2xx status code" string. Our
+// functions return a real, specific { error: "..." } body (e.g. "No
+// profile data found — complete onboarding first"), which was getting
+// silently swallowed everywhere we did `throw new Error(fnError.message)`.
+// This actually reads the response body first.
+async function getFnErrorMessage(fnError: any, fallback: string): Promise<string> {
+  try {
+    if (fnError?.context?.json) {
+      const body = await fnError.context.json();
+      if (body?.error) return body.error;
+    }
+  } catch {
+    // fall through to generic message below
+  }
+  return fnError?.message || fallback;
+}
 
 function emptyCV(roleLabel: string): CVData {
   return {
@@ -67,22 +87,7 @@ export default function BuildClient({
   const [jobDescText, setJobDescText] = useState('');
   const [customizing, setCustomizing] = useState(false);
   const [showOnboardingModal, setShowOnboardingModal] = useState(false);
-  const previewFrameRef = useRef<HTMLIFrameElement>(null);
-  const [isOverflowing, setIsOverflowing] = useState(false);
-
-  function checkOverflow() {
-    try {
-      const doc = previewFrameRef.current?.contentDocument;
-      const content = doc?.querySelector('.content') as HTMLElement | null;
-      if (!content) {
-        setIsOverflowing(false);
-        return;
-      }
-      setIsOverflowing(content.scrollHeight > content.clientHeight + 3);
-    } catch {
-      setIsOverflowing(false);
-    }
-  }
+  const { previewFrameRef, isOverflowing, checkOverflow } = useCvOverflowCheck();
 
   function finishAndShowResult(data: CVData, designId: string) {
     saveToHistory({
@@ -136,7 +141,7 @@ export default function BuildClient({
             body: { userId: uid, roleLabel },
           });
           if (cancelled) return;
-          if (fnError) throw new Error(fnError.message);
+          if (fnError) throw new Error(await getFnErrorMessage(fnError, 'Quick Create failed.'));
           if (!fnData?.success || !fnData?.data) throw new Error(fnData?.error || 'Quick Create failed.');
           const generated = fnData.data as CVData;
           setCvData(generated);
@@ -180,7 +185,7 @@ export default function BuildClient({
       const { data, error: fnError } = await supabase.functions.invoke('parse-cv-template-form', {
         body: { rawText: pasteText },
       });
-      if (fnError) throw new Error(fnError.message);
+      if (fnError) throw new Error(await getFnErrorMessage(fnError, 'Could not parse that text.'));
       if (!data?.success || !data?.data) throw new Error(data?.error || 'Could not parse that text.');
       const p = data.data;
       setCvData((prev) => ({
@@ -222,7 +227,7 @@ export default function BuildClient({
       const { data, error: fnError } = await supabase.functions.invoke('customize-cv-for-job', {
         body: { cvData, jobDescription: jobDescText },
       });
-      if (fnError) throw new Error(fnError.message);
+      if (fnError) throw new Error(await getFnErrorMessage(fnError, 'Could not customize for that job.'));
       if (!data?.success || !data?.data) throw new Error(data?.error || 'Could not customize for that job.');
       setCvData(data.data as CVData);
       setJobDescText('');
@@ -276,10 +281,17 @@ export default function BuildClient({
       <BackButton title={`Build Your ${roleLabel} CV`} href={roleSlug ? `/cv-templates/${roleSlug}` : '/cv-templates'} />
       <main className="max-w-3xl mx-auto px-4 py-6">
         <div className="flex items-center justify-end mb-4">
-          <Link href="/cv-templates/history" className="text-sm text-blue-700 font-medium">CV History</Link>
+          <Link href="/cv-templates/history" className="text-sm text-blue-600 font-medium">CV History</Link>
         </div>
 
-        {error && <p className="text-red-600 text-sm mb-4">{error}</p>}
+        {error && (
+          <p className="text-red-600 text-sm mb-4">
+            {error}
+            {error.includes('No profile data found') && (
+              <> <Link href="/edit" className="underline font-medium">Complete your profile</Link> to use Quick Create.</>
+            )}
+          </p>
+        )}
 
         {stage === 'loading' && (
           <GeneratingAnimation messages={start === 'quick' ? QUICK_CREATE_MESSAGES : FETCH_MESSAGES} />
@@ -288,19 +300,19 @@ export default function BuildClient({
         {stage === 'form' && (
           <div>
             {/* Autofill from a CV, or customize toward a specific job — two tabs */}
-            <div className="border rounded-lg mb-4 bg-gray-50 overflow-hidden">
-              <div className="flex border-b">
+            <div className="border border-border rounded-lg mb-4 bg-muted overflow-hidden">
+              <div className="flex border-b border-border">
                 <button
                   type="button"
                   onClick={() => setActiveTab('autofill')}
-                  className={`flex-1 py-2.5 text-sm font-semibold ${activeTab === 'autofill' ? 'bg-white text-blue-700 border-b-2 border-blue-700' : 'text-gray-500'}`}
+                  className={`flex-1 py-2.5 text-sm font-semibold ${activeTab === 'autofill' ? 'bg-card text-blue-600 border-b-2 border-blue-600' : 'text-muted-foreground'}`}
                 >
                   Autofill from a CV
                 </button>
                 <button
                   type="button"
                   onClick={() => setActiveTab('customize')}
-                  className={`flex-1 py-2.5 text-sm font-semibold ${activeTab === 'customize' ? 'bg-white text-blue-700 border-b-2 border-blue-700' : 'text-gray-500'}`}
+                  className={`flex-1 py-2.5 text-sm font-semibold ${activeTab === 'customize' ? 'bg-card text-blue-600 border-b-2 border-blue-600' : 'text-muted-foreground'}`}
                 >
                   Customize for a Job
                 </button>
@@ -309,7 +321,7 @@ export default function BuildClient({
               {activeTab === 'autofill' && (
                 <div className="p-3">
                   <textarea
-                    className="border rounded px-3 py-2 w-full text-sm bg-white"
+                    className="border border-border rounded px-3 py-2 w-full text-sm bg-card"
                     rows={3}
                     placeholder="Paste CV or resume text here to auto-fill the form below (optional)"
                     value={pasteText}
@@ -319,7 +331,7 @@ export default function BuildClient({
                     onClick={handleParse}
                     disabled={parsing || pasteText.trim().length === 0}
                     type="button"
-                    className="mt-2 text-sm bg-blue-700 text-white px-4 py-1.5 rounded-lg font-medium disabled:opacity-50"
+                    className="mt-2 text-sm bg-blue-600 text-white px-4 py-1.5 rounded-lg font-medium disabled:opacity-50"
                   >
                     {parsing ? 'Reading…' : 'Autofill'}
                   </button>
@@ -329,7 +341,7 @@ export default function BuildClient({
               {activeTab === 'customize' && (
                 <div className="p-3">
                   <textarea
-                    className="border rounded px-3 py-2 w-full text-sm bg-white"
+                    className="border border-border rounded px-3 py-2 w-full text-sm bg-card"
                     rows={3}
                     placeholder="Paste the job description here to tailor your summary and experience toward it (optional)"
                     value={jobDescText}
@@ -339,7 +351,7 @@ export default function BuildClient({
                     onClick={handleCustomizeForJob}
                     disabled={customizing || jobDescText.trim().length === 0}
                     type="button"
-                    className="mt-2 text-sm bg-blue-700 text-white px-4 py-1.5 rounded-lg font-medium disabled:opacity-50"
+                    className="mt-2 text-sm bg-blue-600 text-white px-4 py-1.5 rounded-lg font-medium disabled:opacity-50"
                   >
                     {customizing ? 'Customizing…' : 'Customize'}
                   </button>
@@ -349,11 +361,20 @@ export default function BuildClient({
 
             <CVFieldsEditor cvData={cvData} setCvData={setCvData} defaultOpenSections={defaultOpen} />
 
-            <button onClick={() => finishAndShowResult(cvData, selectedDesign)} type="button" className="bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold w-full mt-2">
+            <button
+              onClick={() => finishAndShowResult(cvData, selectedDesign)}
+              disabled={!cvData.personalDetails.name.trim()}
+              type="button"
+              className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold w-full mt-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
               Generate CV
             </button>
+            {!cvData.personalDetails.name.trim() && (
+              <p className="text-xs text-muted-foreground text-center mt-1.5">Add your name above to generate the CV.</p>
+            )}
           </div>
         )}
+
 
 
         {stage === 'result' && (
@@ -361,7 +382,7 @@ export default function BuildClient({
             <div className="flex gap-2 mb-3 overflow-x-auto flex-nowrap pb-1">
               {CV_PAGE_DESIGNS.map((d) => (
                 <button key={d.id} onClick={() => setSelectedDesign(d.id)}
-                  className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-full text-sm border ${selectedDesign === d.id ? 'bg-blue-700 text-white border-blue-700' : 'bg-white text-gray-700 border-gray-300'}`}>
+                  className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-full text-sm border ${selectedDesign === d.id ? 'bg-blue-600 text-white border-blue-600' : 'bg-card text-foreground border-border'}`}>
                   {d.name}
                 </button>
               ))}
@@ -372,7 +393,7 @@ export default function BuildClient({
                 <span>This CV looks longer than one page — some content at the bottom may be cut off. Try trimming a bullet point or shortening a section, then check again.</span>
               </div>
             )}
-            <div className="border rounded-lg overflow-hidden shadow-sm bg-gray-50 mb-3">
+            <div className="border border-border rounded-lg overflow-hidden shadow-sm bg-muted mb-3">
               <CVPreviewFrame ref={previewFrameRef} title="CV preview" html={previewHtml} onLoad={checkOverflow} />
             </div>
             <div className="h-20" />
@@ -381,14 +402,14 @@ export default function BuildClient({
       </main>
 
       {stage === 'result' && (
-        <div className="fixed bottom-0 left-0 right-0 bg-white border-t shadow-lg z-50">
+        <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border shadow-lg z-50">
           <div className="max-w-3xl mx-auto px-4 py-3 flex gap-2 overflow-x-auto flex-nowrap">
-            <button onClick={() => setStage('form')} className="shrink-0 border px-4 py-2 rounded-lg font-medium text-sm">Edit</button>
-            <button onClick={handlePrint} className="shrink-0 border px-4 py-2 rounded-lg font-medium text-sm">Print / PDF</button>
-            <button onClick={handleDownloadDocx} disabled={downloadingDocx} className="shrink-0 border px-4 py-2 rounded-lg font-medium text-sm disabled:opacity-50">
+            <button onClick={() => setStage('form')} className="shrink-0 border border-border px-4 py-2 rounded-lg font-medium text-sm text-foreground">Edit</button>
+            <button onClick={handlePrint} className="shrink-0 border border-border px-4 py-2 rounded-lg font-medium text-sm text-foreground">Print / PDF</button>
+            <button onClick={handleDownloadDocx} disabled={downloadingDocx} className="shrink-0 border border-border px-4 py-2 rounded-lg font-medium text-sm text-foreground disabled:opacity-50">
               {downloadingDocx ? 'Preparing…' : 'Download as Word'}
             </button>
-            <button onClick={handleSave} disabled={saving} className="shrink-0 border px-4 py-2 rounded-lg font-medium text-sm disabled:opacity-50">
+            <button onClick={handleSave} disabled={saving} className="shrink-0 border border-border px-4 py-2 rounded-lg font-medium text-sm text-foreground disabled:opacity-50">
               {saving ? 'Saving…' : saved ? 'Saved ✓' : 'Save this CV'}
             </button>
           </div>

@@ -2,6 +2,7 @@
 
 import React, { useEffect } from 'react';
 import { usePathname } from 'next/navigation';
+import Script from 'next/script';
 import BottomNavigation from '@/components/navigation/BottomNavigation';
 import Header from '@/components/navigation/Header';
 import Footer from '@/components/navigation/Footer';
@@ -44,8 +45,25 @@ export default function RootLayoutClient({
   // Show footer on pages that don't have bottom nav
   const showFooter = !bottomNavPages.includes(pathname || '') && !hideBottomNav;
 
+  // Don't load AdSense on sign-in/sign-up/onboarding/checkout flows.
+  // AdSense's Auto Ads can show a full-page "vignette" interstitial on
+  // navigation events, which can interrupt a Google OAuth redirect or a
+  // Paystack checkout redirect mid-flow — moved here from the static
+  // <head> in app/layout.tsx so it's conditional on the route.
+  const adExcludedPrefixes = ['/auth', '/onboarding', '/talent'];
+  const shouldLoadAds = !adExcludedPrefixes.some((p) => pathname?.startsWith(p));
+
   return (
     <div className="min-h-screen flex flex-col" style={{ backgroundColor: theme.colors.background.DEFAULT }}>
+      {shouldLoadAds && (
+        <Script
+          async
+          strategy="afterInteractive"
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1119289641389825"
+          crossOrigin="anonymous"
+        />
+      )}
+
       {/* Header - hidden on bottom nav pages */}
       {!hideHeader && <Header />}
 

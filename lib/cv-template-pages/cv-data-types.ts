@@ -66,47 +66,6 @@ export interface CVData {
   }>;
 }
 
-export interface CVTemplate {
-  id: string;
-  name: string;
-  description: string;
-  category: string;
-}
-
-// CV Templates (6 templates)
-export const CV_TEMPLATES: CVTemplate[] = [
-  {
-    id: 'template-1',
-    name: 'Purple Classic',
-    description: 'Traditional professional layout with clean typography',
-    category: 'Professional'
-  },
-  {
-    id: 'template-2',
-    name: 'Burgundy Elegant',
-    description: 'Bold colors and contemporary design',
-    category: 'Creative'
-  },
-  {
-    id: 'template-3',
-    name: 'Purple Modern',
-    description: 'Simple, elegant design focusing on content',
-    category: 'Minimal'
-  },
-  {
-    id: 'template-5',
-    name: 'Blue Professional',
-    description: 'Sophisticated layout for senior leadership',
-    category: 'Executive'
-  },
-  {
-    id: 'template-6',
-    name: 'Clean Professional',
-    description: 'Academic-focused design',
-    category: 'Academic'
-  }
-];
-
-
-
-
+// The design list for this feature lives in ./design-list.ts (CV_PAGE_DESIGNS)
+// — kept separate from this file, and separate from lib/types/cv.ts's own
+// CV_TEMPLATES, so there's only one place either list can be imported from.

@@ -127,7 +127,7 @@ export function mapCVDataToOnboardingUpdate(data: CVData): Record<string, any> {
     cv_projects: data.projects?.length ? data.projects : null,
     cv_accomplishments: data.accomplishments?.length ? data.accomplishments : null,
     cv_awards: data.awards?.length
-      ? data.awards.map((a) => [a.title, a.year, a.issuer].filter(Boolean).join(', '))
+      ? data.awards.map((a) => ({ title: a.title, issuer: a.issuer, year: a.year }))
       : null,
     cv_certifications: data.certifications?.length ? data.certifications : null,
     cv_languages: data.languages?.length ? data.languages : null,

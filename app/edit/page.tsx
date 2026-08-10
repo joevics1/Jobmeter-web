@@ -47,6 +47,9 @@ export default function EditProfilePage() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [pasteText, setPasteText] = useState('');
+  const [parsing, setParsing] = useState(false);
+  const [profileWasEmpty, setProfileWasEmpty] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -63,13 +66,57 @@ export default function EditProfilePage() {
         fetchOnboardingData(authUser.id),
       ]);
 
+      const nextCvData = onboardingRow ? mapOnboardingToCVData(onboardingRow) : emptyCVProfile();
       setProfileData({ full_name: profile?.full_name || null, email: profile?.email || authUser.email || '' });
-      setCvData(onboardingRow ? mapOnboardingToCVData(onboardingRow) : emptyCVProfile());
+      setCvData(nextCvData);
+      setProfileWasEmpty(
+        !nextCvData.personalDetails.name &&
+        !nextCvData.summary &&
+        (nextCvData.experience || []).length === 0
+      );
       setTalentPool(!!onboardingRow?.talent_pool);
       setWasTalentPool(!!onboardingRow?.talent_pool);
       setLoading(false);
     })();
   }, [router]);
+
+  async function handleParse() {
+    if (pasteText.trim().length < 10) {
+      setError('Paste a bit more detail before parsing.');
+      return;
+    }
+    setParsing(true);
+    setError(null);
+    try {
+      const { data, error: fnError } = await supabase.functions.invoke('parse-cv-template-form', {
+        body: { rawText: pasteText },
+      });
+      if (fnError) throw new Error(fnError.message);
+      if (!data?.success || !data?.data) throw new Error(data?.error || 'Could not parse that text.');
+      const p = data.data;
+      setCvData((prev) => ({
+        ...prev,
+        personalDetails: {
+          ...prev.personalDetails,
+          name: p.name || prev.personalDetails.name,
+          title: p.title || prev.personalDetails.title,
+          email: p.email || prev.personalDetails.email,
+          phone: p.phone || prev.personalDetails.phone,
+          location: p.location || prev.personalDetails.location,
+        },
+        summary: p.summary || prev.summary,
+        skills: p.skills?.length ? p.skills : prev.skills,
+        experience: p.experience?.length ? p.experience : prev.experience,
+        education: p.education?.length ? p.education : prev.education,
+      }));
+      setPasteText('');
+      setProfileWasEmpty(false);
+    } catch (err: any) {
+      setError(err.message || 'Could not parse that text.');
+    } finally {
+      setParsing(false);
+    }
+  }
 
   async function handleSave() {
     if (!userId) return;
@@ -119,6 +166,27 @@ export default function EditProfilePage() {
         ) : (
           <>
             {error && <p className="text-red-600 text-sm mb-4">{error}</p>}
+
+            {profileWasEmpty && (
+              <div className="border rounded-lg p-3 mb-4 bg-gray-50">
+                <p className="text-sm font-semibold text-gray-700 mb-2">Have a CV already? Upload it to autofill</p>
+                <textarea
+                  className="border rounded px-3 py-2 w-full text-sm bg-white"
+                  rows={3}
+                  placeholder="Paste your CV or resume text here to auto-fill the form below"
+                  value={pasteText}
+                  onChange={(e) => setPasteText(e.target.value)}
+                />
+                <button
+                  onClick={handleParse}
+                  disabled={parsing || pasteText.trim().length === 0}
+                  type="button"
+                  className="mt-2 text-sm bg-blue-700 text-white px-4 py-1.5 rounded-lg font-medium disabled:opacity-50"
+                >
+                  {parsing ? 'Reading…' : 'Autofill'}
+                </button>
+              </div>
+            )}
 
             <div className="bg-white rounded-xl border border-gray-100 p-4 mb-4 space-y-3">
               <div>

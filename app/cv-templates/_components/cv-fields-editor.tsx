@@ -175,11 +175,11 @@ export default function CVFieldsEditor({
   function SectionShell({ sectionKey, label, children }: { sectionKey: string; label: string; children: React.ReactNode }) {
     const isOpen = openSections.has(sectionKey);
     return (
-      <div className="border rounded-lg mb-3 overflow-hidden">
+      <div className="border border-border rounded-lg mb-3 overflow-hidden">
         <button type="button" onClick={() => toggleSection(sectionKey)}
-          className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 text-left font-semibold">
+          className="w-full flex items-center justify-between px-4 py-3 bg-muted text-left font-semibold">
           {label}
-          <span className="text-gray-400">{isOpen ? '−' : '+'}</span>
+          <span className="text-muted-foreground">{isOpen ? '−' : '+'}</span>
         </button>
         {isOpen && <div className="p-4 space-y-3">{children}</div>}
       </div>
@@ -190,58 +190,58 @@ export default function CVFieldsEditor({
     <div>
       <SectionShell sectionKey="personal" label="Personal Details">
         <div className="grid grid-cols-2 gap-3">
-          <input className="border rounded px-3 py-2" placeholder="Full name" value={cvData.personalDetails.name} onChange={(e) => updatePersonal('name', e.target.value)} />
-          <input className="border rounded px-3 py-2" placeholder="Title" value={cvData.personalDetails.title} onChange={(e) => updatePersonal('title', e.target.value)} />
+          <input className="border border-border rounded px-3 py-2" placeholder="Full name" value={cvData.personalDetails.name} onChange={(e) => updatePersonal('name', e.target.value)} />
+          <input className="border border-border rounded px-3 py-2" placeholder="Title" value={cvData.personalDetails.title} onChange={(e) => updatePersonal('title', e.target.value)} />
         </div>
         <div className="grid grid-cols-2 gap-3">
-          <input className="border rounded px-3 py-2" placeholder="Email" value={cvData.personalDetails.email} onChange={(e) => updatePersonal('email', e.target.value)} />
-          <input className="border rounded px-3 py-2" placeholder="Phone" value={cvData.personalDetails.phone} onChange={(e) => updatePersonal('phone', e.target.value)} />
+          <input className="border border-border rounded px-3 py-2" placeholder="Email" value={cvData.personalDetails.email} onChange={(e) => updatePersonal('email', e.target.value)} />
+          <input className="border border-border rounded px-3 py-2" placeholder="Phone" value={cvData.personalDetails.phone} onChange={(e) => updatePersonal('phone', e.target.value)} />
         </div>
-        <input className="border rounded px-3 py-2 w-full" placeholder="Location" value={cvData.personalDetails.location} onChange={(e) => updatePersonal('location', e.target.value)} />
-        <input className="border rounded px-3 py-2 w-full" placeholder="LinkedIn (optional)" value={cvData.personalDetails.linkedin || ''} onChange={(e) => updatePersonal('linkedin', e.target.value)} />
-        <input className="border rounded px-3 py-2 w-full" placeholder="GitHub (optional)" value={cvData.personalDetails.github || ''} onChange={(e) => updatePersonal('github', e.target.value)} />
-        <input className="border rounded px-3 py-2 w-full" placeholder="Portfolio (optional)" value={cvData.personalDetails.portfolio || ''} onChange={(e) => updatePersonal('portfolio', e.target.value)} />
+        <input className="border border-border rounded px-3 py-2 w-full" placeholder="Location" value={cvData.personalDetails.location} onChange={(e) => updatePersonal('location', e.target.value)} />
+        <input className="border border-border rounded px-3 py-2 w-full" placeholder="LinkedIn (optional)" value={cvData.personalDetails.linkedin || ''} onChange={(e) => updatePersonal('linkedin', e.target.value)} />
+        <input className="border border-border rounded px-3 py-2 w-full" placeholder="GitHub (optional)" value={cvData.personalDetails.github || ''} onChange={(e) => updatePersonal('github', e.target.value)} />
+        <input className="border border-border rounded px-3 py-2 w-full" placeholder="Portfolio (optional)" value={cvData.personalDetails.portfolio || ''} onChange={(e) => updatePersonal('portfolio', e.target.value)} />
       </SectionShell>
 
       <SectionShell sectionKey="summary" label="Summary">
-        <textarea className="border rounded px-3 py-2 w-full" rows={5} placeholder="Professional summary"
+        <textarea className="border border-border rounded px-3 py-2 w-full" rows={5} placeholder="Professional summary"
           value={cvData.summary} onChange={(e) => setCvData((p) => ({ ...p, summary: e.target.value }))} />
-        <input className="border rounded px-3 py-2 w-full" placeholder="Professional roles (comma separated, optional)"
+        <input className="border border-border rounded px-3 py-2 w-full" placeholder="Professional roles (comma separated, optional)"
           value={csv(cvData.roles)} onChange={(e) => setCvData((p) => ({ ...p, roles: fromCsv(e.target.value) }))} />
       </SectionShell>
 
       <SectionShell sectionKey="skills" label="Skills & Languages">
-        <input className="border rounded px-3 py-2 w-full" placeholder="Skills (comma separated)"
+        <input className="border border-border rounded px-3 py-2 w-full" placeholder="Skills (comma separated)"
           value={csv(cvData.skills)} onChange={(e) => setCvData((p) => ({ ...p, skills: fromCsv(e.target.value) }))} />
-        <input className="border rounded px-3 py-2 w-full" placeholder="Languages (comma separated, optional)"
+        <input className="border border-border rounded px-3 py-2 w-full" placeholder="Languages (comma separated, optional)"
           value={csv(cvData.languages)} onChange={(e) => setCvData((p) => ({ ...p, languages: fromCsv(e.target.value) }))} />
-        <input className="border rounded px-3 py-2 w-full" placeholder="Interests (comma separated, optional)"
+        <input className="border border-border rounded px-3 py-2 w-full" placeholder="Interests (comma separated, optional)"
           value={csv(cvData.interests)} onChange={(e) => setCvData((p) => ({ ...p, interests: fromCsv(e.target.value) }))} />
       </SectionShell>
 
       <SectionShell sectionKey="experience" label={`Experience${(cvData.experience || []).length ? ` (${cvData.experience!.length})` : ''}`}>
-        <button onClick={addExperience} type="button" className="text-sm text-blue-700 font-medium">+ Add role</button>
+        <button onClick={addExperience} type="button" className="text-sm text-blue-600 font-medium">+ Add role</button>
         {(cvData.experience || []).map((exp, i) => (
-          <div key={i} className="border rounded p-3 space-y-2">
+          <div key={i} className="border border-border rounded p-3 space-y-2">
             <div className="grid grid-cols-2 gap-2">
-              <input className="border rounded px-2 py-1.5 text-sm" placeholder="Role" value={exp.role} onChange={(e) => updateExperience(i, 'role', e.target.value)} />
-              <input className="border rounded px-2 py-1.5 text-sm" placeholder="Company" value={exp.company} onChange={(e) => updateExperience(i, 'company', e.target.value)} />
+              <input className="border border-border rounded px-2 py-1.5 text-sm" placeholder="Role" value={exp.role} onChange={(e) => updateExperience(i, 'role', e.target.value)} />
+              <input className="border border-border rounded px-2 py-1.5 text-sm" placeholder="Company" value={exp.company} onChange={(e) => updateExperience(i, 'company', e.target.value)} />
             </div>
-            <input className="border rounded px-2 py-1.5 text-sm w-full" placeholder="Years (e.g. 2022 - Present)" value={exp.years} onChange={(e) => updateExperience(i, 'years', e.target.value)} />
-            <textarea className="border rounded px-2 py-1.5 text-sm w-full" rows={3} placeholder="One bullet per line" value={(exp.bullets || []).join('\n')} onChange={(e) => updateExperienceBullets(i, e.target.value)} />
+            <input className="border border-border rounded px-2 py-1.5 text-sm w-full" placeholder="Years (e.g. 2022 - Present)" value={exp.years} onChange={(e) => updateExperience(i, 'years', e.target.value)} />
+            <textarea className="border border-border rounded px-2 py-1.5 text-sm w-full" rows={3} placeholder="One bullet per line" value={(exp.bullets || []).join('\n')} onChange={(e) => updateExperienceBullets(i, e.target.value)} />
             <button onClick={() => removeExperience(i)} type="button" className="text-xs text-red-600">Remove</button>
           </div>
         ))}
       </SectionShell>
 
       <SectionShell sectionKey="education" label={`Education${(cvData.education || []).length ? ` (${cvData.education!.length})` : ''}`}>
-        <button onClick={addEducation} type="button" className="text-sm text-blue-700 font-medium">+ Add education</button>
+        <button onClick={addEducation} type="button" className="text-sm text-blue-600 font-medium">+ Add education</button>
         {(cvData.education || []).map((edu, i) => (
-          <div key={i} className="border rounded p-3 space-y-2">
-            <input className="border rounded px-2 py-1.5 text-sm w-full" placeholder="Degree" value={edu.degree} onChange={(e) => updateEducation(i, 'degree', e.target.value)} />
+          <div key={i} className="border border-border rounded p-3 space-y-2">
+            <input className="border border-border rounded px-2 py-1.5 text-sm w-full" placeholder="Degree" value={edu.degree} onChange={(e) => updateEducation(i, 'degree', e.target.value)} />
             <div className="grid grid-cols-2 gap-2">
-              <input className="border rounded px-2 py-1.5 text-sm" placeholder="Institution" value={edu.institution} onChange={(e) => updateEducation(i, 'institution', e.target.value)} />
-              <input className="border rounded px-2 py-1.5 text-sm" placeholder="Years" value={edu.years} onChange={(e) => updateEducation(i, 'years', e.target.value)} />
+              <input className="border border-border rounded px-2 py-1.5 text-sm" placeholder="Institution" value={edu.institution} onChange={(e) => updateEducation(i, 'institution', e.target.value)} />
+              <input className="border border-border rounded px-2 py-1.5 text-sm" placeholder="Years" value={edu.years} onChange={(e) => updateEducation(i, 'years', e.target.value)} />
             </div>
             <button onClick={() => removeEducation(i)} type="button" className="text-xs text-red-600">Remove</button>
           </div>
@@ -251,44 +251,44 @@ export default function CVFieldsEditor({
       <SectionShell sectionKey="achievements" label="Achievements">
         <div>
           <h4 className="text-sm font-semibold mb-1">Accomplishments</h4>
-          <textarea className="border rounded px-3 py-2 w-full text-sm" rows={2} placeholder="One per line"
+          <textarea className="border border-border rounded px-3 py-2 w-full text-sm" rows={2} placeholder="One per line"
             value={(cvData.accomplishments || []).join('\n')}
             onChange={(e) => setCvData((p) => ({ ...p, accomplishments: e.target.value.split('\n').map((s) => s.trim()).filter(Boolean) }))} />
         </div>
         <div>
-          <div className="flex items-center justify-between mb-1"><h4 className="text-sm font-semibold">Awards</h4><button onClick={addAward} type="button" className="text-sm text-blue-700 font-medium">+ Add</button></div>
+          <div className="flex items-center justify-between mb-1"><h4 className="text-sm font-semibold">Awards</h4><button onClick={addAward} type="button" className="text-sm text-blue-600 font-medium">+ Add</button></div>
           {(cvData.awards || []).map((a, i) => (
-            <div key={i} className="border rounded p-3 mb-2 space-y-2">
-              <input className="border rounded px-2 py-1.5 text-sm w-full" placeholder="Award title" value={a.title} onChange={(e) => updateAward(i, 'title', e.target.value)} />
+            <div key={i} className="border border-border rounded p-3 mb-2 space-y-2">
+              <input className="border border-border rounded px-2 py-1.5 text-sm w-full" placeholder="Award title" value={a.title} onChange={(e) => updateAward(i, 'title', e.target.value)} />
               <div className="grid grid-cols-2 gap-2">
-                <input className="border rounded px-2 py-1.5 text-sm" placeholder="Issuer (optional)" value={a.issuer || ''} onChange={(e) => updateAward(i, 'issuer', e.target.value)} />
-                <input className="border rounded px-2 py-1.5 text-sm" placeholder="Year (optional)" value={a.year || ''} onChange={(e) => updateAward(i, 'year', e.target.value)} />
+                <input className="border border-border rounded px-2 py-1.5 text-sm" placeholder="Issuer (optional)" value={a.issuer || ''} onChange={(e) => updateAward(i, 'issuer', e.target.value)} />
+                <input className="border border-border rounded px-2 py-1.5 text-sm" placeholder="Year (optional)" value={a.year || ''} onChange={(e) => updateAward(i, 'year', e.target.value)} />
               </div>
               <button onClick={() => removeAward(i)} type="button" className="text-xs text-red-600">Remove</button>
             </div>
           ))}
         </div>
         <div>
-          <div className="flex items-center justify-between mb-1"><h4 className="text-sm font-semibold">Certifications</h4><button onClick={addCertification} type="button" className="text-sm text-blue-700 font-medium">+ Add</button></div>
+          <div className="flex items-center justify-between mb-1"><h4 className="text-sm font-semibold">Certifications</h4><button onClick={addCertification} type="button" className="text-sm text-blue-600 font-medium">+ Add</button></div>
           {(cvData.certifications || []).map((c, i) => (
-            <div key={i} className="border rounded p-3 mb-2 space-y-2">
-              <input className="border rounded px-2 py-1.5 text-sm w-full" placeholder="Certification name" value={c.name} onChange={(e) => updateCertification(i, 'name', e.target.value)} />
+            <div key={i} className="border border-border rounded p-3 mb-2 space-y-2">
+              <input className="border border-border rounded px-2 py-1.5 text-sm w-full" placeholder="Certification name" value={c.name} onChange={(e) => updateCertification(i, 'name', e.target.value)} />
               <div className="grid grid-cols-2 gap-2">
-                <input className="border rounded px-2 py-1.5 text-sm" placeholder="Issuer (optional)" value={c.issuer || ''} onChange={(e) => updateCertification(i, 'issuer', e.target.value)} />
-                <input className="border rounded px-2 py-1.5 text-sm" placeholder="Year (optional)" value={c.year || ''} onChange={(e) => updateCertification(i, 'year', e.target.value)} />
+                <input className="border border-border rounded px-2 py-1.5 text-sm" placeholder="Issuer (optional)" value={c.issuer || ''} onChange={(e) => updateCertification(i, 'issuer', e.target.value)} />
+                <input className="border border-border rounded px-2 py-1.5 text-sm" placeholder="Year (optional)" value={c.year || ''} onChange={(e) => updateCertification(i, 'year', e.target.value)} />
               </div>
               <button onClick={() => removeCertification(i)} type="button" className="text-xs text-red-600">Remove</button>
             </div>
           ))}
         </div>
         <div>
-          <div className="flex items-center justify-between mb-1"><h4 className="text-sm font-semibold">Publications</h4><button onClick={addPublication} type="button" className="text-sm text-blue-700 font-medium">+ Add</button></div>
+          <div className="flex items-center justify-between mb-1"><h4 className="text-sm font-semibold">Publications</h4><button onClick={addPublication} type="button" className="text-sm text-blue-600 font-medium">+ Add</button></div>
           {(cvData.publications || []).map((p, i) => (
-            <div key={i} className="border rounded p-3 mb-2 space-y-2">
-              <input className="border rounded px-2 py-1.5 text-sm w-full" placeholder="Title" value={p.title} onChange={(e) => updatePublication(i, 'title', e.target.value)} />
+            <div key={i} className="border border-border rounded p-3 mb-2 space-y-2">
+              <input className="border border-border rounded px-2 py-1.5 text-sm w-full" placeholder="Title" value={p.title} onChange={(e) => updatePublication(i, 'title', e.target.value)} />
               <div className="grid grid-cols-2 gap-2">
-                <input className="border rounded px-2 py-1.5 text-sm" placeholder="Journal/venue (optional)" value={p.journal || ''} onChange={(e) => updatePublication(i, 'journal', e.target.value)} />
-                <input className="border rounded px-2 py-1.5 text-sm" placeholder="Year (optional)" value={p.year || ''} onChange={(e) => updatePublication(i, 'year', e.target.value)} />
+                <input className="border border-border rounded px-2 py-1.5 text-sm" placeholder="Journal/venue (optional)" value={p.journal || ''} onChange={(e) => updatePublication(i, 'journal', e.target.value)} />
+                <input className="border border-border rounded px-2 py-1.5 text-sm" placeholder="Year (optional)" value={p.year || ''} onChange={(e) => updatePublication(i, 'year', e.target.value)} />
               </div>
               <button onClick={() => removePublication(i)} type="button" className="text-xs text-red-600">Remove</button>
             </div>
@@ -298,35 +298,35 @@ export default function CVFieldsEditor({
 
       <SectionShell sectionKey="more" label="Projects & More">
         <div>
-          <div className="flex items-center justify-between mb-1"><h4 className="text-sm font-semibold">Projects</h4><button onClick={addProject} type="button" className="text-sm text-blue-700 font-medium">+ Add</button></div>
+          <div className="flex items-center justify-between mb-1"><h4 className="text-sm font-semibold">Projects</h4><button onClick={addProject} type="button" className="text-sm text-blue-600 font-medium">+ Add</button></div>
           {(cvData.projects || []).map((p, i) => (
-            <div key={i} className="border rounded p-3 mb-2 space-y-2">
-              <input className="border rounded px-2 py-1.5 text-sm w-full" placeholder="Project title" value={p.title} onChange={(e) => updateProject(i, 'title', e.target.value)} />
-              <textarea className="border rounded px-2 py-1.5 text-sm w-full" rows={2} placeholder="Description" value={p.description} onChange={(e) => updateProject(i, 'description', e.target.value)} />
+            <div key={i} className="border border-border rounded p-3 mb-2 space-y-2">
+              <input className="border border-border rounded px-2 py-1.5 text-sm w-full" placeholder="Project title" value={p.title} onChange={(e) => updateProject(i, 'title', e.target.value)} />
+              <textarea className="border border-border rounded px-2 py-1.5 text-sm w-full" rows={2} placeholder="Description" value={p.description} onChange={(e) => updateProject(i, 'description', e.target.value)} />
               <button onClick={() => removeProject(i)} type="button" className="text-xs text-red-600">Remove</button>
             </div>
           ))}
         </div>
         <div>
-          <div className="flex items-center justify-between mb-1"><h4 className="text-sm font-semibold">Volunteer Work</h4><button onClick={addVolunteer} type="button" className="text-sm text-blue-700 font-medium">+ Add</button></div>
+          <div className="flex items-center justify-between mb-1"><h4 className="text-sm font-semibold">Volunteer Work</h4><button onClick={addVolunteer} type="button" className="text-sm text-blue-600 font-medium">+ Add</button></div>
           {(cvData.volunteerWork || []).map((v, i) => (
-            <div key={i} className="border rounded p-3 mb-2 space-y-2">
-              <input className="border rounded px-2 py-1.5 text-sm w-full" placeholder="Organization" value={v.organization} onChange={(e) => updateVolunteer(i, 'organization', e.target.value)} />
+            <div key={i} className="border border-border rounded p-3 mb-2 space-y-2">
+              <input className="border border-border rounded px-2 py-1.5 text-sm w-full" placeholder="Organization" value={v.organization} onChange={(e) => updateVolunteer(i, 'organization', e.target.value)} />
               <div className="grid grid-cols-2 gap-2">
-                <input className="border rounded px-2 py-1.5 text-sm" placeholder="Role (optional)" value={v.role || ''} onChange={(e) => updateVolunteer(i, 'role', e.target.value)} />
-                <input className="border rounded px-2 py-1.5 text-sm" placeholder="Duration (optional)" value={v.duration || ''} onChange={(e) => updateVolunteer(i, 'duration', e.target.value)} />
+                <input className="border border-border rounded px-2 py-1.5 text-sm" placeholder="Role (optional)" value={v.role || ''} onChange={(e) => updateVolunteer(i, 'role', e.target.value)} />
+                <input className="border border-border rounded px-2 py-1.5 text-sm" placeholder="Duration (optional)" value={v.duration || ''} onChange={(e) => updateVolunteer(i, 'duration', e.target.value)} />
               </div>
-              <textarea className="border rounded px-2 py-1.5 text-sm w-full" rows={2} placeholder="Description (optional)" value={v.description || ''} onChange={(e) => updateVolunteer(i, 'description', e.target.value)} />
+              <textarea className="border border-border rounded px-2 py-1.5 text-sm w-full" rows={2} placeholder="Description (optional)" value={v.description || ''} onChange={(e) => updateVolunteer(i, 'description', e.target.value)} />
               <button onClick={() => removeVolunteer(i)} type="button" className="text-xs text-red-600">Remove</button>
             </div>
           ))}
         </div>
         <div>
-          <div className="flex items-center justify-between mb-1"><h4 className="text-sm font-semibold">Additional Sections</h4><button onClick={addAdditionalSection} type="button" className="text-sm text-blue-700 font-medium">+ Add</button></div>
+          <div className="flex items-center justify-between mb-1"><h4 className="text-sm font-semibold">Additional Sections</h4><button onClick={addAdditionalSection} type="button" className="text-sm text-blue-600 font-medium">+ Add</button></div>
           {(cvData.additionalSections || []).map((s, i) => (
-            <div key={i} className="border rounded p-3 mb-2 space-y-2">
-              <input className="border rounded px-2 py-1.5 text-sm w-full" placeholder="Section name" value={s.sectionName} onChange={(e) => updateAdditionalSection(i, 'sectionName', e.target.value)} />
-              <textarea className="border rounded px-2 py-1.5 text-sm w-full" rows={2} placeholder="Content" value={s.content} onChange={(e) => updateAdditionalSection(i, 'content', e.target.value)} />
+            <div key={i} className="border border-border rounded p-3 mb-2 space-y-2">
+              <input className="border border-border rounded px-2 py-1.5 text-sm w-full" placeholder="Section name" value={s.sectionName} onChange={(e) => updateAdditionalSection(i, 'sectionName', e.target.value)} />
+              <textarea className="border border-border rounded px-2 py-1.5 text-sm w-full" rows={2} placeholder="Content" value={s.content} onChange={(e) => updateAdditionalSection(i, 'content', e.target.value)} />
               <button onClick={() => removeAdditionalSection(i)} type="button" className="text-xs text-red-600">Remove</button>
             </div>
           ))}
@@ -334,17 +334,17 @@ export default function CVFieldsEditor({
       </SectionShell>
 
       <SectionShell sectionKey="references" label={`References${(cvData.references || []).length ? ` (${cvData.references!.length})` : ''}`}>
-        <button onClick={addReference} type="button" className="text-sm text-blue-700 font-medium">+ Add reference</button>
+        <button onClick={addReference} type="button" className="text-sm text-blue-600 font-medium">+ Add reference</button>
         {(cvData.references || []).map((r, i) => (
-          <div key={i} className="border rounded p-3 space-y-2">
+          <div key={i} className="border border-border rounded p-3 space-y-2">
             <div className="grid grid-cols-2 gap-2">
-              <input className="border rounded px-2 py-1.5 text-sm" placeholder="Name" value={r.name} onChange={(e) => updateReference(i, 'name', e.target.value)} />
-              <input className="border rounded px-2 py-1.5 text-sm" placeholder="Title (optional)" value={r.title || ''} onChange={(e) => updateReference(i, 'title', e.target.value)} />
+              <input className="border border-border rounded px-2 py-1.5 text-sm" placeholder="Name" value={r.name} onChange={(e) => updateReference(i, 'name', e.target.value)} />
+              <input className="border border-border rounded px-2 py-1.5 text-sm" placeholder="Title (optional)" value={r.title || ''} onChange={(e) => updateReference(i, 'title', e.target.value)} />
             </div>
-            <input className="border rounded px-2 py-1.5 text-sm w-full" placeholder="Company (optional)" value={r.company || ''} onChange={(e) => updateReference(i, 'company', e.target.value)} />
+            <input className="border border-border rounded px-2 py-1.5 text-sm w-full" placeholder="Company (optional)" value={r.company || ''} onChange={(e) => updateReference(i, 'company', e.target.value)} />
             <div className="grid grid-cols-2 gap-2">
-              <input className="border rounded px-2 py-1.5 text-sm" placeholder="Phone (optional)" value={r.phone || ''} onChange={(e) => updateReference(i, 'phone', e.target.value)} />
-              <input className="border rounded px-2 py-1.5 text-sm" placeholder="Email (optional)" value={r.email || ''} onChange={(e) => updateReference(i, 'email', e.target.value)} />
+              <input className="border border-border rounded px-2 py-1.5 text-sm" placeholder="Phone (optional)" value={r.phone || ''} onChange={(e) => updateReference(i, 'phone', e.target.value)} />
+              <input className="border border-border rounded px-2 py-1.5 text-sm" placeholder="Email (optional)" value={r.email || ''} onChange={(e) => updateReference(i, 'email', e.target.value)} />
             </div>
             <button onClick={() => removeReference(i)} type="button" className="text-xs text-red-600">Remove</button>
           </div>
