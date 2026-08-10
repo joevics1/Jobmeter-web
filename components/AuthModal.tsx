@@ -94,7 +94,16 @@ export default function AuthModal({ open, onOpenChange }: AuthModalProps) {
       
       setTimeout(() => {
         onOpenChange(false);
-        router.refresh();
+        // Staying on the current page after sign-in already covers "take
+        // them back to where they were" — router.refresh() re-renders it
+        // signed in. The one case that needs an explicit destination is
+        // signing in from the homepage itself, where there's nothing
+        // useful to "stay" on.
+        if (window.location.pathname === '/') {
+          router.push('/dashboard');
+        } else {
+          router.refresh();
+        }
       }, 1000);
 
     } catch (error: any) {
@@ -113,10 +122,11 @@ export default function AuthModal({ open, onOpenChange }: AuthModalProps) {
 
   const handleGoogleSignIn = async () => {
     try {
+      const returnTo = encodeURIComponent(window.location.pathname);
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo: `${window.location.origin}/auth/callback?returnTo=${returnTo}`,
         },
       });
       if (error) throw error;
