@@ -1,11 +1,15 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 import { usePathname } from 'next/navigation';
-import { Menu, X, Briefcase, FileText, BookOpen, Wrench, Settings, ChevronRight, Send, Users } from 'lucide-react';
+import { Menu, X, Briefcase, FileText, BookOpen, Wrench, Settings, ChevronRight, Send, Users, LogIn } from 'lucide-react';
 import { theme } from '@/lib/theme';
 import { usePendingInvitationsCount } from '@/hooks/usePendingInvitationsCount';
+import { supabase } from '@/lib/supabase';
+
+const AuthModal = dynamic(() => import('@/components/AuthModal'), { ssr: false });
 
 const navItems = [
   { label: 'Jobs', href: '/jobs', icon: Briefcase },
@@ -21,6 +25,19 @@ export default function Header() {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const pendingInvitations = usePendingInvitationsCount();
+
+  // null = still checking, so we don't flash "Log In" for a signed-in
+  // visitor while the session check is in flight.
+  const [isSignedIn, setIsSignedIn] = useState<boolean | null>(null);
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => setIsSignedIn(!!session));
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsSignedIn(!!session);
+    });
+    return () => subscription.unsubscribe();
+  }, []);
 
   const isActive = (href: string) => pathname === href;
 
@@ -40,54 +57,68 @@ export default function Header() {
             JobMeter
           </Link>
 
-          {/* Desktop Navigation - hidden on mobile */}
-          <nav className="hidden md:flex items-center gap-1">
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              const active = isActive(item.href);
+          {/* Right side: desktop nav + Log In / mobile menu button */}
+          <div className="flex items-center gap-2">
+            {/* Desktop Navigation - hidden on mobile */}
+            <nav className="hidden md:flex items-center gap-1">
+              {navItems.map((item) => {
+                const Icon = item.icon;
+                const active = isActive(item.href);
 
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`
-                    flex items-center gap-2 px-4 py-2 rounded-lg
-                    transition-colors duration-200
-                    ${active
-                      ? ''
-                      : 'hover:bg-gray-100'
-                    }
-                  `}
-                  style={{
-                    backgroundColor: active ? theme.colors.primary.DEFAULT : 'transparent',
-                    color: active ? '#FFFFFF' : theme.colors.text.primary,
-                  }}
-                >
-                  <span className="relative">
-                    <Icon size={18} />
-                    {item.href === '/settings' && pendingInvitations > 0 && (
-                      <span
-                        className="absolute -top-1.5 -right-1.5 min-w-[15px] h-[15px] px-0.5 rounded-full flex items-center justify-center text-[9px] font-bold text-white"
-                        style={{ backgroundColor: '#DC2626' }}
-                      >
-                        {pendingInvitations > 9 ? '9+' : pendingInvitations}
-                      </span>
-                    )}
-                  </span>
-                  <span className="text-sm font-medium">{item.label}</span>
-                </Link>
-              );
-            })}
-          </nav>
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={`
+                      flex items-center gap-2 px-4 py-2 rounded-lg
+                      transition-colors duration-200
+                      ${active
+                        ? ''
+                        : 'hover:bg-gray-100'
+                      }
+                    `}
+                    style={{
+                      backgroundColor: active ? theme.colors.primary.DEFAULT : 'transparent',
+                      color: active ? '#FFFFFF' : theme.colors.text.primary,
+                    }}
+                  >
+                    <span className="relative">
+                      <Icon size={18} />
+                      {item.href === '/settings' && pendingInvitations > 0 && (
+                        <span
+                          className="absolute -top-1.5 -right-1.5 min-w-[15px] h-[15px] px-0.5 rounded-full flex items-center justify-center text-[9px] font-bold text-white"
+                          style={{ backgroundColor: '#DC2626' }}
+                        >
+                          {pendingInvitations > 9 ? '9+' : pendingInvitations}
+                        </span>
+                      )}
+                    </span>
+                    <span className="text-sm font-medium">{item.label}</span>
+                  </Link>
+                );
+              })}
+            </nav>
 
-          {/* Mobile Menu Button - visible only on mobile */}
-          <button
-            onClick={() => setMobileMenuOpen(true)}
-            className="md:hidden p-2 rounded-lg hover:bg-gray-100"
-            aria-label="Open menu"
-          >
-            <Menu size={24} style={{ color: theme.colors.text.primary }} />
-          </button>
+            {isSignedIn === false && (
+              <button
+                onClick={() => setAuthModalOpen(true)}
+                className="hidden md:flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium border transition-colors hover:bg-gray-50"
+                style={{ borderColor: theme.colors.primary.DEFAULT, color: theme.colors.primary.DEFAULT }}
+              >
+                <LogIn size={16} />
+                Log In
+              </button>
+            )}
+
+            {/* Mobile Menu Button - visible only on mobile */}
+            <button
+              onClick={() => setMobileMenuOpen(true)}
+              className="md:hidden p-2 rounded-lg hover:bg-gray-100"
+              aria-label="Open menu"
+            >
+              <Menu size={24} style={{ color: theme.colors.text.primary }} />
+            </button>
+          </div>
         </div>
       </header>
 
@@ -121,6 +152,18 @@ export default function Header() {
 
             {/* Drawer Content */}
             <nav className="py-4">
+              {isSignedIn === false && (
+                <button
+                  onClick={() => { setMobileMenuOpen(false); setAuthModalOpen(true); }}
+                  className="w-full flex items-center gap-3 px-4 py-4 border-b hover:bg-gray-50 transition-colors"
+                  style={{ borderColor: theme.colors.border.light }}
+                >
+                  <LogIn size={22} style={{ color: theme.colors.primary.DEFAULT }} />
+                  <span className="text-base font-medium" style={{ color: theme.colors.primary.DEFAULT }}>
+                    Log In
+                  </span>
+                </button>
+              )}
               {navItems.map((item) => {
                 const Icon = item.icon;
                 const active = isActive(item.href);
@@ -198,6 +241,10 @@ export default function Header() {
 
       {/* Spacer to prevent content from being hidden behind fixed header */}
       <div className="h-16" />
+
+      {authModalOpen && (
+        <AuthModal open={authModalOpen} onOpenChange={setAuthModalOpen} defaultMode="signin" />
+      )}
     </>
   );
 }
