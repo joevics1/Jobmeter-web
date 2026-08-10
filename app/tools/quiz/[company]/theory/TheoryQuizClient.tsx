@@ -9,9 +9,12 @@ import { ArrowLeft, CheckCircle, XCircle, Loader2 } from 'lucide-react';
 import AdUnit from '@/components/ads/AdUnit';
 import QuizCrossLinks from '@/components/quiz/QuizCrossLinks';
 
-// Ad refresh checkpoints: whole attempt split into 2 checkpoints during
-// the quiz (a midpoint) plus 1 more when results load — 3 genuine page
-// views total per attempt. See identical reasoning in ObjectiveQuizClient.
+// Ad refresh checkpoints: one distinct ad "segment" per AD_INTERVAL
+// questions. Theory questions take much longer to answer than objective
+// ones (written responses vs. multiple choice), so the interval is
+// shorter — 3 vs. 5 — to keep pace with time actually spent. See
+// identical reasoning in ObjectiveQuizClient.
+const AD_INTERVAL = 3;
 
 interface TheoryQuestion {
   id: string;
@@ -42,7 +45,7 @@ export default function TheoryQuizClient({ company }: { company: string }) {
   const [useTimer, setUseTimer] = useState(false);
   const [timeSpent, setTimeSpent] = useState(0);
   const [timerStarted, setTimerStarted] = useState(false);
-  const midpointPushed = useRef(false);
+  const lastPushedSegment = useRef(1);
   const resultsPushed = useRef(false);
 
   useEffect(() => {
@@ -53,18 +56,18 @@ export default function TheoryQuizClient({ company }: { company: string }) {
     }
   }, [searchParams]);
 
-  // Push a real URL change (?page=2) once the user crosses the midpoint of
-  // the quiz — see identical reasoning in ObjectiveQuizClient.
-  const halfPoint = Math.ceil(questions.length / 2);
+  // Push a real URL change (?page=N) every time the user crosses into a
+  // new AD_INTERVAL-question block — see identical reasoning in
+  // ObjectiveQuizClient.
+  const adSegment = Math.floor(currentIndex / AD_INTERVAL) + 1;
   useEffect(() => {
-    if (questions.length === 0 || midpointPushed.current) return;
-    if (currentIndex < halfPoint) return;
-    midpointPushed.current = true;
+    if (questions.length === 0 || adSegment <= lastPushedSegment.current) return;
+    lastPushedSegment.current = adSegment;
 
     const params = new URLSearchParams(searchParams.toString());
-    params.set('page', '2');
+    params.set('page', String(adSegment));
     router.push(`${pathname}?${params.toString()}`, { scroll: false });
-  }, [currentIndex, questions.length]);
+  }, [adSegment, questions.length]);
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -181,7 +184,7 @@ export default function TheoryQuizClient({ company }: { company: string }) {
     setTimeSpent(0);
     setTimerStarted(false);
     setCurrentIndex(0);
-    midpointPushed.current = false;
+    lastPushedSegment.current = 1;
     resultsPushed.current = false;
     fetchQuestions();
   };
@@ -380,7 +383,7 @@ export default function TheoryQuizClient({ company }: { company: string }) {
             itself only remounts (fresh ad request) when the segment changes
             at the midpoint push above. */}
         <div className="mb-4">
-          <AdUnit key={`quiz-${currentIndex < halfPoint ? 1 : 2}`} slot="4198231153" format="auto" />
+          <AdUnit key={`quiz-${adSegment}`} slot="4198231153" format="auto" />
         </div>
 
         {/* Navigation */}

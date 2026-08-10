@@ -9,12 +9,15 @@ import { ArrowLeft, Check, X, Loader2 } from 'lucide-react';
 import AdUnit from '@/components/ads/AdUnit';
 import QuizCrossLinks from '@/components/quiz/QuizCrossLinks';
 
-// Ad refresh checkpoints: instead of tying refreshes to a fixed question
-// count (which produced a different number of page-views depending on
-// quiz length), the whole attempt is split into exactly 2 checkpoints
-// during the quiz (a midpoint) plus 1 more when results load — 3 genuine
-// page views total per attempt, regardless of whether it's a 10 or 20
-// question quiz.
+// Ad refresh checkpoints: one distinct ad "segment" per AD_INTERVAL
+// questions (5 for objective), so a 10-question quiz shows 2 distinct
+// segments and a 20-question quiz shows 4 — scales with quiz length
+// instead of collapsing to a fixed count. Each segment change pushes a
+// real URL update so Google AdSense gets a genuine new page-view context
+// instead of repeating the same creative. Submitting adds one more
+// checkpoint for the results screen, since that's genuinely different
+// content (score summary + full review).
+const AD_INTERVAL = 5;
 
 interface ObjectiveQuestion {
   id: string;
@@ -49,7 +52,7 @@ export default function ObjectiveQuizClient({ company }: { company: string }) {
   const [timerStarted, setTimerStarted] = useState(false);
   const [selectedSection, setSelectedSection] = useState<string>('general');
   const [questionCount, setQuestionCount] = useState(20);
-  const midpointPushed = useRef(false);
+  const lastPushedSegment = useRef(1);
   const resultsPushed = useRef(false);
 
   useEffect(() => {
@@ -68,22 +71,18 @@ export default function ObjectiveQuizClient({ company }: { company: string }) {
     }
   }, [searchParams]);
 
-  // Push a real URL change (?page=2) once the user crosses the midpoint of
-  // the quiz. A genuine navigation gives Google AdSense a real new
-  // page-view context, so the always-visible ad below actually refreshes
-  // there instead of showing the same creative for the whole attempt.
-  // Answers/progress stay intact — this is a client-side searchParams
-  // update on the same route, not a full reload.
-  const halfPoint = Math.ceil(questions.length / 2);
+  // Push a real URL change (?page=N) every time the user crosses into a
+  // new AD_INTERVAL-question block. Answers/progress stay intact — this
+  // is a client-side searchParams update on the same route, not a reload.
+  const adSegment = Math.floor(currentIndex / AD_INTERVAL) + 1;
   useEffect(() => {
-    if (questions.length === 0 || midpointPushed.current) return;
-    if (currentIndex < halfPoint) return;
-    midpointPushed.current = true;
+    if (questions.length === 0 || adSegment <= lastPushedSegment.current) return;
+    lastPushedSegment.current = adSegment;
 
     const params = new URLSearchParams(searchParams.toString());
-    params.set('page', '2');
+    params.set('page', String(adSegment));
     router.push(`${pathname}?${params.toString()}`, { scroll: false });
-  }, [currentIndex, questions.length]);
+  }, [adSegment, questions.length]);
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -190,7 +189,7 @@ export default function ObjectiveQuizClient({ company }: { company: string }) {
     setTimeSpent(0);
     setTimerStarted(false);
     setCurrentIndex(0);
-    midpointPushed.current = false;
+    lastPushedSegment.current = 1;
     resultsPushed.current = false;
     fetchQuestions();
   };
@@ -398,7 +397,7 @@ export default function ObjectiveQuizClient({ company }: { company: string }) {
             instance across questions, which is the correct behavior (no
             refresh without a genuine new page view). */}
         <div className="mb-4">
-          <AdUnit key={`quiz-${currentIndex < halfPoint ? 1 : 2}`} slot="4198231153" format="auto" />
+          <AdUnit key={`quiz-${adSegment}`} slot="4198231153" format="auto" />
         </div>
 
         <div className="flex gap-3">
