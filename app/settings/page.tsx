@@ -420,7 +420,9 @@ export default function SettingsPage() {
             </Link>
           </div>
         </div>
-        {user && (
+        {/* ── Apply for Me — hidden for now (all 3 links) ──
+             Re-enable by restoring the `user &&` block below. */}
+        {false && user && (
           <div className="mb-6">
             <h2 className="text-base font-semibold mb-2 px-1 text-gray-700">Services</h2>
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">

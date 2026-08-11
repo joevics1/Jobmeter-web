@@ -394,14 +394,16 @@ export default function HomePage({ jobs: initialJobs, blogPosts, companies = [] 
                     Browse Jobs
                     <ArrowRight className="inline ml-2" size={18} />
                   </button>
-                  <button
-                    onClick={() => setAuthModalOpen(true)}
-                    className="py-3 px-5 rounded-lg font-semibold border-2 transition-all hover:bg-gray-50 whitespace-nowrap"
-                    style={{ borderColor: theme.colors.primary.DEFAULT, color: theme.colors.primary.DEFAULT }}
-                    aria-label="Log in or sign up"
-                  >
-                    Log In
-                  </button>
+                  {!user && (
+                    <button
+                      onClick={() => setAuthModalOpen(true)}
+                      className="py-3 px-5 rounded-lg font-semibold border-2 transition-all hover:bg-gray-50 whitespace-nowrap"
+                      style={{ borderColor: theme.colors.primary.DEFAULT, color: theme.colors.primary.DEFAULT }}
+                      aria-label="Log in or sign up"
+                    >
+                      Log In
+                    </button>
+                  )}
                 </div>
               </div>
             ) : (
