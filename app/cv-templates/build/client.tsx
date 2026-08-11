@@ -14,6 +14,7 @@ import { renderCVTemplate } from '@/lib/cv-template-pages/cv-renderer';
 import { CV_PAGE_DESIGNS } from '@/lib/cv-template-pages/design-list';
 import { downloadCVAsDocx } from '@/lib/cv-template-pages/cv-docx-export';
 import { getHistoryEntry, saveToHistory } from '@/lib/cv-template-pages/cv-history';
+import { fetchOnboardingData, mapOnboardingToCVData } from '@/lib/cv-template-pages/onboarding-fetch';
 import { useCvOverflowCheck } from '@/lib/cv-template-pages/use-cv-overflow';
 import type { CVData } from '@/lib/cv-template-pages/cv-data-types';
 import BackButton from '../_components/back-button';
@@ -54,7 +55,7 @@ function emptyCV(roleLabel: string): CVData {
   };
 }
 
-const QUICK_CREATE_MESSAGES = ['Fetching your profile…', 'Tailoring your CV…', 'Almost done…'];
+const QUICK_CREATE_MESSAGES = ['Fetching your profile…', 'Almost done…'];
 const FETCH_MESSAGES = ['Fetching your saved details…'];
 
 export default function BuildClient({
@@ -137,17 +138,20 @@ export default function BuildClient({
           return;
         }
         try {
-          const { data: fnData, error: fnError } = await supabase.functions.invoke('tailor-cv-template-page', {
-            body: { userId: uid, roleLabel },
-          });
+          const row = await fetchOnboardingData(uid);
           if (cancelled) return;
-          if (fnError) throw new Error(await getFnErrorMessage(fnError, 'Quick Create failed.'));
-          if (!fnData?.success || !fnData?.data) throw new Error(fnData?.error || 'Quick Create failed.');
-          const generated = fnData.data as CVData;
-          setCvData(generated);
-          // Quick Create is fully AI-generated — go straight to the result,
-          // no review form (that's what makes it different from Edit/fetch).
-          finishAndShowResult(generated, selectedDesign);
+          if (!row) {
+            setError('No profile data found. Please complete onboarding or fill the form manually.');
+            setCvData(emptyCV(roleLabel));
+            setStage('form');
+            return;
+          }
+          const fetched = mapOnboardingToCVData(row);
+          setCvData(fetched);
+          // Quick Create just fetches — no AI, no cost, no rate limit. Goes
+          // straight to the result, no review form (that's what makes it
+          // different from Edit, which shows the form for review first).
+          finishAndShowResult(fetched, selectedDesign);
         } catch (err: any) {
           if (!cancelled) {
             setError(err.message || 'Quick Create failed. You can fill the form manually instead.');
