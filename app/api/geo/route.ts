@@ -1,30 +1,19 @@
 // app/api/geo/route.ts
 // Uses Vercel's built-in geo headers — no external API, no rate limits, no cost
 import { NextRequest, NextResponse } from 'next/server';
-
-// Map Vercel's ISO country codes to the full country names used in the jobs DB
-const COUNTRY_CODE_MAP: Record<string, string> = {
-  NG: 'Nigeria',
-  US: 'United States',
-  GB: 'United Kingdom',
-  CA: 'Canada',
-  AU: 'Australia',
-  DE: 'Germany',
-  FR: 'France',
-  ES: 'Spain',
-  NZ: 'New Zealand',
-  AE: 'United Arab Emirates',
-  ZA: 'South Africa',
-  KE: 'Kenya',
-  GH: 'Ghana',
-  // Add more as needed
-};
+import { COUNTRY_CODE_TO_NAME } from '@/lib/countries';
 
 export async function GET(request: NextRequest) {
   // Vercel automatically injects geo data into request headers
   const countryCode = request.headers.get('x-vercel-ip-country') || '';
-  const country = COUNTRY_CODE_MAP[countryCode] || 'Nigeria'; // default Nigeria
+  const country = COUNTRY_CODE_TO_NAME[countryCode] || null;
 
+  // Previously this defaulted every unrecognized country code to 'Nigeria',
+  // which silently mislabeled visitors from anywhere not in a 13-country
+  // map (missing Saudi Arabia, Qatar, Kuwait, Bahrain, Oman, India, Egypt,
+  // and dozens more that ARE offered as manual filter options). If we don't
+  // actually know the visitor's country, say so — the caller falls back to
+  // 'Global' rather than a confident wrong guess.
   return NextResponse.json(
     { country, countryCode },
     {

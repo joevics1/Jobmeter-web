@@ -11,7 +11,7 @@ import MatchScanAnimation from '@/components/jobs/MatchScanAnimation';
 import MatchBreakdownModal from '@/components/jobs/MatchBreakdownModal';
 import { MatchBreakdownModalData } from '@/components/jobs/MatchBreakdownModal';
 import JobFilters from '@/components/jobs/JobFilters';
-import { Search, X, SlidersHorizontal, ArrowUpDown, RefreshCw, Globe, FileText, ArrowRight, CheckCircle, AlertCircle, Sparkles, Loader2 } from 'lucide-react';
+import { Search, X, SlidersHorizontal, ArrowUpDown, RefreshCw, Globe, FileText, ArrowRight, CheckCircle, AlertCircle, Sparkles, Loader2, ChevronUp, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import AuthModal from '@/components/AuthModal';
 import { scoreJob, JobRow, UserOnboardingData } from '@/lib/matching/matchEngine';
@@ -19,6 +19,7 @@ import { matchCacheService } from '@/lib/matching/matchCache';
 import CreateCVModal from '@/components/cv/CreateCVModal';
 import CreateCoverLetterModal from '@/components/cv/CreateCoverLetterModal';
 import AdUnit from '@/components/ads/AdUnit';
+import { COUNTRIES } from '@/lib/countries';
 
 import { OrganizationSchema, WebSiteSchema } from '@/components/seo/StructuredData';
 
@@ -200,7 +201,7 @@ export default function JobList({ siteType = 'global', initialJobs, initialCount
   const [matchesCachedAt, setMatchesCachedAt] = useState<number | null>(null);
   const [matchModalOpen, setMatchModalOpen] = useState(false);
   const [matchModalData, setMatchModalData] = useState<MatchBreakdownModalData | null>(null);
-  const [sortBy, setSortBy] = useState<'match' | 'latest' | 'salary'>('match');
+  const [sortBy, setSortBy] = useState<'latest' | 'salary'>('latest');
   const [matchPage, setMatchPage] = useState(1);
   const [matchSearch, setMatchSearch] = useState('');
   const [matchSortBy, setMatchSortBy] = useState<'match' | 'latest' | 'salary'>('match');
@@ -208,6 +209,8 @@ export default function JobList({ siteType = 'global', initialJobs, initialCount
   const [cvModalOpen, setCvModalOpen] = useState(false);
   const [coverLetterModalOpen, setCoverLetterModalOpen] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [fabScrollY, setFabScrollY] = useState(0);
+  const [nearPageBottom, setNearPageBottom] = useState(false);
   const [rolesExpanded, setRolesExpanded] = useState(false);
   const [isDesktop, setIsDesktop] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -424,12 +427,16 @@ export default function JobList({ siteType = 'global', initialJobs, initialCount
         try {
           const response = await fetch('/api/geo');
           const data = await response.json();
-          const country = data.country || 'Nigeria';
-          setDetectedCountry(country);
-          setFilters(prev => ({ ...prev, country }));
+          // api/geo now returns null when the visitor's country isn't
+          // recognized, rather than guessing 'Nigeria' for everyone it
+          // can't place — leave detectedCountry unset so the popup defaults
+          // to 'Global' instead of confidently showing the wrong country.
+          if (data.country) {
+            setDetectedCountry(data.country);
+            setFilters(prev => ({ ...prev, country: data.country }));
+          }
         } catch {
-          setDetectedCountry('Nigeria');
-          setFilters(prev => ({ ...prev, country: 'Nigeria' }));
+          // Network/API failure — same reasoning, don't guess a country.
         }
         setShowCountryPopup(true);
       } else {
@@ -1047,6 +1054,29 @@ if (filters.remote) {
     setMatchPage(1);
   }, [matchSearch, matchSortBy, jobs]);
 
+  // ── Floating filter/scroll buttons ──────────────────────────────────────────
+  // The filter trigger only lived inside the search box near the top of the
+  // page, so reaching it while browsing a long results list meant scrolling
+  // all the way back up. This mirrors it as a floating button once the user
+  // has scrolled past the search bar, alongside scroll-to-top/bottom, which
+  // show or hide based on how close the user already is to each end.
+  useEffect(() => {
+    let ticking = false;
+    const handleScroll = () => {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => {
+        setFabScrollY(window.scrollY);
+        const scrollableHeight = document.documentElement.scrollHeight - window.innerHeight;
+        setNearPageBottom(scrollableHeight <= 0 || window.scrollY >= scrollableHeight - 300);
+        ticking = false;
+      });
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    handleScroll();
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   const paginatedMatchedJobs = useMemo(() => {
     const startIndex = (matchPage - 1) * JOBS_PER_PAGE_DISPLAY;
     return matchedJobs.slice(startIndex, startIndex + JOBS_PER_PAGE_DISPLAY);
@@ -1361,63 +1391,9 @@ if (filters.remote) {
                 >
                   <option value="Global">🌍 Global</option>
                   <option value="__remote__">🌐 Remote Jobs</option>
-                  <option value="Nigeria">🇳🇬 Nigeria</option>
-                  <option value="United States">🇺🇸 United States</option>
-                  <option value="United Kingdom">🇬🇧 United Kingdom</option>
-                  <option value="Canada">🇨🇦 Canada</option>
-                  <option value="Australia">🇦🇺 Australia</option>
-                  <option value="Germany">🇩🇪 Germany</option>
-                  <option value="France">🇫🇷 France</option>
-                  <option value="India">🇮🇳 India</option>
-                  <option value="Kenya">🇰🇪 Kenya</option>
-                  <option value="South Africa">🇿🇦 South Africa</option>
-                  <option value="Ghana">🇬🇭 Ghana</option>
-                  <option value="United Arab Emirates">🇦🇪 United Arab Emirates</option>
-                  <option value="Saudi Arabia">🇸🇦 Saudi Arabia</option>
-                  <option value="Singapore">🇸🇬 Singapore</option>
-                  <option value="Netherlands">🇳🇱 Netherlands</option>
-                  <option value="Spain">🇪🇸 Spain</option>
-                  <option value="Italy">🇮🇹 Italy</option>
-                  <option value="Brazil">🇧🇷 Brazil</option>
-                  <option value="Mexico">🇲🇽 Mexico</option>
-                  <option value="Japan">🇯🇵 Japan</option>
-                  <option value="China">🇨🇳 China</option>
-                  <option value="Ireland">🇮🇪 Ireland</option>
-                  <option value="Switzerland">🇨🇭 Switzerland</option>
-                  <option value="Sweden">🇸🇪 Sweden</option>
-                  <option value="Norway">🇳🇴 Norway</option>
-                  <option value="Denmark">🇩🇰 Denmark</option>
-                  <option value="Finland">🇫🇮 Finland</option>
-                  <option value="Poland">🇵🇱 Poland</option>
-                  <option value="Portugal">🇵🇹 Portugal</option>
-                  <option value="Belgium">🇧🇪 Belgium</option>
-                  <option value="Austria">🇦🇹 Austria</option>
-                  <option value="New Zealand">🇳🇿 New Zealand</option>
-                  <option value="Israel">🇮🇱 Israel</option>
-                  <option value="Malaysia">🇲🇾 Malaysia</option>
-                  <option value="Philippines">🇵🇭 Philippines</option>
-                  <option value="Indonesia">🇮🇩 Indonesia</option>
-                  <option value="Thailand">🇹🇭 Thailand</option>
-                  <option value="Vietnam">🇻🇳 Vietnam</option>
-                  <option value="South Korea">🇰🇷 South Korea</option>
-                  <option value="Egypt">🇪🇬 Egypt</option>
-                  <option value="Pakistan">🇵🇰 Pakistan</option>
-                  <option value="Bangladesh">🇧🇩 Bangladesh</option>
-                  <option value="Morocco">🇲🇦 Morocco</option>
-                  <option value="Tanzania">🇹🇿 Tanzania</option>
-                  <option value="Ethiopia">🇪🇹 Ethiopia</option>
-                  <option value="Qatar">🇶🇦 Qatar</option>
-                  <option value="Kuwait">🇰🇼 Kuwait</option>
-                  <option value="Oman">🇴🇲 Oman</option>
-                  <option value="Jordan">🇯🇴 Jordan</option>
-                  <option value="Lebanon">🇱🇧 Lebanon</option>
-                  <option value="Bahrain">🇧🇭 Bahrain</option>
-                  <option value="Argentina">🇦🇷 Argentina</option>
-                  <option value="Colombia">🇨🇴 Colombia</option>
-                  <option value="Chile">🇨🇱 Chile</option>
-                  <option value="Zimbabwe">🇿🇼 Zimbabwe</option>
-                  <option value="Zambia">🇿🇲 Zambia</option>
-                  <option value="Uganda">🇺🇬 Uganda</option>
+                  {COUNTRIES.map((c) => (
+                    <option key={c.code} value={c.name}>{c.flag} {c.name}</option>
+                  ))}
                   <option value="Rwanda">🇷🇼 Rwanda</option>
                 </select>
               </div>
@@ -1459,10 +1435,10 @@ if (filters.remote) {
                 </div>
                 <div className="flex items-center gap-2">
                   {refreshingMatches && <div className="flex items-center gap-2 text-sm" style={{ color: theme.colors.text.secondary }}><RefreshCw size={14} className="animate-spin" />Refreshing...</div>}
-                  <button onClick={() => { const next = sortBy === 'latest' ? 'salary' : sortBy === 'salary' ? 'match' : 'latest'; setSortBy(next); const params = new URLSearchParams(searchParams.toString()); params.set('sort', next); router.replace(`${pathname}?${params.toString()}`); }}
+                  <button onClick={() => { const next = sortBy === 'latest' ? 'salary' : 'latest'; setSortBy(next); const params = new URLSearchParams(searchParams.toString()); params.set('sort', next); router.replace(`${pathname}?${params.toString()}`); }}
                     className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-lg border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-all"
                     style={{ backgroundColor: theme.colors.background.DEFAULT, borderColor: theme.colors.border.DEFAULT }}>
-                    <ArrowUpDown size={12} />{sortBy === 'latest' ? 'Newest' : sortBy === 'salary' ? 'Salary' : 'Match'}
+                    <ArrowUpDown size={12} />{sortBy === 'latest' ? 'Newest' : 'Salary'}
                   </button>
                   <button onClick={handleRefreshMatches} disabled={refreshingMatches}
                     className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-lg border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-all disabled:opacity-50"
@@ -1588,6 +1564,46 @@ if (filters.remote) {
         )}
 
         {/* First-visit country selection popup */}
+        {/* Floating filter + scroll buttons — right side, above the bottom
+            nav (h-16 = 64px), only once scrolled past the search bar. */}
+        {fabScrollY > 400 && (
+          <div className="fixed right-4 bottom-24 z-40 flex flex-col gap-2.5">
+            {activeTab === 'latest' && (
+              <button
+                onClick={() => setFiltersOpen(true)}
+                className="relative flex items-center justify-center w-12 h-12 rounded-full shadow-lg transition-transform hover:scale-105 active:scale-95"
+                style={{ backgroundColor: theme.colors.primary.DEFAULT }}
+                aria-label="Open filters"
+              >
+                <SlidersHorizontal size={20} className="text-white" />
+                {hasActiveFilters() && (
+                  <span className="absolute -top-1 -right-1 w-5 h-5 text-[10px] font-bold bg-red-500 text-white rounded-full flex items-center justify-center leading-none">
+                    {getActiveFilterCount()}
+                  </span>
+                )}
+              </button>
+            )}
+            <button
+              onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+              className="flex items-center justify-center w-12 h-12 rounded-full shadow-lg border transition-transform hover:scale-105 active:scale-95"
+              style={{ backgroundColor: theme.colors.background.DEFAULT, borderColor: theme.colors.border.DEFAULT }}
+              aria-label="Scroll to top"
+            >
+              <ChevronUp size={20} style={{ color: theme.colors.text.primary }} />
+            </button>
+            {!nearPageBottom && (
+              <button
+                onClick={() => window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' })}
+                className="flex items-center justify-center w-12 h-12 rounded-full shadow-lg border transition-transform hover:scale-105 active:scale-95"
+                style={{ backgroundColor: theme.colors.background.DEFAULT, borderColor: theme.colors.border.DEFAULT }}
+                aria-label="Scroll to bottom"
+              >
+                <ChevronDown size={20} style={{ color: theme.colors.text.primary }} />
+              </button>
+            )}
+          </div>
+        )}
+
         {showCountryPopup && (
           <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
             <div className="w-full max-w-sm rounded-2xl p-6 shadow-2xl" style={{ backgroundColor: theme.colors.background.DEFAULT }}>
@@ -1601,41 +1617,15 @@ if (filters.remote) {
                 </div>
               </div>
               <select
-                defaultValue={detectedCountry || 'Nigeria'}
+                defaultValue={detectedCountry || 'Global'}
                 id="country-popup-select"
                 className="w-full mt-4 px-4 py-3 rounded-xl border-2 font-medium text-sm focus:outline-none focus:border-blue-500 transition-colors"
                 style={{ backgroundColor: theme.colors.background.muted, borderColor: theme.colors.border.DEFAULT, color: theme.colors.text.primary }}
               >
                 <option value="Global">🌍 Global (show all countries)</option>
-                <option value="Nigeria">🇳🇬 Nigeria</option>
-                <option value="United States">🇺🇸 United States</option>
-                <option value="United Kingdom">🇬🇧 United Kingdom</option>
-                <option value="Canada">🇨🇦 Canada</option>
-                <option value="Australia">🇦🇺 Australia</option>
-                <option value="Germany">🇩🇪 Germany</option>
-                <option value="France">🇫🇷 France</option>
-                <option value="India">🇮🇳 India</option>
-                <option value="Kenya">🇰🇪 Kenya</option>
-                <option value="South Africa">🇿🇦 South Africa</option>
-                <option value="Ghana">🇬🇭 Ghana</option>
-                <option value="United Arab Emirates">🇦🇪 United Arab Emirates</option>
-                <option value="Saudi Arabia">🇸🇦 Saudi Arabia</option>
-                <option value="Singapore">🇸🇬 Singapore</option>
-                <option value="Netherlands">🇳🇱 Netherlands</option>
-                <option value="Spain">🇪🇸 Spain</option>
-                <option value="Italy">🇮🇹 Italy</option>
-                <option value="Brazil">🇧🇷 Brazil</option>
-                <option value="Mexico">🇲🇽 Mexico</option>
-                <option value="Japan">🇯🇵 Japan</option>
-                <option value="Ireland">🇮🇪 Ireland</option>
-                <option value="Switzerland">🇨🇭 Switzerland</option>
-                <option value="Sweden">🇸🇪 Sweden</option>
-                <option value="Norway">🇳🇴 Norway</option>
-                <option value="Denmark">🇩🇰 Denmark</option>
-                <option value="Qatar">🇶🇦 Qatar</option>
-                <option value="Kuwait">🇰🇼 Kuwait</option>
-                <option value="Oman">🇴🇲 Oman</option>
-                <option value="Jordan">🇯🇴 Jordan</option>
+                {COUNTRIES.map((c) => (
+                  <option key={c.code} value={c.name}>{c.flag} {c.name}</option>
+                ))}
               </select>
               <button
                 onClick={() => {

@@ -1,11 +1,15 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 import { usePathname } from 'next/navigation';
-import { Menu, X, Briefcase, FileText, BookOpen, Wrench, Settings, ChevronRight, Send, Users } from 'lucide-react';
+import { Menu, X, Briefcase, FileText, BookOpen, Wrench, Settings, ChevronRight, Send, Users, LogIn } from 'lucide-react';
 import { theme } from '@/lib/theme';
 import { usePendingInvitationsCount } from '@/hooks/usePendingInvitationsCount';
+import { supabase } from '@/lib/supabase';
+
+const AuthModal = dynamic(() => import('@/components/AuthModal'), { ssr: false });
 
 const navItems = [
   { label: 'Jobs', href: '/jobs', icon: Briefcase },
@@ -20,7 +24,19 @@ const navItems = [
 export default function Header() {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const pendingInvitations = usePendingInvitationsCount();
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setIsLoggedIn(!!session?.user);
+    });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsLoggedIn(!!session?.user);
+    });
+    return () => subscription.unsubscribe();
+  }, []);
 
   const isActive = (href: string) => pathname === href;
 
@@ -78,6 +94,20 @@ export default function Header() {
                 </Link>
               );
             })}
+
+            {/* Log In — only shown when signed out. There was previously no
+                discoverable login/signup entry point anywhere in primary
+                nav; this and the homepage hero button are it. */}
+            {!isLoggedIn && (
+              <button
+                onClick={() => setAuthModalOpen(true)}
+                className="flex items-center gap-2 ml-2 px-4 py-2 rounded-lg text-sm font-semibold border-2 transition-colors hover:bg-gray-50"
+                style={{ borderColor: theme.colors.primary.DEFAULT, color: theme.colors.primary.DEFAULT }}
+              >
+                <LogIn size={16} />
+                Log In
+              </button>
+            )}
           </nav>
 
           {/* Mobile Menu Button - visible only on mobile */}
@@ -121,6 +151,21 @@ export default function Header() {
 
             {/* Drawer Content */}
             <nav className="py-4">
+              {!isLoggedIn && (
+                <button
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    setAuthModalOpen(true);
+                  }}
+                  className="flex items-center gap-3 w-full px-4 py-4 border-b"
+                  style={{ borderColor: theme.colors.border.DEFAULT }}
+                >
+                  <LogIn size={22} style={{ color: theme.colors.primary.DEFAULT }} />
+                  <span className="text-base font-semibold" style={{ color: theme.colors.primary.DEFAULT }}>
+                    Log In / Sign Up
+                  </span>
+                </button>
+              )}
               {navItems.map((item) => {
                 const Icon = item.icon;
                 const active = isActive(item.href);
@@ -198,6 +243,8 @@ export default function Header() {
 
       {/* Spacer to prevent content from being hidden behind fixed header */}
       <div className="h-16" />
+
+      {authModalOpen && <AuthModal open={authModalOpen} onOpenChange={setAuthModalOpen} />}
     </>
   );
 }
