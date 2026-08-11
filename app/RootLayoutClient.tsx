@@ -39,8 +39,9 @@ export default function RootLayoutClient({
     (pathname?.startsWith('/dashboard') && pathname !== '/dashboard') ||
     (pathname?.startsWith('/tools/interview/') && pathname !== '/tools/interview');
 
-  // Hide header on bottom nav pages (mobile-style pages)
-  const hideHeader = bottomNavPages.includes(pathname || '');
+  // Hide header on bottom nav pages (mobile-style pages) — except /dashboard,
+  // which shows both the header and bottom nav.
+  const hideHeader = bottomNavPages.includes(pathname || '') && pathname !== '/dashboard';
 
   // Show footer on pages that don't have bottom nav
   const showFooter = !bottomNavPages.includes(pathname || '') && !hideBottomNav;

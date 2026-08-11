@@ -362,6 +362,19 @@ export default function SettingsPage() {
         <div className="mb-6">
           <h2 className="text-base font-semibold mb-2 px-1 text-gray-700">My Activity</h2>
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden divide-y divide-gray-100">
+            <Link href="/dashboard" className="flex items-center justify-between p-4 hover:bg-gray-50 transition-colors">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
+                  style={{ backgroundColor: theme.colors.primary.DEFAULT + '15' }}>
+                  <LayoutDashboard size={20} style={{ color: theme.colors.primary.DEFAULT }} />
+                </div>
+                <div className="text-left">
+                  <h3 className="font-semibold text-gray-900">Dashboard</h3>
+                  <p className="text-xs text-gray-500">Quick access to CVs, tools, and more</p>
+                </div>
+              </div>
+              <ChevronRight size={20} className="text-gray-400" />
+            </Link>
             <Link href="/saved" className="flex items-center justify-between p-4 hover:bg-gray-50 transition-colors">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"

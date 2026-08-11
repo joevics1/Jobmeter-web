@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import {
-  FileText, Brain, FileSignature, MessageCircle, GraduationCap, Shield, FileCheck,
+  Briefcase, Send, FileText, Brain, FileSignature, MessageCircle, GraduationCap, Shield, FileCheck,
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { theme } from '@/lib/theme';
@@ -15,6 +15,8 @@ interface FeatureCard {
 }
 
 const features: FeatureCard[] = [
+  { label: 'Browse Jobs', href: '/jobs', icon: Briefcase },
+  { label: 'Post a Job', href: '/submit', icon: Send },
   { label: 'Create CV / Cover Letter', href: '/cv', icon: FileText },
   { label: 'Recruitment Practice Test', href: '/tools/quiz', icon: Brain },
   { label: 'Create Document', href: '/documents', icon: FileSignature },
@@ -38,6 +40,9 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen px-4 py-6" style={{ backgroundColor: theme.colors.background.muted }}>
       <div className="max-w-3xl mx-auto">
+        <Link href="/settings" className="text-sm mb-3 inline-block hover:underline" style={{ color: theme.colors.primary.DEFAULT }}>
+          ← Settings
+        </Link>
         <h1 className="text-2xl font-bold mb-1" style={{ color: theme.colors.text.primary }}>
           {firstName ? `Hi, ${firstName}` : 'Dashboard'}
         </h1>
@@ -62,3 +67,4 @@ export default function DashboardPage() {
     </div>
   );
 }
+
