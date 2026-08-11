@@ -29,14 +29,14 @@ export default function RootLayoutClient({
   }, [pathname]);
 
   // Bottom nav pages that show bottom navigation
-  const bottomNavPages = ['/jobs', '/documents', '/cv', '/tools', '/settings'];
+  const bottomNavPages = ['/jobs', '/documents', '/cv', '/tools', '/settings', '/dashboard'];
   
   // Hide bottom nav on job details pages and auth/onboarding pages
   const hideBottomNav = 
     (pathname?.startsWith('/jobs/') && pathname !== '/jobs') ||
     pathname?.startsWith('/auth') ||
     pathname?.startsWith('/onboarding') ||
-    pathname?.startsWith('/dashboard') ||
+    (pathname?.startsWith('/dashboard') && pathname !== '/dashboard') ||
     (pathname?.startsWith('/tools/interview/') && pathname !== '/tools/interview');
 
   // Hide header on bottom nav pages (mobile-style pages)

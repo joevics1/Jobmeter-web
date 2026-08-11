@@ -21,14 +21,15 @@ import { theme } from '@/lib/theme';
 interface AuthModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  defaultMode?: 'signin' | 'signup';
 }
 
-export default function AuthModal({ open, onOpenChange }: AuthModalProps) {
+export default function AuthModal({ open, onOpenChange, defaultMode = 'signup' }: AuthModalProps) {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const [activeTab, setActiveTab] = useState<'signin' | 'signup'>('signup');
-  const [showSignIn, setShowSignIn] = useState(false);
+  const [showSignIn, setShowSignIn] = useState(defaultMode === 'signin');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState('');
@@ -94,7 +95,16 @@ export default function AuthModal({ open, onOpenChange }: AuthModalProps) {
       
       setTimeout(() => {
         onOpenChange(false);
-        router.refresh();
+        // Staying on the current page after sign-in already covers "take
+        // them back to where they were" — router.refresh() re-renders it
+        // signed in. The one case that needs an explicit destination is
+        // signing in from the homepage itself, where there's nothing
+        // useful to "stay" on.
+        if (window.location.pathname === '/') {
+          router.push('/dashboard');
+        } else {
+          router.refresh();
+        }
       }, 1000);
 
     } catch (error: any) {
@@ -113,10 +123,11 @@ export default function AuthModal({ open, onOpenChange }: AuthModalProps) {
 
   const handleGoogleSignIn = async () => {
     try {
+      const returnTo = encodeURIComponent(window.location.pathname);
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo: `${window.location.origin}/auth/callback?returnTo=${returnTo}`,
         },
       });
       if (error) throw error;

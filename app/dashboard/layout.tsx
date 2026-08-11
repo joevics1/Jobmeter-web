@@ -15,8 +15,11 @@ export default function DashboardLayout({
   const pathname = usePathname();
   const router = useRouter();
 
-  // Recruiter pages render their own full-page UI — no legacy chrome needed here.
-  if (pathname?.startsWith('/dashboard/recruiter')) {
+  // Recruiter pages, and the redesigned main dashboard, render their own
+  // full-page UI — no legacy chrome needed here. The main dashboard now
+  // relies on the site-wide Header/BottomNavigation (see RootLayoutClient),
+  // same as /jobs and /settings, instead of this layout's own header bar.
+  if (pathname?.startsWith('/dashboard/recruiter') || pathname === '/dashboard') {
     return <>{children}</>;
   }
 

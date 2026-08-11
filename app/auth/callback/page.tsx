@@ -13,6 +13,10 @@ export default function AuthCallback() {
     // metadata to the sign-in request itself.
     const params = new URLSearchParams(window.location.search);
     const role = params.get("role");
+    // Set by the SIGN-IN (not signup) Google button, so a returning user
+    // lands back where they were instead of always on a fixed page —
+    // e.g. signing in from a job listing to apply should return there.
+    const returnTo = params.get("returnTo");
 
     // With implicit flow, Supabase automatically parses the hash fragment
     // (#access_token=...) because detectSessionInUrl: true is set in supabase.ts.
@@ -53,7 +57,15 @@ export default function AuthCallback() {
             .eq("user_id", session.user.id)
             .single();
 
-          router.replace(onboarding ? "/settings" : "/onboarding");
+          if (!onboarding) {
+            // Brand-new user — always finish onboarding first, no matter
+            // where they started the sign-in from.
+            router.replace("/onboarding");
+            return;
+          }
+
+          const isUsableReturnTo = returnTo && returnTo !== "/" && !returnTo.startsWith("/auth") && !returnTo.startsWith("/onboarding");
+          router.replace(isUsableReturnTo ? returnTo : "/dashboard");
         }
       }
     );
@@ -68,7 +80,7 @@ export default function AuthCallback() {
     // Supabase's client-side SIGNED_IN event ever fires.
     const timeout = setTimeout(() => {
       subscription.unsubscribe();
-      router.replace("/");
+      router.replace(returnTo && returnTo !== "/" ? returnTo : "/");
     }, 10000);
 
     return () => {

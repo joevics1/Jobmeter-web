@@ -14,6 +14,7 @@ import {
   mapOnboardingToCVData,
   mapCVDataToOnboardingUpdate,
   updateOnboardingData,
+  insertOnboardingData,
 } from '@/lib/cv-template-pages/onboarding-fetch';
 import type { CVData } from '@/lib/cv-template-pages/cv-data-types';
 import CVFieldsEditor from '@/app/cv-templates/_components/cv-fields-editor';
@@ -23,6 +24,20 @@ import { computeNextMonday } from '@/lib/talent';
 interface ProfileData {
   full_name: string | null;
   email: string;
+}
+
+// supabase-js's functions.invoke() doesn't parse the JSON body of a non-2xx
+// response into fnError.message — same fix as app/cv-templates/build/client.tsx.
+async function getFnErrorMessage(fnError: any, fallback: string): Promise<string> {
+  try {
+    if (fnError?.context?.json) {
+      const body = await fnError.context.json();
+      if (body?.error) return body.error;
+    }
+  } catch {
+    // fall through
+  }
+  return fnError?.message || fallback;
 }
 
 function emptyCVProfile(): CVData {
@@ -50,6 +65,7 @@ export default function EditProfilePage() {
   const [pasteText, setPasteText] = useState('');
   const [parsing, setParsing] = useState(false);
   const [profileWasEmpty, setProfileWasEmpty] = useState(false);
+  const [hasExistingRow, setHasExistingRow] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -69,6 +85,7 @@ export default function EditProfilePage() {
       const nextCvData = onboardingRow ? mapOnboardingToCVData(onboardingRow) : emptyCVProfile();
       setProfileData({ full_name: profile?.full_name || null, email: profile?.email || authUser.email || '' });
       setCvData(nextCvData);
+      setHasExistingRow(!!onboardingRow);
       setProfileWasEmpty(
         !nextCvData.personalDetails.name &&
         !nextCvData.summary &&
@@ -91,7 +108,7 @@ export default function EditProfilePage() {
       const { data, error: fnError } = await supabase.functions.invoke('parse-cv-template-form', {
         body: { rawText: pasteText },
       });
-      if (fnError) throw new Error(fnError.message);
+      if (fnError) throw new Error(await getFnErrorMessage(fnError, 'Could not parse that text.'));
       if (!data?.success || !data?.data) throw new Error(data?.error || 'Could not parse that text.');
       const p = data.data;
       setCvData((prev) => ({
@@ -145,8 +162,16 @@ export default function EditProfilePage() {
       } else if (!talentPool) {
         talentUpdates.talent_visible_from = null;
       }
-      const cvResult = await updateOnboardingData(userId, { ...updates, ...talentUpdates });
+      // .update() silently succeeds with zero rows affected if this user has
+      // no onboarding_data row yet (e.g. never went through onboarding, or
+      // just used the paste-to-autofill box above) — it matches nothing and
+      // reports no error, so the UI would show "Saved ✓" while writing
+      // nothing at all. Insert instead when there's no existing row.
+      const cvResult = hasExistingRow
+        ? await updateOnboardingData(userId, { ...updates, ...talentUpdates })
+        : await insertOnboardingData(userId, { ...updates, ...talentUpdates });
       if (!cvResult.success) throw new Error(cvResult.error || 'Could not save your CV details.');
+      setHasExistingRow(true);
 
       setWasTalentPool(talentPool);
       setSaved(true);
