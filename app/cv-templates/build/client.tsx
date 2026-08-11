@@ -17,6 +17,7 @@ import { getHistoryEntry, saveToHistory } from '@/lib/cv-template-pages/cv-histo
 import { fetchOnboardingData, mapOnboardingToCVData } from '@/lib/cv-template-pages/onboarding-fetch';
 import { useCvOverflowCheck } from '@/lib/cv-template-pages/use-cv-overflow';
 import type { CVData } from '@/lib/cv-template-pages/cv-data-types';
+import { Download } from 'lucide-react';
 import BackButton from '../_components/back-button';
 import CVPreviewFrame from '../_components/cv-preview-frame';
 import CVFieldsEditor from '../_components/cv-fields-editor';
@@ -409,12 +410,14 @@ export default function BuildClient({
         <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border shadow-lg z-50">
           <div className="max-w-3xl mx-auto px-4 py-3 flex gap-2 overflow-x-auto flex-nowrap">
             <button onClick={() => setStage('form')} className="shrink-0 border border-border px-4 py-2 rounded-lg font-medium text-sm text-foreground">Edit</button>
-            <button onClick={handlePrint} className="shrink-0 border border-border px-4 py-2 rounded-lg font-medium text-sm text-foreground">Print / PDF</button>
-            <button onClick={handleDownloadDocx} disabled={downloadingDocx} className="shrink-0 border border-border px-4 py-2 rounded-lg font-medium text-sm text-foreground disabled:opacity-50">
-              {downloadingDocx ? 'Preparing…' : 'Download as Word'}
+            <button onClick={handlePrint} className="shrink-0 flex items-center gap-1.5 border border-border px-4 py-2 rounded-lg font-medium text-sm text-foreground">
+              PDF <Download size={15} />
+            </button>
+            <button onClick={handleDownloadDocx} disabled={downloadingDocx} className="shrink-0 flex items-center gap-1.5 border border-border px-4 py-2 rounded-lg font-medium text-sm text-foreground disabled:opacity-50">
+              {downloadingDocx ? 'Preparing…' : (<>Word Docx <Download size={15} /></>)}
             </button>
             <button onClick={handleSave} disabled={saving} className="shrink-0 border border-border px-4 py-2 rounded-lg font-medium text-sm text-foreground disabled:opacity-50">
-              {saving ? 'Saving…' : saved ? 'Saved ✓' : 'Save this CV'}
+              {saving ? 'Saving…' : saved ? 'Saved ✓' : 'Save'}
             </button>
           </div>
         </div>
