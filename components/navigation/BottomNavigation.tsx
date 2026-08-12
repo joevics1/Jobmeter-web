@@ -12,7 +12,7 @@ export default function BottomNavigation() {
   const pendingInvitations = usePendingInvitationsCount();
 
   // Pages that should show bottom menu
-  const allowedPaths = ['/jobs', '/documents', '/tools', '/resource', '/settings'];
+  const allowedPaths = ['/jobs', '/documents', '/tools', '/resource', '/settings', '/dashboard'];
 
   // Check if current page is EXACTLY one of the bottom menu pages
   const shouldShow = allowedPaths.includes(pathname);
