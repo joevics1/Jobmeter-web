@@ -138,6 +138,7 @@ function transformJobToUIStatic(job: any): JobUI {
     sector: job.sector || '', role_category: job.role_category || '',
     description: job.description || job.job_description || '',
     apply_in_app: !!job.apply_in_app, screening_enabled: !!job.screening_enabled,
+    status: job.status, deadline: job.deadline,
   };
 }
 
@@ -211,6 +212,7 @@ export default function JobList({ siteType = 'global', initialJobs, initialCount
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [fabScrollY, setFabScrollY] = useState(0);
   const [nearPageBottom, setNearPageBottom] = useState(false);
+  const [fabDismissed, setFabDismissed] = useState(false);
   const [rolesExpanded, setRolesExpanded] = useState(false);
   const [isDesktop, setIsDesktop] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -835,6 +837,7 @@ export default function JobList({ siteType = 'global', initialJobs, initialCount
       sector: job.sector || '', role_category: job.role_category || '',
       description: job.description || job.job_description || '',
       apply_in_app: !!job.apply_in_app, screening_enabled: !!job.screening_enabled,
+      status: job.status, deadline: job.deadline,
     };
   };
 
@@ -929,6 +932,15 @@ export default function JobList({ siteType = 'global', initialJobs, initialCount
 
     return latestJobs.filter(job => {
       if (appliedJobs.includes(job.id)) return false;
+
+      // Exclude expired listings from the browsable list. Detail pages
+      // deliberately still render expired jobs (kept out of Google's index
+      // separately) — this only affects what shows up here.
+      const jobStatus = (job as any).status;
+      const jobDeadline = (job as any).deadline;
+      const isExpired = jobStatus === 'expired' || (jobDeadline && new Date(jobDeadline) < new Date());
+      if (isExpired) return false;
+
       const jobTypeLower = job.type?.toLowerCase() || '';
 
       const query = filters.search?.toLowerCase();
@@ -1027,7 +1039,13 @@ if (filters.remote) {
 
   const matchedJobs = useMemo(() => {
     if (activeTab !== 'matches') return [];
-    let list = jobs.filter(job => !appliedJobs.includes(job.id));
+    let list = jobs.filter(job => {
+      if (appliedJobs.includes(job.id)) return false;
+      const jobStatus = (job as any).status;
+      const jobDeadline = (job as any).deadline;
+      const isExpired = jobStatus === 'expired' || (jobDeadline && new Date(jobDeadline) < new Date());
+      return !isExpired;
+    });
 
     if (matchSearch.trim()) {
       const q = matchSearch.trim().toLowerCase();
@@ -1066,9 +1084,15 @@ if (filters.remote) {
       if (ticking) return;
       ticking = true;
       requestAnimationFrame(() => {
-        setFabScrollY(window.scrollY);
+        const y = window.scrollY;
+        setFabScrollY(y);
         const scrollableHeight = document.documentElement.scrollHeight - window.innerHeight;
-        setNearPageBottom(scrollableHeight <= 0 || window.scrollY >= scrollableHeight - 300);
+        setNearPageBottom(scrollableHeight <= 0 || y >= scrollableHeight - 300);
+        // Re-arm the dismissed state once scrolled back near the top —
+        // dismissing is a "not right now" for this scroll session, not
+        // "never show again", so it naturally comes back next time the
+        // user scrolls back down.
+        if (y <= 400) setFabDismissed(false);
         ticking = false;
       });
     };
@@ -1462,7 +1486,7 @@ if (filters.remote) {
               if (newFilters.salaryRange?.enabled) { if (newFilters.salaryRange.min > 0) params.set('salaryMin', newFilters.salaryRange.min.toString()); if (newFilters.salaryRange.max > 0) params.set('salaryMax', newFilters.salaryRange.max.toString()); }
               if (sortBy !== 'latest') params.set('sort', sortBy);
               router.replace(params.toString() ? `${pathname}?${params.toString()}` : pathname);
-            }} isOpen={filtersOpen} onToggle={() => setFiltersOpen(!filtersOpen)} />
+            }} isOpen={filtersOpen} onToggle={() => setFiltersOpen(!filtersOpen)} onClearAll={clearAllFilters} />
 
             {/* Loading spinner — shown while jobs haven't arrived yet */}
             {latestJobs.length === 0 && (
@@ -1566,8 +1590,16 @@ if (filters.remote) {
         {/* First-visit country selection popup */}
         {/* Floating filter + scroll buttons — right side, above the bottom
             nav (h-16 = 64px), only once scrolled past the search bar. */}
-        {fabScrollY > 400 && (
-          <div className="fixed right-4 bottom-24 z-40 flex flex-col gap-2.5">
+        {fabScrollY > 400 && !fabDismissed && (
+          <div className="fixed right-4 bottom-24 z-40 flex flex-col items-center gap-2.5">
+            <button
+              onClick={() => setFabDismissed(true)}
+              className="flex items-center justify-center w-6 h-6 rounded-full shadow-md bg-gray-700 hover:bg-gray-800 transition-colors"
+              aria-label="Hide"
+            >
+              <X size={13} className="text-white" />
+            </button>
+
             {activeTab === 'latest' && (
               <button
                 onClick={() => setFiltersOpen(true)}
@@ -1583,24 +1615,25 @@ if (filters.remote) {
                 )}
               </button>
             )}
+
+            {/* Single scroll button, mutually exclusive: down while there's
+                more to see below, up once close to the bottom — not both
+                at once. */}
             <button
-              onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+              onClick={() => window.scrollTo({
+                top: nearPageBottom ? 0 : document.documentElement.scrollHeight,
+                behavior: 'smooth',
+              })}
               className="flex items-center justify-center w-12 h-12 rounded-full shadow-lg border transition-transform hover:scale-105 active:scale-95"
               style={{ backgroundColor: theme.colors.background.DEFAULT, borderColor: theme.colors.border.DEFAULT }}
-              aria-label="Scroll to top"
+              aria-label={nearPageBottom ? 'Scroll to top' : 'Scroll to bottom'}
             >
-              <ChevronUp size={20} style={{ color: theme.colors.text.primary }} />
-            </button>
-            {!nearPageBottom && (
-              <button
-                onClick={() => window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' })}
-                className="flex items-center justify-center w-12 h-12 rounded-full shadow-lg border transition-transform hover:scale-105 active:scale-95"
-                style={{ backgroundColor: theme.colors.background.DEFAULT, borderColor: theme.colors.border.DEFAULT }}
-                aria-label="Scroll to bottom"
-              >
+              {nearPageBottom ? (
+                <ChevronUp size={20} style={{ color: theme.colors.text.primary }} />
+              ) : (
                 <ChevronDown size={20} style={{ color: theme.colors.text.primary }} />
-              </button>
-            )}
+              )}
+            </button>
           </div>
         )}
 

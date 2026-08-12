@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Filter, X, ChevronDown, ChevronUp, Check } from 'lucide-react';
 import { theme } from '@/lib/theme';
+import { COUNTRIES } from '@/lib/countries';
 
 interface JobFiltersProps {
   filters: {
@@ -17,22 +18,23 @@ interface JobFiltersProps {
   onFiltersChange: (filters: any) => void;
   isOpen: boolean;
   onToggle: () => void;
+  /** Parent's own clear-all, which resets every field it actually tracks
+   * (including roleCategory/jobType/state/town, which this component
+   * doesn't render fields for but the parent's filter state has). Without
+   * this, this component's own clearAllFilters was a second, incomplete
+   * copy of that logic that silently dropped those fields to undefined
+   * when triggered from here specifically. */
+  onClearAll?: () => void;
 }
 
-const countries = [
-  'Global', 'Nigeria', 'United States', 'United Kingdom', 'Canada', 'Australia', 
-  'Germany', 'France', 'India', 'Kenya', 'South Africa', 'Ghana',
-  'United Arab Emirates', 'Saudi Arabia', 'Singapore', 'Netherlands',
-  'Spain', 'Italy', 'Brazil', 'Mexico', 'Japan', 'China', 'Ireland',
-  'Switzerland', 'Sweden', 'Norway', 'Denmark', 'Finland', 'Poland',
-  'Portugal', 'Austria', 'New Zealand', 'Israel', 'Malaysia',
-  'Philippines', 'Indonesia', 'Thailand', 'Vietnam', 'South Korea', 'Egypt',
-  'Argentina', 'Bangladesh', 'Belgium', 'Colombia', 'Czech Republic', 'Chile',
-  'Ecuador', 'Ethiopia', 'Greece', 'Hong Kong', 'Hungary', 'Iraq',
-  'Jordan', 'Kuwait', 'Lebanon', 'Morocco', 'Oman', 'Pakistan', 'Peru',
-  'Qatar', 'Romania', 'Russia', 'Sri Lanka', 'Taiwan', 'Tanzania', 'Turkey',
-  'Ukraine', 'Venezuela', 'Zimbabwe'
-];
+// This used to be a fourth separately hand-maintained country list (on top
+// of the main filter dropdown, the first-visit popup, and the geo-IP map),
+// and had already drifted out of sync with all of them — missing Bahrain,
+// Uganda, and Zambia, while carrying a few (Czech Republic, Hong Kong,
+// Turkey, etc.) none of the others had. Now built from the single shared
+// list ('Global' prepended here since this dropdown, unlike the others,
+// needs it as a real selectable option rather than the unfiltered default).
+const countries = ['Global', ...COUNTRIES.map((c) => c.name)];
 
 const nigerianStates = [
   'Abia', 'Adamawa', 'Akwa Ibom', 'Anambra', 'Bauchi', 'Bayelsa', 'Benue', 
@@ -80,13 +82,20 @@ const MultiSelectDropdown = ({
   selected, 
   onChange, 
   placeholder, 
-  label 
+  label,
+  closeOnSelect = false,
 }: { 
   options: string[]; 
   selected: string[]; 
   onChange: (selected: string[]) => void; 
   placeholder: string; 
   label: string;
+  /** Set true for fields where only one selection is meaningful (e.g. this
+   * component being reused as a single-select for Country) — closing after
+   * every pick is correct there, but was previously happening for genuine
+   * multi-selects (State, Sector) too, forcing users to reopen the dropdown
+   * after each individual pick. */
+  closeOnSelect?: boolean;
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState('');
@@ -112,7 +121,7 @@ const MultiSelectDropdown = ({
       ? selected.filter(item => item !== option)
       : [...selected, option];
     onChange(newSelected);
-    setIsOpen(false); // Close dropdown after selection
+    if (closeOnSelect) setIsOpen(false);
   };
 
   const handleRemove = (option: string) => {
@@ -207,7 +216,7 @@ const MultiSelectDropdown = ({
   );
 };
 
-export default function JobFilters({ filters, onFiltersChange, isOpen, onToggle }: JobFiltersProps) {
+export default function JobFilters({ filters, onFiltersChange, isOpen, onToggle, onClearAll }: JobFiltersProps) {
   const [expandedSections, setExpandedSections] = useState<string[]>(['location']);
 
   const toggleSection = (section: string) => {
@@ -255,11 +264,20 @@ export default function JobFilters({ filters, onFiltersChange, isOpen, onToggle 
   };
 
   const clearAllFilters = () => {
+    if (onClearAll) {
+      onClearAll();
+      return;
+    }
+    // Fallback if no parent handler is passed — kept in sync with the
+    // fields this component itself renders (Country/State/Sector/
+    // EmploymentType/Remote/SalaryRange). Prefer passing onClearAll so
+    // this never drifts from the parent's full filter shape again.
     const clearedFilters = {
       search: filters.search,
       location: [] as string[],
       sector: [] as string[],
       employmentType: [] as string[],
+      salaryRange: undefined,
       remote: false,
       country: ''
     };
@@ -270,6 +288,7 @@ export default function JobFilters({ filters, onFiltersChange, isOpen, onToggle 
     (filters.location?.length || 0) > 0 ||
     (filters.sector?.length || 0) > 0 ||
     (filters.employmentType?.length || 0) > 0 ||
+    !!filters.salaryRange ||
     filters.remote ||
     filters.country
   );
@@ -327,6 +346,7 @@ export default function JobFilters({ filters, onFiltersChange, isOpen, onToggle 
                   }}
                   placeholder="Select country..."
                   label="Country"
+                  closeOnSelect
                 />
               </div>
 

@@ -131,6 +131,12 @@ export interface JobUI {
   apply_in_app?: boolean;
   /** Whether apply_in_app is gated behind a screening quiz */
   screening_enabled?: boolean;
+  /** Job status ('expired' or the active/published value) and deadline —
+   * used to exclude expired listings from browsable lists. Detail pages
+   * intentionally still render expired jobs (kept out of Google's index
+   * separately instead), this only affects what shows up in JobList. */
+  status?: string;
+  deadline?: string;
 }
 
 
