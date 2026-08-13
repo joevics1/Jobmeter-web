@@ -19,6 +19,8 @@ export interface CVHistoryEntry {
   countryLabel?: string;
   designId: string;
   cvData: CVData;
+  fontScale?: number; // text size multiplier, default 1 — optional/backward compatible
+  lineScale?: number; // line spacing multiplier, default 1 — optional/backward compatible
 }
 
 function prune(entries: CVHistoryEntry[]): CVHistoryEntry[] {

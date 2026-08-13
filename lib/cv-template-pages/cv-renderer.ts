@@ -2368,35 +2368,78 @@ function capCVDataForRender(data: CVData): CVData {
   return capped;
 }
 
-export function renderCVTemplate(templateId: string, rawData: CVData, mode: 'view' | 'pdf' = 'pdf'): string {
+// ── User-adjustable text size / line spacing ────────────────────────────
+// Every template hardcodes its own font-size/line-height values (tuned per
+// design for the strict 1-page A4 layout). Rather than touching each of the
+// 8 template functions individually — high risk of missing an occurrence
+// across ~150 declarations — we rewrite the already-generated HTML string
+// once here: every literal `font-size: Npx` / `line-height: N` becomes a
+// calc() multiplied by a CSS custom property, and a :root rule sets that
+// property to the requested scale. At the default scale (1), the calc()
+// evaluates to the exact original value, so existing callers that don't
+// pass a scale are unaffected. This is deliberately a pure post-process
+// step (not a redesign of the templates) so it's a single, easy-to-revert
+// change if it causes problems — delete this block and the two regexes
+// below, and the file goes back to exactly what it was.
+export interface CVTextScale {
+  font?: number; // multiplier applied to every font-size, default 1
+  line?: number; // multiplier applied to every line-height, default 1
+}
+
+function applyTextScale(html: string, scale?: CVTextScale): string {
+  const font = scale?.font ?? 1;
+  const line = scale?.line ?? 1;
+  if (font === 1 && line === 1) return html; // no-op — original output, byte for byte
+
+  let out = html
+    .replace(/font-size:\s*([\d.]+)px/g, `font-size: calc($1px * var(--cv-font-scale))`)
+    .replace(/line-height:\s*([\d.]+)(?!px)/g, `line-height: calc($1 * var(--cv-line-scale))`);
+
+  const rootStyle = `<style>:root{--cv-font-scale:${font};--cv-line-scale:${line};}</style>`;
+  out = out.includes('<head>')
+    ? out.replace('<head>', `<head>${rootStyle}`)
+    : rootStyle + out;
+
+  return out;
+}
+
+export function renderCVTemplate(
+  templateId: string,
+  rawData: CVData,
+  mode: 'view' | 'pdf' = 'pdf',
+  scale?: CVTextScale
+): string {
   const data = capCVDataForRender(rawData);
+  let html: string;
 
   if (mode === 'view') {
     switch (templateId) {
-      case 'template-5': return renderResponsiveTemplate5(data);
-      case 'template-6': return renderResponsiveTemplate6(data);
+      case 'template-5': html = renderResponsiveTemplate5(data); break;
+      case 'template-6': html = renderResponsiveTemplate6(data); break;
       // Templates 7-12 don't have a separate responsive/on-screen variant
       // (the source app used one render for both) — same function both modes.
-      case 'template-7': return renderTemplate7(data);
-      case 'template-8': return renderTemplate8(data);
-      case 'template-9': return renderTemplate9(data);
-      case 'template-10': return renderTemplate10(data);
-      case 'template-11': return renderTemplate11(data);
-      case 'template-12': return renderTemplate12(data);
-      default: return renderResponsiveTemplate5(data);
+      case 'template-7': html = renderTemplate7(data); break;
+      case 'template-8': html = renderTemplate8(data); break;
+      case 'template-9': html = renderTemplate9(data); break;
+      case 'template-10': html = renderTemplate10(data); break;
+      case 'template-11': html = renderTemplate11(data); break;
+      case 'template-12': html = renderTemplate12(data); break;
+      default: html = renderResponsiveTemplate5(data);
+    }
+  } else {
+    // PDF mode - strict 1-page enforcement
+    switch (templateId) {
+      case 'template-5': html = renderTemplate5(data); break;
+      case 'template-6': html = renderTemplate6(data); break;
+      case 'template-7': html = renderTemplate7(data); break;
+      case 'template-8': html = renderTemplate8(data); break;
+      case 'template-9': html = renderTemplate9(data); break;
+      case 'template-10': html = renderTemplate10(data); break;
+      case 'template-11': html = renderTemplate11(data); break;
+      case 'template-12': html = renderTemplate12(data); break;
+      default: html = renderTemplate5(data);
     }
   }
-  
-  // PDF mode - strict 1-page enforcement
-  switch (templateId) {
-    case 'template-5': return renderTemplate5(data);
-    case 'template-6': return renderTemplate6(data);
-    case 'template-7': return renderTemplate7(data);
-    case 'template-8': return renderTemplate8(data);
-    case 'template-9': return renderTemplate9(data);
-    case 'template-10': return renderTemplate10(data);
-    case 'template-11': return renderTemplate11(data);
-    case 'template-12': return renderTemplate12(data);
-    default: return renderTemplate5(data);
-  }
+
+  return applyTextScale(html, scale);
 }
