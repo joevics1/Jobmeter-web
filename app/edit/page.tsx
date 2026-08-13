@@ -97,8 +97,8 @@ export default function EditProfilePage() {
     })();
   }, [router]);
 
-  async function handleParse() {
-    if (pasteText.trim().length < 10) {
+  async function parseRawText(rawText: string) {
+    if (rawText.trim().length < 10) {
       setError('Paste a bit more detail before parsing.');
       return;
     }
@@ -106,7 +106,7 @@ export default function EditProfilePage() {
     setError(null);
     try {
       const { data, error: fnError } = await supabase.functions.invoke('parse-cv-template-form', {
-        body: { rawText: pasteText },
+        body: { rawText },
       });
       if (fnError) throw new Error(await getFnErrorMessage(fnError, 'Could not parse that text.'));
       if (!data?.success || !data?.data) throw new Error(data?.error || 'Could not parse that text.');
@@ -131,6 +131,61 @@ export default function EditProfilePage() {
     } catch (err: any) {
       setError(err.message || 'Could not parse that text.');
     } finally {
+      setParsing(false);
+    }
+  }
+
+  async function handleParse() {
+    await parseRawText(pasteText);
+  }
+
+  // Upload a CV file (PDF/DOCX/image) and run it through the same two-step
+  // pipeline used on onboarding: /api/onboarding/ocr extracts raw text
+  // (mammoth for DOCX, Gemini — with an OCR.space fallback — for PDFs and
+  // images), then that text goes through the exact same parse-cv-template-form
+  // call the paste box already uses. No new parsing logic, just a second way
+  // to get text into the same pipeline.
+  async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    e.target.value = ''; // allow re-selecting the same file later
+
+    if (parsing) return;
+
+    const isPDF = file.type === 'application/pdf';
+    const isImage = file.type.includes('image');
+    const isDocument = file.type.includes('document') || file.name.endsWith('.doc') || file.name.endsWith('.docx');
+    if (!isPDF && !isImage && !isDocument) {
+      setError('Please upload a PDF, Word document (DOC/DOCX), or image file.');
+      return;
+    }
+
+    setParsing(true);
+    setError(null);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await fetch('/api/onboarding/ocr', { method: 'POST', body: formData });
+
+      if (!res.ok) {
+        const errorText = await res.text();
+        try {
+          const errorData = JSON.parse(errorText);
+          if (errorData.error === 'EXTRACTION_FAILED') {
+            throw new Error('Text extraction failed. Please try again or paste your CV text instead.');
+          }
+        } catch {
+          // not JSON — fall through to generic error below
+        }
+        throw new Error(`Could not read that file (${res.status}).`);
+      }
+
+      const data = await res.json();
+      if (!data?.text) throw new Error('No text could be extracted from that file.');
+
+      await parseRawText(data.text as string);
+    } catch (err: any) {
+      setError(err.message || 'Failed to process that file. Please try again.');
       setParsing(false);
     }
   }
@@ -195,6 +250,28 @@ export default function EditProfilePage() {
             {profileWasEmpty && (
               <div className="border rounded-lg p-3 mb-4 bg-gray-50">
                 <p className="text-sm font-semibold text-gray-700 mb-2">Have a CV already? Upload it to autofill</p>
+
+                <label
+                  className={`flex items-center justify-center gap-2 border-2 border-dashed rounded-lg py-3 text-sm font-medium cursor-pointer transition-colors ${
+                    parsing ? 'opacity-50 cursor-not-allowed border-gray-300 text-gray-400' : 'border-blue-300 text-blue-700 hover:bg-blue-50'
+                  }`}
+                >
+                  {parsing ? 'Reading…' : 'Upload CV (PDF, Word, or image)'}
+                  <input
+                    type="file"
+                    accept="application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,image/jpeg,image/jpg,image/png"
+                    onChange={handleFileUpload}
+                    disabled={parsing}
+                    className="hidden"
+                  />
+                </label>
+
+                <div className="flex items-center gap-2 my-3">
+                  <div className="flex-1 h-px bg-gray-200" />
+                  <span className="text-xs text-gray-400">OR PASTE TEXT</span>
+                  <div className="flex-1 h-px bg-gray-200" />
+                </div>
+
                 <textarea
                   className="border rounded px-3 py-2 w-full text-sm bg-white"
                   rows={3}
