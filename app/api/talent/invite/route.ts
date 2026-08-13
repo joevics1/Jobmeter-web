@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { isRecruiterAccount } from '@/lib/isRecruiterAccount';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -16,8 +17,7 @@ export async function POST(req: NextRequest) {
     if (authError || !user) return NextResponse.json({ error: 'Not signed in' }, { status: 401 });
 
     const admin = createClient(supabaseUrl, supabaseServiceKey);
-    const { data: profile } = await admin.from('profiles').select('user_type').eq('id', user.id).single();
-    if (!profile || profile.user_type !== 'recruiter') {
+    if (!(await isRecruiterAccount(admin, user.id))) {
       return NextResponse.json({ error: 'Only recruiters can send invites' }, { status: 403 });
     }
 

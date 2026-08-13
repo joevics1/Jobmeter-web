@@ -387,7 +387,7 @@ export default function HomePage({ jobs: initialJobs, blogPosts, companies = [] 
                 <div className="flex gap-3">
                   <button
                     onClick={() => handleCTAClick('seeker')}
-                    className="flex-1 py-3 px-6 rounded-lg font-semibold text-white transition-all hover:shadow-lg"
+                    className="flex-1 py-3 px-3 rounded-lg font-semibold text-white transition-all hover:shadow-lg whitespace-nowrap"
                     style={{ backgroundColor: theme.colors.primary.DEFAULT }}
                     aria-label="Browse all jobs"
                   >
@@ -397,7 +397,7 @@ export default function HomePage({ jobs: initialJobs, blogPosts, companies = [] 
                   {!user && (
                     <button
                       onClick={() => setAuthModalOpen(true)}
-                      className="py-3 px-5 rounded-lg font-semibold border-2 transition-all hover:bg-gray-50 whitespace-nowrap"
+                      className="py-3 px-3 rounded-lg font-semibold border-2 transition-all hover:bg-gray-50 whitespace-nowrap"
                       style={{ borderColor: theme.colors.primary.DEFAULT, color: theme.colors.primary.DEFAULT }}
                       aria-label="Log in or sign up"
                     >

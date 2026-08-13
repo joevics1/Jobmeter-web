@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { classifyTalentCategory, TALENT_FREE_DAILY_VIEW_LIMIT, TALENT_UNLIMITED_PLAN_TYPE } from '@/lib/talent';
+import { isRecruiterAccount } from '@/lib/isRecruiterAccount';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -16,13 +17,7 @@ async function getRecruiter(req: NextRequest) {
   if (error || !user) return null;
 
   const admin = createClient(supabaseUrl, supabaseServiceKey);
-  const { data: profile } = await admin
-    .from('profiles')
-    .select('id, user_type')
-    .eq('id', user.id)
-    .single();
-
-  if (!profile || profile.user_type !== 'recruiter') return null;
+  if (!(await isRecruiterAccount(admin, user.id))) return null;
   return { id: user.id, admin };
 }
 

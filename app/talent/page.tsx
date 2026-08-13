@@ -74,8 +74,25 @@ export default function TalentPoolPage() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) { setAuthChecked(true); return; }
       setToken(session.access_token);
+
       const { data: profile } = await supabase.from('profiles').select('user_type').eq('id', session.user.id).single();
-      setIsRecruiter(profile?.user_type === 'recruiter');
+      if (profile?.user_type === 'recruiter') {
+        setIsRecruiter(true);
+        setAuthChecked(true);
+        return;
+      }
+
+      // profiles.user_type can be missing or stale even for a genuine
+      // recruiter — it's only set at signup, and that write can silently
+      // fail, or the account may have posted jobs (which never checks
+      // user_type at all) without ever going through the recruiter signup
+      // flow that sets it. A companies row is a much harder signal to end
+      // up with by accident, so fall back to checking that.
+      const { data: companies } = await supabase.from('companies').select('id').eq('user_id', session.user.id).limit(1);
+      if (companies && companies.length > 0) {
+        setIsRecruiter(true);
+        supabase.from('profiles').update({ user_type: 'recruiter' }).eq('id', session.user.id).then(() => {});
+      }
       setAuthChecked(true);
     })();
   }, []);

@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
-import { ArrowLeft, FileText, Clipboard, Plus, Building2, X, CheckCircle, AlertCircle, Sparkles, Lock } from 'lucide-react';
+import { ArrowLeft, FileText, Clipboard, Plus, Building2, X, CheckCircle, AlertCircle, Sparkles } from 'lucide-react';
 import UpgradeModal from '@/components/jobs/UpgradeModal';
 import { theme } from '@/lib/theme';
 import { Button } from '@/components/ui/button';
@@ -848,44 +848,19 @@ Posted Date: ${new Date().toISOString().split('T')[0]}`;
                 Screening quiz <span className="text-xs font-normal text-gray-500">— paid feature, candidates must pass before applying</span>
               </p>
 
-              {/* Objective / Speed are two variants of the same MCQ pool — mutually exclusive */}
-              <label className="flex items-center gap-2 text-sm text-gray-700">
-                <input
-                  type="checkbox"
-                  checked={quizObjective}
-                  onChange={(e) => {
-                    if (e.target.checked && !isAdmin) { setShowQuizUpgradeModal(true); return; }
-                    setQuizObjective(e.target.checked);
-                    if (e.target.checked) setQuizSpeed(false);
-                  }}
-                />
+              {/* Objective / Speed are two variants of the same MCQ pool — mutually exclusive.
+                  Not live yet — disabled with a "Coming soon" label rather than the
+                  paywall lock, since this isn't actually purchasable yet regardless
+                  of plan. Written quiz is hidden entirely below for the same reason. */}
+              <label className="flex items-center gap-2 text-sm text-gray-400 cursor-not-allowed">
+                <input type="checkbox" checked={false} disabled />
                 Objective quiz
-                {!isAdmin && <Lock size={12} className="text-gray-400" />}
+                <span className="text-xs text-gray-400">(Coming soon)</span>
               </label>
-              <label className="flex items-center gap-2 text-sm text-gray-700">
-                <input
-                  type="checkbox"
-                  checked={quizSpeed}
-                  onChange={(e) => {
-                    if (e.target.checked && !isAdmin) { setShowQuizUpgradeModal(true); return; }
-                    setQuizSpeed(e.target.checked);
-                    if (e.target.checked) setQuizObjective(false);
-                  }}
-                />
+              <label className="flex items-center gap-2 text-sm text-gray-400 cursor-not-allowed">
+                <input type="checkbox" checked={false} disabled />
                 Speed quiz
-                {!isAdmin && <Lock size={12} className="text-gray-400" />}
-              </label>
-              <label className="flex items-center gap-2 text-sm text-gray-700">
-                <input
-                  type="checkbox"
-                  checked={quizWritten}
-                  onChange={(e) => {
-                    if (e.target.checked && !isAdmin) { setShowQuizUpgradeModal(true); return; }
-                    setQuizWritten(e.target.checked);
-                  }}
-                />
-                Written quiz <span className="text-xs text-gray-500">(AI-graded)</span>
-                {!isAdmin && <Lock size={12} className="text-gray-400" />}
+                <span className="text-xs text-gray-400">(Coming soon)</span>
               </label>
             </div>
           )}
