@@ -14,10 +14,16 @@ interface JobFiltersProps {
     salaryRange?: { min: number; max: number };
     remote?: boolean;
     country?: string;
+    locationSearch?: string;
   };
   onFiltersChange: (filters: any) => void;
   isOpen: boolean;
   onToggle: () => void;
+  /** Live count of jobs matching the current filters, from the parent's
+   * already-computed filteredJobs. Every toggle in this drawer applies
+   * instantly, so this is just reflecting that — not a preview of a
+   * pending change. */
+  resultCount?: number;
   /** Parent's own clear-all, which resets every field it actually tracks
    * (including roleCategory/jobType/state/town, which this component
    * doesn't render fields for but the parent's filter state has). Without
@@ -131,9 +137,11 @@ const MultiSelectDropdown = ({
 
   return (
     <div className="relative" ref={dropdownRef}>
-      <label className="block text-sm font-medium mb-2" style={{ color: theme.colors.text.primary }}>
-        {label}
-      </label>
+      {label && (
+        <label className="block text-sm font-medium mb-2" style={{ color: theme.colors.text.primary }}>
+          {label}
+        </label>
+      )}
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="w-full px-4 py-3 border rounded-lg text-left flex items-center justify-between transition-all hover:border-blue-400"
@@ -216,7 +224,35 @@ const MultiSelectDropdown = ({
   );
 };
 
-export default function JobFilters({ filters, onFiltersChange, isOpen, onToggle, onClearAll }: JobFiltersProps) {
+// Collapsible section wrapper — expandedSections/toggleSection existed
+// before but nothing in the render actually used them, so every section
+// was always fully expanded regardless of this state.
+const FilterSection = ({
+  id,
+  title,
+  isExpanded,
+  onToggle,
+  children,
+}: {
+  id: string;
+  title: string;
+  isExpanded: boolean;
+  onToggle: (id: string) => void;
+  children: React.ReactNode;
+}) => (
+  <div className="border rounded-lg overflow-hidden" style={{ borderColor: theme.colors.border.DEFAULT }}>
+    <button
+      onClick={() => onToggle(id)}
+      className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 hover:bg-gray-100 transition-colors"
+    >
+      <span className="font-semibold text-sm" style={{ color: theme.colors.text.primary }}>{title}</span>
+      {isExpanded ? <ChevronUp size={18} className="text-gray-500" /> : <ChevronDown size={18} className="text-gray-500" />}
+    </button>
+    {isExpanded && <div className="p-4 space-y-3">{children}</div>}
+  </div>
+);
+
+export default function JobFilters({ filters, onFiltersChange, isOpen, onToggle, onClearAll, resultCount }: JobFiltersProps) {
   const [expandedSections, setExpandedSections] = useState<string[]>(['location']);
 
   const toggleSection = (section: string) => {
@@ -279,7 +315,8 @@ export default function JobFilters({ filters, onFiltersChange, isOpen, onToggle,
       employmentType: [] as string[],
       salaryRange: undefined,
       remote: false,
-      country: ''
+      country: '',
+      locationSearch: '',
     };
     onFiltersChange(clearedFilters);
   };
@@ -289,6 +326,7 @@ export default function JobFilters({ filters, onFiltersChange, isOpen, onToggle,
     (filters.sector?.length || 0) > 0 ||
     (filters.employmentType?.length || 0) > 0 ||
     !!filters.salaryRange ||
+    !!filters.locationSearch?.trim() ||
     filters.remote ||
     filters.country
   );
@@ -320,7 +358,7 @@ export default function JobFilters({ filters, onFiltersChange, isOpen, onToggle,
           </div>
 
 {/* Content */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4">
+          <div className="flex-1 overflow-y-auto p-4 space-y-3">
             {hasActiveFilters && (
               <button
                 onClick={clearAllFilters}
@@ -330,29 +368,29 @@ export default function JobFilters({ filters, onFiltersChange, isOpen, onToggle,
               </button>
             )}
 
-            {/* Country & State Filter - Same row */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {/* Country Filter */}
-              <div className="space-y-2">
+            <FilterSection id="location" title="Location" isExpanded={expandedSections.includes('location')} onToggle={toggleSection}>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <MultiSelectDropdown
                   options={countries}
                   selected={filters.country ? [filters.country] : []}
                   onChange={(selected) => {
                     if (selected[0] === 'Global') {
-                      onFiltersChange({ ...filters, country: '', location: [] });
+                      onFiltersChange({ ...filters, country: '', location: [], locationSearch: '' });
                     } else {
-                      onFiltersChange({ ...filters, country: selected[0] || '', location: selected[0] === 'Nigeria' ? filters.location : [] });
+                      onFiltersChange({
+                        ...filters,
+                        country: selected[0] || '',
+                        location: selected[0] === 'Nigeria' ? filters.location : [],
+                        locationSearch: selected[0] === 'Nigeria' ? '' : filters.locationSearch,
+                      });
                     }
                   }}
                   placeholder="Select country..."
                   label="Country"
                   closeOnSelect
                 />
-              </div>
 
-              {/* State Filter - Only show for Nigeria */}
-              {filters.country === 'Nigeria' && (
-                <div className="space-y-2">
+                {filters.country === 'Nigeria' && (
                   <MultiSelectDropdown
                     options={nigerianStates}
                     selected={filters.location || []}
@@ -360,24 +398,41 @@ export default function JobFilters({ filters, onFiltersChange, isOpen, onToggle,
                     placeholder="Select states..."
                     label="State"
                   />
-                </div>
-              )}
-            </div>
+                )}
 
-            {/* Sector Filter */}
-            <div className="space-y-2">
+                {/* Nigeria gets a proper state multi-select above; every
+                    other selected country previously had no location
+                    narrowing at all — this covers city/region as free text
+                    instead of hardcoding a state/region list per country. */}
+                {filters.country && filters.country !== 'Nigeria' && (
+                  <div>
+                    <label className="block text-sm font-medium mb-2" style={{ color: theme.colors.text.primary }}>
+                      City / Region
+                    </label>
+                    <input
+                      type="text"
+                      value={filters.locationSearch || ''}
+                      onChange={(e) => onFiltersChange({ ...filters, locationSearch: e.target.value })}
+                      placeholder="e.g. Dubai, Riyadh..."
+                      className="w-full px-4 py-3 border rounded-lg text-sm"
+                      style={{ borderColor: theme.colors.border.DEFAULT, backgroundColor: theme.colors.background.DEFAULT }}
+                    />
+                  </div>
+                )}
+              </div>
+            </FilterSection>
+
+            <FilterSection id="sector" title="Sector" isExpanded={expandedSections.includes('sector')} onToggle={toggleSection}>
               <MultiSelectDropdown
                 options={sectors}
                 selected={filters.sector || []}
                 onChange={(selected) => onFiltersChange({ ...filters, sector: selected })}
                 placeholder="Select sectors..."
-                label="Sector"
+                label=""
               />
-            </div>
+            </FilterSection>
 
-            {/* Employment Type Filter */}
-            <div className="space-y-2">
-              <h3 className="font-semibold text-gray-900">Employment Type</h3>
+            <FilterSection id="employmentType" title="Employment Type" isExpanded={expandedSections.includes('employmentType')} onToggle={toggleSection}>
               <div className="grid grid-cols-2 gap-2">
                 {employmentTypes.map(type => (
                   <label key={type} className="flex items-center gap-2 cursor-pointer py-2 px-3 border rounded-lg hover:bg-gray-50 transition-colors">
@@ -391,11 +446,7 @@ export default function JobFilters({ filters, onFiltersChange, isOpen, onToggle,
                   </label>
                 ))}
               </div>
-            </div>
-
-            {/* Remote Work Filter with Apply Button */}
-            <div className="flex items-center justify-between">
-              <label className="flex items-center gap-2 cursor-pointer">
+              <label className="flex items-center gap-2 cursor-pointer pt-1">
                 <input
                   type="checkbox"
                   id="remote-filter"
@@ -405,14 +456,58 @@ export default function JobFilters({ filters, onFiltersChange, isOpen, onToggle,
                 />
                 <span className="text-sm font-medium text-gray-700">Remote Only</span>
               </label>
-              
-              <button
-                onClick={onToggle}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm"
-              >
-                Filter
-              </button>
-            </div>
+            </FilterSection>
+
+            <FilterSection id="salary" title="Salary Range" isExpanded={expandedSections.includes('salary')} onToggle={toggleSection}>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium mb-1" style={{ color: theme.colors.text.secondary }}>Minimum</label>
+                  <input
+                    type="number"
+                    min={0}
+                    placeholder="No min"
+                    value={filters.salaryRange?.min || ''}
+                    onChange={(e) => handleSalaryRangeChange('min', e.target.value)}
+                    className="w-full px-3 py-2.5 border rounded-lg text-sm"
+                    style={{ borderColor: theme.colors.border.DEFAULT }}
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium mb-1" style={{ color: theme.colors.text.secondary }}>Maximum</label>
+                  <input
+                    type="number"
+                    min={0}
+                    placeholder="No max"
+                    value={filters.salaryRange?.max || ''}
+                    onChange={(e) => handleSalaryRangeChange('max', e.target.value)}
+                    className="w-full px-3 py-2.5 border rounded-lg text-sm"
+                    style={{ borderColor: theme.colors.border.DEFAULT }}
+                  />
+                </div>
+              </div>
+              <p className="text-xs" style={{ color: theme.colors.text.muted }}>
+                Listings use different currencies — this compares the raw number shown on each job&apos;s posted salary, not a converted amount.
+              </p>
+            </FilterSection>
+          </div>
+
+          {/* Footer — was a static "Filter" button that just closed the
+              drawer, implying a change needed to be "applied" when every
+              toggle above already filters live. Now honestly reflects
+              that with a live count instead. */}
+          <div className="p-4 border-t border-gray-200">
+            <button
+              onClick={onToggle}
+              disabled={resultCount === 0}
+              className="w-full py-3 rounded-lg font-semibold text-sm text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              style={{ backgroundColor: theme.colors.primary.DEFAULT }}
+            >
+              {resultCount === undefined
+                ? 'Done'
+                : resultCount === 0
+                ? 'No jobs match these filters'
+                : `Show ${resultCount.toLocaleString()} job${resultCount === 1 ? '' : 's'}`}
+            </button>
           </div>
         </div>
       </div>

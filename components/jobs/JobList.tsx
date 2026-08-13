@@ -233,6 +233,11 @@ export default function JobList({ siteType = 'global', initialJobs, initialCount
     jobType: '',
     state: '',
     town: '',
+    // Free-text city/region filter for non-Nigeria countries. `location`
+    // above is a proper multi-select but only has a real option list for
+    // Nigerian states — this covers everywhere else without needing a
+    // hardcoded state/region list per country.
+    locationSearch: '',
   });
 
   // ── Refs to prevent duplicate fetches ──────────────────────────────────────
@@ -472,6 +477,7 @@ export default function JobList({ siteType = 'global', initialJobs, initialCount
     const remoteParam = searchParams.get('remote');
     const sortParam = searchParams.get('sort');
     const countryParam = searchParams.get('country');
+    const locationSearchParam = searchParams.get('locationSearch');
 
     if (searchParam) { setSearchQuery(searchParam); setFilters(prev => ({ ...prev, search: searchParam })); }
     if (locationParam) setFilters(prev => ({ ...prev, location: locationParam.split(',') }));
@@ -486,6 +492,7 @@ export default function JobList({ siteType = 'global', initialJobs, initialCount
       setFilters(prev => ({ ...prev, salaryRange: { min: salaryMinParam ? parseInt(salaryMinParam) : 0, max: salaryMaxParam ? parseInt(salaryMaxParam) : 0 } }));
     }
     if (remoteParam === 'true') setFilters(prev => ({ ...prev, remote: true }));
+    if (locationSearchParam) setFilters(prev => ({ ...prev, locationSearch: locationSearchParam }));
     if (sortParam === 'latest' || sortParam === 'salary') setSortBy(sortParam);
   }, [searchParams]);
 
@@ -917,7 +924,7 @@ export default function JobList({ siteType = 'global', initialJobs, initialCount
   };
 
   const clearAllFilters = () => {
-    setFilters({ search: '', location: [], sector: [], employmentType: [], salaryRange: undefined, remote: false, country: '', roleCategory: '', jobType: '', state: '', town: '' });
+    setFilters({ search: '', location: [], sector: [], employmentType: [], salaryRange: undefined, remote: false, country: '', roleCategory: '', jobType: '', state: '', town: '', locationSearch: '' });
     setSearchQuery('');
     localStorage.setItem('user_changed_country', 'false');
     const params = new URLSearchParams();
@@ -1003,6 +1010,12 @@ if (filters.remote) {
         const jobSalary = getSalaryNumber(job.salary || '');
         if (filters.salaryRange.min > 0 && jobSalary < filters.salaryRange.min) return false;
         if (filters.salaryRange.max > 0 && jobSalary > filters.salaryRange.max) return false;
+      }
+
+      if (filters.locationSearch?.trim()) {
+        const needle = filters.locationSearch.trim().toLowerCase();
+        const haystack = `${job.location || ''} ${JSON.stringify(job.rawLocation || '')}`.toLowerCase();
+        if (!haystack.includes(needle)) return false;
       }
 
       if (filters.sector && filters.sector.length > 0) {
@@ -1473,7 +1486,7 @@ if (filters.remote) {
               </div>
             )}
 
-            <JobFilters filters={filters} onFiltersChange={(newFilters: any) => {
+            <JobFilters filters={filters} resultCount={filteredJobs.length} onFiltersChange={(newFilters: any) => {
               setFilters(newFilters);
               const params = new URLSearchParams();
               if (newFilters.search) params.set('search', newFilters.search);
@@ -1481,9 +1494,15 @@ if (filters.remote) {
               if (newFilters.role) params.set('role', newFilters.role);
               if (newFilters.state) params.set('state', newFilters.state);
               if (newFilters.town) params.set('town', newFilters.town);
+              if (newFilters.locationSearch) params.set('locationSearch', newFilters.locationSearch);
               if (newFilters.jobType?.length) params.set('jobType', newFilters.jobType.join(','));
               if (newFilters.workMode?.length) params.set('workMode', newFilters.workMode.join(','));
-              if (newFilters.salaryRange?.enabled) { if (newFilters.salaryRange.min > 0) params.set('salaryMin', newFilters.salaryRange.min.toString()); if (newFilters.salaryRange.max > 0) params.set('salaryMax', newFilters.salaryRange.max.toString()); }
+              // Was previously gated on a `.enabled` field that doesn't
+              // exist anywhere on salaryRange's actual shape ({min, max}),
+              // so this branch never fired — salary filters worked (the
+              // filtering logic reads filters.salaryRange directly) but
+              // never made it into a shareable URL.
+              if (newFilters.salaryRange) { if (newFilters.salaryRange.min > 0) params.set('salaryMin', newFilters.salaryRange.min.toString()); if (newFilters.salaryRange.max > 0) params.set('salaryMax', newFilters.salaryRange.max.toString()); }
               if (sortBy !== 'latest') params.set('sort', sortBy);
               router.replace(params.toString() ? `${pathname}?${params.toString()}` : pathname);
             }} isOpen={filtersOpen} onToggle={() => setFiltersOpen(!filtersOpen)} onClearAll={clearAllFilters} />
