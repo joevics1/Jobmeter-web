@@ -405,12 +405,13 @@ export default function BuildClient({
               ))}
             </div>
 
-            {/* Text size / line spacing — three discrete levels each, kept simple
-                for a small-screen UI. Overflow banner below re-checks automatically
-                since previewHtml recomputes on scale change. */}
-            <div className="flex flex-wrap gap-x-4 gap-y-2 mb-3 text-sm">
-              <div className="flex items-center gap-1.5">
-                <span className="text-muted-foreground text-xs">Text size</span>
+            {/* Text size / line spacing — single row, short labels so both
+                fit without wrapping on a phone screen. Overflow banner below
+                re-checks automatically since previewHtml recomputes on
+                scale change. */}
+            <div className="flex items-center gap-4 mb-3 text-sm overflow-x-auto flex-nowrap pb-1">
+              <div className="flex items-center gap-1.5 shrink-0">
+                <span className="text-muted-foreground text-xs">Size</span>
                 {([['S', 0.9], ['M', 1], ['L', 1.15]] as const).map(([label, value]) => (
                   <button
                     key={label}
@@ -422,9 +423,9 @@ export default function BuildClient({
                   </button>
                 ))}
               </div>
-              <div className="flex items-center gap-1.5">
-                <span className="text-muted-foreground text-xs">Line spacing</span>
-                {([['Compact', 1], ['Normal', 1.15], ['Relaxed', 1.3]] as const).map(([label, value]) => (
+              <div className="flex items-center gap-1.5 shrink-0">
+                <span className="text-muted-foreground text-xs">Spacing</span>
+                {([['S', 1], ['M', 1.15], ['L', 1.3]] as const).map(([label, value]) => (
                   <button
                     key={label}
                     type="button"

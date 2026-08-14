@@ -1193,7 +1193,7 @@ function renderTemplate7(data: CVData): string {
                             <div class="work-entry">
                                 <div class="work-header">
                                     <div class="company-name">${exp.company}</div>
-                                    <div class="work-location-date">${personalDetails.location}<br>${exp.years}</div>
+                                    <div class="work-location-date">${exp.years}</div>
                                 </div>
                                 <div class="work-position">${exp.role}</div>
                                 <ul>
@@ -2389,16 +2389,30 @@ export interface CVTextScale {
 function applyTextScale(html: string, scale?: CVTextScale): string {
   const font = scale?.font ?? 1;
   const line = scale?.line ?? 1;
-  if (font === 1 && line === 1) return html; // no-op — original output, byte for byte
 
-  let out = html
-    .replace(/font-size:\s*([\d.]+)px/g, `font-size: calc($1px * var(--cv-font-scale))`)
-    .replace(/line-height:\s*([\d.]+)(?!px)/g, `line-height: calc($1 * var(--cv-line-scale))`);
+  let out = html;
 
-  const rootStyle = `<style>:root{--cv-font-scale:${font};--cv-line-scale:${line};}</style>`;
+  // Always-on fix: none of the 8 template functions below include
+  // print-color-adjust, so browsers silently drop background colors when
+  // the "PDF" button (window.print()) runs — headers/section bars that are
+  // visible on screen print as plain white. There's an unused `baseCss`
+  // constant near the top of this file that already had the right fix
+  // written but never wired in; this restores it for every template
+  // without editing each one individually.
+  const printFix = '<style>@media print{*{-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important;color-adjust:exact !important;}}</style>';
+
+  let inject = printFix;
+
+  if (font !== 1 || line !== 1) {
+    out = out
+      .replace(/font-size:\s*([\d.]+)px/g, `font-size: calc($1px * var(--cv-font-scale))`)
+      .replace(/line-height:\s*([\d.]+)(?!px)/g, `line-height: calc($1 * var(--cv-line-scale))`);
+    inject += `<style>:root{--cv-font-scale:${font};--cv-line-scale:${line};}</style>`;
+  }
+
   out = out.includes('<head>')
-    ? out.replace('<head>', `<head>${rootStyle}`)
-    : rootStyle + out;
+    ? out.replace('<head>', `<head>${inject}`)
+    : inject + out;
 
   return out;
 }
