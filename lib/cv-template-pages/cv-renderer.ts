@@ -1193,7 +1193,7 @@ function renderTemplate7(data: CVData): string {
                             <div class="work-entry">
                                 <div class="work-header">
                                     <div class="company-name">${exp.company}</div>
-                                    <div class="work-location-date">${personalDetails.location}<br>${exp.years}</div>
+                                    <div class="work-location-date">${exp.years}</div>
                                 </div>
                                 <div class="work-position">${exp.role}</div>
                                 <ul>
@@ -2368,35 +2368,104 @@ function capCVDataForRender(data: CVData): CVData {
   return capped;
 }
 
-export function renderCVTemplate(templateId: string, rawData: CVData, mode: 'view' | 'pdf' = 'pdf'): string {
+// ── User-adjustable text size / line spacing ────────────────────────────
+// Every template hardcodes its own font-size/line-height values (tuned per
+// design for the strict 1-page A4 layout). Rather than touching each of the
+// 8 template functions individually — high risk of missing an occurrence
+// across ~150 declarations — we rewrite the already-generated HTML string
+// once here: every literal `font-size: Npx` / `line-height: N` becomes a
+// calc() multiplied by a CSS custom property, and a :root rule sets that
+// property to the requested scale. At the default scale (1), the calc()
+// evaluates to the exact original value, so existing callers that don't
+// pass a scale are unaffected. This is deliberately a pure post-process
+// step (not a redesign of the templates) so it's a single, easy-to-revert
+// change if it causes problems — delete this block and the two regexes
+// below, and the file goes back to exactly what it was.
+export interface CVTextScale {
+  font?: number; // multiplier applied to every font-size, default 1
+  line?: number; // multiplier applied to every line-height, default 1
+}
+
+function applyTextScale(html: string, scale?: CVTextScale): string {
+  const font = scale?.font ?? 1;
+  const line = scale?.line ?? 1;
+
+  let out = html;
+
+  // Always-on fix: none of the 8 template functions below include
+  // print-color-adjust, so browsers silently drop background colors when
+  // the "PDF" button (window.print()) runs — headers/section bars that are
+  // visible on screen print as plain white. There's an unused `baseCss`
+  // constant near the top of this file that already had the right fix
+  // written but never wired in; this restores it for every template
+  // without editing each one individually.
+  const printFix = '<style>@media print{*{-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important;color-adjust:exact !important;}}</style>';
+
+  let inject = printFix;
+
+  if (font !== 1 || line !== 1) {
+    out = out
+      .replace(/font-size:\s*([\d.]+)px/g, `font-size: calc($1px * var(--cv-font-scale))`)
+      .replace(/line-height:\s*([\d.]+)(?!px)/g, `line-height: calc($1 * var(--cv-line-scale))`)
+      // "Spacing" also needs to grow the gap BETWEEN sections/entries, not
+      // just the gap between lines within a paragraph — margin-bottom is
+      // what actually fills leftover page height (7 of the 8 templates use
+      // a fixed margin-bottom per section; template-7 computes one
+      // dynamically in mm via calculateSpacing()). Without this, "L"
+      // spacing barely changed how full the page looked, since the one
+      // value that actually closes empty space at the bottom was untouched.
+      .replace(/margin-bottom:\s*([\d.]+)px/g, `margin-bottom: calc($1px * var(--cv-line-scale))`)
+      .replace(/margin-bottom:\s*([\d.]+)mm/g, `margin-bottom: calc($1mm * var(--cv-line-scale))`)
+      // template-7 sets its section gap via a custom property rather than
+      // margin-bottom directly — needs the same treatment.
+      .replace(/--section-spacing:\s*([\d.]+)mm/g, `--section-spacing: calc($1mm * var(--cv-line-scale))`);
+    inject += `<style>:root{--cv-font-scale:${font};--cv-line-scale:${line};}</style>`;
+  }
+
+  out = out.includes('<head>')
+    ? out.replace('<head>', `<head>${inject}`)
+    : inject + out;
+
+  return out;
+}
+
+export function renderCVTemplate(
+  templateId: string,
+  rawData: CVData,
+  mode: 'view' | 'pdf' = 'pdf',
+  scale?: CVTextScale
+): string {
   const data = capCVDataForRender(rawData);
+  let html: string;
 
   if (mode === 'view') {
     switch (templateId) {
-      case 'template-5': return renderResponsiveTemplate5(data);
-      case 'template-6': return renderResponsiveTemplate6(data);
+      case 'template-5': html = renderResponsiveTemplate5(data); break;
+      case 'template-6': html = renderResponsiveTemplate6(data); break;
       // Templates 7-12 don't have a separate responsive/on-screen variant
       // (the source app used one render for both) — same function both modes.
-      case 'template-7': return renderTemplate7(data);
-      case 'template-8': return renderTemplate8(data);
-      case 'template-9': return renderTemplate9(data);
-      case 'template-10': return renderTemplate10(data);
-      case 'template-11': return renderTemplate11(data);
-      case 'template-12': return renderTemplate12(data);
-      default: return renderResponsiveTemplate5(data);
+      case 'template-7': html = renderTemplate7(data); break;
+      case 'template-8': html = renderTemplate8(data); break;
+      case 'template-9': html = renderTemplate9(data); break;
+      case 'template-10': html = renderTemplate10(data); break;
+      case 'template-11': html = renderTemplate11(data); break;
+      case 'template-12': html = renderTemplate12(data); break;
+      default: html = renderResponsiveTemplate5(data);
+    }
+  } else {
+    // PDF mode - strict 1-page enforcement
+    switch (templateId) {
+      case 'template-5': html = renderTemplate5(data); break;
+      case 'template-6': html = renderTemplate6(data); break;
+      case 'template-7': html = renderTemplate7(data); break;
+      case 'template-8': html = renderTemplate8(data); break;
+      case 'template-9': html = renderTemplate9(data); break;
+      case 'template-10': html = renderTemplate10(data); break;
+      case 'template-11': html = renderTemplate11(data); break;
+      case 'template-12': html = renderTemplate12(data); break;
+      default: html = renderTemplate5(data);
     }
   }
-  
-  // PDF mode - strict 1-page enforcement
-  switch (templateId) {
-    case 'template-5': return renderTemplate5(data);
-    case 'template-6': return renderTemplate6(data);
-    case 'template-7': return renderTemplate7(data);
-    case 'template-8': return renderTemplate8(data);
-    case 'template-9': return renderTemplate9(data);
-    case 'template-10': return renderTemplate10(data);
-    case 'template-11': return renderTemplate11(data);
-    case 'template-12': return renderTemplate12(data);
-    default: return renderTemplate5(data);
-  }
+
+  return applyTextScale(html, scale);
 }

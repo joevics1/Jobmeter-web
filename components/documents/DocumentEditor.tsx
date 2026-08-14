@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef, useState } from 'react';
-import { Loader2, Pencil, AlertTriangle } from 'lucide-react';
+import { Loader2, Download, AlertTriangle } from 'lucide-react';
 import { GeneratedDocument } from '@/lib/document-format';
 import { downloadDocx as downloadDocxFile } from '@/lib/document-docx-export';
 import DocumentPrintStyles from '@/components/documents/DocumentPrintStyles';
@@ -145,26 +145,25 @@ export default function DocumentEditor({
         <div className="max-w-screen-md mx-auto px-4 sm:px-6 py-3 flex items-center gap-2">
           <button
             onClick={onReset}
-            className="flex-1 flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold rounded-lg py-3 transition-colors"
+            className="flex-1 flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold rounded-lg py-3 px-2 transition-colors"
           >
-            <Pencil className="h-4 w-4" />
             {resetLabel}
           </button>
           <button
             onClick={downloadPdf}
             disabled={!!downloading}
-            className="flex-1 flex items-center justify-center gap-2 border border-border bg-card hover:bg-muted disabled:opacity-50 text-foreground text-sm font-semibold rounded-lg py-3 transition-colors"
+            className="flex-1 flex items-center justify-center gap-1.5 border border-border bg-card hover:bg-muted disabled:opacity-50 text-foreground text-sm font-semibold rounded-lg py-3 px-2 transition-colors"
           >
-            {downloading === 'pdf' ? <Loader2 className="h-4 w-4 animate-spin" /> : <img src="/pdf.png" alt="" className="h-5 w-5" />}
-            <span className="hidden sm:inline">Download PDF</span>
+            {downloading === 'pdf' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+            <span>PDF</span>
           </button>
           <button
             onClick={downloadDocx}
             disabled={!!downloading}
-            className="flex-1 flex items-center justify-center gap-2 border border-border bg-card hover:bg-muted disabled:opacity-50 text-foreground text-sm font-semibold rounded-lg py-3 transition-colors"
+            className="flex-1 flex items-center justify-center gap-1.5 border border-border bg-card hover:bg-muted disabled:opacity-50 text-foreground text-sm font-semibold rounded-lg py-3 px-2 transition-colors"
           >
-            {downloading === 'docx' ? <Loader2 className="h-4 w-4 animate-spin" /> : <img src="/docx.png" alt="" className="h-5 w-5" />}
-            <span className="hidden sm:inline">Download Word</span>
+            {downloading === 'docx' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+            <span>Word Docx</span>
           </button>
         </div>
       </div>

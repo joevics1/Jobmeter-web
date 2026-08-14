@@ -83,6 +83,11 @@ export default function BuildClient({
   const [saved, setSaved] = useState(false);
   const [downloadingDocx, setDownloadingDocx] = useState(false);
 
+  // Text size / line spacing — user-adjustable, see cv-renderer.ts applyTextScale().
+  // 1 = original template default in both cases.
+  const [fontScale, setFontScale] = useState(1);
+  const [lineScale, setLineScale] = useState(1);
+
   const [pasteText, setPasteText] = useState('');
   const [parsing, setParsing] = useState(false);
   const [activeTab, setActiveTab] = useState<'autofill' | 'customize'>('autofill');
@@ -97,6 +102,8 @@ export default function BuildClient({
       roleLabel,
       designId,
       cvData: data,
+      fontScale,
+      lineScale,
     });
     setStage('result');
   }
@@ -121,6 +128,8 @@ export default function BuildClient({
         }
         setCvData(entry.cvData);
         setSelectedDesign(entry.designId);
+        setFontScale(entry.fontScale ?? 1);
+        setLineScale(entry.lineScale ?? 1);
         setStage('result');
         return;
       }
@@ -247,7 +256,10 @@ export default function BuildClient({
   
   // ── Result step ──────────────────────────────────────────────────
 
-  const previewHtml = useMemo(() => renderCVTemplate(selectedDesign, cvData, 'view'), [cvData, selectedDesign]);
+  const previewHtml = useMemo(
+    () => renderCVTemplate(selectedDesign, cvData, 'view', { font: fontScale, line: lineScale }),
+    [cvData, selectedDesign, fontScale, lineScale]
+  );
 
   function handlePrint() {
     previewFrameRef.current?.contentWindow?.print();
@@ -392,10 +404,44 @@ export default function BuildClient({
                 </button>
               ))}
             </div>
+
+            {/* Text size / line spacing — single row, short labels so both
+                fit without wrapping on a phone screen. Overflow banner below
+                re-checks automatically since previewHtml recomputes on
+                scale change. */}
+            <div className="flex items-center gap-4 mb-3 text-sm overflow-x-auto flex-nowrap pb-1">
+              <div className="flex items-center gap-1.5 shrink-0">
+                <span className="text-muted-foreground text-xs">Size</span>
+                {([['S', 0.9], ['M', 1], ['L', 1.25]] as const).map(([label, value]) => (
+                  <button
+                    key={label}
+                    type="button"
+                    onClick={() => setFontScale(value)}
+                    className={`px-2.5 py-1 rounded-full text-xs font-medium border ${fontScale === value ? 'bg-blue-600 text-white border-blue-600' : 'bg-card text-foreground border-border'}`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+              <div className="flex items-center gap-1.5 shrink-0">
+                <span className="text-muted-foreground text-xs">Spacing</span>
+                {([['S', 1], ['M', 1.25], ['L', 1.6]] as const).map(([label, value]) => (
+                  <button
+                    key={label}
+                    type="button"
+                    onClick={() => setLineScale(value)}
+                    className={`px-2.5 py-1 rounded-full text-xs font-medium border ${lineScale === value ? 'bg-blue-600 text-white border-blue-600' : 'bg-card text-foreground border-border'}`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             {isOverflowing && (
               <div className="flex items-start gap-2 text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mb-3">
                 <span>⚠️</span>
-                <span>This CV looks longer than one page — some content at the bottom may be cut off. Try trimming a bullet point or shortening a section, then check again.</span>
+                <span>This CV looks longer than one page — some content at the bottom may be cut off. Try trimming a bullet point, shortening a section, or lowering the text size / line spacing above.</span>
               </div>
             )}
             <div className="border border-border rounded-lg overflow-hidden shadow-sm bg-muted mb-3">
