@@ -14,8 +14,10 @@ export async function generateStaticParams() {
   return getAllPublishedRolePageParams('cv');
 }
 
-// Skip ISR caching while pages are actively being added/reviewed.
-export const dynamic = 'force-dynamic';
+// Static generation with periodic revalidation — content doesn't need to
+// reflect edits instantly, and a Vercel redeploy is always available to
+// force an immediate refresh if needed.
+export const revalidate = 3600;
 
 export async function generateMetadata(
   { params }: { params: { role: string } }
