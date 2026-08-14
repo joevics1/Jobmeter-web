@@ -91,7 +91,10 @@ export default function EditProfilePage() {
         !nextCvData.summary &&
         (nextCvData.experience || []).length === 0
       );
-      setTalentPool(!!onboardingRow?.talent_pool);
+      // Default to opted-in, same as onboarding — only an explicit prior
+      // opt-out (talent_pool === false) should show unchecked. A null/
+      // undefined value just means they've never touched this control.
+      setTalentPool(onboardingRow?.talent_pool !== false);
       setWasTalentPool(!!onboardingRow?.talent_pool);
       setLoading(false);
     })();

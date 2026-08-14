@@ -182,14 +182,14 @@ export default function TemplateDocumentClient({ template, docType, docCountry }
               <div className="max-w-screen-md mx-auto px-4 sm:px-6 py-3 flex items-center gap-2">
                 <button
                   onClick={() => setScreen('form')}
-                  className="flex-1 flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold rounded-lg py-3 px-2 transition-colors"
+                  className="flex-1 flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold rounded-lg py-3 px-1 transition-colors whitespace-nowrap"
                 >
                   Edit
                 </button>
                 <button
                   onClick={handlePreviewDownloadPdf}
                   disabled={!!previewDownloading}
-                  className="flex-1 flex items-center justify-center gap-1.5 border border-border bg-card hover:bg-muted disabled:opacity-50 text-foreground text-sm font-semibold rounded-lg py-3 px-2 transition-colors"
+                  className="flex-1 flex items-center justify-center gap-1 border border-border bg-card hover:bg-muted disabled:opacity-50 text-foreground text-sm font-semibold rounded-lg py-3 px-1 transition-colors whitespace-nowrap"
                 >
                   {previewDownloading === 'pdf' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
                   <span>PDF</span>
@@ -197,7 +197,7 @@ export default function TemplateDocumentClient({ template, docType, docCountry }
                 <button
                   onClick={handlePreviewDownloadDocx}
                   disabled={!!previewDownloading}
-                  className="flex-1 flex items-center justify-center gap-1.5 border border-border bg-card hover:bg-muted disabled:opacity-50 text-foreground text-sm font-semibold rounded-lg py-3 px-2 transition-colors"
+                  className="flex-1 flex items-center justify-center gap-1 border border-border bg-card hover:bg-muted disabled:opacity-50 text-foreground text-sm font-semibold rounded-lg py-3 px-1 transition-colors whitespace-nowrap"
                 >
                   {previewDownloading === 'docx' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
                   <span>Word Docx</span>

@@ -27,22 +27,21 @@ export default function AuthCallback() {
           subscription.unsubscribe();
 
           if (role === "recruiter") {
-            // Best-effort: make sure a recruiter profile row exists, same as
-            // the password sign-up flow. Never blocks the redirect if it fails.
+            // Best-effort: make sure this profile is actually marked as a
+            // recruiter. The on_auth_user_created DB trigger always creates
+            // a profiles row first (it fires on the auth.users insert,
+            // before this client-side code ever runs) and defaults
+            // user_type to 'seeker' since Google's OAuth payload has no way
+            // to carry our custom user_type metadata. So the row already
+            // exists by now — we still need to correct its user_type, not
+            // just insert one when it's missing (which was the bug: that
+            // branch never ran, so Google-signed-up recruiters stayed
+            // 'seeker' forever). Never blocks the redirect if it fails.
             try {
-              const { data: existingProfile } = await supabase
+              await supabase
                 .from("profiles")
-                .select("id")
-                .eq("id", session.user.id)
-                .single();
-
-              if (!existingProfile) {
-                await supabase.from("profiles").insert([{
-                  id: session.user.id,
-                  email: session.user.email,
-                  user_type: "recruiter",
-                }]);
-              }
+                .update({ user_type: "recruiter" })
+                .eq("id", session.user.id);
             } catch (err) {
               console.error("Recruiter profile setup error:", err);
             }
