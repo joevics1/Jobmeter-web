@@ -12,6 +12,7 @@
 // has to show or choose between countries. Re-adding country to the URL
 // later just means re-adding the .eq('country_code', ...) filters below.
 
+import { cache } from 'react';
 import { createClient } from '@/lib/supabase/server';
 import type { CVData } from './cv-data-types';
 
@@ -39,7 +40,12 @@ export interface ContentRolePage {
   updated_at: string;
 }
 
-export async function getRolePage(
+// Wrapped in React's cache() — generateMetadata() and the page component
+// both call this with identical args for the same request (role page had
+// no memoization at all before), which meant every page load fired the
+// same Supabase query twice. cache() dedupes calls with matching arguments
+// within a single render pass, so this now only runs once per request.
+export const getRolePage = cache(async function getRolePage(
   kind: ContentRolePageKind,
   roleSlug: string
 ): Promise<ContentRolePage | null> {
@@ -56,7 +62,7 @@ export async function getRolePage(
 
   if (error || !data) return null;
   return data as ContentRolePage;
-}
+});
 
 export async function getAllPublishedRolePageParams(
   kind: ContentRolePageKind
