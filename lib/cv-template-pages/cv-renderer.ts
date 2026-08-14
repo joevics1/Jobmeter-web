@@ -2406,7 +2406,19 @@ function applyTextScale(html: string, scale?: CVTextScale): string {
   if (font !== 1 || line !== 1) {
     out = out
       .replace(/font-size:\s*([\d.]+)px/g, `font-size: calc($1px * var(--cv-font-scale))`)
-      .replace(/line-height:\s*([\d.]+)(?!px)/g, `line-height: calc($1 * var(--cv-line-scale))`);
+      .replace(/line-height:\s*([\d.]+)(?!px)/g, `line-height: calc($1 * var(--cv-line-scale))`)
+      // "Spacing" also needs to grow the gap BETWEEN sections/entries, not
+      // just the gap between lines within a paragraph — margin-bottom is
+      // what actually fills leftover page height (7 of the 8 templates use
+      // a fixed margin-bottom per section; template-7 computes one
+      // dynamically in mm via calculateSpacing()). Without this, "L"
+      // spacing barely changed how full the page looked, since the one
+      // value that actually closes empty space at the bottom was untouched.
+      .replace(/margin-bottom:\s*([\d.]+)px/g, `margin-bottom: calc($1px * var(--cv-line-scale))`)
+      .replace(/margin-bottom:\s*([\d.]+)mm/g, `margin-bottom: calc($1mm * var(--cv-line-scale))`)
+      // template-7 sets its section gap via a custom property rather than
+      // margin-bottom directly — needs the same treatment.
+      .replace(/--section-spacing:\s*([\d.]+)mm/g, `--section-spacing: calc($1mm * var(--cv-line-scale))`);
     inject += `<style>:root{--cv-font-scale:${font};--cv-line-scale:${line};}</style>`;
   }
 

@@ -412,7 +412,7 @@ export default function BuildClient({
             <div className="flex items-center gap-4 mb-3 text-sm overflow-x-auto flex-nowrap pb-1">
               <div className="flex items-center gap-1.5 shrink-0">
                 <span className="text-muted-foreground text-xs">Size</span>
-                {([['S', 0.9], ['M', 1], ['L', 1.15]] as const).map(([label, value]) => (
+                {([['S', 0.9], ['M', 1], ['L', 1.25]] as const).map(([label, value]) => (
                   <button
                     key={label}
                     type="button"
@@ -425,7 +425,7 @@ export default function BuildClient({
               </div>
               <div className="flex items-center gap-1.5 shrink-0">
                 <span className="text-muted-foreground text-xs">Spacing</span>
-                {([['S', 1], ['M', 1.15], ['L', 1.3]] as const).map(([label, value]) => (
+                {([['S', 1], ['M', 1.25], ['L', 1.6]] as const).map(([label, value]) => (
                   <button
                     key={label}
                     type="button"
