@@ -210,11 +210,12 @@ export async function generateStaticParams() {
 //  ① slot 4198231153  top display        below breadcrumb, full width
 //  ② slot 4690286797  in-article fluid   after company description
 //  ③ slot 8181708196  in-article fluid   before FAQ section
-//  ④ slot 9025117620  in-feed fluid      bottom of page, above anchor spacer
-//  ⑤ slot 9751041788  anchor fixed       fixed bottom bar, mobile + desktop
+//  ④ slot 9025117620  in-feed fluid      bottom of page
 //
-// Total impressions per page-view: 5 (4 scroll + 1 persistent anchor)
+// Total impressions per page-view: 4
 // No slot is used more than once.
+// (Fixed bottom anchor unit — slot 9751041788 — removed: it rendered
+//  oversized on many pages and covered content instead of staying 50px.)
 //
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -254,23 +255,6 @@ export default async function CompanyProfilePage({
       {company.faqs && Array.isArray(company.faqs) && company.faqs.length > 0 && (
         <FAQSchema faqs={company.faqs} />
       )}
-
-      {/* ════════════════════════════════════════════════════════════════════
-          Ad ⑤ — Anchor · slot 9751041788
-          Fixed bottom bar, visible on BOTH mobile and desktop.
-          height 50px, z-index 40 so it clears nav/modals.
-          Matching spacer div at page bottom prevents content overlap.
-      ════════════════════════════════════════════════════════════════════ */}
-      <div
-        className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-gray-100"
-        style={{ height: '50px', overflow: 'hidden' }}
-      >
-        <AdUnit
-          slot="9751041788"
-          format="auto"
-          style={{ display: 'block', width: '100%', height: '50px', maxHeight: '50px', overflow: 'hidden' }}
-        />
-      </div>
 
       <div className="min-h-screen bg-gray-50">
 
@@ -778,9 +762,6 @@ export default async function CompanyProfilePage({
           </div>
 
         </div>
-
-        {/* Spacer — prevents anchor ad (50px) from overlapping last content */}
-        <div className="h-[58px]" />
 
       </div>
     </>
