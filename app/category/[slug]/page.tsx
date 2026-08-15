@@ -45,6 +45,7 @@ export type CategoryJobPage = {
   // Worker filters
   filter_city: string | null;
   filter_country: string | null;
+  filter_sector: string | null;
   filter_role: string | null;
 
   // Core SEO

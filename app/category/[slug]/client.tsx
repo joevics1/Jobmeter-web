@@ -10,9 +10,11 @@ import {
   ChevronDown
 } from 'lucide-react';
 import { CategoryJobPage, SalaryRow, SkillRow, AgencyRow, LinkRow, FAQRow } from './page';
+import { getCountryDisplay } from '@/lib/countrySlugMap';
 
 const WORKER_URL = 'https://jobs-api.joevicspro.workers.dev/jobs';
 const JOBS_PER_PAGE = 20;
+const RELATED_JOBS_LIMIT = 6;
 
 type RawJob = {
   id: string;
@@ -27,13 +29,63 @@ type RawJob = {
   created_at: string;
   sector: string;
   role_category: string;
+  // May not be present depending on the Worker's response shape — handled
+  // defensively so filtering/expiry never throws on an older payload.
+  status?: string | null;
+  deadline?: string | null;
 };
 
 type JobUI = {
   id: string; slug: string; title: string;
   company: string; location: string; salary: string;
   type: string; sector: string; role_category: string; postedDate: string;
+  isExpired: boolean;
 };
+
+function isJobExpired(job: RawJob): boolean {
+  if (job.status === 'expired') return true;
+  if (job.deadline) {
+    const d = new Date(job.deadline);
+    if (!isNaN(d.getTime()) && d.getTime() < Date.now()) return true;
+  }
+  return false;
+}
+
+function jobCountry(job: RawJob): string | null {
+  if (typeof job.location === 'object' && job.location?.country) return job.location.country;
+  return null;
+}
+
+function jobCity(job: RawJob): string | null {
+  if (typeof job.location === 'object' && job.location?.city) return job.location.city;
+  return null;
+}
+
+function countryMatches(jobCountryRaw: string | null, pageCountry: string | null): boolean {
+  if (!pageCountry) return true;
+  if (!jobCountryRaw) return false;
+  return getCountryDisplay(jobCountryRaw) === getCountryDisplay(pageCountry);
+}
+
+function cityMatches(jobCityRaw: string | null, pageCity: string | null): boolean {
+  if (!pageCity) return true;
+  if (!jobCityRaw) return false;
+  return jobCityRaw.toLowerCase().includes(pageCity.toLowerCase());
+}
+
+function sectorMatches(job: RawJob, pageSector: string | null): boolean {
+  if (!pageSector) return true;
+  return (job.sector || '').toLowerCase() === pageSector.toLowerCase();
+}
+
+function roleMatches(job: RawJob, pageRole: string | null): boolean {
+  if (!pageRole) return true;
+  const needle = pageRole.toLowerCase();
+  return (
+    (job.role_category || '').toLowerCase().includes(needle) ||
+    (job.title || '').toLowerCase().includes(needle)
+  );
+}
 
 function formatRelativeDate(dateStr: string): string {
   try {
@@ -65,21 +117,66 @@ function transformJob(j: RawJob): JobUI {
     type: j.employment_type || j.job_type || '',
     sector: j.sector || '', role_category: j.role_category || '',
     postedDate: formatRelativeDate(j.posted_date || j.created_at),
+    isExpired: isJobExpired(j),
   };
 }
 
+// Primary match for this page: country + sector + role + city must all agree
+// (any filter left unset on the page is treated as "no restriction").
 function matchesPage(job: RawJob, page: CategoryJobPage): boolean {
-  const cityMatch =
-    !page.filter_city ||
-    (typeof job.location === 'object' &&
-      !!job.location?.city?.toLowerCase().includes(page.filter_city.toLowerCase()));
+  return (
+    countryMatches(jobCountry(job), page.filter_country) &&
+    cityMatches(jobCity(job), page.filter_city) &&
+    sectorMatches(job, page.filter_sector) &&
+    roleMatches(job, page.filter_role)
+  );
+}
 
-  const roleMatch =
-    !page.filter_role ||
-    !!job.role_category?.toLowerCase().includes(page.filter_role.toLowerCase()) ||
-    !!job.title?.toLowerCase().includes(page.filter_role.toLowerCase());
+// Related jobs: when the exact page filters don't produce enough jobs (or to
+// supplement a full list), fall back through progressively broader tiers so
+// the page never has an empty "you might also like" section. Priority:
+//   1. same role + same city        (closest possible match)
+//   2. same sector + same city
+//   3. same role + same country
+//   4. same sector + same country
+//   5. any job in the same country
+// Active jobs are preferred within each tier; expired jobs only fill in
+// once active ones run out, at any tier, rather than being dropped — so a
+// page with only expired jobs left in that city/sector still has content
+// instead of going blank.
+function buildRelatedJobs(
+  allJobs: RawJob[],
+  page: CategoryJobPage,
+  excludeIds: Set<string>,
+  limit: number
+): JobUI[] {
+  const pool = allJobs.filter((j) => !excludeIds.has(j.id));
 
-  return cityMatch && roleMatch;
+  const tiers: ((j: RawJob) => boolean)[] = [
+    (j) => cityMatches(jobCity(j), page.filter_city) && roleMatches(j, page.filter_role) && !!page.filter_city && !!page.filter_role,
+    (j) => cityMatches(jobCity(j), page.filter_city) && sectorMatches(j, page.filter_sector) && !!page.filter_city && !!page.filter_sector,
+    (j) => countryMatches(jobCountry(j), page.filter_country) && roleMatches(j, page.filter_role) && !!page.filter_role,
+    (j) => countryMatches(jobCountry(j), page.filter_country) && sectorMatches(j, page.filter_sector) && !!page.filter_sector,
+    (j) => countryMatches(jobCountry(j), page.filter_country),
+  ];
+
+  const picked: RawJob[] = [];
+  const pickedIds = new Set<string>();
+
+  for (const tierMatch of tiers) {
+    if (picked.length >= limit) break;
+    const tierJobs = pool.filter((j) => !pickedIds.has(j.id) && tierMatch(j));
+    // Active jobs first within the tier, expired ones only fill remaining slots.
+    const active = tierJobs.filter((j) => !isJobExpired(j));
+    const expired = tierJobs.filter((j) => isJobExpired(j));
+    for (const j of [...active, ...expired]) {
+      if (picked.length >= limit) break;
+      picked.push(j);
+      pickedIds.add(j.id);
+    }
+  }
+
+  return picked.map(transformJob);
 }
 
 function Section({ id, icon: Icon, title, children }: {
@@ -226,15 +323,26 @@ function RelatedLinks({ title, links }: { title: string; links: LinkRow[] }) {
   );
 }
 
+function ExpiredBadge() {
+  return (
+    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gray-100 text-gray-500 text-[11px] font-medium">
+      Closed
+    </span>
+  );
+}
+
 function JobCard({ job }: { job: JobUI }) {
   return (
     <Link href={`/jobs/${job.slug}`}
-      className="group block rounded-xl border border-gray-100 bg-white p-4 shadow-sm hover:border-blue-200 hover:shadow-md transition-all duration-200">
+      className={`group block rounded-xl border border-gray-100 bg-white p-4 shadow-sm hover:border-blue-200 hover:shadow-md transition-all duration-200 ${job.isExpired ? 'opacity-70' : ''}`}>
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
-          <h3 className="font-semibold text-gray-900 text-sm leading-snug group-hover:text-blue-600 transition-colors line-clamp-2">
-            {job.title}
-          </h3>
+          <div className="flex items-center gap-2">
+            <h3 className="font-semibold text-gray-900 text-sm leading-snug group-hover:text-blue-600 transition-colors line-clamp-2">
+              {job.title}
+            </h3>
+            {job.isExpired && <ExpiredBadge />}
+          </div>
           <p className="mt-1 text-sm text-gray-500 flex items-center gap-1.5 truncate">
             <Building2 size={12} className="shrink-0" /> {job.company}
           </p>
@@ -251,22 +359,40 @@ function JobCard({ job }: { job: JobUI }) {
   );
 }
 
-function JobsWidget({ page }: { page: CategoryJobPage }) {
-  const [allJobs, setAllJobs] = useState<JobUI[]>([]);
-  const [loading, setLoading] = useState(true);
+function RelatedJobsSection({ rawJobs, page, excludeIds }: {
+  rawJobs: RawJob[]; page: CategoryJobPage; excludeIds: Set<string>;
+}) {
+  const related = useMemo(
+    () => buildRelatedJobs(rawJobs, page, excludeIds, RELATED_JOBS_LIMIT),
+    [rawJobs, page, excludeIds]
+  );
+
+  if (related.length === 0) return null;
+
+  return (
+    <Section id="related-jobs" icon={Briefcase} title="You Might Also Like">
+      <p className="text-sm text-gray-500 -mt-2 mb-4">
+        Other roles in {page.filter_city || page.filter_country || 'the region'} you may be interested in.
+      </p>
+      <div className="grid sm:grid-cols-2 gap-3">
+        {related.map((job) => <JobCard key={job.id} job={job} />)}
+      </div>
+    </Section>
+  );
+}
+
+function JobsWidget({ page, rawJobs, loading }: { page: CategoryJobPage; rawJobs: RawJob[]; loading: boolean }) {
   const [search, setSearch] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
 
-  useEffect(() => {
-    fetch(WORKER_URL)
-      .then((r) => r.json())
-      .then((data) => {
-        const raw: RawJob[] = data.jobs ?? [];
-        setAllJobs(raw.filter((j) => matchesPage(j, page)).map(transformJob));
-      })
-      .catch(console.error)
-      .finally(() => setLoading(false));
-  }, [page]);
+  const allJobs = useMemo(() => {
+    const matched = rawJobs.filter((j) => matchesPage(j, page)).map(transformJob);
+    // Active jobs first, then expired ones — never hide expired jobs outright,
+    // just deprioritize them so the page stays populated over time.
+    return [...matched].sort((a, b) => Number(a.isExpired) - Number(b.isExpired));
+  }, [rawJobs, page]);
+
+  const matchedIds = useMemo(() => new Set(allJobs.map((j) => j.id)), [allJobs]);
 
   const filtered = useMemo(() => {
     if (!search.trim()) return allJobs;
@@ -365,6 +491,7 @@ function TableOfContents({ page }: { page: CategoryJobPage }) {
     { id: 'cost-of-living', label: 'Cost of Living', show: !!page.cost_of_living_html },
     { id: 'housing', label: 'Housing', show: !!page.housing_html },
     { id: 'faq', label: 'FAQ', show: (page.faq_json?.length ?? 0) > 0 },
+    { id: 'related-jobs', label: 'You Might Also Like', show: true },
   ].filter((i) => i.show);
 
   return (
@@ -396,6 +523,27 @@ function TableOfContents({ page }: { page: CategoryJobPage }) {
 }
 
 export default function CategoryPageClient({ page }: { page: CategoryJobPage }) {
+  const [rawJobs, setRawJobs] = useState<RawJob[]>([]);
+  const [jobsLoading, setJobsLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch(WORKER_URL)
+      .then((r) => r.json())
+      .then((data) => {
+        if (cancelled) return;
+        setRawJobs(data.jobs ?? []);
+      })
+      .catch(console.error)
+      .finally(() => !cancelled && setJobsLoading(false));
+    return () => { cancelled = true; };
+  }, []);
+
+  const matchedIds = useMemo(
+    () => new Set(rawJobs.filter((j) => matchesPage(j, page)).map((j) => j.id)),
+    [rawJobs, page]
+  );
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="bg-white border-b border-gray-100">
@@ -412,9 +560,15 @@ export default function CategoryPageClient({ page }: { page: CategoryJobPage }) 
 
       <div className="max-w-4xl mx-auto px-4 py-10">
         <header className="mb-8">
-          <div className="flex items-center gap-2 text-sm text-blue-600 font-medium mb-3">
+          <div className="flex flex-wrap items-center gap-2 text-sm text-blue-600 font-medium mb-3">
             <MapPin size={14} />
             {page.filter_city ?? page.filter_country ?? 'Gulf Region'}
+            {page.filter_sector && (
+              <>
+                <span className="text-gray-300">·</span>
+                {page.filter_sector}
+              </>
+            )}
             {page.filter_role && (
               <>
                 <span className="text-gray-300">·</span>
@@ -429,7 +583,7 @@ export default function CategoryPageClient({ page }: { page: CategoryJobPage }) 
 
         <TableOfContents page={page} />
         <Prose html={page.intro_html} />
-        <JobsWidget page={page} />
+        <JobsWidget page={page} rawJobs={rawJobs} loading={jobsLoading} />
 
         {page.hiring_trends_html && (
           <Section id="trends" icon={TrendingUp} title={page.page_type === 'role_in_location' ? 'Demand & Hiring Trends' : 'Current Hiring Trends'}>
@@ -574,6 +728,7 @@ export default function CategoryPageClient({ page }: { page: CategoryJobPage }) 
             <RelatedLinks title="Related Roles" links={page.related_roles_json ?? []} />
           </section>
         )}
+        <RelatedJobsSection rawJobs={rawJobs} page={page} excludeIds={matchedIds} />
       </div>
     </div>
   );
