@@ -379,6 +379,61 @@ export default async function CompanyProfilePage({
                 </div>
               </div>
 
+              {/* Join Our Team CTA — moved here, right under About */}
+              <div className="bg-blue-600 rounded-lg shadow-sm p-4 sm:p-6 text-white">
+                <h3 className="text-base sm:text-lg font-bold mb-1 sm:mb-2">Join Our Team</h3>
+                <p className="text-blue-100 text-xs sm:text-sm mb-3 sm:mb-4">
+                  {companyJobs.length} open {companyJobs.length === 1 ? 'position' : 'positions'}
+                </p>
+                <Link
+                  href={company.careers_page_url || `/jobs?company=${company.slug}`}
+                  className="block w-full sm:w-auto sm:inline-block bg-white text-blue-600 text-center font-bold py-2 sm:py-3 px-6 rounded-lg hover:bg-blue-50 transition-colors text-sm sm:text-base"
+                >
+                  View Open Positions
+                </Link>
+              </div>
+
+              {/* Company Info — moved here, right under About */}
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
+                <h3 className="text-sm sm:text-base font-bold text-gray-900 mb-3 sm:mb-4">Company Info</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 text-xs sm:text-sm">
+                  {company.founded_year && (
+                    <div>
+                      <span className="text-gray-600">Founded:</span>
+                      <span className="ml-2 font-medium text-gray-900">{company.founded_year}</span>
+                    </div>
+                  )}
+                  {company.industry && (
+                    <div>
+                      <span className="text-gray-600">Industry:</span>
+                      <span className="ml-2 font-medium text-gray-900">{company.industry}</span>
+                    </div>
+                  )}
+                  {company.company_size && (
+                    <div>
+                      <span className="text-gray-600">Size:</span>
+                      <span className="ml-2 font-medium text-gray-900">{company.company_size} employees</span>
+                    </div>
+                  )}
+                  {company.headquarters_location && (
+                    <div>
+                      <span className="text-gray-600">Location:</span>
+                      <span className="ml-2 font-medium text-gray-900">{company.headquarters_location}</span>
+                    </div>
+                  )}
+                  {company.work_environment && (
+                    <div className="sm:col-span-2">
+                      <span className="text-gray-600">Work Style:</span>
+                      <span className="ml-2 font-medium text-gray-900">{company.work_environment}</span>
+                    </div>
+                  )}
+                  <div>
+                    <span className="text-gray-600">Profile Views:</span>
+                    <span className="ml-2 font-medium text-gray-900">{company.view_count.toLocaleString()}</span>
+                  </div>
+                </div>
+              </div>
+
               {/* ════════════════════════════════════════════════════════════
                   Ad ② — In-article · slot 4690286797
                   After the description block — highest dwell-time position.
@@ -554,65 +609,12 @@ export default async function CompanyProfilePage({
             {/* ════════════════════════════════════════════════════════════════
                 Company info col — 1/3 width on desktop, stacks first on mobile.
                 sticky top-4 keeps it pinned at the top beside the main content.
+                Holds Contact & Links only — Join Our Team + Company Info now
+                live in the main column, right after the About section.
                 NO ads in this column.
             ════════════════════════════════════════════════════════════════ */}
             <div className="lg:col-span-1 order-first lg:order-none">
               <div className="sticky top-4 space-y-4 sm:space-y-6">
-
-                {/* Join Our Team CTA */}
-                <div className="bg-blue-600 rounded-lg shadow-sm p-4 sm:p-6 text-white">
-                  <h3 className="text-base sm:text-lg font-bold mb-1 sm:mb-2">Join Our Team</h3>
-                  <p className="text-blue-100 text-xs sm:text-sm mb-3 sm:mb-4">
-                    {companyJobs.length} open {companyJobs.length === 1 ? 'position' : 'positions'}
-                  </p>
-                  <Link
-                    href={company.careers_page_url || `/jobs?company=${company.slug}`}
-                    className="block w-full bg-white text-blue-600 text-center font-bold py-2 sm:py-3 rounded-lg hover:bg-blue-50 transition-colors text-sm sm:text-base"
-                  >
-                    View Open Positions
-                  </Link>
-                </div>
-
-                {/* Company Info */}
-                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
-                  <h3 className="text-sm sm:text-base font-bold text-gray-900 mb-3 sm:mb-4">Company Info</h3>
-                  <div className="space-y-2 sm:space-y-3 text-xs sm:text-sm">
-                    {company.founded_year && (
-                      <div>
-                        <span className="text-gray-600">Founded:</span>
-                        <span className="ml-2 font-medium text-gray-900">{company.founded_year}</span>
-                      </div>
-                    )}
-                    {company.industry && (
-                      <div>
-                        <span className="text-gray-600">Industry:</span>
-                        <span className="ml-2 font-medium text-gray-900">{company.industry}</span>
-                      </div>
-                    )}
-                    {company.company_size && (
-                      <div>
-                        <span className="text-gray-600">Size:</span>
-                        <span className="ml-2 font-medium text-gray-900">{company.company_size} employees</span>
-                      </div>
-                    )}
-                    {company.headquarters_location && (
-                      <div>
-                        <span className="text-gray-600">Location:</span>
-                        <span className="ml-2 font-medium text-gray-900">{company.headquarters_location}</span>
-                      </div>
-                    )}
-                    {company.work_environment && (
-                      <div>
-                        <span className="text-gray-600">Work Style:</span>
-                        <span className="ml-2 font-medium text-gray-900">{company.work_environment}</span>
-                      </div>
-                    )}
-                    <div>
-                      <span className="text-gray-600">Profile Views:</span>
-                      <span className="ml-2 font-medium text-gray-900">{company.view_count.toLocaleString()}</span>
-                    </div>
-                  </div>
-                </div>
 
                 {/* Contact & Links */}
                 <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">

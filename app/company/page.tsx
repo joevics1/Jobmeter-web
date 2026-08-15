@@ -198,26 +198,6 @@ export default async function CompanyDirectoryPage({ searchParams }: Props) {
           </div>
         </div>
 
-        {/* ── Employer CTA ── */}
-        <div className="bg-blue-50 border-b border-blue-100">
-          <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-6">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
-              <div>
-                <h2 className="text-base sm:text-lg lg:text-xl font-bold text-gray-900 mb-0.5 sm:mb-1">
-                  Are you an employer?
-                </h2>
-                <p className="text-xs sm:text-sm text-gray-600">Register your company to attract top talent.</p>
-              </div>
-              <Link
-                href="/company/register"
-                className="px-4 sm:px-6 py-2 sm:py-3 bg-blue-600 text-white text-sm sm:text-base rounded-lg hover:bg-blue-700 transition-colors font-medium whitespace-nowrap w-full sm:w-auto text-center"
-              >
-                Register Company
-              </Link>
-            </div>
-          </div>
-        </div>
-
         {/* ── Search + filter ── */}
         <div className="bg-white border-b border-gray-200">
           <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-3 sm:py-4">
@@ -256,6 +236,26 @@ export default async function CompanyDirectoryPage({ searchParams }: Props) {
                 </Link>
               )}
             </form>
+          </div>
+        </div>
+
+        {/* ── Employer CTA ── */}
+        <div className="bg-blue-50 border-b border-blue-100">
+          <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-6">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
+              <div>
+                <h2 className="text-base sm:text-lg lg:text-xl font-bold text-gray-900 mb-0.5 sm:mb-1">
+                  Are you an employer?
+                </h2>
+                <p className="text-xs sm:text-sm text-gray-600">Register your company to attract top talent.</p>
+              </div>
+              <Link
+                href="/company/register"
+                className="px-4 sm:px-6 py-2 sm:py-3 bg-blue-600 text-white text-sm sm:text-base rounded-lg hover:bg-blue-700 transition-colors font-medium whitespace-nowrap w-full sm:w-auto text-center"
+              >
+                Register Company
+              </Link>
+            </div>
           </div>
         </div>
 
