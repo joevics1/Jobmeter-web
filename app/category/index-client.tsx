@@ -2,64 +2,64 @@
 
 import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
-import { Search, ChevronRight, ArrowRight, MapPin, Briefcase, Plane } from 'lucide-react';
+import { Search, ChevronRight, ArrowRight, MapPin, Briefcase } from 'lucide-react';
 import { GroupedCategories, CategoryPageMeta } from './page';
 
-// ─── Guide card ───────────────────────────────────────────────────────────
-// Styled like a torn boarding-pass stub: a colored spine marks whether this
-// guide is a location page or a role page, an eyebrow states the facet
-// (country/city, or role/city), and a dashed perforation in the hero echoes
-// the travel/relocation subject without leaning on cliché iconography.
-function CategoryCard({ page }: { page: CategoryPageMeta }) {
-  const isRolePage = page.page_type === 'role_in_location';
-  const eyebrow = isRolePage
-    ? [page.filter_role, page.filter_city ?? page.filter_country].filter(Boolean).join(' · ')
+type TypeFilter = 'all' | 'location' | 'role';
+
+// ─── One row in the directory ──────────────────────────────────────────────
+// Each category page is a single line of real information (what it's
+// filtered by, and its title) — a list row is honest to that, where a big
+// marketing-style card would just be mostly empty space around one line of
+// text.
+function CategoryRow({ page }: { page: CategoryPageMeta }) {
+  const isRole = page.page_type === 'role_in_location';
+  const facet = isRole
+    ? [page.filter_role, page.filter_city ?? page.filter_country].filter(Boolean).join(', ')
     : [page.filter_city, page.filter_country].filter(Boolean).join(', ') || page.filter_country;
 
   return (
     <Link
       href={`/category/${page.slug}`}
-      className="group relative flex overflow-hidden rounded-xl border border-gray-200 bg-white hover:border-gray-300 hover:shadow-lg transition-all duration-200"
+      className="group flex items-center gap-4 py-3.5 px-1 border-b border-gray-100 last:border-b-0 hover:bg-gray-50 transition-colors"
     >
-      <div className={`w-1.5 shrink-0 ${isRolePage ? 'bg-amber-500' : 'bg-blue-600'}`} />
-      <div className="flex flex-1 flex-col gap-3 p-5">
-        <div className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-gray-400">
-          {isRolePage ? <Briefcase size={12} /> : <MapPin size={12} />}
-          {eyebrow || (isRolePage ? 'Role guide' : 'Location guide')}
-        </div>
-        <h3 className="font-extrabold text-gray-900 leading-snug line-clamp-2 group-hover:text-blue-600 transition-colors">
+      <span className="hidden sm:flex items-center gap-1 shrink-0 w-8 text-gray-300 group-hover:text-gray-400">
+        {isRole ? <Briefcase size={14} /> : <MapPin size={14} />}
+      </span>
+      <span className="flex-1 min-w-0">
+        <span className="block font-semibold text-gray-900 group-hover:text-blue-600 transition-colors truncate">
           {page.h1}
-        </h3>
-        <div className="mt-auto flex items-center gap-1 text-xs font-semibold text-gray-400 group-hover:text-blue-600 transition-colors">
-          Read the guide
-          <ChevronRight size={14} className="transition-transform group-hover:translate-x-0.5" />
-        </div>
-      </div>
+        </span>
+        {facet && (
+          <span className="block text-xs text-gray-400 truncate">{facet}</span>
+        )}
+      </span>
+      <ChevronRight size={16} className="shrink-0 text-gray-300 group-hover:text-blue-600 group-hover:translate-x-0.5 transition-all" />
     </Link>
   );
 }
 
-// ─── Country section ──────────────────────────────────────────────────────
-function CountrySection({ group, searchQuery }: { group: GroupedCategories; searchQuery: string }) {
+// ─── One country's block of rows ──────────────────────────────────────────
+function CountryBlock({ group, searchQuery, typeFilter }: {
+  group: GroupedCategories; searchQuery: string; typeFilter: TypeFilter;
+}) {
   const q = searchQuery.toLowerCase();
-  const filteredPages = [...group.locationPages, ...group.rolePages].filter(
-    (p) => !q || p.h1.toLowerCase().includes(q)
-  );
+  const pages = [...group.locationPages, ...group.rolePages].filter((p) => {
+    if (typeFilter === 'location' && p.page_type !== 'jobs_in_location') return false;
+    if (typeFilter === 'role' && p.page_type !== 'role_in_location') return false;
+    return !q || p.h1.toLowerCase().includes(q);
+  });
 
-  if (filteredPages.length === 0) return null;
+  if (pages.length === 0) return null;
 
   return (
-    <div className="mb-14">
-      <div className="flex items-baseline gap-3 mb-5 px-0.5">
-        <span className="text-2xl leading-none">{group.flag}</span>
-        <h2 className="text-lg font-black text-gray-900 tracking-tight">{group.country}</h2>
-        <span className="text-xs font-semibold text-gray-400">{filteredPages.length} guide{filteredPages.length === 1 ? '' : 's'}</span>
-        <div className="flex-1 h-px bg-gray-200 ml-1" />
+    <div className="mb-10">
+      <div className="flex items-baseline justify-between mb-1">
+        <h2 className="text-sm font-bold text-gray-900 uppercase tracking-wide">{group.country}</h2>
+        <span className="text-xs text-gray-400">{pages.length}</span>
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {filteredPages.map((p) => (
-          <CategoryCard key={p.slug} page={p} />
-        ))}
+      <div className="rounded-lg border border-gray-200 bg-white px-3 sm:px-4">
+        {pages.map((p) => <CategoryRow key={p.slug} page={p} />)}
       </div>
     </div>
   );
@@ -69,122 +69,110 @@ function CountrySection({ group, searchQuery }: { group: GroupedCategories; sear
 export default function CategoryIndexClient({ groups }: { groups: GroupedCategories[] }) {
   const [search, setSearch] = useState('');
   const [activeCountry, setActiveCountry] = useState<string>('All');
+  const [typeFilter, setTypeFilter] = useState<TypeFilter>('all');
 
   const countries = useMemo(() => groups.map((g) => g.country), [groups]);
-  const totalGuides = useMemo(
+  const totalCategories = useMemo(
     () => groups.reduce((sum, g) => sum + g.locationPages.length + g.rolePages.length, 0),
     [groups]
   );
 
   const visibleGroups = useMemo(() => {
-    return groups.filter((g) => {
-      if (activeCountry !== 'All' && g.country !== activeCountry) return false;
-      if (!search.trim()) return true;
-      const q = search.toLowerCase();
-      return (
-        g.country.toLowerCase().includes(q) ||
-        g.locationPages.some((p) => p.h1.toLowerCase().includes(q)) ||
-        g.rolePages.some((p) => p.h1.toLowerCase().includes(q))
-      );
-    });
-  }, [groups, search, activeCountry]);
+    return groups.filter((g) => activeCountry === 'All' || g.country === activeCountry);
+  }, [groups, activeCountry]);
+
+  const hasAnyResults = useMemo(() => {
+    const q = search.toLowerCase();
+    return visibleGroups.some((g) =>
+      [...g.locationPages, ...g.rolePages].some((p) => {
+        if (typeFilter === 'location' && p.page_type !== 'jobs_in_location') return false;
+        if (typeFilter === 'role' && p.page_type !== 'role_in_location') return false;
+        return !q || p.h1.toLowerCase().includes(q);
+      })
+    );
+  }, [visibleGroups, search, typeFilter]);
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* ── Hero: dark band, mirrors the existing dark CTA at the page's
-             foot so the page reads as a single bookended strip ── */}
-      <div className="bg-slate-900">
-        <div className="max-w-6xl mx-auto px-4 pt-10 pb-8 md:pt-16 md:pb-10">
-          <nav className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 mb-6">
-            <Link href="/" className="hover:text-white transition-colors">Home</Link>
-            <ChevronRight size={12} />
-            <span className="text-slate-300">Guides</span>
-          </nav>
+      <div className="max-w-3xl mx-auto px-4 pt-8 pb-16">
+        <nav className="flex items-center gap-1.5 text-xs text-gray-400 mb-6">
+          <Link href="/" className="hover:text-blue-600 transition-colors">Home</Link>
+          <ChevronRight size={12} />
+          <span className="text-gray-600">Categories</span>
+        </nav>
 
-          <div className="flex items-center gap-2 text-amber-400 text-xs font-bold uppercase tracking-widest mb-3">
-            <Plane size={14} />
-            Relocation & career guides
+        <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">
+          Browse Jobs by Category & Location
+        </h1>
+        <p className="text-gray-500 mb-6">
+          {totalCategories} categor{totalCategories === 1 ? 'y' : 'ies'} across every country JobMeter covers —
+          find openings by city, country, or role.
+        </p>
+
+        {/* Toolbar */}
+        <div className="flex flex-col sm:flex-row gap-2 mb-8">
+          <div className="relative flex-1">
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search a city, role, or country…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full h-10 pl-9 pr-3 text-sm rounded-lg border border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
           </div>
-          <h1 className="text-3xl md:text-5xl font-black text-white tracking-tight mb-3 max-w-2xl">
-            Everything you need to work in the Gulf
-          </h1>
-          <p className="text-slate-400 max-w-xl text-base md:text-lg leading-relaxed">
-            {totalGuides} in-depth guide{totalGuides === 1 ? '' : 's'} on salaries, visas and hiring by
-            country, city and role — built from live job data, updated as the market moves.
-          </p>
+          <select
+            value={activeCountry}
+            onChange={(e) => setActiveCountry(e.target.value)}
+            className="h-10 px-3 text-sm rounded-lg border border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="All">All countries</option>
+            {countries.map((c) => <option key={c} value={c}>{c}</option>)}
+          </select>
+          <div className="flex rounded-lg border border-gray-200 bg-white p-0.5 text-sm">
+            {(['all', 'location', 'role'] as TypeFilter[]).map((t) => (
+              <button
+                key={t}
+                onClick={() => setTypeFilter(t)}
+                className={`px-3 h-9 rounded-md font-medium transition-colors ${
+                  typeFilter === t ? 'bg-blue-600 text-white' : 'text-gray-500 hover:text-gray-800'
+                }`}
+              >
+                {t === 'all' ? 'All' : t === 'location' ? 'By Location' : 'By Role'}
+              </button>
+            ))}
+          </div>
         </div>
 
-        {/* ── Boarding-pass style search strip, perforated where it meets
-               the content below ── */}
-        <div className="max-w-6xl mx-auto px-4">
-          <div className="flex flex-col sm:flex-row rounded-t-2xl bg-white shadow-xl overflow-hidden border border-b-0 border-gray-200">
-            <div className="relative flex-1">
-              <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Search a city, role, or country…"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="w-full h-14 pl-11 pr-4 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none"
-              />
-            </div>
-            <div className="hidden sm:block w-px bg-gray-200 my-2.5" />
-            <div className="flex overflow-x-auto sm:overflow-visible">
-              {['All', ...countries].map((c) => (
-                <button
-                  key={c}
-                  onClick={() => setActiveCountry(c)}
-                  className={`shrink-0 px-4 h-14 text-sm font-semibold whitespace-nowrap transition-colors border-b-2 ${
-                    activeCountry === c
-                      ? 'text-blue-600 border-blue-600'
-                      : 'text-gray-500 border-transparent hover:text-gray-800'
-                  }`}
-                >
-                  {c === 'All' ? 'All countries' : c}
-                </button>
-              ))}
-            </div>
-          </div>
-          {/* perforation */}
-          <div className="h-0 border-t-2 border-dashed border-gray-300" />
-        </div>
-      </div>
-
-      <div className="max-w-6xl mx-auto px-4 pt-10 pb-16">
-        {visibleGroups.length === 0 ? (
-          <div className="text-center py-20 rounded-2xl border border-dashed border-gray-300 bg-white">
-            <Search size={28} className="mx-auto text-gray-300 mb-3" />
-            <h3 className="text-lg font-bold text-gray-900">No guides match "{search}"</h3>
-            <p className="text-sm text-gray-500 mt-1">Try a different city, role, or country.</p>
+        {!hasAnyResults ? (
+          <div className="text-center py-16 rounded-lg border border-dashed border-gray-300 bg-white">
+            <Search size={24} className="mx-auto text-gray-300 mb-2" />
+            <p className="text-sm font-medium text-gray-700">No categories match your search.</p>
             <button
-              onClick={() => { setSearch(''); setActiveCountry('All'); }}
-              className="mt-4 text-sm font-semibold text-blue-600 hover:underline"
+              onClick={() => { setSearch(''); setActiveCountry('All'); setTypeFilter('all'); }}
+              className="mt-3 text-sm text-blue-600 hover:underline"
             >
               Clear filters
             </button>
           </div>
         ) : (
           visibleGroups.map((group) => (
-            <CountrySection key={group.country} group={group} searchQuery={search} />
+            <CountryBlock key={group.country} group={group} searchQuery={search} typeFilter={typeFilter} />
           ))
         )}
 
-        {/* ── Footer CTA ── */}
-        <div className="mt-8 rounded-2xl bg-slate-900 p-10 md:p-14 text-white text-center relative overflow-hidden">
-          <div className="absolute -right-10 -top-10 w-48 h-48 rounded-full bg-blue-600/20 blur-3xl" />
-          <div className="absolute -left-10 -bottom-10 w-48 h-48 rounded-full bg-amber-500/10 blur-3xl" />
-          <div className="relative">
-            <h2 className="text-2xl md:text-3xl font-black mb-3 tracking-tight">Ready to see live openings?</h2>
-            <p className="text-slate-400 mb-8 max-w-lg mx-auto">
-              Our job board updates daily with vacancies across the Gulf.
-            </p>
-            <Link
-              href="/jobs"
-              className="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-500 transition-colors"
-            >
-              Go to the job board <ArrowRight size={18} />
-            </Link>
+        {/* Footer CTA */}
+        <div className="mt-4 rounded-lg border border-gray-200 bg-white p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h2 className="font-bold text-gray-900">Looking for something specific?</h2>
+            <p className="text-sm text-gray-500">Browse every open role on the job board, updated daily.</p>
           </div>
+          <Link
+            href="/jobs"
+            className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 transition-colors shrink-0"
+          >
+            Go to the job board <ArrowRight size={16} />
+          </Link>
         </div>
       </div>
     </div>

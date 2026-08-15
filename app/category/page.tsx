@@ -6,9 +6,9 @@ import { createClient } from '@supabase/supabase-js';
 import CategoryIndexClient from './index-client';
 
 export const metadata: Metadata = {
-  title: 'Browse Jobs by Location & Role | Nigeria JobMeter',
+  title: 'Browse Jobs by Category & Location | JobMeter',
   description:
-    'Browse Nigeria job guides by city and role. Find jobs in Lagos, Abuja, Port Harcourt, Kano and more — or search by profession across Nigeria.',
+    'Browse job openings by category, role, and location. Find opportunities by city, country, or profession across every country JobMeter covers.',
   alternates: {
     canonical: 'https://www.nigeria.jobmeter.app/category',
   },
