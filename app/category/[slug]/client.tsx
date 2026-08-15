@@ -406,7 +406,7 @@ function JobsWidget({ page, rawJobs, loading }: { page: CategoryJobPage; rawJobs
   const paginated = filtered.slice((currentPage - 1) * JOBS_PER_PAGE, currentPage * JOBS_PER_PAGE);
 
   return (
-    <section id="jobs" className="mt-10 scroll-mt-20">
+    <section id="jobs" className="scroll-mt-20">
       <div className="flex items-center justify-between mb-4">
         <h2 className="flex items-center gap-2 text-xl font-bold text-gray-900">
           <Briefcase size={20} className="text-blue-500" />
@@ -581,9 +581,9 @@ export default function CategoryPageClient({ page }: { page: CategoryJobPage }) 
           </h1>
         </header>
 
+        <JobsWidget page={page} rawJobs={rawJobs} loading={jobsLoading} />
         <TableOfContents page={page} />
         <Prose html={page.intro_html} />
-        <JobsWidget page={page} rawJobs={rawJobs} loading={jobsLoading} />
 
         {page.hiring_trends_html && (
           <Section id="trends" icon={TrendingUp} title={page.page_type === 'role_in_location' ? 'Demand & Hiring Trends' : 'Current Hiring Trends'}>
