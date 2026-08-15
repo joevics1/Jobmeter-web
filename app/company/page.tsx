@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { redirect } from 'next/navigation';
 import { Building2, ArrowRight, CheckCircle, ArrowLeft } from 'lucide-react';
 import AdUnit from '@/components/ads/AdUnit';
+import CompanyLogoPlaceholder from '@/components/company/CompanyLogoPlaceholder';
 
 interface Props {
   searchParams?: { [key: string]: string | string[] | undefined };
@@ -223,7 +224,7 @@ export default async function CompanyDirectoryPage({ searchParams }: Props) {
               </select>
               <button
                 type="submit"
-                className="px-4 sm:px-6 py-2 sm:py-2.5 bg-blue-600 text-white text-sm sm:text-base rounded-lg hover:bg-blue-700 transition-colors font-medium whitespace-nowrap"
+                className="w-1/2 self-start sm:w-auto px-3 sm:px-6 py-2 sm:py-2.5 bg-blue-600 text-white text-sm sm:text-base rounded-lg hover:bg-blue-700 transition-colors font-medium whitespace-nowrap text-center"
               >
                 Search
               </button>
@@ -251,7 +252,7 @@ export default async function CompanyDirectoryPage({ searchParams }: Props) {
               </div>
               <Link
                 href="/company/register"
-                className="px-4 sm:px-6 py-2 sm:py-3 bg-blue-600 text-white text-sm sm:text-base rounded-lg hover:bg-blue-700 transition-colors font-medium whitespace-nowrap w-full sm:w-auto text-center"
+                className="w-1/2 sm:w-auto px-3 sm:px-6 py-2 sm:py-3 bg-blue-600 text-white text-sm sm:text-base rounded-lg hover:bg-blue-700 transition-colors font-medium whitespace-nowrap text-center"
               >
                 Register Company
               </Link>
@@ -296,9 +297,11 @@ export default async function CompanyDirectoryPage({ searchParams }: Props) {
                               />
                             </div>
                           ) : (
-                            <div className="w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 flex-shrink-0 bg-gray-100 rounded-lg flex items-center justify-center">
-                              <Building2 size={24} className="sm:size-7 lg:size-8 text-gray-400" />
-                            </div>
+                            <CompanyLogoPlaceholder
+                              industry={company.industry}
+                              className="w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 flex-shrink-0"
+                              iconClassName="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8"
+                            />
                           )}
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-1.5 sm:gap-2 mb-1">

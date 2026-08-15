@@ -12,6 +12,7 @@ import { CompanySchema, FAQSchema } from '@/components/seo/StructuredData';
 import { getCompanyName } from '@/lib/utils/companyUtils';
 import MarkdownRenderer from '@/components/MarkdownRenderer';
 import AdUnit from '@/components/ads/AdUnit';
+import CompanyLogoPlaceholder from '@/components/company/CompanyLogoPlaceholder';
 
 // Was `false` (cache forever). That meant once a company page was rendered and
 // crawled, it kept serving as "published" indefinitely even after is_published
@@ -330,9 +331,11 @@ export default async function CompanyProfilePage({
                       />
                     </div>
                   ) : (
-                    <div className="w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 flex-shrink-0 bg-gray-100 rounded-lg flex items-center justify-center">
-                      <Briefcase size={32} className="sm:size-10 lg:size-12 text-gray-400" />
-                    </div>
+                    <CompanyLogoPlaceholder
+                      industry={company.industry}
+                      className="w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 flex-shrink-0"
+                      iconClassName="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12"
+                    />
                   )}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5 sm:gap-2 mb-1 sm:mb-2">
@@ -732,9 +735,11 @@ export default async function CompanyProfilePage({
                           />
                         </div>
                       ) : (
-                        <div className="w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 flex-shrink-0 bg-gray-100 rounded-lg flex items-center justify-center">
-                          <Briefcase size={20} className="sm:size-6 lg:size-8 text-gray-400" />
-                        </div>
+                        <CompanyLogoPlaceholder
+                          industry={similar.industry}
+                          className="w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 flex-shrink-0"
+                          iconClassName="w-5 h-5 sm:w-6 sm:h-6 lg:w-8 lg:h-8"
+                        />
                       )}
                       <div className="flex-1 min-w-0">
                         <h3 className="font-semibold text-gray-900 text-sm sm:text-base mb-0.5 sm:mb-1 hover:text-blue-600 transition-colors line-clamp-1">
