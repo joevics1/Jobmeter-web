@@ -10,34 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-
-const SECTORS = [
-  'Information Technology & Software',
-  'Engineering & Manufacturing',
-  'Finance & Banking',
-  'Healthcare & Medical',
-  'Education & Training',
-  'Sales & Marketing',
-  'Human Resources & Recruitment',
-  'Customer Service & Support',
-  'Media, Advertising & Communications',
-  'Design, Arts & Creative',
-  'Construction & Real Estate',
-  'Logistics, Transport & Supply Chain',
-  'Agriculture & Agribusiness',
-  'Energy & Utilities (Oil, Gas, Renewable Energy)',
-  'Legal & Compliance',
-  'Government & Public Administration',
-  'Retail & E-commerce',
-  'Hospitality & Tourism',
-  'Science & Research',
-  'Security & Defense',
-  'Telecommunications',
-  'Nonprofit & NGO',
-  'Environment & Sustainability',
-  'Product Management & Operations',
-  'Data & Analytics'
-];
+import { SECTORS } from '@/lib/sectors';
 
 const EMPLOYMENT_TYPES = ['Full-time', 'Part-time', 'Contract', 'Freelance', 'Internship'];
 const ANONYMOUS_OPTION = '__anonymous__';
