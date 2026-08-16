@@ -4,18 +4,8 @@ import React, { useState, useMemo } from 'react';
 import { Search, X, ChevronDown, Sparkles, Briefcase, Award, TrendingUp, ArrowRight, Loader2 } from 'lucide-react';
 import { theme } from '@/lib/theme';
 import { SKILLS_CATEGORIES, POPULAR_TOOLS } from '@/lib/constants/skills';
-import { supabase } from '@/lib/supabase';
+import { findMatchingRoles, RoleFinderResult } from '@/lib/utils/roleMatching';
 import AdUnit from '@/components/ads/AdUnit';
-
-interface Role {
-  role: string; seniority: string; description: string;
-  requiredSkills: string[]; skillGaps: string[];
-  certifications: string[]; salaryRange: string; matchScore: number;
-}
-
-interface RoleFinderResult {
-  roles: Role[]; summary: string; totalSkillsMatched: number;
-}
 
 const EXPERIENCE_LEVELS = [
   { value: 0, label: 'Less than 1 year' },
@@ -62,13 +52,13 @@ export default function RoleFinderClient() {
     if (selectedSkills.length === 0) { setError('Please select at least one skill'); return; }
     setIsSearching(true); setError(null); setResult(null);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      const { data, error: apiError } = await supabase.functions.invoke('role-finder', {
-        body: { skills: selectedSkills, tools: selectedTools, yearsOfExperience, userId: user?.id || null }
-      });
-      if (apiError) throw new Error(apiError.message);
-      if (!data.success) throw new Error(data.error || 'Failed to find roles');
-      setResult(data.data);
+      // Instant client-side matching against lib/data/roles.ts — no network
+      // call. A tiny artificial delay keeps the existing loading state
+      // feeling intentional rather than an instant flash.
+      await new Promise((resolve) => setTimeout(resolve, 300));
+      const data = findMatchingRoles(selectedSkills, selectedTools, yearsOfExperience);
+      if (data.roles.length === 0) throw new Error('No matching roles found. Try adding more skills.');
+      setResult(data);
     } catch (err: any) { console.error('Role finder error:', err); setError(err.message || 'Failed to find roles. Please try again.'); }
     finally { setIsSearching(false); }
   };
