@@ -6,6 +6,11 @@ import AdUnit from '@/components/ads/AdUnit';
 
 export const revalidate = false;
 
+export const metadata = {
+  title: 'Graduate & Trainee Jobs — Programs for Fresh Graduates | Jobmeter',
+  description: 'Browse graduate trainee programs and entry-level trainee positions updated daily, for fresh graduates starting their career.',
+};
+
 export default function GraduateTraineeFinderPage() {
   return (
     <div className="min-h-screen" style={{ backgroundColor: theme.colors.background.muted }}>

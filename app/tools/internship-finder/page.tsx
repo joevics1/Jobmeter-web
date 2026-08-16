@@ -5,6 +5,11 @@ import { GraduationCap, Laptop, Award, Home, Globe, Rocket, ClipboardList, Gradu
 
 export const revalidate = false;
 
+export const metadata = {
+  title: 'Internship Finder — Find Internship Openings | Jobmeter',
+  description: 'Browse internship openings updated daily to kickstart your career, filterable by sector and location.',
+};
+
 export default function InternshipFinderPage() {
   return (
     <div className="min-h-screen" style={{ backgroundColor: theme.colors.background.muted }}>

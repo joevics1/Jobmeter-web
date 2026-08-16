@@ -5,6 +5,11 @@ import AdUnit from '@/components/ads/AdUnit';
 
 export const revalidate = false;
 
+export const metadata = {
+  title: 'NYSC Jobs — Job Vacancies for Corpers | Jobmeter',
+  description: 'Browse job openings suited for NYSC corps members, updated daily across sectors and states in Nigeria.',
+};
+
 export default function NYSCFinderPage() {
   return (
     <div className="min-h-screen" style={{ backgroundColor: theme.colors.background.muted }}>

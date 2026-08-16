@@ -5,6 +5,11 @@ import AdUnit from '@/components/ads/AdUnit';
 
 export const revalidate = false;
 
+export const metadata = {
+  title: 'Entry Level Jobs — No-Experience & Junior Roles | Jobmeter',
+  description: 'Browse entry-level job openings for beginners and recent graduates, updated daily across every sector Jobmeter covers.',
+};
+
 export default function EntryLevelFinderPage() {
   return (
     <div className="min-h-screen" style={{ backgroundColor: theme.colors.background.muted }}>

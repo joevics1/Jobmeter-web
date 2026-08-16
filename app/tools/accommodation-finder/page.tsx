@@ -5,6 +5,11 @@ import AdUnit from '@/components/ads/AdUnit';
 
 export const revalidate = false;
 
+export const metadata = {
+  title: 'Jobs with Accommodation — Roles with Housing Included | Jobmeter',
+  description: 'Browse job openings that include accommodation as a benefit, updated daily across sectors and locations.',
+};
+
 export default function AccommodationFinderPage() {
   return (
     <div className="min-h-screen" style={{ backgroundColor: theme.colors.background.muted }}>

@@ -5,6 +5,11 @@ import AdUnit from '@/components/ads/AdUnit';
 
 export const revalidate = false;
 
+export const metadata = {
+  title: 'Remote Jobs — Find Work From Home & Remote Job Openings | Jobmeter',
+  description: 'Browse remote job openings updated daily. Filter by sector and employment type to find legitimate work-from-home roles.',
+};
+
 export default function RemoteJobsPage() {
   return (
     <div className="min-h-screen" style={{ backgroundColor: theme.colors.background.muted }}>
