@@ -134,12 +134,12 @@ export function EntryLevelFinderClient() {
     try {
       setLoading(true);
 
-      const res = await fetch('/api/jobs');
+      const res = await fetch('https://jobs-api.joevicspro.workers.dev/jobs');
       if (!res.ok) throw new Error(`Jobs API error: ${res.status}`);
       const { jobs: allJobs } = await res.json();
 
       let filtered = (allJobs || []).filter((job: any) =>
-        job.experience_level === 'entry-level' || job.experience_level === 'Entry Level'
+        (job.experience_level || '').toLowerCase().replace(/[\s-]+/g, '_') === 'entry_level'
       );
 
       if (searchQuery.trim()) {

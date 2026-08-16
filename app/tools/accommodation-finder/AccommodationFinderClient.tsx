@@ -134,7 +134,7 @@ export function AccommodationFinderClient() {
   try {
       setLoading(true);
 
-      const res = await fetch('/api/jobs');
+      const res = await fetch('https://jobs-api.joevicspro.workers.dev/jobs');
       if (!res.ok) throw new Error(`Jobs API error: ${res.status}`);
       const { jobs: allJobs } = await res.json();
 
