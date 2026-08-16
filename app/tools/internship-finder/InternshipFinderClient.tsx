@@ -167,9 +167,11 @@ export default function InternshipFinderClient() {
       if (!res.ok) throw new Error(`Jobs API error: ${res.status}`);
       const { jobs: allJobs } = await res.json();
 
-      let filtered = (allJobs || []).filter((job: any) =>
-        job.category === 'intern-jobs'
-      );
+      // ── Primary filter ────────────────────────────────────────────────────
+      let filtered = (allJobs || []).filter((job: any) => {
+        const role = (job.role || '').toLowerCase();
+        return role.includes('intern') || role.includes('interns') || role.includes('internship');
+      });
 
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase();
