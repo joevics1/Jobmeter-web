@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useMemo } from 'react';
-import { X, ChevronDown, Sparkles, Award, TrendingUp, ArrowRight, Loader2, Search, Briefcase, ShieldCheck, Zap, Check } from 'lucide-react';
+import { X, ChevronDown, Sparkles, Award, TrendingUp, ArrowRight, Loader2, Search, Briefcase, ShieldCheck, Zap, Check, Target } from 'lucide-react';
 import { theme } from '@/lib/theme';
 import { SKILLS_CATEGORIES, POPULAR_TOOLS, ALL_SKILLS } from '@/lib/constants/skills';
 import { findMatchingRoles, RoleFinderResult } from '@/lib/utils/roleMatching';
@@ -98,17 +98,6 @@ export default function RoleFinderClient() {
             </label>
             <p className="text-xs text-gray-500 mb-3">Search for a skill, or browse by category below</p>
 
-            {selectedSkills.length > 0 && (
-              <div className="flex flex-wrap gap-2 mb-3">
-                {selectedSkills.map((skill) => (
-                  <span key={skill} className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm bg-blue-50 text-blue-700 border border-blue-100">
-                    {skill}
-                    <button onClick={() => removeSkill(skill)} className="hover:text-blue-900"><X size={14} /></button>
-                  </span>
-                ))}
-              </div>
-            )}
-
             <div className="relative">
               <div className="relative">
                 <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
@@ -194,6 +183,24 @@ export default function RoleFinderClient() {
                       );
                     })}
                   </div>
+                </div>
+              </div>
+            )}
+
+            {/* Selected skills — shown here (below search + browse) so users
+                see their picks update in place instead of scrolling back up */}
+            {selectedSkills.length > 0 && (
+              <div className="mt-4 pt-3 border-t" style={{ borderColor: theme.colors.border.light }}>
+                <p className="text-xs font-semibold text-gray-700 mb-2">
+                  Selected skills ({selectedSkills.length})
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {selectedSkills.map((skill) => (
+                    <span key={skill} className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm bg-blue-50 text-blue-700 border border-blue-100">
+                      {skill}
+                      <button onClick={() => removeSkill(skill)} className="hover:text-blue-900"><X size={14} /></button>
+                    </span>
+                  ))}
                 </div>
               </div>
             )}
@@ -286,7 +293,7 @@ export default function RoleFinderClient() {
       {/* ── Results ── */}
       {result && (
         <div className="mt-8 space-y-6">
-          <div className="rounded-2xl p-6 border" style={{ backgroundColor: '#EFF6FF', borderColor: '#BFDBFE' }}>
+          <div className="rounded-2xl p-6 border" style={{ backgroundColor: '#EFF6FF', borderColor: '#BFDBFE', borderLeft: `4px solid ${theme.colors.primary.DEFAULT}` }}>
             <div className="flex items-center gap-2 mb-2">
               <TrendingUp size={18} className="text-blue-600" />
               <h2 className="text-base font-bold text-gray-900">Career Summary</h2>
@@ -300,11 +307,24 @@ export default function RoleFinderClient() {
           {/* ── [AD: between summary and role cards] ─────────────────── */}
           <AdUnit slot="4690286797" format="fluid" layout="in-article" />
 
+          <div className="flex items-center gap-2 pt-2">
+            <Target size={20} className="text-blue-600" />
+            <h2 className="text-lg font-bold text-gray-900">Your Matched Career Paths</h2>
+          </div>
+          <p className="text-xs text-gray-500 -mt-4">Ranked by fit, best match first</p>
+
           <div className="grid sm:grid-cols-2 gap-4">
             {result.roles.map((role, index) => {
               const matchStyle = getMatchStyle(role.matchScore);
               return (
-                <div key={index} className="bg-white rounded-xl p-5 shadow-sm flex flex-col" style={{ border: `1px solid ${theme.colors.border.DEFAULT}` }}>
+                <div
+                  key={index}
+                  className="relative bg-white rounded-xl p-5 pl-6 shadow-md flex flex-col"
+                  style={{ border: `1px solid ${theme.colors.border.DEFAULT}`, borderLeft: `4px solid ${matchStyle.color}` }}
+                >
+                  <div className="absolute -top-2.5 -left-2.5 w-7 h-7 rounded-full bg-blue-600 text-white text-xs font-bold flex items-center justify-center shadow-sm">
+                    {index + 1}
+                  </div>
                   <div className="flex items-start justify-between gap-2 mb-2">
                     <div>
                       <h3 className="text-base font-bold text-gray-900 leading-snug">{role.role}</h3>
