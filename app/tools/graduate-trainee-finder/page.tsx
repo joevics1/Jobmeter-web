@@ -3,15 +3,22 @@ import { theme } from '@/lib/theme';
 import { GraduationCap, Briefcase, Wifi, Award, Home, Globe, Rocket, ClipboardList } from 'lucide-react';
 import { GraduateTraineeFinderClient } from './GraduateTraineeFinderClient';
 import AdUnit from '@/components/ads/AdUnit';
+import { fetchWorkerJobsForSchema, jobPostingSchema, MAX_JOB_POSTINGS } from '@/lib/jobPostingSchema';
 
-export const revalidate = false;
+export const revalidate = 3600;
 
 export const metadata = {
   title: 'Graduate & Trainee Jobs — Programs for Fresh Graduates | Jobmeter',
   description: 'Browse graduate trainee programs and entry-level trainee positions updated daily, for fresh graduates starting their career.',
 };
 
-export default function GraduateTraineeFinderPage() {
+export default async function GraduateTraineeFinderPage() {
+  const allJobs = await fetchWorkerJobsForSchema();
+  const jobPostings = allJobs
+    .filter((job) => (job.role || '').toLowerCase().includes('trainee'))
+    .slice(0, MAX_JOB_POSTINGS)
+    .map((job) => jobPostingSchema(job));
+
   return (
     <div className="min-h-screen" style={{ backgroundColor: theme.colors.background.muted }}>
       {/* Header */}
@@ -182,7 +189,8 @@ export default function GraduateTraineeFinderPage() {
                   { "@type": "ListItem", "position": 4, "name": "Jobs with Visa Sponsorship",    "url": "https://jobmeter.app/tools/visa-finder" },
                   { "@type": "ListItem", "position": 5, "name": "Entry Level Jobs Finder",       "url": "https://jobmeter.app/tools/entry-level-finder" },
                 ]
-              }
+              },
+              ...jobPostings,
             ])
           }}
         />

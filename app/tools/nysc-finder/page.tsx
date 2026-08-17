@@ -2,15 +2,22 @@ import { theme } from '@/lib/theme';
 import { Award, Laptop, Home, Globe, Rocket, GraduationCap, Briefcase } from 'lucide-react';
 import { NYSCFinderClient } from './NYSCFinderClient';
 import AdUnit from '@/components/ads/AdUnit';
+import { fetchWorkerJobsForSchema, jobPostingSchema, MAX_JOB_POSTINGS } from '@/lib/jobPostingSchema';
 
-export const revalidate = false;
+export const revalidate = 3600;
 
 export const metadata = {
   title: 'NYSC Jobs — Job Vacancies for Corpers | Jobmeter',
   description: 'Browse job openings suited for NYSC corps members, updated daily across sectors and states in Nigeria.',
 };
 
-export default function NYSCFinderPage() {
+export default async function NYSCFinderPage() {
+  const allJobs = await fetchWorkerJobsForSchema();
+  const jobPostings = allJobs
+    .filter((job) => (job.role || '').toLowerCase().includes('nysc'))
+    .slice(0, MAX_JOB_POSTINGS)
+    .map((job) => jobPostingSchema(job));
+
   return (
     <div className="min-h-screen" style={{ backgroundColor: theme.colors.background.muted }}>
       {/* Header */}
@@ -185,7 +192,8 @@ export default function NYSCFinderPage() {
                 { "@type": "ListItem", "position": 4, "name": "Jobs with Accommodation",     "url": "https://jobmeter.app/tools/accommodation-finder" },
                 { "@type": "ListItem", "position": 5, "name": "Remote Jobs Finder",          "url": "https://jobmeter.app/tools/remote-jobs-finder" },
               ]
-            }
+            },
+            ...jobPostings,
           ])
         }}
       />

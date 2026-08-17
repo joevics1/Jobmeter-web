@@ -2,15 +2,22 @@ import { theme } from '@/lib/theme';
 import { Rocket, Briefcase, Wifi, Home, GraduationCap, Award, ClipboardList, Globe } from 'lucide-react';
 import { EntryLevelFinderClient } from './EntryLevelFinderClient';
 import AdUnit from '@/components/ads/AdUnit';
+import { fetchWorkerJobsForSchema, jobPostingSchema, MAX_JOB_POSTINGS } from '@/lib/jobPostingSchema';
 
-export const revalidate = false;
+export const revalidate = 3600;
 
 export const metadata = {
   title: 'Entry Level Jobs — No-Experience & Junior Roles | Jobmeter',
   description: 'Browse entry-level job openings for beginners and recent graduates, updated daily across every sector Jobmeter covers.',
 };
 
-export default function EntryLevelFinderPage() {
+export default async function EntryLevelFinderPage() {
+  const allJobs = await fetchWorkerJobsForSchema();
+  const jobPostings = allJobs
+    .filter((job) => (job.experience_level || '').toLowerCase().replace(/[\s-]+/g, '_') === 'entry_level')
+    .slice(0, MAX_JOB_POSTINGS)
+    .map((job) => jobPostingSchema(job));
+
   return (
     <div className="min-h-screen" style={{ backgroundColor: theme.colors.background.muted }}>
       <div
@@ -177,7 +184,8 @@ export default function EntryLevelFinderPage() {
                   { "@type": "ListItem", "position": 4, "name": "Jobs with Visa Sponsorship",    "url": "https://jobmeter.app/tools/visa-finder" },
                   { "@type": "ListItem", "position": 5, "name": "Jobs with Accommodation",       "url": "https://jobmeter.app/tools/accommodation-finder" },
                 ]
-              }
+              },
+              ...jobPostings,
             ])
           }}
         />

@@ -2,15 +2,25 @@ import { theme } from '@/lib/theme';
 import InternshipFinderClient from './InternshipFinderClient';
 import AdUnit from '@/components/ads/AdUnit';
 import { GraduationCap, Laptop, Award, Home, Globe, Rocket, ClipboardList, GraduationCap as GC, ChevronRight } from 'lucide-react';
+import { fetchWorkerJobsForSchema, jobPostingSchema, MAX_JOB_POSTINGS } from '@/lib/jobPostingSchema';
 
-export const revalidate = false;
+export const revalidate = 3600;
 
 export const metadata = {
   title: 'Internship Finder — Find Internship Openings | Jobmeter',
   description: 'Browse internship openings updated daily to kickstart your career, filterable by sector and location.',
 };
 
-export default function InternshipFinderPage() {
+export default async function InternshipFinderPage() {
+  const allJobs = await fetchWorkerJobsForSchema();
+  const jobPostings = allJobs
+    .filter((job) => {
+      const role = (job.role || '').toLowerCase();
+      return role.includes('intern') || role.includes('interns') || role.includes('internship');
+    })
+    .slice(0, MAX_JOB_POSTINGS)
+    .map((job) => jobPostingSchema(job));
+
   return (
     <div className="min-h-screen" style={{ backgroundColor: theme.colors.background.muted }}>
       <div
@@ -176,7 +186,8 @@ export default function InternshipFinderPage() {
                   { "@type": "ListItem", "position": 4, "name": "Jobs with Accommodation",       "url": "https://jobmeter.app/tools/accommodation-finder" },
                   { "@type": "ListItem", "position": 5, "name": "Entry Level Jobs Finder",       "url": "https://jobmeter.app/tools/entry-level-finder" },
                 ]
-              }
+              },
+              ...jobPostings,
             ])
           }}
         />

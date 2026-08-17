@@ -2,15 +2,22 @@ import { theme } from '@/lib/theme';
 import { Home, Briefcase, Globe, GraduationCap, Award, Rocket, ClipboardList, Wifi } from 'lucide-react';
 import { AccommodationFinderClient } from './AccommodationFinderClient';
 import AdUnit from '@/components/ads/AdUnit';
+import { fetchWorkerJobsForSchema, jobPostingSchema, MAX_JOB_POSTINGS } from '@/lib/jobPostingSchema';
 
-export const revalidate = false;
+export const revalidate = 3600;
 
 export const metadata = {
   title: 'Jobs with Accommodation — Roles with Housing Included | Jobmeter',
   description: 'Browse job openings that include accommodation as a benefit, updated daily across sectors and locations.',
 };
 
-export default function AccommodationFinderPage() {
+export default async function AccommodationFinderPage() {
+  const allJobs = await fetchWorkerJobsForSchema();
+  const jobPostings = allJobs
+    .filter((job) => job.accommodation_status === 'yes')
+    .slice(0, MAX_JOB_POSTINGS)
+    .map((job) => jobPostingSchema(job));
+
   return (
     <div className="min-h-screen" style={{ backgroundColor: theme.colors.background.muted }}>
       {/* Header */}
@@ -184,7 +191,8 @@ export default function AccommodationFinderPage() {
                   { "@type": "ListItem", "position": 4, "name": "NYSC Jobs Finder",               "url": "https://jobmeter.app/tools/nysc-finder" },
                   { "@type": "ListItem", "position": 5, "name": "Entry Level Jobs Finder",        "url": "https://jobmeter.app/tools/entry-level-finder" },
                 ]
-              }
+              },
+              ...jobPostings,
             ])
           }}
         />

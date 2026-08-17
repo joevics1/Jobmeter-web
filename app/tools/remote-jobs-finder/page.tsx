@@ -2,15 +2,26 @@ import { Wifi, GraduationCap, Award, Globe, Home, Rocket, ClipboardList } from '
 import { theme } from '@/lib/theme';
 import RemoteJobsFinderClient from './RemoteJobsFinderClient';
 import AdUnit from '@/components/ads/AdUnit';
+import { fetchWorkerJobsForSchema, jobPostingSchema, MAX_JOB_POSTINGS } from '@/lib/jobPostingSchema';
 
-export const revalidate = false;
+// Was `false` (fully static forever after first build) -- switched to
+// hourly ISR so the JobPosting structured data below stays accurate as
+// jobs are posted/expire, instead of freezing at whatever existed at build
+// time.
+export const revalidate = 3600;
 
 export const metadata = {
   title: 'Remote Jobs — Find Work From Home & Remote Job Openings | Jobmeter',
   description: 'Browse remote job openings updated daily. Filter by sector and employment type to find legitimate work-from-home roles.',
 };
 
-export default function RemoteJobsPage() {
+export default async function RemoteJobsPage() {
+  const allJobs = await fetchWorkerJobsForSchema();
+  const jobPostings = allJobs
+    .filter((job) => (job.job_type || '').toLowerCase() === 'remote')
+    .slice(0, MAX_JOB_POSTINGS)
+    .map((job) => jobPostingSchema(job));
+
   return (
     <div className="min-h-screen" style={{ backgroundColor: theme.colors.background.muted }}>
       {/* Header */}
@@ -183,7 +194,8 @@ export default function RemoteJobsPage() {
                   { "@type": "ListItem", "position": 4, "name": "Jobs with Visa Sponsorship Finder", "url": "https://jobmeter.app/tools/visa-finder" },
                   { "@type": "ListItem", "position": 5, "name": "Entry Level Jobs Finder", "url": "https://jobmeter.app/tools/entry-level-finder" },
                 ]
-              }
+              },
+              ...jobPostings,
             ])
           }}
         />

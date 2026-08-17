@@ -3,15 +3,22 @@ import { Globe } from 'lucide-react';
 import { theme } from '@/lib/theme';
 import VisaFinderClient from './VisaFinderClient';
 import AdUnit from '@/components/ads/AdUnit';
+import { fetchWorkerJobsForSchema, jobPostingSchema, MAX_JOB_POSTINGS } from '@/lib/jobPostingSchema';
 
-export const revalidate = false;
+export const revalidate = 3600;
 
 export const metadata = {
   title: 'Jobs with Visa Sponsorship — Openings Offering Work Visa Support | Jobmeter',
   description: 'Browse job openings that include visa sponsorship, updated daily across every sector and country Jobmeter covers.',
 };
 
-export default function VisaFinderPage() {
+export default async function VisaFinderPage() {
+  const allJobs = await fetchWorkerJobsForSchema();
+  const jobPostings = allJobs
+    .filter((job) => job.visa_assistance === 'yes')
+    .slice(0, MAX_JOB_POSTINGS)
+    .map((job) => jobPostingSchema(job));
+
   return (
     <div className="min-h-screen" style={{ backgroundColor: theme.colors.background.muted }}>
       <div className="pt-12 pb-8 px-6" style={{ backgroundColor: theme.colors.primary.DEFAULT }}>
@@ -108,7 +115,8 @@ export default function VisaFinderPage() {
           { "@type": "ListItem", "position": 3, "name": "NYSC Jobs Finder", "url": "https://jobmeter.app/tools/nysc-finder" },
           { "@type": "ListItem", "position": 4, "name": "Jobs with Accommodation", "url": "https://jobmeter.app/tools/accommodation-finder" },
           { "@type": "ListItem", "position": 5, "name": "Entry Level Jobs Finder", "url": "https://jobmeter.app/tools/entry-level-finder" },
-        ] }
+        ] },
+        ...jobPostings,
       ]) }} />
 
       <div className="fixed bottom-0 left-0 right-0 z-40 lg:hidden bg-white border-t border-gray-100" style={{ height: '50px', overflow: 'hidden' }}>
