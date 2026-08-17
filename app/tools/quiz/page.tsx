@@ -5,6 +5,7 @@ import CompanyCard from './CompanyCard';
 import { theme } from '@/lib/theme';
 import AdUnit from '@/components/ads/AdUnit';
 import QuizBreadcrumb from '@/components/quiz/QuizBreadcrumb';
+import RelatedToolsStrip from '@/components/tools/RelatedToolsStrip';
 
 export const revalidate = false;
 
@@ -180,6 +181,8 @@ export default function QuizPage() {
             <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
               {companyNodes}
             </div>
+
+            <RelatedToolsStrip />
 
             {/* ── Ad 2: After Company Cards ── */}
             <div className="mt-8 mb-6">

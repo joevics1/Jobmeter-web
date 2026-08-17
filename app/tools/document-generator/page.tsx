@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { ChevronRight, ChevronDown } from 'lucide-react';
 import DocumentGeneratorClient from './client';
+import RelatedToolsStrip from '@/components/tools/RelatedToolsStrip';
 
 export const metadata: Metadata = {
   title: 'AI Document Generator — Contracts, Agreements & More | JobMeter',
@@ -77,6 +78,8 @@ export default function DocumentGeneratorPage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(SCHEMA) }}
       />
       <DocumentGeneratorClient />
+
+      <RelatedToolsStrip />
 
       {/* ── SEO content — server-rendered ── */}
       <div className="bg-muted/30 border-t border-border">

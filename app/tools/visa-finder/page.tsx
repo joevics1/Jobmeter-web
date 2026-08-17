@@ -4,6 +4,7 @@ import { theme } from '@/lib/theme';
 import VisaFinderClient from './VisaFinderClient';
 import AdUnit from '@/components/ads/AdUnit';
 import { fetchWorkerJobsForSchema, jobPostingSchema, MAX_JOB_POSTINGS } from '@/lib/jobPostingSchema';
+import RelatedToolsStrip from '@/components/tools/RelatedToolsStrip';
 
 export const revalidate = 3600;
 
@@ -56,6 +57,8 @@ export default async function VisaFinderPage() {
       </div>
 
       <VisaFinderClient />
+
+      <RelatedToolsStrip />
       <div className="mt-8 bg-white rounded-2xl p-6 md:p-10 mx-4 md:mx-6 mb-8" style={{ border: `1px solid ${theme.colors.border.DEFAULT}` }}>
         <article className="prose prose-gray max-w-none">
           <h2 className="text-2xl font-bold text-gray-900 mb-4">Jobs with Visa Sponsorship</h2>

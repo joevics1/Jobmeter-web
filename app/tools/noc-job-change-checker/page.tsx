@@ -3,6 +3,7 @@ import { Metadata } from 'next';
 import NOCJobChangeCheckerClient from './NOCJobChangeCheckerClient';
 import AdUnit from '../../../components/ads/AdUnit';
 import Script from 'next/script';
+import RelatedToolsStrip from '@/components/tools/RelatedToolsStrip';
 
 const pageUrl = 'https://jobmeter.app/tools/noc-job-change-checker';
 
@@ -128,6 +129,10 @@ export default function NOCJobChangePage() {
         {/* Main Tool */}
         <div className="max-w-6xl mx-auto px-6 pb-12">
           <NOCJobChangeCheckerClient />
+        </div>
+
+        <div className="max-w-6xl mx-auto px-6 pb-4">
+          <RelatedToolsStrip />
         </div>
 
         {/* In-article Ad 1 */}

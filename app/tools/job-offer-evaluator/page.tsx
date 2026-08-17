@@ -3,6 +3,7 @@ import { Metadata } from 'next';
 import JobOfferEvaluator from './JobOfferEvaluator';
 import AdUnit from '@/components/ads/AdUnit';
 import Script from 'next/script';
+import RelatedToolsStrip from '@/components/tools/RelatedToolsStrip';
 
 const pageUrl = 'https://jobmeter.app/tools/job-offer-evaluator';
 
@@ -193,6 +194,8 @@ export default function JobOfferEvaluatorPage() {
         {/* Main Tool */}
         <div className="max-w-6xl mx-auto px-6 pb-8">
           <JobOfferEvaluator />
+
+          <RelatedToolsStrip />
         </div>
 
         {/* Ad */}

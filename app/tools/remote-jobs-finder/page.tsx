@@ -3,6 +3,7 @@ import { theme } from '@/lib/theme';
 import RemoteJobsFinderClient from './RemoteJobsFinderClient';
 import AdUnit from '@/components/ads/AdUnit';
 import { fetchWorkerJobsForSchema, jobPostingSchema, MAX_JOB_POSTINGS } from '@/lib/jobPostingSchema';
+import RelatedToolsStrip from '@/components/tools/RelatedToolsStrip';
 
 // Was `false` (fully static forever after first build) -- switched to
 // hourly ISR so the JobPosting structured data below stays accurate as
@@ -73,6 +74,8 @@ export default async function RemoteJobsPage() {
       <div className="px-4 md:px-6 py-6 max-w-7xl mx-auto">
         {/* Interactive Client Component */}
         <RemoteJobsFinderClient />
+
+        <RelatedToolsStrip />
 
         <AdUnit slot="4198231153" format="auto" />
 

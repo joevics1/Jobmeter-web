@@ -2,6 +2,7 @@ import React from 'react';
 import { theme } from '@/lib/theme';
 import RoleFinderClient from './RoleFinderClient';
 import AdUnit from '@/components/ads/AdUnit';
+import RelatedToolsStrip from '@/components/tools/RelatedToolsStrip';
 
 export const revalidate = false;
 
@@ -41,6 +42,8 @@ export default function RoleFinderPage() {
       </div>
 
       <RoleFinderClient />
+
+      <RelatedToolsStrip />
 
       <div className="px-4 sm:px-6 py-6 max-w-5xl mx-auto">
         <div className="space-y-6">

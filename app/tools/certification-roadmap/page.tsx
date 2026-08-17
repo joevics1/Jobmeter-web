@@ -3,6 +3,7 @@ import { Metadata } from 'next';
 import CertificationRoadmapTool from './CertificationRoadmapTool';
 import AdUnit from '@/components/ads/AdUnit';
 import Script from 'next/script';
+import RelatedToolsStrip from '@/components/tools/RelatedToolsStrip';
 
 const pageUrl = 'https://jobmeter.app/tools/certification-roadmap';
 
@@ -138,6 +139,8 @@ export default function CertificationRoadmapPage() {
         {/* Main Tool */}
         <div className="max-w-6xl mx-auto px-6 pb-8">
           <CertificationRoadmapTool />
+
+          <RelatedToolsStrip />
         </div>
 
         {/* Ad */}

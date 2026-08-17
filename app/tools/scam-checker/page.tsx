@@ -2,6 +2,7 @@ import React from 'react';
 import { theme } from '@/lib/theme';
 import ScamCheckerClient from './ScamCheckerClient';
 import AdUnit from '@/components/ads/AdUnit';
+import RelatedToolsStrip from '@/components/tools/RelatedToolsStrip';
 
 export const revalidate = false;
 
@@ -45,6 +46,8 @@ export default function ScamCheckerPage() {
       </div>
 
       <ScamCheckerClient />
+
+      <RelatedToolsStrip />
       <div className="px-6 py-6 max-w-4xl mx-auto mt-4">
         <div className="space-y-8">
           <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200">

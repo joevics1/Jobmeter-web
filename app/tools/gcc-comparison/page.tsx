@@ -3,6 +3,7 @@ import { Metadata } from 'next';
 import GCCComparisonTool from './GCCComparisonTool';
 import AdUnit from '@/components/ads/AdUnit';
 import Script from 'next/script';
+import RelatedToolsStrip from '@/components/tools/RelatedToolsStrip';
 
 const pageUrl = 'https://jobmeter.app/tools/gcc-comparison';
 
@@ -121,6 +122,8 @@ export default function GCCComparisonPage() {
         {/* The Tool itself */}
         <div className="max-w-6xl mx-auto px-6 pb-8">
           <GCCComparisonTool />
+
+          <RelatedToolsStrip />
         </div>
 
         {/* SEO CONTENT SECTION - Matching Sample Card Design and Formatting */}

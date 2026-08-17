@@ -3,6 +3,7 @@ import { Metadata } from 'next';
 import CostOfLivingTool from './CostOfLivingTool';
 import AdUnit from '@/components/ads/AdUnit';
 import Script from 'next/script';
+import RelatedToolsStrip from '@/components/tools/RelatedToolsStrip';
 
 const pageUrl = 'https://jobmeter.app/tools/cost-of-living';
 
@@ -151,6 +152,8 @@ export default function CostOfLivingPage() {
         {/* Main Tool */}
         <div className="max-w-6xl mx-auto px-6 pb-8">
           <CostOfLivingTool />
+
+          <RelatedToolsStrip />
         </div>
 
         {/* Middle Ad */}

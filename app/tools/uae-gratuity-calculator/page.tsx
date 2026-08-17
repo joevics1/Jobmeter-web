@@ -3,6 +3,7 @@ import { Metadata } from 'next';
 import GratuityCalculator from './GratuityCalculator';
 import AdUnit from '@/components/ads/AdUnit';
 import Script from 'next/script';
+import RelatedToolsStrip from '@/components/tools/RelatedToolsStrip';
 
 const pageUrl = 'https://jobmeter.app/tools/uae-gratuity-calculator';
 
@@ -129,6 +130,8 @@ export default function UAEGratuityPage() {
 
         {/* Main Interactive Tool Component */}
         <GratuityCalculator />
+
+        <RelatedToolsStrip />
 
 {/* Comprehensive SEO Content - UAE Gratuity Calculator */}
         <div className="mt-16 bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800/60 rounded-3xl shadow-sm overflow-hidden">

@@ -2,6 +2,7 @@
 import { Metadata } from 'next';
 import IELTSCheckerTool from './IELTSCheckerTool';
 import AdUnit from '@/components/ads/AdUnit';
+import RelatedToolsStrip from '@/components/tools/RelatedToolsStrip';
 
 const pageUrl = 'https://jobmeter.app/tools/ielts-checker';
 
@@ -204,6 +205,8 @@ export default function IELTSCheckerPage() {
       {/* Tool - unchanged */}
       <div className="max-w-6xl mx-auto px-6 pb-12">
         <IELTSCheckerTool />
+
+        <RelatedToolsStrip />
       </div>
 
       {/* Middle Ad */}

@@ -1,6 +1,7 @@
 // app/tools/profession-country-match/page.tsx
 import { Metadata } from 'next';
 import ProfessionCountryMatchTool from './ProfessionCountryMatchTool';
+import RelatedToolsStrip from '@/components/tools/RelatedToolsStrip';
 
 const pageUrl = 'https://jobmeter.app/tools/profession-country-match';
 
@@ -192,6 +193,8 @@ export default function ProfessionCountryMatchPage() {
       {/* Tool - unchanged */}
       <div className="max-w-6xl mx-auto px-6 py-8">
         <ProfessionCountryMatchTool />
+
+        <RelatedToolsStrip />
       </div>
 
       {/* Middle Ad */}

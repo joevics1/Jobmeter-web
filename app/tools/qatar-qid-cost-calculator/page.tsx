@@ -3,6 +3,7 @@ import { Metadata } from 'next';
 import Script from 'next/script';
 import AdUnit from '@/components/ads/AdUnit';
 import QatarQIDCostCalculator from './QatarQIDCostCalculator';
+import RelatedToolsStrip from '@/components/tools/RelatedToolsStrip';
 
 const pageUrl = 'https://jobmeter.app/tools/qatar-qid-cost-calculator';
 
@@ -58,7 +59,9 @@ export default function QatarQIDCostPage() {
             </p>
           </div>
         </div>
-        <div className="max-w-6xl mx-auto px-6 pb-8"><QatarQIDCostCalculator /></div>
+        <div className="max-w-6xl mx-auto px-6 pb-8"><QatarQIDCostCalculator />
+
+        <RelatedToolsStrip /></div>
         <div className="max-w-6xl mx-auto px-6 py-6"><AdUnit slot="mid-page-ad" /></div>
         <div className="max-w-6xl mx-auto px-6 pb-16">
           <div className="bg-white dark:bg-gray-900 rounded-3xl border border-gray-200 dark:border-gray-800 shadow-sm overflow-hidden">

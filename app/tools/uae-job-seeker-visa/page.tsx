@@ -3,6 +3,7 @@ import { Metadata } from 'next';
 import UAEJobSeekerVisaTool from './UAEJobSeekerVisaTool';
 import AdUnit from '@/components/ads/AdUnit';
 import Script from 'next/script';
+import RelatedToolsStrip from '@/components/tools/RelatedToolsStrip';
 
 const pageUrl = 'https://jobmeter.app/tools/uae-job-seeker-visa';
 
@@ -178,6 +179,8 @@ export default function UAEJobSeekerVisaPage() {
 
         <div className="max-w-6xl mx-auto px-6 pb-8">
           <UAEJobSeekerVisaTool />
+
+          <RelatedToolsStrip />
         </div>
 
         {/* Middle Ad */}

@@ -3,6 +3,7 @@ import { theme } from '@/lib/theme';
 import { XCircle, CheckCircle } from 'lucide-react';
 import ScamDetectorClient from './ScamDetectorClient';
 import AdUnit from '@/components/ads/AdUnit';
+import RelatedToolsStrip from '@/components/tools/RelatedToolsStrip';
 
 export const revalidate = false;
 
@@ -46,6 +47,8 @@ export default function ScamDetectorPage() {
       </div>
 
       <ScamDetectorClient />
+
+      <RelatedToolsStrip />
       <div className="px-6 py-6 max-w-4xl mx-auto">
         <div className="space-y-8">
           <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">

@@ -3,6 +3,7 @@ import { Metadata } from 'next';
 import KuwaitDependentFeeCalculator from './KuwaitDependentFeeCalculator';
 import AdUnit from '@/components/ads/AdUnit';
 import Script from 'next/script';
+import RelatedToolsStrip from '@/components/tools/RelatedToolsStrip';
 
 const pageUrl = 'https://jobmeter.app/tools/kuwait-dependent-fee-calculator';
 
@@ -119,6 +120,8 @@ export default function KuwaitDependentFeePage() {
 
         <div className="max-w-6xl mx-auto px-6 pb-8">
           <KuwaitDependentFeeCalculator />
+
+          <RelatedToolsStrip />
         </div>
 
         <div className="max-w-6xl mx-auto px-6 py-6"><AdUnit slot="mid-page-ad" /></div>

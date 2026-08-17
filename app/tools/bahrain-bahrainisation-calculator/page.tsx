@@ -3,6 +3,7 @@ import { Metadata } from 'next';
 import Script from 'next/script';
 import AdUnit from '@/components/ads/AdUnit';
 import LocalizationQuotaCalculator from '../_shared/LocalizationQuotaCalculator';
+import RelatedToolsStrip from '@/components/tools/RelatedToolsStrip';
 
 const pageUrl = 'https://jobmeter.app/tools/bahrain-bahrainisation-calculator';
 
@@ -76,6 +77,8 @@ export default function BahrainisationPage() {
 
         <div className="max-w-6xl mx-auto px-6 pb-8">
           <LocalizationQuotaCalculator country="bahrain" />
+
+          <RelatedToolsStrip />
         </div>
 
         <div className="max-w-6xl mx-auto px-6 py-6"><AdUnit slot="mid-page-ad" /></div>

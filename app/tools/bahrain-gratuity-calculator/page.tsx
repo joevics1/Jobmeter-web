@@ -3,6 +3,7 @@ import { Metadata } from 'next';
 import Script from 'next/script';
 import AdUnit from '@/components/ads/AdUnit';
 import GratuityCalculatorShell from '../_shared/GratuityCalculatorShell';
+import RelatedToolsStrip from '@/components/tools/RelatedToolsStrip';
 
 const pageUrl = 'https://jobmeter.app/tools/bahrain-gratuity-calculator';
 
@@ -83,6 +84,8 @@ export default function BahrainGratuityPage() {
 
         <div className="max-w-6xl mx-auto px-6 pb-8">
           <GratuityCalculatorShell country="bahrain" />
+
+          <RelatedToolsStrip />
         </div>
 
         <div className="max-w-6xl mx-auto px-6 py-6"><AdUnit slot="mid-page-ad" /></div>

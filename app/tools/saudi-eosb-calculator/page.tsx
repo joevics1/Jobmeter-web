@@ -2,6 +2,7 @@
 import { Metadata } from 'next';
 import SaudiEOSBCalculator from './SaudiEOSBCalculator';
 import Script from 'next/script';
+import RelatedToolsStrip from '@/components/tools/RelatedToolsStrip';
 
 const pageUrl = 'https://jobmeter.app/tools/saudi-eosb-calculator';
 
@@ -173,6 +174,8 @@ export default function Page() {
         {/* Main Tool Component */}
         <div className="max-w-6xl mx-auto px-6 pb-8">
           <SaudiEOSBCalculator />
+
+          <RelatedToolsStrip />
         </div>
 
         {/* Extensive SEO & Educational Content Section */}

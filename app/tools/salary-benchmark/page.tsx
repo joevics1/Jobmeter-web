@@ -3,6 +3,7 @@ import { Metadata } from 'next';
 import SalaryBenchmarkTool from './SalaryBenchmarkTool';
 import AdUnit from '@/components/ads/AdUnit';
 import Script from 'next/script';
+import RelatedToolsStrip from '@/components/tools/RelatedToolsStrip';
 
 const pageUrl = 'https://jobmeter.app/tools/salary-benchmark';
 
@@ -188,6 +189,8 @@ export default function SalaryBenchmarkPage() {
         {/* Core Calculation Tool Component */}
         <div className="max-w-6xl mx-auto px-6 pb-8">
           <SalaryBenchmarkTool />
+
+          <RelatedToolsStrip />
         </div>
 
         {/* Mid-Page Ad Unit */}

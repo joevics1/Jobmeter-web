@@ -3,6 +3,7 @@ import { Metadata } from 'next';
 import IqamaCalculatorClient from './IqamaCalculatorClient';
 import AdUnit from '@/components/ads/AdUnit';
 import Script from 'next/script';
+import RelatedToolsStrip from '@/components/tools/RelatedToolsStrip';
 
 const pageUrl = 'https://jobmeter.app/tools/iqama-cost-calculator';
 
@@ -151,6 +152,8 @@ export default function IqamaCostCalculatorPage() {
         {/* Main Tool Component */}
         <div className="max-w-5xl mx-auto px-6 pb-12">
           <IqamaCalculatorClient />
+
+          <RelatedToolsStrip />
         </div>
 
         {/* Bottom Ad Unit */}

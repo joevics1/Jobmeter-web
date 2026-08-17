@@ -2,6 +2,7 @@ import { Metadata } from 'next';
 import EquivalencyCheckerClient from './EquivalencyCheckerClient';
 import AdUnit from '../../../components/ads/AdUnit'; // Adjust path as needed
 import Script from 'next/script';
+import RelatedToolsStrip from '@/components/tools/RelatedToolsStrip';
 
 const pageUrl = 'https://jobmeter.app/tools/education-equivalency-checker';
 
@@ -180,6 +181,8 @@ export default function EducationEquivalencyPage() {
         <div id="checker-tool" className="max-w-5xl mx-auto px-6 -mt-8">
           <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-2xl p-8 md:p-12 border border-gray-100 dark:border-gray-800">
             <EquivalencyCheckerClient />
+
+            <RelatedToolsStrip />
           </div>
         </div>
 

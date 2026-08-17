@@ -1,10 +1,10 @@
 "use client";
 
-// Compact "Related Tools" widget shown at the bottom of every /tools/* page
-// (wired in via app/tools/layout.tsx). Picks 5 tools at random, seeded by
-// the current path so the set is stable on repeat visits/reloads but
-// varies from page to page — deliberately small and single-container so
-// it doesn't compete with the page's own content for attention.
+// Compact "Related Tools" widget, rendered by each /tools/* page right
+// after its own tool component and before its SEO content. Picks 5 tools
+// at random, seeded by the current path so the set is stable on repeat
+// visits/reloads but varies from page to page — deliberately small and
+// single-container so it doesn't compete with the page's own content.
 
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
@@ -40,27 +40,28 @@ export default function RelatedToolsStrip() {
   if (picks.length === 0) return null;
 
   return (
-    <section className="max-w-4xl mx-auto px-4 md:px-6 pb-16">
-      <div className="border border-gray-200 rounded-xl overflow-hidden bg-white">
-        <div className="flex items-center gap-1.5 px-4 py-2.5 bg-gray-50 border-b border-gray-200">
+    <section className="max-w-4xl mx-auto px-4 md:px-6 pb-6">
+      <div className="border rounded-xl overflow-hidden" style={{ borderColor: '#BFDBFE', backgroundColor: '#EFF6FF' }}>
+        <div className="flex items-center gap-1.5 px-4 py-2.5 border-b" style={{ borderColor: '#BFDBFE' }}>
           <Sparkles size={13} className="text-blue-600" />
-          <h2 className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Related Tools</h2>
+          <h2 className="text-xs font-semibold text-blue-800 uppercase tracking-wide">Related Tools</h2>
         </div>
-        <div className="divide-y divide-gray-100">
+        <div className="divide-y" style={{ borderColor: '#DBEAFE' }}>
           {picks.map((tool) => (
             <Link
               key={tool.id}
               href={tool.route}
-              className="flex items-center justify-between px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors"
+              className="flex items-center justify-between px-4 py-2.5 text-sm text-gray-700 bg-white/60 hover:bg-white transition-colors"
             >
               <span>{tool.title}</span>
-              <ArrowRight size={13} className="text-gray-400 flex-shrink-0" />
+              <ArrowRight size={13} className="text-blue-400 flex-shrink-0" />
             </Link>
           ))}
         </div>
         <Link
           href="/tools"
-          className="block px-4 py-2 text-xs font-medium text-blue-600 hover:bg-blue-50 text-center border-t border-gray-200"
+          className="block px-4 py-2 text-xs font-medium text-blue-700 hover:bg-white transition-colors text-center border-t"
+          style={{ borderColor: '#BFDBFE' }}
         >
           View all tools →
         </Link>

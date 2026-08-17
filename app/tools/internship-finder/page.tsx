@@ -3,6 +3,7 @@ import InternshipFinderClient from './InternshipFinderClient';
 import AdUnit from '@/components/ads/AdUnit';
 import { GraduationCap, Laptop, Award, Home, Globe, Rocket, ClipboardList, GraduationCap as GC, ChevronRight } from 'lucide-react';
 import { fetchWorkerJobsForSchema, jobPostingSchema, MAX_JOB_POSTINGS } from '@/lib/jobPostingSchema';
+import RelatedToolsStrip from '@/components/tools/RelatedToolsStrip';
 
 export const revalidate = 3600;
 
@@ -69,6 +70,8 @@ export default async function InternshipFinderPage() {
 
       <div className="px-4 md:px-6 py-6 max-w-7xl mx-auto">
         <InternshipFinderClient />
+
+        <RelatedToolsStrip />
 
         <AdUnit slot="4198231153" format="auto" />
 

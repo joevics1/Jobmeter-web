@@ -3,6 +3,7 @@ import { ArrowLeft, Calculator, Info, AlertCircle } from 'lucide-react';
 import { theme } from '@/lib/theme';
 import PAYECalculatorClient from './PAYECalculatorClient';
 import AdUnit from '@/components/ads/AdUnit';
+import RelatedToolsStrip from '@/components/tools/RelatedToolsStrip';
 
 export const revalidate = false;
 
@@ -72,6 +73,8 @@ export default function PAYECalculatorPage() {
 
         {/* Client Island - Calculator */}
         <PAYECalculatorClient />
+
+        <RelatedToolsStrip />
 
         {/* Compliance Notice */}
         <div className="mt-6 bg-yellow-50 border border-yellow-200 rounded-xl p-4">
