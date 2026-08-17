@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useMemo } from 'react';
-import { X, ChevronDown, Sparkles, Award, TrendingUp, ArrowRight, Loader2, Search, Briefcase, ShieldCheck, Zap, Check, Target } from 'lucide-react';
+import { X, ChevronDown, Sparkles, Award, TrendingUp, Loader2, Search, Briefcase, ShieldCheck, Zap, Check, Target } from 'lucide-react';
 import { theme } from '@/lib/theme';
 import { SKILLS_CATEGORIES, POPULAR_TOOLS, ALL_SKILLS } from '@/lib/constants/skills';
 import { findMatchingRoles, RoleFinderResult } from '@/lib/utils/roleMatching';
@@ -389,31 +389,6 @@ export default function RoleFinderClient() {
           </div>
         </div>
       )}
-
-      {/* ── Related tools ── */}
-      <div className="mt-16 mb-10">
-        <h2 className="text-xl font-bold text-gray-900 mb-1">Related Career Tools</h2>
-        <p className="text-sm text-gray-500 mb-5">More free AI tools to help you find the right career and land your next role</p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {[
-            { title: 'CV Keyword Checker', desc: 'Check keyword match between your CV and job descriptions', href: '/tools/keyword-checker', tag: 'CV Tools' },
-            { title: 'ATS CV Review', desc: 'Optimize your CV for ATS systems to pass automated screening', href: '/tools/ats-review', tag: 'CV Tools' },
-            { title: 'Interview Practice', desc: 'Practice with AI-generated questions tailored to any job description', href: '/tools/interview', tag: 'Career Tools' },
-            { title: 'Career Coach', desc: 'Get personalized career guidance and step-by-step advice', href: '/tools/career', tag: 'Career Tools' },
-            { title: 'Job Scam Checker', desc: 'Verify companies and flag fraudulent recruiters before you apply', href: '/tools/scam-checker', tag: 'Safety Tools' },
-            { title: 'Create CV / Cover Letter', desc: 'Build a professional, ATS-ready CV and cover letter in minutes', href: '/cv', tag: 'CV Tools' },
-          ].map((tool) => (
-            <a key={tool.href} href={tool.href} className="flex flex-col gap-2 p-5 rounded-xl border bg-blue-50/50 border-blue-100 hover:shadow-md hover:border-blue-300 transition-all group">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-white text-gray-500">{tool.tag}</span>
-                <ArrowRight size={16} className="text-gray-400 group-hover:text-blue-600 transition-colors" />
-              </div>
-              <p className="font-semibold text-gray-900 text-sm">{tool.title}</p>
-              <p className="text-xs text-gray-600 leading-relaxed">{tool.desc}</p>
-            </a>
-          ))}
-        </div>
-      </div>
     </div>
   );
 }
