@@ -13,40 +13,36 @@ export const metadata = {
 export default function RoleFinderPage() {
   return (
     <div className="min-h-screen" style={{ backgroundColor: theme.colors.background.muted }}>
-      <div className="pt-12 pb-8 px-6" style={{ backgroundColor: theme.colors.primary.DEFAULT }}>
-        <div className="flex flex-col gap-2 max-w-4xl mx-auto">
+      <div className="pt-10 pb-8 px-4 sm:px-6" style={{ backgroundColor: theme.colors.primary.DEFAULT }}>
+        <div className="flex flex-col gap-2 max-w-5xl mx-auto">
           <a href="/tools" className="text-sm text-white/80 hover:text-white transition-colors self-start">← Back to Tools</a>
-          <h1 className="text-2xl font-bold" style={{ color: theme.colors.text.light }}>Alternative Role Finder</h1>
-          <p className="text-sm" style={{ color: theme.colors.text.light }}>Discover jobs based on your skills — find alternative career paths and what career suits you</p>
-        </div>
-      </div>
-      <div className="bg-white border-b border-gray-200">
-        <div className="max-w-4xl mx-auto px-6 py-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">How It Works</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <h1 className="text-2xl sm:text-3xl font-bold text-white">Alternative Role Finder</h1>
+          <p className="text-sm text-white/85 max-w-xl">Discover jobs based on your skills — find alternative career paths and what career suits you</p>
+
+          <div className="mt-5 grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
             {[
               { n: '1', p: 'Select your skills and tools' },
               { n: '2', p: 'Add your years of experience' },
-              { n: '3', p: 'Click Find Roles to get recommendations' },
-              { n: '4', p: 'Explore matching roles and skill gaps' },
+              { n: '3', p: 'Click Find Roles' },
+              { n: '4', p: 'Explore roles and skill gaps' },
             ].map(({ n, p }) => (
-              <div key={n} className="flex items-start gap-3">
-                <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold text-sm flex-shrink-0">{n}</div>
-                <p className="text-sm text-gray-600">{p}</p>
+              <div key={n} className="flex items-start gap-2">
+                <div className="w-6 h-6 bg-white/15 rounded-full flex items-center justify-center text-white font-bold text-xs flex-shrink-0">{n}</div>
+                <p className="text-xs text-white/90 leading-snug">{p}</p>
               </div>
             ))}
           </div>
-          </div>
         </div>
+      </div>
 
-        {/* Ad 1: Display Top - After How It Works */}
-        <div className="px-6 py-6 max-w-4xl mx-auto">
-          <AdUnit slot="4198231153" format="auto" />
-        </div>
+      {/* Ad 1: Display Top */}
+      <div className="px-4 sm:px-6 py-4 max-w-5xl mx-auto">
+        <AdUnit slot="4198231153" format="auto" />
+      </div>
 
-        <RoleFinderClient />
+      <RoleFinderClient />
 
-      <div className="px-6 py-6 max-w-4xl mx-auto">
+      <div className="px-4 sm:px-6 py-6 max-w-5xl mx-auto">
         <div className="space-y-6">
           <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
             <h2 className="text-xl font-bold text-gray-900 mb-4">Alternative Role Finder: Discover Jobs Based on Your Skills</h2>

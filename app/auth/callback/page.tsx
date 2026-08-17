@@ -74,9 +74,11 @@ export default function AuthCallback() {
     // unused page, since removed). Widened from 5s to 10s: this timeout
     // was firing on real signups even when the OAuth login itself
     // succeeded, most likely because heavy third-party ad scripts
-    // (AdSense/AdMaven, loaded site-wide including on this page) can
-    // delay JS execution enough to blow past a tight 5s window before
-    // Supabase's client-side SIGNED_IN event ever fires.
+    // (AdSense, loaded site-wide including on this page) can delay JS
+    // execution enough to blow past a tight 5s window before Supabase's
+    // client-side SIGNED_IN event ever fires. (AdMaven — the other ad
+    // network referenced here previously — has since been removed
+    // site-wide; it was injecting spammy native-ad content links.)
     const timeout = setTimeout(() => {
       subscription.unsubscribe();
       router.replace(returnTo && returnTo !== "/" ? returnTo : "/");
