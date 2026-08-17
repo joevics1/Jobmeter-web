@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useMemo } from 'react';
-import { X, ChevronDown, Sparkles, Award, TrendingUp, ArrowRight, Loader2, Search, Briefcase, ShieldCheck, Zap } from 'lucide-react';
+import { X, ChevronDown, Sparkles, Award, TrendingUp, ArrowRight, Loader2, Search, Briefcase, ShieldCheck, Zap, Check } from 'lucide-react';
 import { theme } from '@/lib/theme';
 import { SKILLS_CATEGORIES, POPULAR_TOOLS, ALL_SKILLS } from '@/lib/constants/skills';
 import { findMatchingRoles, RoleFinderResult } from '@/lib/utils/roleMatching';
@@ -146,37 +146,54 @@ export default function RoleFinderClient() {
             </button>
 
             {browseOpen && (
-              <div className="mt-3 rounded-lg p-3" style={{ backgroundColor: theme.colors.background.muted }}>
-                <div className="flex flex-wrap gap-1.5 mb-3">
-                  {CATEGORY_NAMES.map((cat) => (
-                    <button
-                      key={cat}
-                      onClick={() => setActiveCategory(cat)}
-                      className={`px-2.5 py-1 text-xs rounded-full border transition-colors whitespace-nowrap ${
-                        activeCategory === cat
-                          ? 'bg-blue-600 border-blue-600 text-white'
-                          : 'bg-white border-gray-200 text-gray-600 hover:border-blue-300'
-                      }`}
-                    >
-                      {cat}
-                    </button>
-                  ))}
+              <div className="mt-3 border rounded-lg overflow-hidden" style={{ borderColor: theme.colors.border.DEFAULT }}>
+                {/* Step 1: category tabs — underline style, deliberately NOT chip-shaped
+                    so they read as "tabs" rather than "things you can select as skills" */}
+                <div className="px-3 pt-3" style={{ backgroundColor: theme.colors.background.muted }}>
+                  <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide mb-2">1. Choose a category</p>
+                  <div className="flex flex-wrap gap-x-4 gap-y-2 pb-3">
+                    {CATEGORY_NAMES.map((cat) => (
+                      <button
+                        key={cat}
+                        onClick={() => setActiveCategory(cat)}
+                        className={`text-sm pb-1 border-b-2 transition-colors whitespace-nowrap ${
+                          activeCategory === cat
+                            ? 'border-blue-600 text-blue-700 font-semibold'
+                            : 'border-transparent text-gray-500 hover:text-gray-700'
+                        }`}
+                      >
+                        {cat}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-                <div className="flex flex-wrap gap-2">
-                  {SKILLS_CATEGORIES[activeCategory as keyof typeof SKILLS_CATEGORIES].map((skill) => (
-                    <button
-                      key={skill}
-                      onClick={() => addSkill(skill)}
-                      disabled={selectedSkills.includes(skill)}
-                      className={`px-3 py-1 text-sm rounded-full border transition-colors ${
-                        selectedSkills.includes(skill)
-                          ? 'bg-blue-100 border-blue-300 text-blue-800 cursor-default'
-                          : 'bg-white border-gray-200 hover:border-blue-300 hover:bg-blue-50'
-                      }`}
-                    >
-                      {skill}
-                    </button>
-                  ))}
+
+                {/* Step 2: skill chips for the active category — rounded pills with a
+                    checkmark on selection, visually distinct from the tabs above */}
+                <div className="p-3 bg-white border-t" style={{ borderColor: theme.colors.border.DEFAULT }}>
+                  <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                    2. Tap to add skills in {activeCategory}
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {SKILLS_CATEGORIES[activeCategory as keyof typeof SKILLS_CATEGORIES].map((skill) => {
+                      const isSelected = selectedSkills.includes(skill);
+                      return (
+                        <button
+                          key={skill}
+                          onClick={() => addSkill(skill)}
+                          disabled={isSelected}
+                          className={`inline-flex items-center gap-1 px-3 py-1.5 text-sm rounded-full border transition-colors ${
+                            isSelected
+                              ? 'bg-blue-600 border-blue-600 text-white cursor-default'
+                              : 'bg-white border-gray-300 text-gray-700 hover:border-blue-400 hover:bg-blue-50'
+                          }`}
+                        >
+                          {isSelected && <Check size={14} />}
+                          {skill}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
             )}
