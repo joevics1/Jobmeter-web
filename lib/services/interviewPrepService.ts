@@ -41,6 +41,7 @@ export interface InterviewSession {
   jobCompany?: string;
   jobDescription: string;
   cvUsed: boolean;
+  cvText?: string; // Raw CV text captured at session creation (pasted, uploaded, or selected)
   chat: ChatMessage[];
   completed: boolean;
   currentPhase: 'introduction' | 'questioning' | 'completed';
@@ -353,9 +354,9 @@ Evaluate this answer and provide constructive feedback.`;
         throw new Error('No question found to evaluate answer against');
       }
 
-      // Extract CV content if available
-      let cvText = '';
-      if (session.cvUsed) {
+      // Extract CV content if available (prefer text saved directly on the session)
+      let cvText = session.cvText || '';
+      if (!cvText && session.cvUsed) {
         try {
           const cvDocs = localStorage.getItem('cv_documents');
           if (cvDocs) {
@@ -439,10 +440,12 @@ Evaluate this answer and provide constructive feedback.`;
    * Build prompt for getting next question from interviewer
    */
   static buildNextQuestionPrompt(session: InterviewSession, userAnswer: string): string {
-    // Extract CV content if available
-    let cvText = '';
-    if (session.cvUsed) {
-      // Try to get CV from session or localStorage
+    // Extract CV content if available. Prefer the text captured directly on
+    // the session at creation time (works for pasted/uploaded CVs, not just
+    // ones saved to the CV library) and fall back to the old localStorage
+    // lookup for sessions created before this field existed.
+    let cvText = session.cvText || '';
+    if (!cvText && session.cvUsed) {
       try {
         const cvDocs = localStorage.getItem('cv_documents');
         if (cvDocs) {
@@ -580,7 +583,8 @@ Ask the next interview question. Remember: ${shouldEnd ? 'return null to end the
     jobDescription: string,
     jobTitle?: string,
     jobCompany?: string,
-    cvUsed: boolean = false
+    cvUsed: boolean = false,
+    cvContent?: string
   ): InterviewSession {
     const session: InterviewSession = {
       id: `interview_${Date.now()}`,
@@ -589,6 +593,7 @@ Ask the next interview question. Remember: ${shouldEnd ? 'return null to end the
       jobCompany,
       jobDescription,
       cvUsed,
+      cvText: cvContent ? this.extractCVText(cvContent) : undefined,
       chat: [],
       completed: false,
       currentPhase: 'introduction',

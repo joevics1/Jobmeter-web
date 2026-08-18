@@ -55,7 +55,7 @@ export default function ToolsPage() {
     {
       id: 'career-tools', title: 'Career Tools', description: 'Tools to help advance your career', icon: Briefcase, color: '#F59E0B',
       tools: [
-        { id: 'interview', title: 'Interview Practice', description: 'Practice with personalized questions based on job descriptions', icon: MessageCircle, color: '#8B5CF6', route: '/tools/interview' },
+        { id: 'interview', title: 'Interview Practice', description: 'Practice with personalized questions based on job descriptions', icon: MessageCircle, color: '#10B981', route: '/tools/interview' },
         { id: 'career', title: 'Career Coach', description: 'Get personalized career guidance and advice', icon: GraduationCap, color: '#F59E0B', route: '/tools/career' },
         { id: 'role-finder', title: 'Role Finder', description: 'Discover new career paths based on your skills', icon: Search, color: '#06B6D4', route: '/tools/role-finder' },
         { id: 'quiz', title: 'Recruitment Assessment Practice Tests', description: 'Practice aptitude tests from top companies', icon: Brain, color: '#EC4899', route: '/tools/quiz' },

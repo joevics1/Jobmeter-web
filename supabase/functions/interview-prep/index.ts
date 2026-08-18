@@ -2,12 +2,14 @@
 // Simple AI proxy - just calls Gemini API with provided prompt
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { callGeminiText } from "../_shared/gemini.ts";
+import { callGeminiText, callGeminiMultimodal } from "../_shared/gemini.ts";
 
 interface RequestBody {
   prompt: string;
   temperature?: number;
   maxTokens?: number;
+  audioData?: string;
+  mimeType?: string;
 }
 
 const corsHeaders = {
@@ -21,11 +23,12 @@ serve(async (req) => {
   }
 
   try {
-    const { prompt, temperature, maxTokens }: RequestBody = await req.json();
+    const { prompt, temperature, maxTokens, audioData, mimeType }: RequestBody = await req.json();
 
     console.log('Received request with prompt length:', prompt?.length);
     console.log('Temperature:', temperature);
     console.log('Max tokens:', maxTokens);
+    console.log('Has audio data:', !!audioData, 'mimeType:', mimeType);
 
     if (!prompt || typeof prompt !== 'string') {
       console.error('Invalid prompt:', prompt);
@@ -43,8 +46,24 @@ serve(async (req) => {
       throw new Error('Gemini API key not configured');
     }
 
-    console.log('Calling Gemini API for interview prep...');
-    const responseText = await callGeminiText(prompt, apiKey, { temperature: temperature || 0.7, maxTokens: maxTokens || 4096 });
+    // If audio was sent (spoken answer), it MUST be attached to the Gemini
+    // call as actual audio content. Previously this was silently dropped and
+    // only the text prompt was sent, so Gemini had no real audio to
+    // transcribe and would hallucinate a plausible-sounding "transcript" and
+    // answer instead of using what the candidate actually said.
+    let responseText: string;
+    if (audioData && mimeType) {
+      console.log('Calling Gemini API (multimodal) with attached audio for interview prep...');
+      responseText = await callGeminiMultimodal(
+        prompt,
+        apiKey,
+        { mimeType, base64Data: audioData },
+        { temperature: temperature || 0.7, maxTokens: maxTokens || 4096 }
+      );
+    } else {
+      console.log('Calling Gemini API for interview prep...');
+      responseText = await callGeminiText(prompt, apiKey, { temperature: temperature || 0.7, maxTokens: maxTokens || 4096 });
+    }
     console.log('Gemini API response length:', responseText?.length);
     console.log('Gemini API response preview:', responseText?.substring(0, 200));
 

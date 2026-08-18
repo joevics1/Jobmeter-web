@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { X, Loader2, Search, FileText, Briefcase, Check, ArrowRight } from 'lucide-react';
+import { X, Loader2, Search, FileText, Briefcase, Check, ArrowRight, Upload } from 'lucide-react';
 import { InterviewPrepService } from '@/lib/services/interviewPrepService';
 import { theme } from '@/lib/theme';
 import { useRouter } from 'next/navigation';
@@ -18,6 +18,7 @@ interface Job {
   title: string;
   company: string;
   location: string;
+  country: string;
   description?: string;
 }
 
@@ -50,16 +51,20 @@ export default function InterviewPrepModal({ isOpen, onClose }: InterviewPrepMod
   const [jobs, setJobs] = useState<Job[]>([]);
   const [filteredJobs, setFilteredJobs] = useState<Job[]>([]);
   const [jobSearchQuery, setJobSearchQuery] = useState('');
+  const [jobCountryFilter, setJobCountryFilter] = useState('all');
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [pastedJobDescription, setPastedJobDescription] = useState('');
 
   // CV selection state (optional)
-  const [cvSelectionMethod, setCvSelectionMethod] = useState<'select' | 'paste' | 'skip' | null>(null);
+  const [cvSelectionMethod, setCvSelectionMethod] = useState<'select' | 'paste' | 'upload' | 'skip' | null>(null);
   const [cvDocuments, setCvDocuments] = useState<CVDocument[]>([]);
   const [filteredCVDocuments, setFilteredCVDocuments] = useState<CVDocument[]>([]);
   const [cvSearchQuery, setCvSearchQuery] = useState('');
   const [selectedCV, setSelectedCV] = useState<CVDocument | null>(null);
   const [pastedCVContent, setPastedCVContent] = useState('');
+  const [uploadedCVFile, setUploadedCVFile] = useState<File | null>(null);
+  const [cvUploadError, setCvUploadError] = useState('');
+  const [isExtractingCV, setIsExtractingCV] = useState(false);
 
   // Modal states
   const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -80,6 +85,11 @@ export default function InterviewPrepModal({ isOpen, onClose }: InterviewPrepMod
     setCvSelectionMethod(null);
     setPastedJobDescription('');
     setPastedCVContent('');
+    setJobSearchQuery('');
+    setJobCountryFilter('all');
+    setUploadedCVFile(null);
+    setCvUploadError('');
+    setIsExtractingCV(false);
   };
 
   const handleClose = () => {
@@ -127,6 +137,9 @@ export default function InterviewPrepModal({ isOpen, onClose }: InterviewPrepMod
         location: typeof job.location === 'string' ? job.location :
           (job.location?.remote ? 'Remote' :
           [job.location?.city, job.location?.state, job.location?.country].filter(Boolean).join(', ') || 'Not specified'),
+        country: typeof job.location === 'object' && job.location
+          ? (job.location.remote ? 'Remote' : (job.location.country || 'Not specified'))
+          : 'Not specified',
         description: job.description || '',
       }));
       
@@ -161,6 +174,9 @@ export default function InterviewPrepModal({ isOpen, onClose }: InterviewPrepMod
           location: typeof data.location === 'string' ? data.location :
             (data.location?.remote ? 'Remote' :
             [data.location?.city, data.location?.state, data.location?.country].filter(Boolean).join(', ') || 'Not specified'),
+          country: typeof data.location === 'object' && data.location
+            ? (data.location.remote ? 'Remote' : (data.location.country || 'Not specified'))
+            : 'Not specified',
           description: data.description || data.job_description || '',
         };
       }
@@ -174,18 +190,34 @@ export default function InterviewPrepModal({ isOpen, onClose }: InterviewPrepMod
 
   // Filter jobs
   useEffect(() => {
-    if (!jobSearchQuery.trim()) {
-      setFilteredJobs(jobs);
-      return;
+    let filtered = jobs;
+
+    if (jobCountryFilter !== 'all') {
+      filtered = filtered.filter(job => job.country === jobCountryFilter);
     }
-    const query = jobSearchQuery.toLowerCase();
-    const filtered = jobs.filter(job =>
-      job.title.toLowerCase().includes(query) ||
-      job.company.toLowerCase().includes(query) ||
-      job.location.toLowerCase().includes(query)
-    );
+
+    if (jobSearchQuery.trim()) {
+      const query = jobSearchQuery.toLowerCase();
+      filtered = filtered.filter(job =>
+        job.title.toLowerCase().includes(query) ||
+        job.company.toLowerCase().includes(query) ||
+        job.location.toLowerCase().includes(query)
+      );
+    }
+
     setFilteredJobs(filtered);
-  }, [jobSearchQuery, jobs]);
+  }, [jobSearchQuery, jobCountryFilter, jobs]);
+
+  // Distinct list of countries present in the loaded jobs, for the filter dropdown
+  const availableCountries = React.useMemo(() => {
+    const countries = new Set<string>();
+    jobs.forEach(job => {
+      if (job.country && job.country !== 'Not specified') {
+        countries.add(job.country);
+      }
+    });
+    return Array.from(countries).sort();
+  }, [jobs]);
 
   // Filter CV documents
   useEffect(() => {
@@ -234,6 +266,57 @@ export default function InterviewPrepModal({ isOpen, onClose }: InterviewPrepMod
     setStep('job-selection');
   };
 
+  const handleCVFileUpload = async (file: File) => {
+    setCvUploadError('');
+
+    const isPDF = file.type === 'application/pdf';
+    const isImage = file.type.startsWith('image/');
+    const isDocument = file.type.includes('document') || file.name.endsWith('.doc') || file.name.endsWith('.docx');
+
+    if (!isPDF && !isImage && !isDocument) {
+      setCvUploadError('Please upload a PDF, Word document (DOC/DOCX), or image file');
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      setCvUploadError('File too large. Maximum size is 10MB');
+      return;
+    }
+
+    setUploadedCVFile(file);
+    setIsExtractingCV(true);
+
+    try {
+      const form = new FormData();
+      form.append('file', file);
+      const res = await fetch('/api/onboarding/ocr', { method: 'POST', body: form });
+
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({ error: `Extraction failed: ${res.status}` }));
+        throw new Error(errorData.error || 'Could not extract text from that file. Please try another file.');
+      }
+
+      const data = await res.json();
+      if (!data?.text || !data.text.trim()) {
+        throw new Error('No text could be extracted from that file. Please try another file or paste your CV instead.');
+      }
+
+      const uploadedCV: CVDocument = {
+        id: 'uploaded',
+        name: file.name,
+        pasted_text: data.text,
+      };
+      setSelectedCV(uploadedCV);
+      setCvSelectionMethod(null);
+      handleGenerateQuestions(uploadedCV);
+    } catch (error: any) {
+      console.error('Error extracting CV file:', error);
+      setCvUploadError(error.message || 'Failed to process the uploaded file. Please try again.');
+      setUploadedCVFile(null);
+    } finally {
+      setIsExtractingCV(false);
+    }
+  };
+
   const handleJobSelect = async (job: Job) => {
     // If the job doesn't have a description, fetch full details from Supabase
     if (!job.description || !job.description.trim()) {
@@ -262,6 +345,7 @@ export default function InterviewPrepModal({ isOpen, onClose }: InterviewPrepMod
       title: 'Pasted Job',
       company: 'Unknown',
       location: '',
+      country: '',
       description: pastedJobDescription,
     });
     setJobSelectionMethod(null);
@@ -271,11 +355,17 @@ export default function InterviewPrepModal({ isOpen, onClose }: InterviewPrepMod
   const handleSkipCV = () => {
     setSelectedCV(null);
     setCvSelectionMethod(null);
-    handleGenerateQuestions();
+    handleGenerateQuestions(null);
   };
 
-  const handleGenerateQuestions = async () => {
+  // Accepts the CV explicitly instead of reading `selectedCV` from state,
+  // because setSelectedCV(...) followed immediately by handleGenerateQuestions()
+  // in the same tick would otherwise read the stale (pre-update) state value —
+  // this was silently dropping the candidate's CV (including pasted text)
+  // from every session, even though `cvUsed` was correctly marked true.
+  const handleGenerateQuestions = async (cvOverride?: CVDocument | null) => {
     if (!selectedJob) return;
+    const cv = cvOverride !== undefined ? cvOverride : selectedCV;
 
     // 1. Check Auth
     const { data: { session } } = await supabase.auth.getSession();
@@ -297,12 +387,15 @@ export default function InterviewPrepModal({ isOpen, onClose }: InterviewPrepMod
     try {
       // Get CV content if selected
       let cvContent = '';
-      if (selectedCV) {
-        if (selectedCV.html_content) {
-          cvContent = selectedCV.html_content;
-        } else if (selectedCV.structured_data) {
-          const data = selectedCV.structured_data;
-          cvContent = JSON.stringify(data);
+      if (cv) {
+        if (cv.html_content) {
+          cvContent = cv.html_content;
+        } else if (cv.structured_data) {
+          cvContent = JSON.stringify(cv.structured_data);
+        } else if (cv.pasted_text) {
+          cvContent = cv.pasted_text;
+        } else if (cv.content) {
+          cvContent = cv.content;
         }
       }
 
@@ -317,7 +410,8 @@ export default function InterviewPrepModal({ isOpen, onClose }: InterviewPrepMod
         selectedJob.description || '',
         selectedJob.title,
         selectedJob.company,
-        !!selectedCV
+        !!cv,
+        cvContent
       );
 
       InterviewPrepService.saveSession(newSession);
@@ -395,15 +489,27 @@ export default function InterviewPrepModal({ isOpen, onClose }: InterviewPrepMod
 
                   {jobSelectionMethod === 'select' && (
                     <div className="space-y-4">
-                      <div className="relative">
-                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
-                        <input
-                          type="text"
-                          placeholder="Search jobs..."
-                          value={jobSearchQuery}
-                          onChange={(e) => setJobSearchQuery(e.target.value)}
-                          className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        />
+                      <div className="flex flex-col sm:flex-row gap-3">
+                        <div className="relative flex-1">
+                          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+                          <input
+                            type="text"
+                            placeholder="Search jobs..."
+                            value={jobSearchQuery}
+                            onChange={(e) => setJobSearchQuery(e.target.value)}
+                            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          />
+                        </div>
+                        <select
+                          value={jobCountryFilter}
+                          onChange={(e) => setJobCountryFilter(e.target.value)}
+                          className="sm:w-48 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900"
+                        >
+                          <option value="all">All countries</option>
+                          {availableCountries.map(country => (
+                            <option key={country} value={country}>{country}</option>
+                          ))}
+                        </select>
                       </div>
                       <div className="max-h-64 overflow-y-auto border border-gray-200 rounded-lg">
                         {filteredJobs.length === 0 ? (
@@ -456,7 +562,7 @@ export default function InterviewPrepModal({ isOpen, onClose }: InterviewPrepMod
                   <p className="text-gray-600 mb-4">Including your CV helps generate more personalized questions.</p>
 
                   {!cvSelectionMethod && (
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                       <button
                         onClick={() => setCvSelectionMethod('select')}
                         className="p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-colors"
@@ -464,6 +570,14 @@ export default function InterviewPrepModal({ isOpen, onClose }: InterviewPrepMod
                         <FileText className="mx-auto mb-2 text-gray-400" size={24} />
                         <div className="font-medium text-gray-900">Select CV</div>
                         <div className="text-sm text-gray-500">Choose from saved CVs</div>
+                      </button>
+                      <button
+                        onClick={() => setCvSelectionMethod('upload')}
+                        className="p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-colors"
+                      >
+                        <Upload className="mx-auto mb-2 text-gray-400" size={24} />
+                        <div className="font-medium text-gray-900">Upload CV</div>
+                        <div className="text-sm text-gray-500">PDF, Word, or image</div>
                       </button>
                       <button
                         onClick={() => setCvSelectionMethod('paste')}
@@ -481,6 +595,55 @@ export default function InterviewPrepModal({ isOpen, onClose }: InterviewPrepMod
                         <div className="font-medium text-gray-900">Skip</div>
                         <div className="text-sm text-gray-500">Continue without CV</div>
                       </button>
+                    </div>
+                  )}
+
+                  {cvSelectionMethod === 'upload' && (
+                    <div className="space-y-4">
+                      {isExtractingCV ? (
+                        <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+                          <Loader2 className="mx-auto mb-3 animate-spin text-blue-500" size={32} />
+                          <p className="text-gray-600 text-sm">
+                            {uploadedCVFile ? `Extracting text from ${uploadedCVFile.name}...` : 'Processing file...'}
+                          </p>
+                        </div>
+                      ) : (
+                        <label
+                          htmlFor="interview-cv-upload"
+                          className="block border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition-colors"
+                        >
+                          <Upload className="mx-auto mb-3 text-gray-400" size={32} />
+                          <div className="font-medium text-gray-900 mb-1">Click to upload your CV</div>
+                          <div className="text-sm text-gray-500">PDF, DOC, DOCX, or image (max 10MB)</div>
+                          <input
+                            id="interview-cv-upload"
+                            type="file"
+                            accept="application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,image/jpeg,image/jpg,image/png"
+                            className="hidden"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) handleCVFileUpload(file);
+                            }}
+                          />
+                        </label>
+                      )}
+                      {cvUploadError && (
+                        <p className="text-sm text-red-600">{cvUploadError}</p>
+                      )}
+                      {!isExtractingCV && (
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            onClick={() => {
+                              setCvSelectionMethod(null);
+                              setUploadedCVFile(null);
+                              setCvUploadError('');
+                            }}
+                          >
+                            Back
+                          </Button>
+                        </div>
+                      )}
                     </div>
                   )}
 
@@ -508,7 +671,7 @@ export default function InterviewPrepModal({ isOpen, onClose }: InterviewPrepMod
                               onClick={() => {
                                 setSelectedCV(cv);
                                 setCvSelectionMethod(null);
-                                handleGenerateQuestions();
+                                handleGenerateQuestions(cv);
                               }}
                               className="w-full p-4 text-left border-b border-gray-100 hover:bg-gray-50 transition-colors last:border-b-0"
                             >
@@ -538,13 +701,14 @@ export default function InterviewPrepModal({ isOpen, onClose }: InterviewPrepMod
                             alert('Please paste your CV content');
                             return;
                           }
-                          setSelectedCV({
+                          const pastedCV: CVDocument = {
                             id: 'pasted',
                             name: 'Pasted CV',
                             pasted_text: pastedCVContent,
-                          });
+                          };
+                          setSelectedCV(pastedCV);
                           setCvSelectionMethod(null);
-                          handleGenerateQuestions();
+                          handleGenerateQuestions(pastedCV);
                         }} disabled={!pastedCVContent.trim()}>
                           Continue
                         </Button>

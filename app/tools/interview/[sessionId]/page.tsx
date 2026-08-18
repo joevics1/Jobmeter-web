@@ -151,9 +151,10 @@ export default function InterviewSessionPage() {
     const chat = session.chat || [];
     const lastQuestion = chat.filter(msg => msg.type === 'question').pop();
 
-    // Extract CV if available
-    let cvText = '';
-    if (session.cvUsed) {
+    // Extract CV if available (prefer text saved directly on the session,
+    // which works for pasted/uploaded CVs, not just saved CV library entries)
+    let cvText = session.cvText || '';
+    if (!cvText && session.cvUsed) {
       try {
         const cvDocs = localStorage.getItem('cv_documents');
         if (cvDocs) {
