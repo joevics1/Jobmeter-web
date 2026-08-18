@@ -94,7 +94,34 @@ export class CareerCoachService {
   }
 
   /**
-   * Get current user's cached analysis (for career page)
+   * Get the current user's cached analysis, scoped to their user ID.
+   * (Previously this scanned every `career_coach_*` key in localStorage and
+   * returned whichever was most recently written, with no regard for which
+   * user was actually logged in — so on a shared device, or after switching
+   * accounts in the same browser, a person could see someone else's career
+   * analysis. Always resolve the current user's ID first and look up their
+   * own cache entry directly.)
+   */
+  static getAnalysisForUser(userId: string): CareerCoachResult | null {
+    try {
+      const cached = localStorage.getItem(`career_coach_${userId}`);
+      if (!cached) return null;
+      const session: CareerCoachSession = JSON.parse(cached);
+      // Cache is valid for 7 days
+      if (Date.now() - session.timestamp < 7 * 24 * 60 * 60 * 1000) {
+        return session.result;
+      }
+      return null;
+    } catch (error) {
+      console.error('Error reading cached analysis:', error);
+      return null;
+    }
+  }
+
+  /**
+   * @deprecated Use getAnalysisForUser(userId) instead — this ignores which
+   * user is currently signed in and can leak another user's cached analysis
+   * on a shared browser/device. Kept only for backward compatibility.
    */
   static getAnalysis(): CareerCoachResult | null {
     try {

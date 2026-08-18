@@ -107,9 +107,15 @@ serve(async (req) => {
 
     if (!userId) {
       console.error('userId is required');
+      // Status 200 with success:false, matching the pattern used by every
+      // other edge function (interview-prep, ats-cv-review). If this
+      // returns a real non-2xx status, supabase-js's functions.invoke()
+      // treats it as a transport error and discards the JSON body, so the
+      // client never sees this message — it only gets a generic "Edge
+      // Function returned a non-2xx status code".
       return new Response(
-        JSON.stringify({ error: 'userId is required' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+        JSON.stringify({ success: false, error: 'userId is required' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
       );
     }
 
@@ -125,8 +131,8 @@ serve(async (req) => {
 
     if (onboardingError || !onboardingData) {
       return new Response(
-        JSON.stringify({ error: 'User profile not found. Please complete your profile first.' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 404 }
+        JSON.stringify({ success: false, error: 'User profile not found. Please complete your profile first.' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
       );
     }
 
@@ -140,8 +146,8 @@ serve(async (req) => {
     if (profileError) {
       console.error('Error fetching profile data:', profileError);
       return new Response(
-        JSON.stringify({ error: 'Failed to fetch user profile data.' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
+        JSON.stringify({ success: false, error: 'Failed to fetch user profile data.' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
       );
     }
 
@@ -172,21 +178,17 @@ Analyze this user's profile and provide comprehensive career guidance.`;
 
     // Get API key
     const apiKey = Deno.env.get('GEMINI_API_KEY_CV') || Deno.env.get('GEMINI_API_KEY');
+    console.log('API Key available:', !!apiKey);
     if (!apiKey) {
-      throw new Error('Gemini API key not configured');
+      return new Response(
+        JSON.stringify({ success: false, error: 'AI service configuration error.' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
+      );
     }
 
     // Call Gemini
     console.log('Calling Gemini API for career coach analysis...');
-    console.log('API Key available:', !!apiKey);
     console.log('Prompt length:', prompt.length);
-
-    if (!apiKey) {
-      return new Response(
-        JSON.stringify({ error: 'AI service configuration error.' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
-      );
-    }
 
     const responseText = await callGeminiText(prompt, apiKey, { temperature: 0.7, maxTokens: 8192 });
 
@@ -231,7 +233,7 @@ Analyze this user's profile and provide comprehensive career guidance.`;
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 500,
+        status: 200,
       }
     );
   }

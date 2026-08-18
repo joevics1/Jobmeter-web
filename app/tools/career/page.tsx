@@ -172,6 +172,7 @@ export default function CareerPage() {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [startingAnalysis, setStartingAnalysis] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
     loadAnalysis();
@@ -179,8 +180,11 @@ export default function CareerPage() {
 
   const loadAnalysis = async () => {
     try {
-      const result = await CareerCoachService.getAnalysis();
-      if (result) setAnalysis(result);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const result = CareerCoachService.getAnalysisForUser(user.id);
+        if (result) setAnalysis(result);
+      }
     } catch (error) {
       console.error('Error loading career analysis:', error);
     } finally {
@@ -190,6 +194,8 @@ export default function CareerPage() {
 
   // Protected Start Analysis Flow (replaces old handleReanalyze for the empty state)
   const handleStartAnalysis = async () => {
+    setErrorMessage(null);
+
     // AUTH CHECK
     const { data: { session } } = await supabase.auth.getSession();
     if (!session?.user) {
@@ -211,7 +217,7 @@ export default function CareerPage() {
     }
 
     if (!onboardingData) {
-      // No alert - just return silently (as per your request to remove browser alert)
+      setErrorMessage('Please complete your profile setup before requesting a career analysis.');
       return;
     }
 
@@ -230,31 +236,39 @@ export default function CareerPage() {
       setAnalysis(result);
     } catch (error: any) {
       console.error('Error generating analysis:', error);
+      setErrorMessage(error?.message || 'Something went wrong generating your career analysis. Please try again.');
     } finally {
       setStartingAnalysis(false);
     }
   };
 
   const handleReanalyze = async () => {
+    setErrorMessage(null);
     setReanalyzing(true);
     setShowReanalyzeWarning(false);
     try {
-      let userId = 'anonymous_user';
       const { data: { user } } = await supabase.auth.getUser();
-      if (user) userId = user.id;
+      if (!user) {
+        setShowAuthModal(true);
+        return;
+      }
 
       const { data: onboardingData } = await supabase
         .from('onboarding_data')
         .select('*')
-        .eq('user_id', userId)
+        .eq('user_id', user.id)
         .maybeSingle();
 
-      if (!onboardingData) return;
+      if (!onboardingData) {
+        setErrorMessage('Please complete your profile setup before reanalyzing.');
+        return;
+      }
 
-      const result = await CareerCoachService.generateAnalysis(userId, onboardingData);
+      const result = await CareerCoachService.generateAnalysis(user.id, onboardingData);
       setAnalysis(result);
     } catch (error: any) {
       console.error('Error reanalyzing career:', error);
+      setErrorMessage(error?.message || 'Something went wrong reanalyzing your profile. Please try again.');
     } finally {
       setReanalyzing(false);
     }
@@ -315,6 +329,9 @@ export default function CareerPage() {
                   </>
                 )}
               </button>
+              {errorMessage && (
+                <p className="text-sm text-red-600 mt-4">{errorMessage}</p>
+              )}
               <p className="text-sm text-gray-500 mt-4">
                 You&apos;ll need to be logged in and have completed your profile setup.
               </p>
@@ -395,6 +412,12 @@ export default function CareerPage() {
       </div>
 
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        {errorMessage && (
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+            {errorMessage}
+          </div>
+        )}
+
         {/* Tabs */}
         <div className="flex gap-1 mb-6 border-b border-gray-200 overflow-x-auto">
           {tabs.map(({ id, label, icon: Icon }) => (
