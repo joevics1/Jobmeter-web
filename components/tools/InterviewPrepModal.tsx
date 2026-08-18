@@ -18,7 +18,6 @@ interface Job {
   title: string;
   company: string;
   location: string;
-  country: string;
   description?: string;
 }
 
@@ -51,7 +50,6 @@ export default function InterviewPrepModal({ isOpen, onClose }: InterviewPrepMod
   const [jobs, setJobs] = useState<Job[]>([]);
   const [filteredJobs, setFilteredJobs] = useState<Job[]>([]);
   const [jobSearchQuery, setJobSearchQuery] = useState('');
-  const [jobCountryFilter, setJobCountryFilter] = useState('all');
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [pastedJobDescription, setPastedJobDescription] = useState('');
 
@@ -86,7 +84,6 @@ export default function InterviewPrepModal({ isOpen, onClose }: InterviewPrepMod
     setPastedJobDescription('');
     setPastedCVContent('');
     setJobSearchQuery('');
-    setJobCountryFilter('all');
     setUploadedCVFile(null);
     setCvUploadError('');
     setIsExtractingCV(false);
@@ -137,9 +134,6 @@ export default function InterviewPrepModal({ isOpen, onClose }: InterviewPrepMod
         location: typeof job.location === 'string' ? job.location :
           (job.location?.remote ? 'Remote' :
           [job.location?.city, job.location?.state, job.location?.country].filter(Boolean).join(', ') || 'Not specified'),
-        country: typeof job.location === 'object' && job.location
-          ? (job.location.remote ? 'Remote' : (job.location.country || 'Not specified'))
-          : 'Not specified',
         description: job.description || '',
       }));
       
@@ -174,9 +168,6 @@ export default function InterviewPrepModal({ isOpen, onClose }: InterviewPrepMod
           location: typeof data.location === 'string' ? data.location :
             (data.location?.remote ? 'Remote' :
             [data.location?.city, data.location?.state, data.location?.country].filter(Boolean).join(', ') || 'Not specified'),
-          country: typeof data.location === 'object' && data.location
-            ? (data.location.remote ? 'Remote' : (data.location.country || 'Not specified'))
-            : 'Not specified',
           description: data.description || data.job_description || '',
         };
       }
@@ -190,34 +181,18 @@ export default function InterviewPrepModal({ isOpen, onClose }: InterviewPrepMod
 
   // Filter jobs
   useEffect(() => {
-    let filtered = jobs;
-
-    if (jobCountryFilter !== 'all') {
-      filtered = filtered.filter(job => job.country === jobCountryFilter);
+    if (!jobSearchQuery.trim()) {
+      setFilteredJobs(jobs);
+      return;
     }
-
-    if (jobSearchQuery.trim()) {
-      const query = jobSearchQuery.toLowerCase();
-      filtered = filtered.filter(job =>
-        job.title.toLowerCase().includes(query) ||
-        job.company.toLowerCase().includes(query) ||
-        job.location.toLowerCase().includes(query)
-      );
-    }
-
+    const query = jobSearchQuery.toLowerCase();
+    const filtered = jobs.filter(job =>
+      job.title.toLowerCase().includes(query) ||
+      job.company.toLowerCase().includes(query) ||
+      job.location.toLowerCase().includes(query)
+    );
     setFilteredJobs(filtered);
-  }, [jobSearchQuery, jobCountryFilter, jobs]);
-
-  // Distinct list of countries present in the loaded jobs, for the filter dropdown
-  const availableCountries = React.useMemo(() => {
-    const countries = new Set<string>();
-    jobs.forEach(job => {
-      if (job.country && job.country !== 'Not specified') {
-        countries.add(job.country);
-      }
-    });
-    return Array.from(countries).sort();
-  }, [jobs]);
+  }, [jobSearchQuery, jobs]);
 
   // Filter CV documents
   useEffect(() => {
@@ -345,7 +320,6 @@ export default function InterviewPrepModal({ isOpen, onClose }: InterviewPrepMod
       title: 'Pasted Job',
       company: 'Unknown',
       location: '',
-      country: '',
       description: pastedJobDescription,
     });
     setJobSelectionMethod(null);
@@ -489,27 +463,15 @@ export default function InterviewPrepModal({ isOpen, onClose }: InterviewPrepMod
 
                   {jobSelectionMethod === 'select' && (
                     <div className="space-y-4">
-                      <div className="flex flex-col sm:flex-row gap-3">
-                        <div className="relative flex-1">
-                          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
-                          <input
-                            type="text"
-                            placeholder="Search jobs..."
-                            value={jobSearchQuery}
-                            onChange={(e) => setJobSearchQuery(e.target.value)}
-                            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          />
-                        </div>
-                        <select
-                          value={jobCountryFilter}
-                          onChange={(e) => setJobCountryFilter(e.target.value)}
-                          className="sm:w-48 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900"
-                        >
-                          <option value="all">All countries</option>
-                          {availableCountries.map(country => (
-                            <option key={country} value={country}>{country}</option>
-                          ))}
-                        </select>
+                      <div className="relative">
+                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+                        <input
+                          type="text"
+                          placeholder="Search jobs..."
+                          value={jobSearchQuery}
+                          onChange={(e) => setJobSearchQuery(e.target.value)}
+                          className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        />
                       </div>
                       <div className="max-h-64 overflow-y-auto border border-gray-200 rounded-lg">
                         {filteredJobs.length === 0 ? (

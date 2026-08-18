@@ -20,7 +20,7 @@ export default function InterviewSessionPage() {
   const [isRecording, setIsRecording] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isWaitingForResponse, setIsWaitingForResponse] = useState(false);
-  const [autoMode, setAutoMode] = useState(true); // Auto TTS + STT mode
+  const [autoMode, setAutoMode] = useState(false); // User must opt in to Auto TTS + auto-recording; default to giving them full control (type or manually start voice)
 
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
