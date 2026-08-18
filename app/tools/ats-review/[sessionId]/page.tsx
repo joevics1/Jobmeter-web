@@ -111,7 +111,7 @@ export default function ATSReviewSessionPage() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
           <p className="text-gray-600">Loading review...</p>
         </div>
       </div>
@@ -127,7 +127,7 @@ export default function ATSReviewSessionPage() {
           <p className="text-gray-600 mb-4">The review session you&apos;re looking for doesn&apos;t exist.</p>
           <Link
             href="/tools"
-            className="inline-flex items-center gap-2 text-green-600 hover:text-green-700 font-medium"
+            className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium"
           >
             <ArrowLeft size={20} />
             Back to Tools
@@ -298,7 +298,7 @@ export default function ATSReviewSessionPage() {
         {analysisResult.finalRecommendations && analysisResult.finalRecommendations.length > 0 && (
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-              <Target size={24} className="text-green-600" />
+              <Target size={24} className="text-blue-600" />
               Final Recommendations
             </h2>
             <ul className="space-y-3">

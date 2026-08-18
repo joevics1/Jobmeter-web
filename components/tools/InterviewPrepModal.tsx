@@ -551,7 +551,7 @@ export default function InterviewPrepModal({ isOpen, onClose }: InterviewPrepMod
                       </button>
                       <button
                         onClick={handleSkipCV}
-                        className="p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-green-500 hover:bg-green-50 transition-colors"
+                        className="p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-colors"
                       >
                         <Check className="mx-auto mb-2 text-gray-400" size={24} />
                         <div className="font-medium text-gray-900">Skip</div>

@@ -64,7 +64,7 @@ export default function ATSReviewPage() {
             </div>
             <button
               onClick={() => setShowModal(true)}
-              className="flex items-center justify-center w-10 h-10 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+              className="flex items-center justify-center w-10 h-10 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
             >
               <Plus size={20} />
             </button>
@@ -78,19 +78,19 @@ export default function ATSReviewPage() {
           <h2 className="text-lg font-semibold text-gray-900 mb-4">How It Works</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="flex items-start gap-3">
-              <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center text-green-600 font-bold text-sm flex-shrink-0">1</div>
+              <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold text-sm flex-shrink-0">1</div>
               <p className="text-sm text-gray-600">Upload your CV or paste its content</p>
             </div>
             <div className="flex items-start gap-3">
-              <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center text-green-600 font-bold text-sm flex-shrink-0">2</div>
+              <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold text-sm flex-shrink-0">2</div>
               <p className="text-sm text-gray-600">Select a target job description (optional)</p>
             </div>
             <div className="flex items-start gap-3">
-              <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center text-green-600 font-bold text-sm flex-shrink-0">3</div>
+              <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold text-sm flex-shrink-0">3</div>
               <p className="text-sm text-gray-600">Our AI analyzes your CV for ATS compatibility</p>
             </div>
             <div className="flex items-start gap-3">
-              <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center text-green-600 font-bold text-sm flex-shrink-0">4</div>
+              <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold text-sm flex-shrink-0">4</div>
               <p className="text-sm text-gray-600">Receive a detailed score and improvement tips</p>
             </div>
           </div>
@@ -120,7 +120,7 @@ export default function ATSReviewPage() {
                       <div className="flex-1">
                         <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center gap-3">
-                          <FileCheck size={24} className="text-green-600" />
+                          <FileCheck size={24} className="text-blue-600" />
                           <div>
                             <h3 className="font-semibold text-gray-900 text-lg">
                               {session.cvName}
@@ -170,7 +170,7 @@ export default function ATSReviewPage() {
             </p>
             <button
               onClick={() => setShowModal(true)}
-              className="inline-flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-lg font-semibold"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-lg font-semibold"
             >
               <Plus size={20} />
               Start Your First Review
@@ -382,7 +382,7 @@ export default function ATSReviewPage() {
                   { step: '5', title: 'Optimize and Re-Scan', desc: 'Implement the recommended changes and re-upload your updated CV to track your improved ATS score.' },
                 ].map(({ step, title, desc }) => (
                   <li key={step} className="flex items-start gap-3">
-                    <div className="w-7 h-7 bg-green-100 rounded-full flex items-center justify-center text-green-700 font-bold text-sm flex-shrink-0 mt-0.5">{step}</div>
+                    <div className="w-7 h-7 bg-blue-100 rounded-full flex items-center justify-center text-blue-700 font-bold text-sm flex-shrink-0 mt-0.5">{step}</div>
                     <div><strong className="text-gray-900">{title}:</strong> <span>{desc}</span></div>
                   </li>
                 ))}

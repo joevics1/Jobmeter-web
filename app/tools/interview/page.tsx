@@ -45,7 +45,7 @@ export default function InterviewPage() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
       </div>
     );
   }
@@ -72,7 +72,7 @@ export default function InterviewPage() {
             </div>
             <button
               onClick={() => setModalOpen(true)}
-              className="flex items-center justify-center w-10 h-10 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+              className="flex items-center justify-center w-10 h-10 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
             >
               <Plus size={20} />
             </button>
@@ -86,19 +86,19 @@ export default function InterviewPage() {
           <h2 className="text-lg font-semibold text-gray-900 mb-4">How It Works</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="flex items-start gap-3">
-              <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center text-green-600 font-bold text-sm flex-shrink-0">1</div>
+              <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold text-sm flex-shrink-0">1</div>
               <p className="text-sm text-gray-600">Start a new practice session</p>
             </div>
             <div className="flex items-start gap-3">
-              <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center text-green-600 font-bold text-sm flex-shrink-0">2</div>
+              <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold text-sm flex-shrink-0">2</div>
               <p className="text-sm text-gray-600">Answer AI-generated interview questions</p>
             </div>
             <div className="flex items-start gap-3">
-              <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center text-green-600 font-bold text-sm flex-shrink-0">3</div>
+              <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold text-sm flex-shrink-0">3</div>
               <p className="text-sm text-gray-600">Get instant feedback on your answers</p>
             </div>
             <div className="flex items-start gap-3">
-              <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center text-green-600 font-bold text-sm flex-shrink-0">4</div>
+              <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold text-sm flex-shrink-0">4</div>
               <p className="text-sm text-gray-600">Track progress and improve over time</p>
             </div>
           </div>
@@ -128,7 +128,7 @@ export default function InterviewPage() {
                   >
                     <div className="flex items-center justify-between mb-4">
                       <div className="flex items-center gap-3">
-                        <MessageCircle size={24} className="text-green-600" />
+                        <MessageCircle size={24} className="text-blue-600" />
                         <div>
                           <h3 className="font-semibold text-gray-900 text-lg">
                             {session.jobTitle || 'Interview Practice'}
@@ -139,7 +139,7 @@ export default function InterviewPage() {
                         </div>
                       </div>
                       <div className="text-right">
-                        <div className="text-lg font-bold text-green-600">
+                        <div className="text-lg font-bold text-blue-600">
                           {completedAnswers}/{totalQuestions}
                         </div>
                         <div className="text-xs text-gray-500">Questions</div>
@@ -153,7 +153,7 @@ export default function InterviewPage() {
                       </div>
                       <div className="w-full bg-gray-200 rounded-full h-2">
                         <div
-                          className="bg-green-600 h-2 rounded-full transition-all duration-300"
+                          className="bg-blue-600 h-2 rounded-full transition-all duration-300"
                           style={{ width: `${progressPercent}%` }}
                         ></div>
                       </div>
@@ -194,7 +194,7 @@ export default function InterviewPage() {
             </p>
             <button
               onClick={() => setModalOpen(true)}
-              className="inline-flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-lg font-semibold"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-lg font-semibold"
             >
               <Plus size={20} />
               Start Your First Session
@@ -356,7 +356,7 @@ export default function InterviewPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="border border-gray-200 rounded-lg p-4">
                 <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                  <span className="w-7 h-7 bg-purple-100 rounded-full flex items-center justify-center text-purple-600 text-sm">🎙</span>
+                  <span className="w-7 h-7 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 text-sm">🎙</span>
                   Audio Mode
                 </h3>
                 <ul className="space-y-2 text-sm text-gray-700">
@@ -368,7 +368,7 @@ export default function InterviewPage() {
               </div>
               <div className="border border-gray-200 rounded-lg p-4">
                 <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                  <span className="w-7 h-7 bg-green-100 rounded-full flex items-center justify-center text-green-600 text-sm">✍</span>
+                  <span className="w-7 h-7 bg-blue-50 rounded-full flex items-center justify-center text-blue-500 text-sm">✍</span>
                   Text Mode
                 </h3>
                 <ul className="space-y-2 text-sm text-gray-700">

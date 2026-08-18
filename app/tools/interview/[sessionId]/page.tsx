@@ -440,7 +440,7 @@ Rules:
               <button
                 onClick={() => setAutoMode(!autoMode)}
                 className={`flex items-center gap-2 px-3 py-1 rounded-full text-sm transition-colors ${
-                  autoMode ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'
+                  autoMode ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'
                 }`}
               >
                 {autoMode ? 'Auto Mode' : 'Manual Mode'}
@@ -478,7 +478,7 @@ Rules:
                     message.type === 'question'
                       ? 'bg-blue-50 border border-blue-200'
                       : message.type === 'answer'
-                        ? 'bg-green-50 border border-green-200 ml-auto'
+                        ? 'bg-gray-100 border border-gray-300 ml-auto'
                         : 'bg-yellow-50 border border-yellow-200'
                   }`}>
                     {message.type === 'feedback' && message.score !== undefined && (
@@ -513,8 +513,8 @@ Rules:
                   </div>
                 </div>
                 {message.type === 'answer' && (
-                  <div className="flex-shrink-0 w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-                    <User size={20} className="text-green-600" />
+                  <div className="flex-shrink-0 w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
+                    <User size={20} className="text-gray-700" />
                   </div>
                 )}
               </div>
