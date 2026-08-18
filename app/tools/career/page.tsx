@@ -27,7 +27,7 @@ function HowItWorks() {
             'Identify skill gaps and get development tips',
           ].map((step, i) => (
             <div key={i} className="flex items-start gap-3">
-              <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center text-purple-600 font-bold text-sm flex-shrink-0">
+              <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold text-sm flex-shrink-0">
                 {i + 1}
               </div>
               <p className="text-sm text-gray-600">{step}</p>
@@ -327,7 +327,7 @@ export default function CareerPage() {
                 <p className="text-sm text-gray-600">Get personalized career recommendations based on your skills</p>
               </div>
               <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
-                <Award size={32} className="mx-auto text-purple-600 mb-3" />
+                <Award size={32} className="mx-auto text-blue-600 mb-3" />
                 <h3 className="font-bold text-gray-900 mb-2">Skill Gaps</h3>
                 <p className="text-sm text-gray-600">Identify skills you need to develop for your target role</p>
               </div>
@@ -354,13 +354,242 @@ export default function CareerPage() {
     );
   }
 
-  // Analysis exists view (unchanged from your original)
+  // Analysis results view
+  const priorityStyle = (priority: 'high' | 'medium' | 'low') => {
+    if (priority === 'high') return { bg: '#FEF2F2', text: '#DC2626', border: '#FECACA' };
+    if (priority === 'medium') return { bg: '#FFFBEB', text: '#D97706', border: '#FDE68A' };
+    return { bg: '#ECFDF5', text: '#059669', border: '#A7F3D0' };
+  };
+
+  const tabs: { id: TabType; label: string; icon: typeof Target }[] = [
+    { id: 'paths', label: 'Career Paths', icon: Target },
+    { id: 'skills', label: 'Skill Gaps', icon: Award },
+    { id: 'insights', label: 'Insights', icon: TrendingUp },
+  ];
+
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Your full analysis view code here - kept exactly as in the original file you provided */}
-      {/* (header, HowItWorks, score card, tabs, paths/skills/insights sections, reanalyze warning, etc.) */}
+      {/* Header */}
+      <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <Link href="/tools" className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                <ArrowLeft size={20} className="text-gray-600" />
+              </Link>
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900">Your Career Analysis</h1>
+                <p className="text-sm text-gray-600">Personalized paths, skill gaps, and market insights</p>
+              </div>
+            </div>
+            <button
+              onClick={() => setShowReanalyzeWarning(true)}
+              disabled={reanalyzing}
+              className="hidden sm:inline-flex items-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium disabled:opacity-50"
+            >
+              {reanalyzing ? <RefreshCw size={16} className="animate-spin" /> : <RefreshCw size={16} />}
+              Reanalyze
+            </button>
+          </div>
+        </div>
+      </div>
 
-      {/* ... [Paste your original analysis return block here if needed - it was too long to repeat] ... */}
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        {/* Tabs */}
+        <div className="flex gap-1 mb-6 border-b border-gray-200 overflow-x-auto">
+          {tabs.map(({ id, label, icon: Icon }) => (
+            <button
+              key={id}
+              onClick={() => setActiveTab(id)}
+              className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium border-b-2 whitespace-nowrap transition-colors ${
+                activeTab === id ? 'border-blue-600 text-blue-700' : 'border-transparent text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              <Icon size={16} />
+              {label}
+            </button>
+          ))}
+        </div>
+
+        {/* Career Paths */}
+        {activeTab === 'paths' && (
+          <div className="space-y-4">
+            {analysis.personalizedPaths.map((path, i) => (
+              <div key={i} className="bg-white rounded-xl p-5 sm:p-6 shadow-sm border border-gray-200">
+                <div className="flex flex-wrap items-start justify-between gap-2 mb-2">
+                  <h3 className="text-lg font-bold text-gray-900">{path.title}</h3>
+                  <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-blue-50 text-blue-700 border border-blue-100 whitespace-nowrap">
+                    {path.timeframe}
+                  </span>
+                </div>
+                <p className="text-sm text-gray-600 mb-4">{path.description}</p>
+
+                {path.salaryRange && (
+                  <p className="text-sm text-gray-700 font-medium mb-4">💰 {path.salaryRange}</p>
+                )}
+
+                {path.steps?.length > 0 && (
+                  <div className="mb-4">
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Steps</p>
+                    <ol className="space-y-1.5">
+                      {path.steps.map((step, si) => (
+                        <li key={si} className="flex items-start gap-2 text-sm text-gray-700">
+                          <span className="w-5 h-5 rounded-full bg-blue-100 text-blue-700 text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">{si + 1}</span>
+                          {step}
+                        </li>
+                      ))}
+                    </ol>
+                  </div>
+                )}
+
+                {path.requiredSkills?.length > 0 && (
+                  <div className="mb-3">
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Required Skills</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {path.requiredSkills.map((s) => (
+                        <span key={s} className="px-2 py-0.5 text-xs rounded bg-gray-100 text-gray-700">{s}</span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {path.potentialRoles?.length > 0 && (
+                  <div>
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Potential Roles</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {path.potentialRoles.map((r) => (
+                        <span key={r} className="px-2 py-0.5 text-xs rounded bg-blue-50 text-blue-700 border border-blue-100">{r}</span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Skill Gaps */}
+        {activeTab === 'skills' && (
+          <div className="space-y-4">
+            {analysis.skillGaps.map((gap, i) => {
+              const ps = priorityStyle(gap.priority);
+              return (
+                <div key={i} className="bg-white rounded-xl p-5 shadow-sm border border-gray-200">
+                  <div className="flex flex-wrap items-start justify-between gap-2 mb-2">
+                    <h3 className="text-base font-bold text-gray-900">{gap.skill}</h3>
+                    <span
+                      className="px-2.5 py-1 text-xs font-bold rounded-full border whitespace-nowrap uppercase"
+                      style={{ backgroundColor: ps.bg, color: ps.text, borderColor: ps.border }}
+                    >
+                      {gap.priority} priority
+                    </span>
+                  </div>
+                  <div className="grid sm:grid-cols-2 gap-2 mb-3 text-sm">
+                    <p className="text-gray-600"><span className="font-medium text-gray-900">Current:</span> {gap.currentLevel}</p>
+                    <p className="text-gray-600"><span className="font-medium text-gray-900">Target:</span> {gap.targetLevel}</p>
+                  </div>
+                  {gap.learningPath?.length > 0 && (
+                    <div className="mb-3">
+                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Learning Path</p>
+                      <ol className="space-y-1">
+                        {gap.learningPath.map((step, si) => (
+                          <li key={si} className="text-sm text-gray-700">{si + 1}. {step}</li>
+                        ))}
+                      </ol>
+                    </div>
+                  )}
+                  {gap.resources?.length > 0 && (
+                    <div className="mb-2">
+                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Resources</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {gap.resources.map((r) => (
+                          <span key={r} className="px-2 py-0.5 text-xs rounded bg-gray-100 text-gray-700">{r}</span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  <p className="text-xs text-gray-500 mt-2">Estimated time: {gap.estimatedTime}</p>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Insights */}
+        {activeTab === 'insights' && (
+          <div className="space-y-4">
+            <div className="grid sm:grid-cols-3 gap-4">
+              <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-200">
+                <div className="flex items-center gap-2 mb-3">
+                  <TrendingUp size={18} className="text-blue-600" />
+                  <h3 className="text-sm font-bold text-gray-900">Opportunities</h3>
+                </div>
+                <ul className="space-y-1.5 text-sm text-gray-600">
+                  {analysis.insights.opportunities.map((o, i) => <li key={i}>• {o}</li>)}
+                </ul>
+              </div>
+              <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-200">
+                <div className="flex items-center gap-2 mb-3">
+                  <AlertTriangle size={18} className="text-amber-600" />
+                  <h3 className="text-sm font-bold text-gray-900">Watch Out For</h3>
+                </div>
+                <ul className="space-y-1.5 text-sm text-gray-600">
+                  {analysis.insights.warnings.map((w, i) => <li key={i}>• {w}</li>)}
+                </ul>
+              </div>
+              <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-200">
+                <div className="flex items-center gap-2 mb-3">
+                  <Lightbulb size={18} className="text-blue-600" />
+                  <h3 className="text-sm font-bold text-gray-900">Tips</h3>
+                </div>
+                <ul className="space-y-1.5 text-sm text-gray-600">
+                  {analysis.insights.tips.map((t, i) => <li key={i}>• {t}</li>)}
+                </ul>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-xl p-5 sm:p-6 shadow-sm border border-gray-200">
+              <div className="flex items-center gap-2 mb-4">
+                <Briefcase size={18} className="text-blue-600" />
+                <h3 className="text-base font-bold text-gray-900">Market Insights</h3>
+              </div>
+              <div className="grid sm:grid-cols-2 gap-4 mb-4 text-sm">
+                <p className="text-gray-600"><span className="font-medium text-gray-900">Job Growth:</span> {analysis.marketInsights.jobGrowth}</p>
+                <p className="text-gray-600"><span className="font-medium text-gray-900">Salary Expectations:</span> {analysis.marketInsights.salaryExpectations}</p>
+              </div>
+              {analysis.marketInsights.industryTrends?.length > 0 && (
+                <div className="mb-4">
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Industry Trends</p>
+                  <ul className="space-y-1 text-sm text-gray-600">
+                    {analysis.marketInsights.industryTrends.map((t, i) => <li key={i}>• {t}</li>)}
+                  </ul>
+                </div>
+              )}
+              {analysis.marketInsights.demandSkills?.length > 0 && (
+                <div>
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">In-Demand Skills</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {analysis.marketInsights.demandSkills.map((s) => (
+                      <span key={s} className="px-2 py-0.5 text-xs rounded bg-blue-50 text-blue-700 border border-blue-100">{s}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        <div className="mt-6 sm:hidden">
+          <button
+            onClick={() => setShowReanalyzeWarning(true)}
+            disabled={reanalyzing}
+            className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium disabled:opacity-50"
+          >
+            <RefreshCw size={16} className={reanalyzing ? 'animate-spin' : ''} />
+            Reanalyze
+          </button>
+        </div>
+      </div>
 
       {showReanalyzeWarning && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
