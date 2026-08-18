@@ -49,7 +49,7 @@ export default function ToolsPage() {
       tools: [
 //        { id: 'cv-create', title: 'Create CV/Cover Letter', description: 'Build professional CVs and cover letters in minutes', icon: FileText, color: '#2563EB', route: '/cv' },
 //        { id: 'keyword-checker', title: 'CV Keyword Checker', description: 'Check keyword match between your CV and job descriptions', icon: Search, color: '#10B981', route: '/tools/keyword-checker' },
-        { id: 'ats-review', title: 'ATS CV Review', description: 'Optimize your CV for ATS systems and job matching', icon: FileCheck, color: '#8B5CF6', route: '/tools/ats-review' },
+        { id: 'ats-review', title: 'ATS CV Review', description: 'Optimize your CV for ATS systems and job matching', icon: FileCheck, color: '#10B981', route: '/tools/ats-review' },
       ],
     },
     {

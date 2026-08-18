@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { FileText, Briefcase, Check, ArrowRight, X, Loader2, Search, FileCheck, Clock } from 'lucide-react';
+import { FileText, Briefcase, Check, ArrowRight, X, Loader2, Search, FileCheck, Clock, Upload } from 'lucide-react';
 import { theme } from '@/lib/theme';
 import { useRouter } from 'next/navigation';
 import { ATSReviewService } from '@/lib/services/atsReviewService';
@@ -46,12 +46,15 @@ export default function ATSReviewModal({ isOpen, onClose }: ATSReviewModalProps)
   const [loading, setLoading] = useState(false);
   
   // CV selection state
-  const [cvSelectionMethod, setCvSelectionMethod] = useState<'select' | 'paste' | null>(null);
+  const [cvSelectionMethod, setCvSelectionMethod] = useState<'select' | 'paste' | 'upload' | null>(null);
   const [cvDocuments, setCvDocuments] = useState<CVDocument[]>([]);
   const [filteredCVDocuments, setFilteredCVDocuments] = useState<CVDocument[]>([]);
   const [cvSearchQuery, setCvSearchQuery] = useState('');
   const [selectedCV, setSelectedCV] = useState<CVDocument | null>(null);
   const [pastedCVContent, setPastedCVContent] = useState('');
+  const [uploadedCVFile, setUploadedCVFile] = useState<File | null>(null);
+  const [cvUploadError, setCvUploadError] = useState('');
+  const [isExtractingCV, setIsExtractingCV] = useState(false);
   
   // Review type
   const [reviewType, setReviewType] = useState<'cv-only' | 'cv-job' | null>(null);
@@ -189,6 +192,56 @@ export default function ATSReviewModal({ isOpen, onClose }: ATSReviewModalProps)
     });
     setCvSelectionMethod(null);
     setStep('job-selection');
+  };
+
+  const handleCVFileUpload = async (file: File) => {
+    setCvUploadError('');
+
+    const isPDF = file.type === 'application/pdf';
+    const isImage = file.type.startsWith('image/');
+    const isDocument = file.type.includes('document') || file.name.endsWith('.doc') || file.name.endsWith('.docx');
+
+    if (!isPDF && !isImage && !isDocument) {
+      setCvUploadError('Please upload a PDF, Word document (DOC/DOCX), or image file');
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      setCvUploadError('File too large. Maximum size is 10MB');
+      return;
+    }
+
+    setUploadedCVFile(file);
+    setIsExtractingCV(true);
+
+    try {
+      const form = new FormData();
+      form.append('file', file);
+      const res = await fetch('/api/onboarding/ocr', { method: 'POST', body: form });
+
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({ error: `Extraction failed: ${res.status}` }));
+        throw new Error(errorData.error || 'Could not extract text from that file. Please try another file.');
+      }
+
+      const data = await res.json();
+      if (!data?.text || !data.text.trim()) {
+        throw new Error('No text could be extracted from that file. Please try another file or paste your CV instead.');
+      }
+
+      setSelectedCV({
+        id: 'uploaded',
+        name: file.name,
+        pasted_text: data.text,
+      });
+      setCvSelectionMethod(null);
+      setStep('job-selection');
+    } catch (error: any) {
+      console.error('Error extracting CV file:', error);
+      setCvUploadError(error.message || 'Failed to process the uploaded file. Please try again.');
+      setUploadedCVFile(null);
+    } finally {
+      setIsExtractingCV(false);
+    }
   };
 
   const fetchFullJobDetails = async (jobId: string): Promise<Job | null> => {
@@ -387,6 +440,9 @@ export default function ATSReviewModal({ isOpen, onClose }: ATSReviewModalProps)
     setPastedCVContent('');
     setPastedJobDetails('');
     setReviewType(null);
+    setUploadedCVFile(null);
+    setCvUploadError('');
+    setIsExtractingCV(false);
   };
 
   const handleClose = () => {
@@ -437,6 +493,15 @@ export default function ATSReviewModal({ isOpen, onClose }: ATSReviewModalProps)
                     </button>
 
                     <button
+                      onClick={() => setCvSelectionMethod('upload')}
+                      className="w-full p-4 border-2 border-dashed border-gray-300 rounded-xl hover:border-blue-500 transition-colors text-left group"
+                    >
+                      <Upload size={24} className="mb-2 text-blue-600" />
+                      <h4 className="font-semibold text-gray-900 mb-1">Upload CV</h4>
+                      <p className="text-sm text-gray-600">Upload a PDF, Word document, or image</p>
+                    </button>
+
+                    <button
                       onClick={() => setCvSelectionMethod('paste')}
                       className="w-full p-4 border-2 border-dashed border-gray-300 rounded-xl hover:border-blue-500 transition-colors text-left group"
                     >
@@ -444,6 +509,52 @@ export default function ATSReviewModal({ isOpen, onClose }: ATSReviewModalProps)
                       <h4 className="font-semibold text-gray-900 mb-1">Paste CV Content</h4>
                       <p className="text-sm text-gray-600">Paste your CV as plain text</p>
                     </button>
+                  </div>
+                ) : cvSelectionMethod === 'upload' ? (
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between mb-4">
+                      <h4 className="font-semibold text-gray-900">Upload Your CV</h4>
+                      <button
+                        onClick={() => {
+                          setCvSelectionMethod(null);
+                          setUploadedCVFile(null);
+                          setCvUploadError('');
+                        }}
+                        className="text-sm text-blue-600 hover:text-blue-700"
+                      >
+                        Back
+                      </button>
+                    </div>
+                    {isExtractingCV ? (
+                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+                        <Loader2 className="mx-auto mb-3 animate-spin text-blue-500" size={32} />
+                        <p className="text-gray-600 text-sm">
+                          {uploadedCVFile ? `Extracting text from ${uploadedCVFile.name}...` : 'Processing file...'}
+                        </p>
+                      </div>
+                    ) : (
+                      <label
+                        htmlFor="ats-cv-upload"
+                        className="block border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition-colors"
+                      >
+                        <Upload className="mx-auto mb-3 text-gray-400" size={32} />
+                        <div className="font-medium text-gray-900 mb-1">Click to upload your CV</div>
+                        <div className="text-sm text-gray-500">PDF, DOC, DOCX, or image (max 10MB)</div>
+                        <input
+                          id="ats-cv-upload"
+                          type="file"
+                          accept="application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,image/jpeg,image/jpg,image/png"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) handleCVFileUpload(file);
+                          }}
+                        />
+                      </label>
+                    )}
+                    {cvUploadError && (
+                      <p className="text-sm text-red-600">{cvUploadError}</p>
+                    )}
                   </div>
                 ) : cvSelectionMethod === 'select' ? (
                   <div className="space-y-3">
@@ -458,7 +569,7 @@ export default function ATSReviewModal({ isOpen, onClose }: ATSReviewModalProps)
                     </div>
                     {cvDocuments.length === 0 ? (
                       <div className="text-center py-8">
-                        <p className="text-gray-600 mb-4">No CVs found. Create a CV first or paste your CV content.</p>
+                        <p className="text-gray-600 mb-4">No CVs found. Create a CV first, upload one, or paste your CV content.</p>
                         <div className="space-y-2">
                           <Button
                             onClick={() => {
@@ -469,6 +580,13 @@ export default function ATSReviewModal({ isOpen, onClose }: ATSReviewModalProps)
                             className="mr-2"
                           >
                             Create CV
+                          </Button>
+                          <Button
+                            onClick={() => setCvSelectionMethod('upload')}
+                            variant="outline"
+                            className="mr-2"
+                          >
+                            Or Upload CV
                           </Button>
                           <Button
                             onClick={() => setCvSelectionMethod('paste')}
