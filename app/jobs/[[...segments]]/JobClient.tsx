@@ -23,7 +23,6 @@ import {
   ChevronRight,
   BookOpen,
   PenTool,
-  X,
   CheckCircle2,
 } from 'lucide-react';
 import { theme } from '@/lib/theme';
@@ -165,9 +164,6 @@ export default function JobClient({ job, relatedJobs, companies, documentLinks, 
   const [showUrl, setShowUrl] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
 
-  const [anchorHeight, setAnchorHeight] = useState(100);
-  const [isAnchorClosed, setIsAnchorClosed] = useState(false);
-
   const [randomBlogs, setRandomBlogs] = useState<typeof ALL_BLOGS>([]);
 
   useEffect(() => {
@@ -200,11 +196,6 @@ export default function JobClient({ job, relatedJobs, companies, documentLinks, 
     setCopied(label);
     toast({ title: 'Copied!', description: `${label} copied to clipboard` });
     setTimeout(() => setCopied(null), 2000);
-  };
-
-  const handleCloseAnchorAd = () => {
-    setAnchorHeight(50);
-    setIsAnchorClosed(true);
   };
 
   const handleShare = async () => {
@@ -1290,24 +1281,6 @@ export default function JobClient({ job, relatedJobs, companies, documentLinks, 
                 <AdUnit slot={AD_SLOTS.BANNER_2} format="auto" style={{ display: 'block', width: '100%' }} />
               </div>
             </div>
-          </div>
-        </div>
-
-        {/* Mobile Anchor Ad */}
-        <div
-          id="mobile-anchor-ad"
-          className="fixed bottom-0 left-0 right-0 z-40 lg:hidden bg-white border-t border-gray-100 overflow-hidden transition-all duration-300"
-          style={{ height: `${anchorHeight}px` }}
-        >
-          <button
-            onClick={handleCloseAnchorAd}
-            className="absolute top-1.5 left-3 z-50 w-7 h-7 flex items-center justify-center bg-white rounded-full shadow text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition-colors"
-            aria-label="Close bottom advertisement"
-          >
-            <X size={18} />
-          </button>
-          <div className="w-full transition-all duration-300" style={{ height: `${anchorHeight}px` }}>
-            <AdUnit slot={AD_SLOTS.ANCHOR_MOBILE} format="auto" style={{ display: 'block', width: '100%', height: `${anchorHeight}px`, maxHeight: `${anchorHeight}px` }} />
           </div>
         </div>
 
