@@ -387,11 +387,13 @@ export default function ATSReviewModal({ isOpen, onClose }: ATSReviewModalProps)
     }
 
     // === CREDIT CHECK ===
-    const creditResult = await deductCredit(1);
-    if (!creditResult.success) {
-      setShowPaymentModal(true);
-      return; // Stay on current step — do NOT show analyzing
-    }
+    // TEMPORARILY DISABLED — ATS CV Review is free for now (per request 2026-08-19).
+    // Re-enable by uncommenting this block when credits should be required again.
+    // const creditResult = await deductCredit(1);
+    // if (!creditResult.success) {
+    //   setShowPaymentModal(true);
+    //   return; // Stay on current step — do NOT show analyzing
+    // }
 
     // Only transition to analyzing after auth + credit pass
     setStep('analyzing');

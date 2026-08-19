@@ -349,11 +349,13 @@ export default function InterviewPrepModal({ isOpen, onClose }: InterviewPrepMod
     }
 
     // 2. Check/Deduct Credit
-    const result = await deductCredit(1);
-    if (!result.success) {
-      setShowPaymentModal(true);
-      return;
-    }
+    // TEMPORARILY DISABLED — Interview Practice is free for now (per request 2026-08-19).
+    // Re-enable by uncommenting this block when credits should be required again.
+    // const result = await deductCredit(1);
+    // if (!result.success) {
+    //   setShowPaymentModal(true);
+    //   return;
+    // }
 
     setLoading(true);
     setStep('generating');
