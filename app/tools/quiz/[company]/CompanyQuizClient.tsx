@@ -9,7 +9,7 @@ import { getCached, setCached, CACHE_KEYS } from '@/lib/quizCache';
 import { theme } from '@/lib/theme';
 import { useCredits } from '@/context/CreditContext';
 import { ApplyPaymentModal } from '@/components/payment/ApplyPaymentModal';
-import AuthModal from '@/components/AuthModal';
+import { useAuth } from '@/context/AuthContext';
 import AdUnit from '@/components/ads/AdUnit';
 import QuizCrossLinks from '@/components/quiz/QuizCrossLinks';
 import {
@@ -39,6 +39,7 @@ export default function CompanyQuizClient({
 }) {
   const router = useRouter();
   const { credits, isPro, loading: creditsLoading, deductCredit } = useCredits();
+  const { openAuthModal } = useAuth();
   
   const [loading, setLoading] = useState(true);
   const [selectedType, setSelectedType] = useState<'objective' | 'theory' | null>(null);
@@ -48,9 +49,8 @@ export default function CompanyQuizClient({
   const [showAllSections, setShowAllSections] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
 
-  // Modal states
+  // Payment modal state (auth modal is global — see AuthContext)
   const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const [showAuthModal, setShowAuthModal] = useState(false);
 
   useEffect(() => {
     fetchSections();
@@ -88,7 +88,7 @@ export default function CompanyQuizClient({
     // 1. Check Auth first
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
-      setShowAuthModal(true);
+      openAuthModal('signin');
       setIsProcessing(false);
       return;
     }
@@ -279,12 +279,11 @@ export default function CompanyQuizClient({
         <QuizCrossLinks currentCompany={company} />
       </div>
 
-      {/* Modals */}
-      <AuthModal open={showAuthModal} onOpenChange={setShowAuthModal} />
+      {/* Payment Modal (auth modal is global — see RootLayoutClient) */}
       <ApplyPaymentModal 
         open={showPaymentModal} 
         onOpenChange={setShowPaymentModal} 
-        onAuthRequired={() => setShowAuthModal(true)} 
+        onAuthRequired={() => openAuthModal('signin')} 
       />
     </div>
   );

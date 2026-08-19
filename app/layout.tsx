@@ -9,6 +9,7 @@ import RootLayoutClient from './RootLayoutClient';
 import PWAInstaller from '@/components/PWAInstaller';
 import NotificationManager from '@/components/NotificationManager';
 import { CreditProvider } from '@/context/CreditContext'; // Added import
+import { AuthProvider } from '@/context/AuthContext';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -133,9 +134,11 @@ export default function RootLayout({
 
       </head>
       <body className={inter.className}>
-        <CreditProvider>
-          <RootLayoutClient>{children}</RootLayoutClient>
-        </CreditProvider>
+        <AuthProvider>
+          <CreditProvider>
+            <RootLayoutClient>{children}</RootLayoutClient>
+          </CreditProvider>
+        </AuthProvider>
         <PWAInstaller />
         <NotificationManager />
       </body>

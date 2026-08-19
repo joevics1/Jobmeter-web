@@ -1,15 +1,12 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
-import dynamic from 'next/dynamic';
 import { usePathname } from 'next/navigation';
 import { Menu, X, Briefcase, FileText, BookOpen, Wrench, Settings, ChevronRight, Send, Users, LogIn } from 'lucide-react';
 import { theme } from '@/lib/theme';
 import { usePendingInvitationsCount } from '@/hooks/usePendingInvitationsCount';
-import { supabase } from '@/lib/supabase';
-
-const AuthModal = dynamic(() => import('@/components/AuthModal'), { ssr: false });
+import { useAuth } from '@/context/AuthContext';
 
 const navItems = [
   { label: 'Jobs', href: '/jobs', icon: Briefcase },
@@ -26,18 +23,9 @@ export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const pendingInvitations = usePendingInvitationsCount();
 
-  // null = still checking, so we don't flash "Log In" for a signed-in
+  // loading = still checking, so we don't flash "Log In" for a signed-in
   // visitor while the session check is in flight.
-  const [isSignedIn, setIsSignedIn] = useState<boolean | null>(null);
-  const [authModalOpen, setAuthModalOpen] = useState(false);
-
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => setIsSignedIn(!!session));
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setIsSignedIn(!!session);
-    });
-    return () => subscription.unsubscribe();
-  }, []);
+  const { isSignedIn, loading, openAuthModal } = useAuth();
 
   const isActive = (href: string) => pathname === href;
 
@@ -99,9 +87,9 @@ export default function Header() {
               })}
             </nav>
 
-            {isSignedIn === false && (
+            {!loading && !isSignedIn && (
               <button
-                onClick={() => setAuthModalOpen(true)}
+                onClick={() => openAuthModal('signin')}
                 className="hidden md:flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium border transition-colors hover:bg-gray-50"
                 style={{ borderColor: theme.colors.primary.DEFAULT, color: theme.colors.primary.DEFAULT }}
               >
@@ -152,9 +140,9 @@ export default function Header() {
 
             {/* Drawer Content */}
             <nav className="py-4">
-              {isSignedIn === false && (
+              {!loading && !isSignedIn && (
                 <button
-                  onClick={() => { setMobileMenuOpen(false); setAuthModalOpen(true); }}
+                  onClick={() => { setMobileMenuOpen(false); openAuthModal('signin'); }}
                   className="w-full flex items-center gap-3 px-4 py-4 border-b hover:bg-gray-50 transition-colors"
                   style={{ borderColor: theme.colors.border.light }}
                 >
@@ -241,10 +229,6 @@ export default function Header() {
 
       {/* Spacer to prevent content from being hidden behind fixed header */}
       <div className="h-16" />
-
-      {authModalOpen && (
-        <AuthModal open={authModalOpen} onOpenChange={setAuthModalOpen} defaultMode="signin" />
-      )}
     </>
   );
 }

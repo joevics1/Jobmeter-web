@@ -10,7 +10,7 @@ import { JobUI } from '@/components/jobs/JobCard';
 import JobFilters from '@/components/jobs/JobFilters';
 import { ChevronDown, Search, X, Filter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import AuthModal from '@/components/AuthModal';
+import { useAuth } from '@/context/AuthContext';
 
 import { OrganizationSchema, WebSiteSchema } from '@/components/seo/StructuredData';
 
@@ -32,12 +32,11 @@ export default function LatestJobsPage() {
   const [latestJobsPage, setLatestJobsPage] = useState(1);
   const [latestJobsHasMore, setLatestJobsHasMore] = useState(true);
   
-  const [user, setUser] = useState<any>(null);
+  const { user, loading: authLoading, openAuthModal } = useAuth();
+  const authChecked = !authLoading;
   const [userName, setUserName] = useState<string | null>(null);
-  const [authChecked, setAuthChecked] = useState(false);
   const [savedJobs, setSavedJobs] = useState<string[]>([]);
   const [appliedJobs, setAppliedJobs] = useState<string[]>([]);
-  const [authModalOpen, setAuthModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [filters, setFilters] = useState({
@@ -50,21 +49,13 @@ export default function LatestJobsPage() {
   });
 
   useEffect(() => {
-    checkAuth();
     loadSavedJobs();
     loadAppliedJobs();
-    
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (session) {
-        setUser(session.user);
-      } else {
-        setUser(null);
-        setUserName(null);
-      }
-    });
-
-    return () => subscription.unsubscribe();
   }, []);
+
+  useEffect(() => {
+    if (!user) setUserName(null);
+  }, [user]);
 
   // Initialize search query and filters from URL parameters
   useEffect(() => {
@@ -122,16 +113,6 @@ export default function LatestJobsPage() {
       fetchLatestJobs(1);
     }
   }, [authChecked]);
-
-  const checkAuth = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (session) {
-      setUser(session.user);
-    } else {
-      setUser(null);
-    }
-    setAuthChecked(true);
-  };
 
   const fetchUserProfile = async () => {
     if (!user) return;
@@ -644,11 +625,6 @@ export default function LatestJobsPage() {
           )}
         </div>
       </div>
-
-      <AuthModal
-        open={authModalOpen}
-        onOpenChange={setAuthModalOpen}
-      />
     </>
   );
 }

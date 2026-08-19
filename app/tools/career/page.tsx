@@ -7,8 +7,8 @@ import { CareerCoachService, CareerCoachResult } from '@/lib/services/careerCoac
 import { theme } from '@/lib/theme';
 import { supabase } from '@/lib/supabase';
 import { useCredits } from '@/context/CreditContext';
-import AuthModal from '@/components/AuthModal';
 import { ApplyPaymentModal } from '@/components/payment/ApplyPaymentModal';
+import { useAuth } from '@/context/AuthContext';
 
 type TabType = 'paths' | 'skills' | 'insights';
 
@@ -161,6 +161,7 @@ function SEOContent() {
 
 export default function CareerPage() {
   const { deductCredit } = useCredits();
+  const { openAuthModal } = useAuth();
 
   const [analysis, setAnalysis] = useState<CareerCoachResult | null>(null);
   const [loading, setLoading] = useState(true);
@@ -168,8 +169,7 @@ export default function CareerPage() {
   const [showReanalyzeWarning, setShowReanalyzeWarning] = useState(false);
   const [activeTab, setActiveTab] = useState<TabType>('paths');
 
-  // New modal states for auth & payment flow
-  const [showAuthModal, setShowAuthModal] = useState(false);
+  // Payment modal state (auth modal is global — see AuthContext)
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [startingAnalysis, setStartingAnalysis] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -199,7 +199,7 @@ export default function CareerPage() {
     // AUTH CHECK
     const { data: { session } } = await supabase.auth.getSession();
     if (!session?.user) {
-      setShowAuthModal(true);
+      openAuthModal('signin');
       return;
     }
 
@@ -249,7 +249,7 @@ export default function CareerPage() {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        setShowAuthModal(true);
+        openAuthModal('signin');
         return;
       }
 
@@ -360,12 +360,11 @@ export default function CareerPage() {
         <RelatedTools />
         <SEOContent />
 
-        {/* Auth & Payment Modals */}
-        <AuthModal open={showAuthModal} onOpenChange={setShowAuthModal} />
+        {/* Payment Modal (auth modal is global — see RootLayoutClient) */}
         <ApplyPaymentModal
           open={showPaymentModal}
           onOpenChange={setShowPaymentModal}
-          onAuthRequired={() => setShowAuthModal(true)}
+          onAuthRequired={() => openAuthModal('signin')}
         />
       </div>
     );
@@ -645,12 +644,11 @@ export default function CareerPage() {
       <RelatedTools />
       <SEOContent />
 
-      {/* Auth & Payment Modals */}
-      <AuthModal open={showAuthModal} onOpenChange={setShowAuthModal} />
+      {/* Payment Modal (auth modal is global — see RootLayoutClient) */}
       <ApplyPaymentModal
         open={showPaymentModal}
         onOpenChange={setShowPaymentModal}
-        onAuthRequired={() => setShowAuthModal(true)}
+        onAuthRequired={() => openAuthModal('signin')}
       />
     </div>
   );

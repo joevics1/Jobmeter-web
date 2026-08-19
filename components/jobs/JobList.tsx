@@ -13,7 +13,7 @@ import { MatchBreakdownModalData } from '@/components/jobs/MatchBreakdownModal';
 import JobFilters from '@/components/jobs/JobFilters';
 import { Search, X, SlidersHorizontal, ArrowUpDown, RefreshCw, Globe, FileText, ArrowRight, CheckCircle, AlertCircle, Sparkles, Loader2, ChevronUp, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import AuthModal from '@/components/AuthModal';
+import { useAuth } from '@/context/AuthContext';
 import { scoreJob, JobRow, UserOnboardingData } from '@/lib/matching/matchEngine';
 import { matchCacheService } from '@/lib/matching/matchCache';
 import CreateCVModal from '@/components/cv/CreateCVModal';
@@ -160,31 +160,22 @@ export default function JobList({ siteType = 'global', initialJobs, initialCount
   const [loading, setLoading] = useState(false);
 
   // ── Auth ────────────────────────────────────────────────────────────────────
-  // Pre-seed synchronously from localStorage so authChecked=true on first render
-  // when there's a valid cached session — no blank/flash gap waiting for async listener.
-  const [user, setUser] = useState<any>(() => {
-    if (typeof window === 'undefined') return null;
-    try {
-      const raw = Object.keys(localStorage).find(k => k.startsWith('sb-') && k.endsWith('-auth-token'));
-      if (!raw) return null;
-      const parsed = JSON.parse(localStorage.getItem(raw) || '');
-      return parsed?.user ?? null;
-    } catch { return null; }
-  });
+  // `user` and `authChecked` (== !authLoading) now come from the shared
+  // AuthContext instead of a local, per-component session check. Note the
+  // previous version of this pre-seed looked for a localStorage key named
+  // `sb-*-auth-token` — Supabase's *default* key — but lib/supabase.ts sets
+  // a custom `storageKey: 'supabase.auth.token'`, so that lookup never
+  // actually matched anything and this component always started out
+  // thinking the user was signed out.
+  const { user, loading: authLoading, openAuthModal } = useAuth();
+  const authChecked = !authLoading;
   const [userName, setUserName] = useState<string | null>(null);
-  const [authChecked, setAuthChecked] = useState<boolean>(() => {
-    if (typeof window === 'undefined') return false;
-    try {
-      const raw = Object.keys(localStorage).find(k => k.startsWith('sb-') && k.endsWith('-auth-token'));
-      return !!raw && !!JSON.parse(localStorage.getItem(raw) || '')?.user;
-    } catch { return false; }
-  });
   const [userOnboardingData, setUserOnboardingData] = useState<UserOnboardingData | null>(() => {
     if (typeof window === 'undefined') return null;
     try {
-      const raw = Object.keys(localStorage).find(k => k.startsWith('sb-') && k.endsWith('-auth-token'));
-      if (!raw) return null;
-      const userId = JSON.parse(localStorage.getItem(raw) || '')?.user?.id;
+      // Matches the storageKey set in lib/supabase.ts (NOT Supabase's
+      // default `sb-*-auth-token` naming — see note above).
+      const userId = JSON.parse(localStorage.getItem('supabase.auth.token') || '')?.user?.id;
       if (!userId) return null;
       const cached = localStorage.getItem(`onboarding_cache_${userId}`);
       const ts = localStorage.getItem(`onboarding_cache_ts_${userId}`);
@@ -206,7 +197,6 @@ export default function JobList({ siteType = 'global', initialJobs, initialCount
   const [matchPage, setMatchPage] = useState(1);
   const [matchSearch, setMatchSearch] = useState('');
   const [matchSortBy, setMatchSortBy] = useState<'match' | 'latest' | 'salary'>('match');
-  const [authModalOpen, setAuthModalOpen] = useState(false);
   const [cvModalOpen, setCvModalOpen] = useState(false);
   const [coverLetterModalOpen, setCoverLetterModalOpen] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -368,27 +358,25 @@ export default function JobList({ siteType = 'global', initialJobs, initialCount
     return popularRoles.filter(role => role.toLowerCase().includes(lowerQuery)).slice(0, 8);
   };
 
-  // ── Auth — single onAuthStateChange listener, no separate checkAuth call ────
-  // onAuthStateChange fires immediately with the current session on mount,
-  // so it replaces the old checkAuth() call entirely.
+  // ── Auth ──────────────────────────────────────────────────────────────────
+  // `user` itself now comes from the shared AuthContext. This effect just
+  // reacts to it changing to fetch/clear this page's own profile and
+  // onboarding data.
   useEffect(() => {
     loadSavedJobs();
     loadAppliedJobs();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (session?.user) {
-        setUser(session.user);
-        fetchUserProfile(session.user);
-        fetchUserOnboardingData(session.user);
-      } else {
-        setUser(null);
-        setUserName(null);
-        setUserOnboardingData(null);
-      }
-      setAuthChecked(true);
-    });
-    return () => subscription.unsubscribe();
   }, []);
+
+  useEffect(() => {
+    if (authLoading) return;
+    if (user) {
+      fetchUserProfile(user);
+      fetchUserOnboardingData(user);
+    } else {
+      setUserName(null);
+      setUserOnboardingData(null);
+    }
+  }, [user, authLoading]);
 
   // ── Initial filter props ────────────────────────────────────────────────────
   useEffect(() => {
@@ -1241,7 +1229,7 @@ if (filters.remote) {
                 </div>
                 <h3 className="text-lg font-semibold mb-2" style={{ color: theme.colors.text.primary }}>Sign in to see your matches</h3>
                 <p className="text-sm mb-5" style={{ color: theme.colors.text.secondary }}>Create a free account and we'll match you to jobs based on your skills, experience, and preferences.</p>
-                <button onClick={() => setAuthModalOpen(true)} className="px-6 py-3 rounded-xl font-semibold text-sm text-white transition-all" style={{ backgroundColor: '#1D4ED8' }}>
+                <button onClick={() => openAuthModal('signin')} className="px-6 py-3 rounded-xl font-semibold text-sm text-white transition-all" style={{ backgroundColor: '#1D4ED8' }}>
                   Sign Up Free
                 </button>
               </div>
@@ -1437,7 +1425,7 @@ if (filters.remote) {
 
               {!user && (
                 <button
-                  onClick={() => setAuthModalOpen(true)}
+                  onClick={() => openAuthModal('signin')}
                   disabled={cvStatus === 'uploading' || cvStatus === 'parsing'}
                   className="flex-1 px-3 py-2.5 rounded-lg font-medium text-sm whitespace-nowrap transition-all hover:opacity-90 active:scale-95 flex items-center justify-center gap-2 disabled:opacity-70"
                   style={{ backgroundColor: theme.colors.primary.DEFAULT, color: '#ffffff', height: '42px', minWidth: '160px' }}
@@ -1701,7 +1689,6 @@ if (filters.remote) {
         )}
 
         <MatchBreakdownModal open={matchModalOpen} onClose={() => setMatchModalOpen(false)} data={matchModalData} />
-        <AuthModal open={authModalOpen} onOpenChange={setAuthModalOpen} />
         <CreateCVModal isOpen={cvModalOpen} onClose={() => setCvModalOpen(false)} onComplete={(cvId) => router.push(`/cv/view/${cvId}`)} />
         <CreateCoverLetterModal isOpen={coverLetterModalOpen} onClose={() => setCoverLetterModalOpen(false)} onComplete={(coverLetterId) => router.push(`/cv/view/${coverLetterId}`)} />
       </div>

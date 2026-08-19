@@ -92,18 +92,16 @@ export default function AuthModal({ open, onOpenChange, defaultMode = 'signup' }
       if (error) throw error;
 
       showMessage('Signed in successfully!', 'success');
-      
+
+      // No manual refresh/reload needed: AuthContext's onAuthStateChange
+      // listener picks this up immediately and updates every component
+      // site-wide (it also closes this modal itself). The only thing we
+      // still handle here is navigation — "stay where you were" already
+      // works because nothing needs remounting, except on the homepage,
+      // where there's nothing useful to "stay" on.
       setTimeout(() => {
-        onOpenChange(false);
-        // Staying on the current page after sign-in already covers "take
-        // them back to where they were" — router.refresh() re-renders it
-        // signed in. The one case that needs an explicit destination is
-        // signing in from the homepage itself, where there's nothing
-        // useful to "stay" on.
         if (window.location.pathname === '/') {
           router.push('/dashboard');
-        } else {
-          router.refresh();
         }
       }, 1000);
 

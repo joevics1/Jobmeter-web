@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { theme } from '@/lib/theme';
 import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/context/AuthContext';
 
 import { 
   Briefcase, 
@@ -25,10 +26,6 @@ import Link from 'next/link';
 import Image from 'next/image';
 import AdUnit from '@/components/ads/AdUnit';
 
-const AuthModal = dynamic(() => import('@/components/AuthModal'), {
-  ssr: false,
-  loading: () => null
-});
 const RecruiterAuthModal = dynamic(() => import('@/components/RecruiterAuthModal'), {
   ssr: false,
   loading: () => null
@@ -171,22 +168,18 @@ MatchCircle.displayName = 'MatchCircle';
 
 export default function HomePage({ jobs: initialJobs, blogPosts, companies = [] }: HomePageProps) {
   const router = useRouter();
+  const { user, loading: authLoading, openAuthModal } = useAuth();
   const [activeTab, setActiveTab] = useState<'seekers' | 'recruiters'>('seekers');
-  const [authModalOpen, setAuthModalOpen] = useState(false);
   const [recruiterModalOpen, setRecruiterModalOpen] = useState(false);
-  const [user, setUser] = useState<any>(null);
   const [userOnboardingData, setUserOnboardingData] = useState<UserOnboardingData | null>(null);
   const [processedJobs, setProcessedJobs] = useState<JobWithMatch[]>([]);
   const [matchingInProgress, setMatchingInProgress] = useState(false);
 
   useEffect(() => {
-    const authTimer = setTimeout(() => {
-      checkAuth();
-    }, 100);
-    return () => clearTimeout(authTimer);
-  }, []);
-
-  useEffect(() => {
+    // Wait for AuthContext to resolve the session before deciding whether
+    // to fetch matched jobs, so we don't briefly show unmatched jobs to a
+    // signed-in user while their session is still loading.
+    if (authLoading) return;
     if (user) {
       const processingTimer = setTimeout(() => {
         fetchUserOnboardingDataAndProcessJobs();
@@ -200,18 +193,7 @@ export default function HomePage({ jobs: initialJobs, blogPosts, companies = [] 
       }));
       setProcessedJobs(jobsWithoutMatch);
     }
-  }, [user, initialJobs]);
-
-  const checkAuth = async () => {
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
-        setUser(session.user);
-      }
-    } catch (error) {
-      console.error('Error checking auth:', error);
-    }
-  };
+  }, [user, authLoading, initialJobs]);
 
   const fetchUserOnboardingDataAndProcessJobs = async () => {
     if (!user?.id) return;
@@ -254,7 +236,7 @@ export default function HomePage({ jobs: initialJobs, blogPosts, companies = [] 
   ) => {
     const CHUNK_SIZE = 3;
     const jobsToProcess = jobs.slice(0, 6);
-    const matchCache = matchCacheService.loadMatchCache(user?.id);
+    const matchCache = matchCacheService.loadMatchCache(user?.id ?? null);
     const results: JobWithMatch[] = [];
 
     for (let i = 0; i < jobsToProcess.length; i += CHUNK_SIZE) {
@@ -285,7 +267,7 @@ export default function HomePage({ jobs: initialJobs, blogPosts, companies = [] 
           const result = scoreJob(jobData, onboardingData);
           matchScore = result.score;
           breakdown = result.breakdown;
-          matchCacheService.saveCachedMatch(user?.id, job.id, result);
+          matchCacheService.saveCachedMatch(user?.id ?? null, job.id, result);
         }
 
         return { ...job, matchScore, breakdown };
@@ -302,16 +284,13 @@ export default function HomePage({ jobs: initialJobs, blogPosts, companies = [] 
     setMatchingInProgress(false);
   };
 
-  const handleCTAClick = async (type: 'seeker' | 'recruiter') => {
+  const handleCTAClick = (type: 'seeker' | 'recruiter') => {
     if (type === 'seeker') {
       router.push('/jobs');
+    } else if (!user) {
+      setRecruiterModalOpen(true);
     } else {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        setRecruiterModalOpen(true);
-      } else {
-        router.push('/submit');
-      }
+      router.push('/submit');
     }
   };
 
@@ -396,7 +375,7 @@ export default function HomePage({ jobs: initialJobs, blogPosts, companies = [] 
                   </button>
                   {!user && (
                     <button
-                      onClick={() => setAuthModalOpen(true)}
+                      onClick={() => openAuthModal('signin')}
                       className="py-3 px-3 rounded-lg font-semibold border-2 transition-all hover:bg-gray-50 whitespace-nowrap"
                       style={{ borderColor: theme.colors.primary.DEFAULT, color: theme.colors.primary.DEFAULT }}
                       aria-label="Log in or sign up"
@@ -826,7 +805,6 @@ export default function HomePage({ jobs: initialJobs, blogPosts, companies = [] 
           </div>
         </section>
 
-        {authModalOpen && <AuthModal open={authModalOpen} onOpenChange={setAuthModalOpen} defaultMode="signin" />}
         {recruiterModalOpen && <RecruiterAuthModal open={recruiterModalOpen} onOpenChange={setRecruiterModalOpen} />}
       </div>
     </>

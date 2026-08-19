@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect } from 'react';
+import dynamic from 'next/dynamic';
 import { usePathname } from 'next/navigation';
 import Script from 'next/script';
 import BottomNavigation from '@/components/navigation/BottomNavigation';
@@ -9,12 +10,20 @@ import Footer from '@/components/navigation/Footer';
 import CookieModal from '@/components/CookieModal';
 import { theme } from '@/lib/theme';
 import ExitIntentPopup from '@/components/ExitIntentPopup';
+import { useAuth } from '@/context/AuthContext';
+
+// One AuthModal instance for the entire site, mounted here and driven by
+// AuthContext. Every "sign in" trigger anywhere on the site should call
+// useAuth().openAuthModal() instead of rendering its own <AuthModal>.
+const AuthModal = dynamic(() => import('@/components/AuthModal'), { ssr: false });
+
 export default function RootLayoutClient({
   children,
 }: {
     children: React.ReactNode;
   }) {
   const pathname = usePathname();
+  const { authModalOpen, authModalMode, closeAuthModal } = useAuth();
 
   // Force every route change to start at the top of the page. Next.js's
   // built-in scroll-to-top on navigation only reliably fires when the
@@ -91,6 +100,11 @@ export default function RootLayoutClient({
       
       {/* Exit Intent Popup */}
       <ExitIntentPopup />
+
+      {/* Single site-wide Auth Modal, controlled by AuthContext */}
+      {authModalOpen && (
+        <AuthModal open={authModalOpen} onOpenChange={closeAuthModal} defaultMode={authModalMode} />
+      )}
     </div>
   );
 }

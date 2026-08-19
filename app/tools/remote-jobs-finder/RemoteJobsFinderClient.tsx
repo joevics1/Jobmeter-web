@@ -3,6 +3,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/context/AuthContext';
 import { theme } from '@/lib/theme';
 import JobCard from '@/components/jobs/JobCard';
 import { JobUI } from '@/components/jobs/JobCard';
@@ -31,8 +32,8 @@ const employmentTypes = ['Full-time', 'Part-time', 'Contract', 'Internship', 'Fr
 export default function RemoteJobsFinderClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { user } = useAuth();
 
-  const [user, setUser] = useState<any>(null);
   const [jobs, setJobs] = useState<JobUI[]>([]);
   const [loading, setLoading] = useState(true);
   const [savedJobs, setSavedJobs] = useState<string[]>([]);
@@ -52,25 +53,15 @@ export default function RemoteJobsFinderClient() {
   const [totalPages, setTotalPages] = useState(1);
 
   useEffect(() => {
-    checkAuth();
     loadSavedJobs();
     loadAppliedJobs();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (session) {
-        setUser(session.user);
-      } else {
-        setUser(null);
-        setUserOnboardingData(null);
-      }
-    });
-
-    return () => subscription.unsubscribe();
   }, []);
 
   useEffect(() => {
     if (user) {
       fetchUserOnboardingData();
+    } else {
+      setUserOnboardingData(null);
     }
   }, [user]);
 
@@ -89,13 +80,6 @@ export default function RemoteJobsFinderClient() {
   useEffect(() => {
     fetchRemoteJobs();
   }, [currentPage, filters, user, userOnboardingData]);
-
-  const checkAuth = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (session) {
-      setUser(session.user);
-    }
-  };
 
   const fetchUserOnboardingData = async () => {
     if (!user) return;

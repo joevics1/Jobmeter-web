@@ -11,7 +11,7 @@ import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { useCredits } from '@/context/CreditContext';
 import { ApplyPaymentModal } from '@/components/payment/ApplyPaymentModal';
-import AuthModal from '@/components/AuthModal';
+import { useAuth } from '@/context/AuthContext';
 
 interface Job {
   id: string;
@@ -41,6 +41,7 @@ interface InterviewPrepModalProps {
 export default function InterviewPrepModal({ isOpen, onClose }: InterviewPrepModalProps) {
   const router = useRouter();
   const { deductCredit } = useCredits();
+  const { openAuthModal } = useAuth();
 
   const [step, setStep] = useState<Step>('job-selection');
   const [loading, setLoading] = useState(false);
@@ -64,9 +65,8 @@ export default function InterviewPrepModal({ isOpen, onClose }: InterviewPrepMod
   const [cvUploadError, setCvUploadError] = useState('');
   const [isExtractingCV, setIsExtractingCV] = useState(false);
 
-  // Modal states
+  // Payment modal state (auth modal is global — see AuthContext)
   const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const [showAuthModal, setShowAuthModal] = useState(false);
 
   // Reset modal state when opened
   useEffect(() => {
@@ -344,7 +344,7 @@ export default function InterviewPrepModal({ isOpen, onClose }: InterviewPrepMod
     // 1. Check Auth
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
-      setShowAuthModal(true);
+      openAuthModal('signin');
       return;
     }
 
@@ -694,12 +694,11 @@ export default function InterviewPrepModal({ isOpen, onClose }: InterviewPrepMod
         </DialogContent>
       </Dialog>
 
-      {/* Auth & Payment Modals */}
-      <AuthModal open={showAuthModal} onOpenChange={setShowAuthModal} />
+      {/* Payment Modal (auth modal is global — see RootLayoutClient) */}
       <ApplyPaymentModal
         open={showPaymentModal}
         onOpenChange={setShowPaymentModal}
-        onAuthRequired={() => setShowAuthModal(true)}
+        onAuthRequired={() => openAuthModal('signin')}
       />
     </>
   );

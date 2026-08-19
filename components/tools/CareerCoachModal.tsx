@@ -7,7 +7,7 @@ import { CareerCoachService } from '@/lib/services/careerCoachService';
 import { supabase } from '@/lib/supabase';
 import { useCredits } from '@/context/CreditContext';
 import { ApplyPaymentModal } from '@/components/payment/ApplyPaymentModal';
-import AuthModal from '@/components/AuthModal';
+import { useAuth } from '@/context/AuthContext';
 
 interface CareerCoachModalProps {
   isOpen: boolean;
@@ -17,14 +17,14 @@ interface CareerCoachModalProps {
 export default function CareerCoachModal({ isOpen, onClose }: CareerCoachModalProps) {
   const router = useRouter();
   const { deductCredit } = useCredits();
+  const { openAuthModal } = useAuth();
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [onboardingData, setOnboardingData] = useState<any>(null);
   const [hasExistingAnalysis, setHasExistingAnalysis] = useState(false);
 
-  // Auth & Payment modal states
-  const [showAuthModal, setShowAuthModal] = useState(false);
+  // Payment modal state (auth modal is global — see AuthContext)
   const [showPaymentModal, setShowPaymentModal] = useState(false);
 
   useEffect(() => {
@@ -38,7 +38,6 @@ export default function CareerCoachModal({ isOpen, onClose }: CareerCoachModalPr
     setError(null);
     setOnboardingData(null);
     setHasExistingAnalysis(false);
-    setShowAuthModal(false);
     setShowPaymentModal(false);
     setLoading(false);
   };
@@ -87,7 +86,7 @@ export default function CareerCoachModal({ isOpen, onClose }: CareerCoachModalPr
     // === AUTH CHECK ===
     const { data: { session } } = await supabase.auth.getSession();
     if (!session?.user) {
-      setShowAuthModal(true);
+      openAuthModal('signin');
       return;
     }
 
@@ -234,12 +233,11 @@ export default function CareerCoachModal({ isOpen, onClose }: CareerCoachModalPr
         </div>
       </div>
 
-      {/* Auth & Payment Modals */}
-      <AuthModal open={showAuthModal} onOpenChange={setShowAuthModal} />
+      {/* Payment Modal (auth modal is global — see RootLayoutClient) */}
       <ApplyPaymentModal
         open={showPaymentModal}
         onOpenChange={setShowPaymentModal}
-        onAuthRequired={() => setShowAuthModal(true)}
+        onAuthRequired={() => openAuthModal('signin')}
       />
     </>
   );

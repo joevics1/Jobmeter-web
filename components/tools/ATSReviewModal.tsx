@@ -11,7 +11,7 @@ import { ATSReviewService } from '@/lib/services/atsReviewService';
 import { supabase } from '@/lib/supabase';
 import { useCredits } from '@/context/CreditContext';
 import { ApplyPaymentModal } from '@/components/payment/ApplyPaymentModal';
-import AuthModal from '@/components/AuthModal';
+import { useAuth } from '@/context/AuthContext';
 
 interface Job {
   id: string;
@@ -41,6 +41,7 @@ interface ATSReviewModalProps {
 export default function ATSReviewModal({ isOpen, onClose }: ATSReviewModalProps) {
   const router = useRouter();
   const { deductCredit } = useCredits();
+  const { openAuthModal } = useAuth();
 
   const [step, setStep] = useState<Step>('cv-selection');
   const [loading, setLoading] = useState(false);
@@ -68,8 +69,7 @@ export default function ATSReviewModal({ isOpen, onClose }: ATSReviewModalProps)
   const [pastedJobDetails, setPastedJobDetails] = useState('');
   const [fetchingJob, setFetchingJob] = useState(false);
 
-  // Auth & Payment modal states
-  const [showAuthModal, setShowAuthModal] = useState(false);
+  // Payment modal state (auth modal is now global — see AuthContext)
   const [showPaymentModal, setShowPaymentModal] = useState(false);
 
   // Reset modal state when opened
@@ -382,7 +382,7 @@ export default function ATSReviewModal({ isOpen, onClose }: ATSReviewModalProps)
     // === AUTH CHECK ===
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
-      setShowAuthModal(true);
+      openAuthModal('signin');
       return; // Stay on current step — do NOT show analyzing
     }
 
@@ -855,12 +855,11 @@ export default function ATSReviewModal({ isOpen, onClose }: ATSReviewModalProps)
         </DialogContent>
       </Dialog>
 
-      {/* Auth & Payment Modals */}
-      <AuthModal open={showAuthModal} onOpenChange={setShowAuthModal} />
+      {/* Payment Modal (auth modal is global — see RootLayoutClient) */}
       <ApplyPaymentModal
         open={showPaymentModal}
         onOpenChange={setShowPaymentModal}
-        onAuthRequired={() => setShowAuthModal(true)}
+        onAuthRequired={() => openAuthModal('signin')}
       />
     </>
   );

@@ -7,7 +7,7 @@ import { User, Bell, LogOut, ChevronRight, Mail, Shield, HelpCircle, LogIn, Info
 import { theme } from '@/lib/theme';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import AuthModal from '@/components/AuthModal';
+import { useAuth } from '@/context/AuthContext';
 import { usePendingInvitationsCount } from '@/hooks/usePendingInvitationsCount';
 
 interface ProfileData {
@@ -30,12 +30,11 @@ const CLIENT_CACHE_KEYS = [
 export default function SettingsPage() {
   const pendingInvitations = usePendingInvitationsCount();
   const router = useRouter();
-  const [user, setUser] = useState<any>(null);
+  const { user, loading: authLoading, openAuthModal } = useAuth();
   const [profileData, setProfileData] = useState<ProfileData | null>(null);
   const [loading, setLoading] = useState(true);
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [emailUpdates, setEmailUpdates] = useState(false);
-  const [authModalOpen, setAuthModalOpen] = useState(false);
 
   // Admin panel state
   const [isAdmin, setIsAdmin] = useState(false);
@@ -44,37 +43,23 @@ export default function SettingsPage() {
   const [adminSecret, setAdminSecret] = useState('');
   const [showSecretInput, setShowSecretInput] = useState(false);
 
+  // AuthContext already tracks sign-in/out globally and updates every
+  // component that reads it — no manual listener or full-page reload
+  // needed here (a page reload used to be the only way this page found
+  // out about a sign-in, but it also meant this was the ONE page that
+  // behaved differently from the rest of the site).
   useEffect(() => {
-    checkAuth();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === 'SIGNED_IN' || event === 'SIGNED_OUT' || event === 'USER_UPDATED') {
-        // Force a full page reload so all state — profile, apply stage, etc — is fresh
-        window.location.reload();
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
+    setLoading(authLoading);
+  }, [authLoading]);
 
   useEffect(() => {
     if (user) {
       loadProfileData();
       loadSettings();
+    } else {
+      setProfileData(null);
     }
   }, [user]);
-
-  const checkAuth = async () => {
-    try {
-      const { data: { user: authUser }, error } = await supabase.auth.getUser();
-      if (error || !authUser) { setLoading(false); return; }
-      setUser(authUser);
-      setLoading(false);
-    } catch (error) {
-      console.error('Error in checkAuth:', error);
-      setLoading(false);
-    }
-  };
 
   const loadProfileData = async () => {
     if (!user) return;
@@ -122,7 +107,7 @@ export default function SettingsPage() {
     try {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
-      setUser(null); setProfileData(null);
+      setProfileData(null);
       router.push('/');
     } catch (error) {
       console.error('Error signing out:', error);
@@ -256,7 +241,7 @@ export default function SettingsPage() {
           <div className="mb-6 border-b" style={{ backgroundColor: theme.colors.primary.DEFAULT + '10', borderColor: theme.colors.border.DEFAULT }}>
             <div className="flex items-center justify-between gap-4 p-4">
               <span className="text-sm font-medium flex-1" style={{ color: theme.colors.primary.DEFAULT }}>Sign up to access your settings and personalized features.</span>
-              <Button onClick={() => setAuthModalOpen(true)} size="sm" style={{ backgroundColor: theme.colors.primary.DEFAULT }} className="flex-shrink-0">
+              <Button onClick={() => openAuthModal('signin')} size="sm" style={{ backgroundColor: theme.colors.primary.DEFAULT }} className="flex-shrink-0">
                 <LogIn size={16} className="mr-2" />Sign Up
               </Button>
             </div>
@@ -578,8 +563,6 @@ export default function SettingsPage() {
           <p className="text-xs text-gray-400">Your smart career companion</p>
         </div>
       </div>
-
-      <AuthModal open={authModalOpen} onOpenChange={setAuthModalOpen} />
     </div>
   );
 }
