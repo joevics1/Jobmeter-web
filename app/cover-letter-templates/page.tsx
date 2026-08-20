@@ -11,6 +11,8 @@ export const metadata = {
   description: 'Browse free, role-specific cover letter templates tailored for job seekers.',
 };
 
+export const dynamic = 'force-dynamic';
+
 export default async function CoverLetterTemplatesHub() {
   const pages = await getAllPublishedCoverLetterRolePages();
 
