@@ -6,8 +6,9 @@ export const revalidate = false;
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import RootLayoutClient from './RootLayoutClient';
-import PWAInstaller from '@/components/PWAInstaller';
-import NotificationManager from '@/components/NotificationManager';
+// Deactivated per request — do not re-enable without explicit confirmation.
+// import PWAInstaller from '@/components/PWAInstaller';
+// import NotificationManager from '@/components/NotificationManager';
 import { CreditProvider } from '@/context/CreditContext'; // Added import
 import { AuthProvider } from '@/context/AuthContext';
 
@@ -139,8 +140,9 @@ export default function RootLayout({
             <RootLayoutClient>{children}</RootLayoutClient>
           </CreditProvider>
         </AuthProvider>
-        <PWAInstaller />
-        <NotificationManager />
+        {/* Deactivated per request — do not re-enable without explicit confirmation. */}
+        {/* <PWAInstaller /> */}
+        {/* <NotificationManager /> */}
       </body>
     </html>
   );
