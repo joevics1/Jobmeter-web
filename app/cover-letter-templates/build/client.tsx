@@ -24,6 +24,7 @@ import { Download } from 'lucide-react';
 import BackButton from '../_components/back-button';
 import CoverLetterPreviewFrame from '../_components/cover-letter-preview-frame';
 import CoverLetterFieldsEditor from '../_components/cover-letter-fields-editor';
+import CoverLetterInlineEditor from '../_components/cover-letter-inline-editor';
 import GeneratingAnimation from '../_components/generating-animation';
 import CoverLetterOnboardingModal from '../_components/cover-letter-onboarding-modal';
 
@@ -73,6 +74,7 @@ export default function BuildClient({
   historyId?: string;
 }) {
   const [stage, setStage] = useState<Stage>('loading');
+  const [resultView, setResultView] = useState<'edit' | 'preview'>('edit');
   const [error, setError] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [letterData, setLetterData] = useState<CoverLetterData>(emptyCoverLetter(roleLabel));
@@ -382,23 +384,53 @@ export default function BuildClient({
 
         {stage === 'result' && (
           <div>
-            <div className="flex gap-2 mb-3 overflow-x-auto flex-nowrap pb-1">
-              {COVER_LETTER_PAGE_DESIGNS.map((d) => (
-                <button key={d.id} onClick={() => setSelectedDesign(d.id)}
-                  className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-full text-sm border ${selectedDesign === d.id ? 'bg-blue-600 text-white border-blue-600' : 'bg-card text-foreground border-border'}`}>
-                  {d.name}
-                </button>
-              ))}
+            {/* Two tabs: click-to-edit the letter directly (default), or
+                switch designs and prepare it for download — same
+                contentEditable pattern as the Documents feature
+                (components/documents/DocumentEditor.tsx), added here
+                alongside the structured form, not replacing it. */}
+            <div className="flex gap-1 mb-3 border-b border-border">
+              <button
+                onClick={() => setResultView('edit')}
+                className={`px-3 py-2 text-sm font-semibold border-b-2 ${resultView === 'edit' ? 'border-blue-600 text-blue-700' : 'border-transparent text-muted-foreground'}`}
+              >
+                Edit Text
+              </button>
+              <button
+                onClick={() => setResultView('preview')}
+                className={`px-3 py-2 text-sm font-semibold border-b-2 ${resultView === 'preview' ? 'border-blue-600 text-blue-700' : 'border-transparent text-muted-foreground'}`}
+              >
+                Design &amp; Download
+              </button>
             </div>
 
-            {isOverflowing && (
-              <div className="flex items-start gap-2 text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mb-3">
-                <span>⚠️</span>
-                <span>This letter looks longer than one page — some content at the bottom may be cut off. Try shortening a paragraph.</span>
-              </div>
+            {resultView === 'edit' && (
+              <CoverLetterInlineEditor data={letterData} onChange={setLetterData} />
             )}
-            <div className="border border-border rounded-lg overflow-hidden shadow-sm bg-muted mb-3">
-              <CoverLetterPreviewFrame ref={previewFrameRef} title="Cover letter preview" html={previewHtml} onLoad={checkOverflow} />
+
+            {/* Kept mounted (just hidden) rather than conditionally
+                removed when resultView === 'edit', so handlePrint's
+                previewFrameRef.contentWindow?.print() still has a live
+                iframe to call regardless of which tab is active. */}
+            <div className={resultView === 'preview' ? '' : 'hidden'}>
+              <div className="flex gap-2 mb-3 overflow-x-auto flex-nowrap pb-1">
+                {COVER_LETTER_PAGE_DESIGNS.map((d) => (
+                  <button key={d.id} onClick={() => setSelectedDesign(d.id)}
+                    className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-full text-sm border ${selectedDesign === d.id ? 'bg-blue-600 text-white border-blue-600' : 'bg-card text-foreground border-border'}`}>
+                    {d.name}
+                  </button>
+                ))}
+              </div>
+
+              {isOverflowing && (
+                <div className="flex items-start gap-2 text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mb-3">
+                  <span>⚠️</span>
+                  <span>This letter looks longer than one page — some content at the bottom may be cut off. Try shortening a paragraph.</span>
+                </div>
+              )}
+              <div className="border border-border rounded-lg overflow-hidden shadow-sm bg-muted mb-3">
+                <CoverLetterPreviewFrame ref={previewFrameRef} title="Cover letter preview" html={previewHtml} onLoad={checkOverflow} />
+              </div>
             </div>
             <div className="h-20" />
           </div>
@@ -408,7 +440,7 @@ export default function BuildClient({
       {stage === 'result' && (
         <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border shadow-lg z-50">
           <div className="max-w-3xl mx-auto px-4 py-3 flex gap-2 overflow-x-auto flex-nowrap">
-            <button onClick={() => setStage('form')} className="shrink-0 border border-border px-4 py-2 rounded-lg font-medium text-sm text-foreground">Edit</button>
+            <button onClick={() => setStage('form')} className="shrink-0 border border-border px-4 py-2 rounded-lg font-medium text-sm text-foreground">Edit Form</button>
             <button onClick={handlePrint} className="shrink-0 flex items-center gap-1.5 border border-border px-4 py-2 rounded-lg font-medium text-sm text-foreground">
               PDF <Download size={15} />
             </button>
