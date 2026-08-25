@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/refresh-crawler-ips",
+      "schedule": "0 3 * * *"
+    }
+  ]
+}
