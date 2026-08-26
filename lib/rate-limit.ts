@@ -25,6 +25,34 @@ export const ratelimit = new Ratelimit({
   prefix: 'ratelimit:jobmeter',
 });
 
+export interface SafeLimitResult {
+  success: boolean;
+  limit: number;
+  remaining: number;
+  reset: number;
+}
+
+/**
+ * Wraps ratelimit.limit() so a missing/misconfigured/unreachable Redis
+ * (e.g. UPSTASH_REDIS_REST_URL/TOKEN not set yet) fails OPEN — the request
+ * is allowed through — instead of throwing and taking down every request to
+ * /jobs and /company with a 500. The Redis client itself doesn't throw on
+ * construction when env vars are missing, only on the actual call, so this
+ * is the layer that has to catch it.
+ */
+export async function safeLimit(key: string): Promise<SafeLimitResult> {
+  try {
+    return await ratelimit.limit(key);
+  } catch (error) {
+    console.error(
+      '[rate-limit] Redis call failed — failing open (request allowed, not rate-limited). ' +
+        'Check UPSTASH_REDIS_REST_URL/UPSTASH_REDIS_REST_TOKEN are set. Error:',
+      error
+    );
+    return { success: true, limit: MAX_REQUESTS, remaining: MAX_REQUESTS, reset: Date.now() };
+  }
+}
+
 /**
  * Real client IP. Cloudflare proxies every request before it reaches Vercel,
  * so request.ip / a naive x-forwarded-for read would just see Cloudflare's

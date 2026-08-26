@@ -1,7 +1,7 @@
 // middleware.ts
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { ratelimit, getClientIp, RATE_LIMIT_ENFORCE } from '@/lib/rate-limit';
+import { safeLimit, getClientIp, RATE_LIMIT_ENFORCE } from '@/lib/rate-limit';
 import { claimsToBeCrawler, getCachedCrawlerRanges } from '@/lib/crawler-allowlist';
 import { decideRateLimitAction } from '@/lib/rate-limit-decision';
 
@@ -31,7 +31,7 @@ export async function middleware(request: NextRequest) {
     // single request.
     crawlerRanges: claimsToBeCrawler(userAgent) ? await getCachedCrawlerRanges() : [],
     runLimiter: () =>
-      ratelimit.limit(`${ip}:${pathname.startsWith('/company') ? 'company' : 'jobs'}`),
+      safeLimit(`${ip}:${pathname.startsWith('/company') ? 'company' : 'jobs'}`),
   });
 
   switch (action.type) {

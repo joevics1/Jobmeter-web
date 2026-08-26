@@ -63,11 +63,18 @@ export async function refreshCrawlerAllowlist(): Promise<{ count: number }> {
 }
 
 /** Reads the cached CIDR list. Returns [] (fail open to "not verified", i.e.
- *  rate-limit applies) if the cache hasn't been populated yet. */
+ *  rate-limit applies) if the cache hasn't been populated yet, OR if Redis
+ *  itself is unreachable/misconfigured — this must never throw, since a
+ *  throw here would 500 every request to /jobs and /company. */
 export async function getCachedCrawlerRanges(): Promise<string[]> {
-  const redis = redisClient();
-  const cached = await redis.get<string[]>(CACHE_KEY);
-  return cached ?? [];
+  try {
+    const redis = redisClient();
+    const cached = await redis.get<string[]>(CACHE_KEY);
+    return cached ?? [];
+  } catch (error) {
+    console.error('[crawler-allowlist] Redis read failed — treating as no verified crawlers:', error);
+    return [];
+  }
 }
 
 // A quick, cheap pre-filter on User-Agent so we don't do the (still fast, but
