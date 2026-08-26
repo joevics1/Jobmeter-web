@@ -54,7 +54,11 @@ export async function refreshCrawlerAllowlist(): Promise<{ count: number }> {
   ]);
   const all = [...google, ...googleSpecial, ...bing];
   const redis = redisClient();
-  await redis.set(CACHE_KEY, JSON.stringify(all), { ex: CACHE_TTL_SECONDS });
+  // @upstash/redis auto-serializes non-string values on set() and
+  // auto-deserializes JSON-looking strings on get() — pass the array
+  // directly rather than JSON.stringify-ing it ourselves, or get() ends up
+  // trying to double-parse an already-parsed value.
+  await redis.set(CACHE_KEY, all, { ex: CACHE_TTL_SECONDS });
   return { count: all.length };
 }
 
@@ -62,13 +66,8 @@ export async function refreshCrawlerAllowlist(): Promise<{ count: number }> {
  *  rate-limit applies) if the cache hasn't been populated yet. */
 export async function getCachedCrawlerRanges(): Promise<string[]> {
   const redis = redisClient();
-  const cached = await redis.get<string>(CACHE_KEY);
-  if (!cached) return [];
-  try {
-    return JSON.parse(cached);
-  } catch {
-    return [];
-  }
+  const cached = await redis.get<string[]>(CACHE_KEY);
+  return cached ?? [];
 }
 
 // A quick, cheap pre-filter on User-Agent so we don't do the (still fast, but
