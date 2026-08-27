@@ -187,7 +187,6 @@ export default function TakeHomePayPage() {
       <div className="max-w-7xl mx-auto px-6 py-8">
         {/* Top Display Ad */}
         <div className="mb-10">
-          <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1119289641389825" crossOrigin="anonymous"></script>
           <ins className="adsbygoogle"
                style={{ display: 'block' }}
                data-ad-client="ca-pub-1119289641389825"
@@ -210,7 +209,6 @@ export default function TakeHomePayPage() {
 
         {/* Middle In-Article Ad 1 */}
         <div className="my-12">
-          <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1119289641389825" crossOrigin="anonymous"></script>
           <ins className="adsbygoogle"
                style={{ display: 'block', textAlign: 'center' }}
                data-ad-layout="in-article"
@@ -458,7 +456,6 @@ export default function TakeHomePayPage() {
 
         {/* Middle In-Article Ad 2 */}
         <div className="my-12">
-          <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1119289641389825" crossOrigin="anonymous"></script>
           <ins className="adsbygoogle"
                style={{ display: 'block', textAlign: 'center' }}
                data-ad-layout="in-article"
@@ -470,7 +467,6 @@ export default function TakeHomePayPage() {
 
         {/* Bottom Display Ad */}
         <div className="mt-12 mb-8">
-          <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1119289641389825" crossOrigin="anonymous"></script>
           <ins className="adsbygoogle"
                style={{ display: 'block' }}
                data-ad-client="ca-pub-1119289641389825"

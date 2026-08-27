@@ -117,8 +117,6 @@ const GratuityCalculator: React.FC = () => {
     <div className="bg-white rounded-3xl shadow-xl p-8 max-w-4xl mx-auto">
       {/* Ad Above Calculator (Optional) */}
       <div className="mb-8">
-        <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1119289641389825"
-          crossOrigin="anonymous"></script>
         <ins className="adsbygoogle"
           style={{ display: 'block' }}
           data-ad-client="ca-pub-1119289641389825"
@@ -221,8 +219,6 @@ const GratuityCalculator: React.FC = () => {
 
       {/* Ad Below the Tool */}
       <div className="mt-12">
-        <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1119289641389825"
-          crossOrigin="anonymous"></script>
         <ins className="adsbygoogle"
           style={{ display: 'block' }}
           data-ad-client="ca-pub-1119289641389825"
