@@ -1,11 +1,13 @@
 // Supabase Edge Function: tailor-cover-letter-template-page
-// Powers "Quick Create" — logged-in users only. Unlike CV's Quick Create
-// (which just reformats onboarding_data's structured fields with no AI —
-// see lib/cv-template-pages/onboarding-fetch.ts), a cover letter is prose
-// that has to be WRITTEN, so this always goes through Gemini: fetch
-// onboarding_data server-side, rewrite the role's template letter
-// (fetched by the caller and passed in) into a personalized one, never
-// inventing facts not present in the profile.
+// DEPRECATED / UNUSED — nothing calls this anymore. Quick Create used to
+// route through here (Gemini call), but with no job description given
+// there was nothing real to personalize against, so this was just an AI
+// call spent inventing generic-sounding content from the same
+// onboarding_data fields lib/cover-letter-template-pages/onboarding-fetch.ts
+// now reads directly, for free. Quick Create is a straight fetch+merge
+// now — see app/cover-letter-templates/build/client.tsx. Safe to delete
+// this function (and undeploy it from Supabase) whenever convenient;
+// left in place only so this isn't a destructive change on its own.
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3'

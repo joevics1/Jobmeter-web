@@ -6,13 +6,29 @@
 // content — it structures what's already there so the user can
 // review/edit before rendering. (Writing a NEW letter from scratch is
 // tailor-cover-letter-template-page's job, not this one.)
+//
+// This is one of the two remaining Gemini calls in the cover-letter-
+// templates feature (the other is customize-cover-letter-for-job) — the
+// only two spots where AI is actually earning its cost, since both take
+// real user-supplied text to work from. Quick Create/Edit/Clear no longer
+// call Gemini at all (see app/cover-letter-templates/build/client.tsx).
+//
+// The client already gates this behind login, but that's UI-only — this
+// endpoint's URL is public, so it verifies the caller's session itself
+// (getAuthedUserId) rather than trusting anything in the request body,
+// and enforces a per-user daily cap so one signed-in user can't burn
+// unlimited Gemini calls on this free tool.
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
+import { callGeminiJSON } from '../_shared/gemini.ts'
+import { checkDailyLimit, getAuthedUserId } from '../_shared/rate-limit.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
+
+const DAILY_LIMIT = 15;
 
 interface RequestBody {
   rawText: string;
@@ -44,6 +60,24 @@ serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
 
   try {
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
+    const anonKey = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
+    const userId = await getAuthedUserId(req, supabaseUrl, anonKey);
+    if (!userId) {
+      return new Response(JSON.stringify({ error: 'Please sign in to use this.' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const { allowed, remaining } = await checkDailyLimit(`parse-cover-letter:${userId}`, DAILY_LIMIT);
+    if (!allowed) {
+      return new Response(JSON.stringify({ error: `Daily limit reached (${DAILY_LIMIT}/day). Please try again tomorrow.` }), {
+        status: 429,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     const { rawText }: RequestBody = await req.json();
     if (!rawText || rawText.trim().length < 10) {
       return new Response(JSON.stringify({ error: 'Please paste more detail before parsing.' }), {
@@ -55,32 +89,13 @@ serve(async (req) => {
     const apiKey = Deno.env.get('GEMINI_API_KEY');
     if (!apiKey) throw new Error('GEMINI_API_KEY environment variable is not set');
 
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 30000);
-
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${apiKey}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: `${PARSE_PROMPT}\n\n---\nTEXT TO PARSE:\n${rawText}` }] }],
-          generationConfig: { temperature: 0.1, maxOutputTokens: 2000 },
-        }),
-        signal: controller.signal,
-      }
-    );
-    clearTimeout(timeoutId);
-
-    if (!response.ok) throw new Error(`Gemini API error: ${response.status}`);
-
-    const data = await response.json();
-    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-    const jsonText = text.replace(/^```json\s*/g, '').replace(/^```\s*/g, '').replace(/```\s*$/g, '').trim();
-
     let parsed: any;
     try {
-      parsed = JSON.parse(jsonText);
+      parsed = await callGeminiJSON(
+        `${PARSE_PROMPT}\n\n---\nTEXT TO PARSE:\n${rawText}`,
+        apiKey,
+        { temperature: 0.1, maxTokens: 2000, timeoutMs: 30000 }
+      );
     } catch {
       return new Response(JSON.stringify({ error: 'Could not parse that text. Try adding more structure (e.g. line breaks between paragraphs).' }), {
         status: 500,
@@ -88,7 +103,7 @@ serve(async (req) => {
       });
     }
 
-    return new Response(JSON.stringify({ success: true, data: parsed }), {
+    return new Response(JSON.stringify({ success: true, data: parsed, remaining }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error: any) {

@@ -7,9 +7,14 @@
 // Quick Create is functionally restricted to signed-in users — if no
 // userId is present when this resolves, it opens the onboarding modal
 // instead of proceeding (same gate as CV templates' paste-to-parse box).
-// Unlike CV's Quick Create (a raw, non-AI reshape of onboarding_data),
-// this one always calls Gemini (tailor-cover-letter-template-page),
-// because a cover letter has to be WRITTEN, not just reformatted.
+// Quick Create, Edit (sample), and Clear (blank) all now use the same
+// non-AI onboarding-fetch.ts mapper as CV templates — no Gemini call,
+// no cost, just filling in what we already know about a signed-in user.
+// Quick Create merges fetched personalDetails into the role's sample
+// letter body and skips straight to the result; Edit/Clear merge
+// personalDetails into their respective starting data before showing
+// the form. Real AI personalization still happens, but only once there's
+// an actual job description to tailor against — see handleCustomizeForJob.
 
 import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
@@ -19,6 +24,7 @@ import { COVER_LETTER_PAGE_DESIGNS } from '@/lib/cover-letter-template-pages/des
 import { downloadCoverLetterAsDocx } from '@/lib/cover-letter-template-pages/cover-letter-docx-export';
 import { getHistoryEntry, saveToHistory } from '@/lib/cover-letter-template-pages/cover-letter-history';
 import { useCoverLetterOverflowCheck } from '@/lib/cover-letter-template-pages/use-cover-letter-overflow';
+import { fetchOnboardingData, mergePersonalDetails } from '@/lib/cover-letter-template-pages/onboarding-fetch';
 import type { CoverLetterData } from '@/lib/cover-letter-template-pages/cover-letter-data-types';
 import { Download } from 'lucide-react';
 import BackButton from '../_components/back-button';
@@ -58,7 +64,7 @@ function emptyCoverLetter(roleLabel: string): CoverLetterData {
   };
 }
 
-const QUICK_CREATE_MESSAGES = ['Reading your profile…', 'Writing your cover letter…', 'Almost done…'];
+const QUICK_CREATE_MESSAGES = ['Reading your profile…', 'Filling in your details…', 'Almost done…'];
 
 export default function BuildClient({
   roleSlug,
@@ -127,31 +133,42 @@ export default function BuildClient({
       }
 
       if (start === 'sample') {
-        setLetterData(sampleCoverLetterData || emptyCoverLetter(roleLabel));
+        let data = sampleCoverLetterData || emptyCoverLetter(roleLabel);
+        if (uid) {
+          const row = await fetchOnboardingData(uid);
+          if (cancelled) return;
+          if (row) data = mergePersonalDetails(data, row);
+        }
+        setLetterData(data);
         setStage('form');
         return;
       }
 
       if (start === 'quick') {
         // Functional login gate — Quick Create never proceeds without a
-        // real userId, since the AI call needs onboarding_data server-side.
+        // real userId, since it's reading that user's own onboarding_data.
         if (!uid) {
           setLetterData(emptyCoverLetter(roleLabel));
           setStage('form');
           setShowOnboardingModal(true);
           return;
         }
-        setStage('loading');
         try {
-          const { data: fnData, error: fnError } = await supabase.functions.invoke('tailor-cover-letter-template-page', {
-            body: { userId: uid, roleLabel },
-          });
+          const row = await fetchOnboardingData(uid);
           if (cancelled) return;
-          if (fnError) throw new Error(await getFnErrorMessage(fnError, 'Quick Create failed.'));
-          if (!fnData?.success || !fnData?.data) throw new Error(fnData?.error || 'Quick Create failed.');
-          const generated = fnData.data as CoverLetterData;
-          setLetterData(generated);
-          finishAndShowResult(generated, selectedDesign);
+          if (!row) {
+            setError('No profile data found. Please complete onboarding or fill the form manually.');
+            setLetterData(sampleCoverLetterData || emptyCoverLetter(roleLabel));
+            setStage('form');
+            return;
+          }
+          // No AI, no job description to personalize against — merge real
+          // identity details into the role's sample letter body and go
+          // straight to the result, same shape as CV's Quick Create.
+          const base = sampleCoverLetterData || emptyCoverLetter(roleLabel);
+          const merged = mergePersonalDetails(base, row);
+          setLetterData(merged);
+          finishAndShowResult(merged, selectedDesign);
         } catch (err: any) {
           if (!cancelled) {
             setError(err.message || 'Quick Create failed. You can fill the form manually instead.');
@@ -163,7 +180,13 @@ export default function BuildClient({
       }
 
       // start === 'blank'
-      setLetterData(emptyCoverLetter(roleLabel));
+      let blank = emptyCoverLetter(roleLabel);
+      if (uid) {
+        const row = await fetchOnboardingData(uid);
+        if (cancelled) return;
+        if (row) blank = mergePersonalDetails(blank, row);
+      }
+      setLetterData(blank);
       setStage('form');
     }
 
