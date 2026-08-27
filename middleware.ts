@@ -14,27 +14,12 @@ const BLOCKED_COUNTRIES = new Set(['SG']);
 // links, mailto/tel links) instead of only following real internal links.
 const VALID_SLUG_SEGMENT = /^[a-z0-9-]+$/;
 
-// Known link-preview / unfurl bots. These fetch the page to build a
-// preview card (title, image, description) but never see the actual
-// content and don't count as real visitors — blocking them stops the
-// preview card from rendering on the platform in question.
-const PREVIEW_BOT_UA_PATTERNS = [
-  /facebookexternalhit/i,   // Facebook / Messenger
-  /Twitterbot/i,            // Twitter / X
-  /LinkedInBot/i,           // LinkedIn
-  /WhatsApp/i,              // WhatsApp
-  /TelegramBot/i,           // Telegram
-  /Slackbot/i,              // Slack (covers Slackbot-LinkExpanding too)
-  /Discordbot/i,            // Discord
-  /SkypeUriPreview/i,       // Skype
-  /Pinterest/i,             // Pinterest
-  /vkShare/i,               // VK
-  /redditbot/i,             // Reddit
-];
-
-function isPreviewBot(userAgent: string): boolean {
-  return PREVIEW_BOT_UA_PATTERNS.some((pattern) => pattern.test(userAgent));
-}
+// Known link-preview / unfurl bots (Facebook/Twitter/LinkedIn/WhatsApp/etc).
+// IMPORTANT: these must NEVER be blocked. Blocking them doesn't stop a "fake
+// visitor" — these bots ARE the mechanism that fetches the page to build the
+// preview card when a job link is shared. A previous version of this file
+// 403'd them here, which broke every social share sitewide ("preview
+// unavailable"). Left as a comment as a guardrail against re-adding it.
 
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
@@ -53,12 +38,6 @@ export async function middleware(request: NextRequest) {
         return new NextResponse('Not Found', { status: 404 });
       }
     }
-  }
-
-  // Block link-preview bots first — cheapest check, applies regardless of
-  // country/rate-limit state, and doesn't need Redis at all.
-  if (pathname.startsWith('/jobs') && isPreviewBot(userAgent)) {
-    return new NextResponse('Preview Disabled', { status: 403 });
   }
 
   // The site now sits behind Cloudflare's proxy, which means Vercel only ever
