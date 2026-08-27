@@ -7,6 +7,13 @@ import { decideRateLimitAction } from '@/lib/rate-limit-decision';
 
 const BLOCKED_COUNTRIES = new Set(['SG']);
 
+// Matches a valid job/country slug segment: lowercase letters, numbers, and
+// hyphens only. Real slugs on this site never contain "://", "www.", "tel:",
+// "@", spaces, or dots — those only show up when a scraper mechanically
+// follows every href it parsed out of a rendered page (external profile
+// links, mailto/tel links) instead of only following real internal links.
+const VALID_SLUG_SEGMENT = /^[a-z0-9-]+$/;
+
 // Known link-preview / unfurl bots. These fetch the page to build a
 // preview card (title, image, description) but never see the actual
 // content and don't count as real visitors — blocking them stops the
@@ -33,13 +40,33 @@ export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
   const userAgent = request.headers.get('user-agent') || '';
 
+  // Reject obviously scraped/malformed job paths before any other check,
+  // DB lookup, or rendering work happens — cheapest possible exit. Real
+  // slugs are always [a-z0-9-]; a scraper mechanically following every href
+  // it parsed out of a rendered page produces paths like
+  // /jobs/nigeria/www.linkedin.com/in/... or /jobs/tel:0915..., which this
+  // catches with zero false positives against legitimate traffic.
+  if (pathname.startsWith('/jobs/')) {
+    const segments = pathname.slice('/jobs/'.length).split('/').filter(Boolean);
+    for (const segment of segments) {
+      if (!VALID_SLUG_SEGMENT.test(segment)) {
+        return new NextResponse('Not Found', { status: 404 });
+      }
+    }
+  }
+
   // Block link-preview bots first — cheapest check, applies regardless of
   // country/rate-limit state, and doesn't need Redis at all.
   if (pathname.startsWith('/jobs') && isPreviewBot(userAgent)) {
     return new NextResponse('Preview Disabled', { status: 403 });
   }
 
-  const country = request.headers.get('x-vercel-ip-country') || 'unknown';
+  // The site now sits behind Cloudflare's proxy, which means Vercel only ever
+  // sees Cloudflare's own edge IP as the "client" — x-vercel-ip-country would
+  // reflect whichever Cloudflare datacenter routed the request, not the real
+  // visitor's country. Cloudflare adds its own header with the true visitor
+  // country before forwarding to the origin; use that instead.
+  const country = request.headers.get('cf-ipcountry') || request.headers.get('x-vercel-ip-country') || 'unknown';
   const ip = getClientIp(request);
 
   // Cloudflare sits in front of Vercel and already runs Bot Fight Mode + its
