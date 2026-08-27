@@ -25,6 +25,7 @@ import { downloadCoverLetterAsDocx } from '@/lib/cover-letter-template-pages/cov
 import { getHistoryEntry, saveToHistory } from '@/lib/cover-letter-template-pages/cover-letter-history';
 import { useCoverLetterOverflowCheck } from '@/lib/cover-letter-template-pages/use-cover-letter-overflow';
 import { fetchOnboardingData, mergePersonalDetails } from '@/lib/cover-letter-template-pages/onboarding-fetch';
+import { normalizeForNewSession } from '@/lib/cover-letter-template-pages/normalize';
 import type { CoverLetterData } from '@/lib/cover-letter-template-pages/cover-letter-data-types';
 import { Download } from 'lucide-react';
 import BackButton from '../_components/back-button';
@@ -133,7 +134,7 @@ export default function BuildClient({
       }
 
       if (start === 'sample') {
-        let data = sampleCoverLetterData || emptyCoverLetter(roleLabel);
+        let data = normalizeForNewSession(sampleCoverLetterData || emptyCoverLetter(roleLabel));
         if (uid) {
           const row = await fetchOnboardingData(uid);
           if (cancelled) return;
@@ -165,7 +166,7 @@ export default function BuildClient({
           // No AI, no job description to personalize against — merge real
           // identity details into the role's sample letter body and go
           // straight to the result, same shape as CV's Quick Create.
-          const base = sampleCoverLetterData || emptyCoverLetter(roleLabel);
+          const base = normalizeForNewSession(sampleCoverLetterData || emptyCoverLetter(roleLabel));
           const merged = mergePersonalDetails(base, row);
           setLetterData(merged);
           finishAndShowResult(merged, selectedDesign);
@@ -180,7 +181,7 @@ export default function BuildClient({
       }
 
       // start === 'blank'
-      let blank = emptyCoverLetter(roleLabel);
+      let blank = normalizeForNewSession(emptyCoverLetter(roleLabel));
       if (uid) {
         const row = await fetchOnboardingData(uid);
         if (cancelled) return;
