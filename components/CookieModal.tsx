@@ -3,8 +3,18 @@
 import React, { useState, useEffect } from 'react';
 import { X, Cookie as CookieIcon } from 'lucide-react';
 
+// Any page-level bar that's pinned to the bottom of the viewport (the
+// mobile bottom nav, the CV/cover-letter builder action bars, the
+// document editor toolbar, etc.) should mark itself with
+// `data-app-bottom-bar` so this banner can sit above it instead of
+// covering it — they previously shared the same fixed-bottom-0 spot and
+// whichever mounted last (usually this banner, after its 5s delay) would
+// hide the other one.
+const BOTTOM_BAR_SELECTOR = '[data-app-bottom-bar]';
+
 const CookieModal = () => {
   const [isVisible, setIsVisible] = useState(false);
+  const [offset, setOffset] = useState(0);
 
   useEffect(() => {
     // Check if user has already accepted cookies
@@ -21,6 +31,31 @@ const CookieModal = () => {
     return () => clearTimeout(timer);
   }, []);
 
+  // Recompute how far up the banner needs to sit whenever a bottom bar is
+  // present. Bars can mount/unmount after this effect starts (e.g. the CV
+  // builder's action bar only appears once a document has been generated),
+  // so this watches the DOM rather than checking once.
+  useEffect(() => {
+    if (!isVisible) return;
+
+    function recalcOffset() {
+      const bars = Array.from(document.querySelectorAll<HTMLElement>(BOTTOM_BAR_SELECTOR));
+      const tallest = bars.reduce((max, el) => Math.max(max, el.offsetHeight), 0);
+      setOffset(tallest);
+    }
+
+    recalcOffset();
+    window.addEventListener('resize', recalcOffset);
+
+    const observer = new MutationObserver(recalcOffset);
+    observer.observe(document.body, { childList: true, subtree: true });
+
+    return () => {
+      window.removeEventListener('resize', recalcOffset);
+      observer.disconnect();
+    };
+  }, [isVisible]);
+
   const handleClose = () => {
     setIsVisible(false);
     // Store acceptance in localStorage
@@ -30,7 +65,10 @@ const CookieModal = () => {
   if (!isVisible) return null;
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-gray-900 text-white z-50 px-4 py-3 shadow-lg">
+    <div
+      className="fixed left-0 right-0 bg-gray-900 text-white z-50 px-4 py-3 shadow-lg transition-[bottom] duration-150"
+      style={{ bottom: offset }}
+    >
       <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
         <div className="flex items-center gap-3 text-sm">
           <CookieIcon size={20} className="text-blue-400" />

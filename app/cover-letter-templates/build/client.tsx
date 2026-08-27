@@ -462,7 +462,7 @@ export default function BuildClient({
       </main>
 
       {stage === 'result' && (
-        <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border shadow-lg z-50">
+        <div data-app-bottom-bar="true" className="fixed bottom-0 left-0 right-0 bg-card border-t border-border shadow-lg z-50">
           <div className="max-w-3xl mx-auto px-4 py-3 flex gap-2 overflow-x-auto flex-nowrap">
             <button onClick={() => setStage('form')} className="shrink-0 border border-border px-4 py-2 rounded-lg font-medium text-sm text-foreground">Edit Form</button>
             <button onClick={handlePrint} className="shrink-0 flex items-center gap-1.5 border border-border px-4 py-2 rounded-lg font-medium text-sm text-foreground">

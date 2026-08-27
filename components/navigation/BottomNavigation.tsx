@@ -31,6 +31,7 @@ export default function BottomNavigation() {
 
   return (
     <nav
+      data-app-bottom-bar="true"
       className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t"
       style={{
         borderColor: theme.colors.border.DEFAULT,

@@ -141,7 +141,7 @@ export default function DocumentEditor({
       </div>
 
       {/* Fixed bottom action bar — stays put while the document scrolls */}
-      <div className="no-print fixed bottom-0 left-0 right-0 z-40 bg-background border-t border-border">
+      <div data-app-bottom-bar="true" className="no-print fixed bottom-0 left-0 right-0 z-40 bg-background border-t border-border">
         <div className="max-w-screen-md mx-auto px-4 sm:px-6 py-3 flex items-center gap-2">
           <button
             onClick={onReset}

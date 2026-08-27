@@ -1112,7 +1112,7 @@ Posted Date: ${new Date().toISOString().split('T')[0]}`;
       </div>
 
       {/* Footer Submit Button */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 px-4 py-3 border-t bg-white/95 backdrop-blur-sm safe-area-bottom shadow-[0_-4px_16px_rgba(0,0,0,0.05)]">
+      <div data-app-bottom-bar="true" className="fixed bottom-0 left-0 right-0 z-40 px-4 py-3 border-t bg-white/95 backdrop-blur-sm safe-area-bottom shadow-[0_-4px_16px_rgba(0,0,0,0.05)]">
         <div className="max-w-3xl mx-auto">
         <Button
           onClick={handleSubmit}

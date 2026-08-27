@@ -539,7 +539,7 @@ Rules:
 
           {/* Input Area - Fixed at bottom of viewport */}
           {!session.completed && (
-            <div className="fixed bottom-0 left-0 right-0 border-t border-gray-200 bg-white z-20">
+            <div data-app-bottom-bar="true" className="fixed bottom-0 left-0 right-0 border-t border-gray-200 bg-white z-20">
               <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
                 {/* Textbox - hidden while recording */}
                 {!isRecording && (
