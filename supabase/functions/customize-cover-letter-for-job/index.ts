@@ -26,7 +26,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-const DAILY_LIMIT = 15;
+const DAILY_LIMIT = 5;
 
 interface RequestBody {
   coverLetterData: any;
