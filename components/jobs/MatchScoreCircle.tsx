@@ -1,7 +1,7 @@
 "use client";
 
 import React from 'react';
-import { Loader2, Target } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 
 interface MatchScoreCircleProps {
   /** Match percentage (0-100). Pass null while unknown / not yet computed. */
@@ -28,50 +28,40 @@ export default function MatchScoreCircle({
   onClick,
   className = '',
 }: MatchScoreCircleProps) {
-  // Logged out — neutral placeholder, click prompts login
-  if (!loggedIn) {
-    return (
-      <button
-        type="button"
-        onClick={onClick}
-        title="Sign in to see your match score"
-        aria-label="Sign in to see your match score"
-        className={`flex-shrink-0 w-11 h-11 rounded-full border-2 flex items-center justify-center transition-transform hover:scale-105 ${className}`}
-        style={{ borderColor: '#CBD5E1', backgroundColor: '#F8FAFC' }}
-      >
-        <Target size={16} style={{ color: '#94A3B8' }} />
-      </button>
-    );
-  }
-
   // Logged in but score still being computed
-  if (loading || score === null) {
+  if (loggedIn && (loading || score === null)) {
     return (
       <button
         type="button"
         disabled
         aria-label="Calculating your match score"
-        className={`flex-shrink-0 w-11 h-11 rounded-full border-2 flex items-center justify-center ${className}`}
+        className={`flex-shrink-0 w-16 h-16 rounded-full border-2 flex items-center justify-center ${className}`}
         style={{ borderColor: '#CBD5E1', backgroundColor: '#F8FAFC' }}
       >
-        <Loader2 size={16} className="animate-spin" style={{ color: '#94A3B8' }} />
+        <Loader2 size={18} className="animate-spin" style={{ color: '#94A3B8' }} />
       </button>
     );
   }
 
-  const { text, bg, border } = getMatchColors(score);
+  // Logged out shows a 0% placeholder — clicking prompts login instead of a real score
+  const displayScore = loggedIn ? (score as number) : 0;
+  const { text, bg, border } = getMatchColors(displayScore);
+  const label = loggedIn ? `${displayScore}% match — tap for details` : 'Sign in to see your match score';
 
   return (
     <button
       type="button"
       onClick={onClick}
-      title={`${score}% match — tap for details`}
-      aria-label={`${score}% match — tap for details`}
-      className={`flex-shrink-0 w-11 h-11 rounded-full border-2 flex items-center justify-center transition-transform hover:scale-105 ${className}`}
+      title={label}
+      aria-label={label}
+      className={`flex-shrink-0 w-16 h-16 rounded-full border-2 flex flex-col items-center justify-center leading-none transition-transform hover:scale-105 ${className}`}
       style={{ borderColor: border, backgroundColor: bg }}
     >
-      <span className="text-[11px] font-bold leading-none" style={{ color: text }}>
-        {score}%
+      <span className="text-base font-bold" style={{ color: text }}>
+        {displayScore}%
+      </span>
+      <span className="text-[9px] font-semibold uppercase tracking-wide mt-0.5" style={{ color: text }}>
+        Match
       </span>
     </button>
   );
