@@ -32,17 +32,16 @@ import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/
 import AdUnit from '@/components/ads/AdUnit';
 import { TOOLS_NAV } from '@/lib/toolsNav';
 import type { DocumentLink, CvTemplateMatch } from './page';
+import { useAuth } from '@/context/AuthContext';
+import { scoreJob, JobRow, UserOnboardingData } from '@/lib/matching/matchEngine';
+import { matchCacheService } from '@/lib/matching/matchCache';
+import MatchBreakdownModal from '@/components/jobs/MatchBreakdownModal';
+import MatchScoreCircle from '@/components/jobs/MatchScoreCircle';
 
 // ─── Ad slot IDs ───────────────────────────────────────────────────────────────
+// Trimmed down to a single mid-content placement to stay within the AdSense ad limit.
 const AD_SLOTS = {
-  DISPLAY_TOP:        '4198231153',
-  IN_ARTICLE:         '3314340925',
-  DISPLAY_BOTTOM:     '9751041788',
-  SIDEBAR_MOBILE:     '9025117620',
-  ANCHOR_MOBILE:      '9010641928',
-  BANNER_1:           '7253585934',
-  BANNER_2:           '5940504265',
-  BANNER_3:           '8348311222',
+  IN_ARTICLE: '3314340925',
 } as const;
 
 // Namespaced per site so saved/applied state doesn't bleed across subdomains
@@ -149,10 +148,15 @@ export default function JobClient({ job, relatedJobs, companies, documentLinks, 
   const router = useRouter();
   const jobId = job.id;
   const { toast } = useToast();
+  const { openAuthModal } = useAuth();
   
   const [saved, setSaved] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [applied, setApplied] = useState(false);
+  const [matchScore, setMatchScore] = useState<number | null>(null);
+  const [matchBreakdown, setMatchBreakdown] = useState<any>(null);
+  const [matchLoading, setMatchLoading] = useState(false);
+  const [matchModalOpen, setMatchModalOpen] = useState(false);
   const [upgradeErrorType, setUpgradeErrorType] = useState<'PREMIUM_REQUIRED' | 'QUOTA_EXCEEDED' | 'INSUFFICIENT_CREDITS' | null>(null);
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
   const [upgradeErrorData, setUpgradeErrorData] = useState<any>(null);
@@ -248,6 +252,117 @@ export default function JobClient({ job, relatedJobs, companies, documentLinks, 
   const checkAuth = async () => {
     const { data: { session } } = await supabase.auth.getSession();
     if (session) setUser(session.user);
+  };
+
+  // ─── Match score (for the small circle at the top of the page) ────────────
+  useEffect(() => {
+    if (!user) {
+      setMatchScore(null);
+      setMatchBreakdown(null);
+      return;
+    }
+
+    let cancelled = false;
+
+    const computeMatch = async () => {
+      setMatchLoading(true);
+      try {
+        // Cache check first — same cache the job list already writes to.
+        const cached = matchCacheService.getCachedMatch(user.id, jobId);
+        if (cached) {
+          if (!cancelled) {
+            setMatchScore(cached.score);
+            setMatchBreakdown(cached.breakdown);
+          }
+          return;
+        }
+
+        const cacheKey = `onboarding_cache_${user.id}`;
+        const tsKey = `onboarding_cache_ts_${user.id}`;
+        const CACHE_TTL = 30 * 60 * 1000; // 30 minutes
+        let onboardingData: UserOnboardingData | null = null;
+
+        try {
+          const cachedRaw = localStorage.getItem(cacheKey);
+          const ts = localStorage.getItem(tsKey);
+          if (cachedRaw && ts && Date.now() - parseInt(ts, 10) < CACHE_TTL) {
+            onboardingData = JSON.parse(cachedRaw);
+          }
+        } catch {}
+
+        if (!onboardingData) {
+          const { data, error } = await supabase
+            .from('onboarding_data')
+            .select('*')
+            .eq('user_id', user.id)
+            .single();
+          if (error && error.code !== 'PGRST116') throw error;
+          onboardingData = data ? {
+            target_roles: data.target_roles || [],
+            cv_skills: data.cv_skills || [],
+            preferred_locations: data.preferred_locations || [],
+            experience_level: data.experience_level || null,
+            salary_min: data.salary_min || null,
+            salary_max: data.salary_max || null,
+            job_type: data.job_type || null,
+            sector: data.sector || null,
+          } : {
+            target_roles: [], cv_skills: [], preferred_locations: [],
+            experience_level: null, salary_min: null, salary_max: null,
+            job_type: null, sector: null,
+          };
+          try {
+            localStorage.setItem(cacheKey, JSON.stringify(onboardingData));
+            localStorage.setItem(tsKey, Date.now().toString());
+          } catch {}
+        }
+
+        const jobRow: JobRow = {
+          role: job.role || job.title,
+          related_roles: job.related_roles,
+          ai_enhanced_roles: job.ai_enhanced_roles,
+          skills_required: job.skills_required,
+          ai_enhanced_skills: job.ai_enhanced_skills,
+          location: job.location,
+          experience_level: job.experience_level,
+          salary_range: job.salary_range,
+          employment_type: job.employment_type || job.type,
+          sector: job.sector,
+        };
+
+        const result = scoreJob(jobRow, onboardingData);
+        const rsCapped = Math.min(80, result.breakdown.rolesScore + result.breakdown.skillsScore + result.breakdown.sectorScore);
+        const calculatedTotal = Math.round(
+          rsCapped + result.breakdown.locationScore + result.breakdown.experienceScore + result.breakdown.salaryScore + result.breakdown.typeScore
+        );
+
+        matchCacheService.saveCachedMatch(user.id, jobId, result);
+
+        if (!cancelled) {
+          setMatchScore(calculatedTotal);
+          setMatchBreakdown(result.breakdown);
+        }
+      } catch (e) {
+        console.error('Error computing match score:', e);
+        if (!cancelled) {
+          setMatchScore(null);
+          setMatchBreakdown(null);
+        }
+      } finally {
+        if (!cancelled) setMatchLoading(false);
+      }
+    };
+
+    computeMatch();
+    return () => { cancelled = true; };
+  }, [user, jobId]);
+
+  const handleMatchClick = () => {
+    if (!user) {
+      openAuthModal('signin');
+      return;
+    }
+    setMatchModalOpen(true);
   };
 
   const loadSavedStatus = () => {
@@ -475,9 +590,18 @@ export default function JobClient({ job, relatedJobs, companies, documentLinks, 
 
               {/* Job Header Card */}
               <div className="bg-white rounded-xl shadow-sm p-6">
-                <h1 className="text-2xl sm:text-3xl font-bold mb-3" style={{ color: theme.colors.primary.DEFAULT }}>
-                  {job.title || 'Untitled Job'}
-                </h1>
+                <div className="flex items-start justify-between gap-3 mb-3">
+                  <h1 className="text-2xl sm:text-3xl font-bold" style={{ color: theme.colors.primary.DEFAULT }}>
+                    {job.title || 'Untitled Job'}
+                  </h1>
+                  <MatchScoreCircle
+                    score={matchScore}
+                    loading={matchLoading}
+                    loggedIn={!!user}
+                    onClick={handleMatchClick}
+                    className="mt-1"
+                  />
+                </div>
                 <p className="text-base text-gray-700 mb-4">
                   {(() => {
                     const companyName = getCompanyName();
@@ -645,10 +769,6 @@ export default function JobClient({ job, relatedJobs, companies, documentLinks, 
                   </div>
                 </div>
 
-                <div className="mt-4 -mx-6 px-6" style={{ minHeight: '250px' }}>
-                  <AdUnit slot={AD_SLOTS.DISPLAY_TOP} format="auto" style={{ display: 'block', width: '100%', minHeight: '250px' }} />
-                </div>
-
                 {(job.sector || job.experience_level || job.deadline) && (
                   <div className="mt-6 pt-6 border-t border-gray-100">
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
@@ -756,10 +876,6 @@ export default function JobClient({ job, relatedJobs, companies, documentLinks, 
                 return null;
               })()}
 
-              <div className="w-full overflow-hidden">
-                <AdUnit slot={AD_SLOTS.IN_ARTICLE} format="fluid" layout="in-article" style={{ display: 'block', textAlign: 'center', width: '100%' }} />
-              </div>
-
               {(() => {
                 const benefitsArray = Array.isArray(job.benefits) ? job.benefits : [];
                 if (benefitsArray.length > 0) {
@@ -779,10 +895,6 @@ export default function JobClient({ job, relatedJobs, companies, documentLinks, 
                 }
                 return null;
               })()}
-
-              <div className="w-full overflow-hidden" style={{ minHeight: '100px' }}>
-                <AdUnit slot={AD_SLOTS.DISPLAY_BOTTOM} format="auto" style={{ display: 'block', width: '100%' }} />
-              </div>
 
               {/* How to Apply */}
               {isExpired ? (
@@ -1065,17 +1177,10 @@ export default function JobClient({ job, relatedJobs, companies, documentLinks, 
                 </div>
               )}
 
-              <div className="w-full rounded-lg overflow-hidden">
-                <AdUnit slot={AD_SLOTS.BANNER_1} format="auto" style={{ display: 'block', width: '100%' }} />
-              </div>
             </div>
 
             {/* RIGHT COLUMN — Sidebar */}
             <div className="lg:col-span-1 space-y-6">
-              <div className="hidden lg:block w-full rounded-lg overflow-hidden">
-                <AdUnit slot={AD_SLOTS.BANNER_3} format="auto" style={{ display: 'block', width: '100%' }} />
-              </div>
-
               <div className="bg-white rounded-xl shadow-sm overflow-hidden">
                 <div className="px-5 py-4 font-semibold text-base flex items-center gap-2" style={{ backgroundColor: `${theme.colors.primary.DEFAULT}10`, color: theme.colors.primary.DEFAULT }}>
                   <PenTool size={16} />
@@ -1099,10 +1204,6 @@ export default function JobClient({ job, relatedJobs, companies, documentLinks, 
                     </a>
                   </div>
                 </div>
-              </div>
-
-              <div className="flex lg:hidden w-full overflow-hidden">
-                <AdUnit slot={AD_SLOTS.SIDEBAR_MOBILE} format="fluid" layoutKey="-fb+5w+4e-db+86" style={{ display: 'block', width: '100%' }} />
               </div>
 
               {similarJobs && similarJobs.length > 0 && (
@@ -1277,9 +1378,6 @@ export default function JobClient({ job, relatedJobs, companies, documentLinks, 
                 </div>
               )}
 
-              <div className="w-full rounded-lg overflow-hidden">
-                <AdUnit slot={AD_SLOTS.BANNER_2} format="auto" style={{ display: 'block', width: '100%' }} />
-              </div>
             </div>
           </div>
         </div>
@@ -1297,6 +1395,18 @@ export default function JobClient({ job, relatedJobs, companies, documentLinks, 
             currentCredits={upgradeErrorData?.currentCredits}
           />
         )}
+
+        {/* Match Breakdown Modal */}
+        <MatchBreakdownModal
+          open={matchModalOpen}
+          onClose={() => setMatchModalOpen(false)}
+          data={matchBreakdown ? {
+            breakdown: matchBreakdown,
+            totalScore: matchScore || 0,
+            jobTitle: job.title || 'This job',
+            companyName: getCompanyName(),
+          } : null}
+        />
 
         {/* No TimedJobPopup on remote.jobmeter.app */}
 
