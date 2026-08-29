@@ -11,7 +11,10 @@ export const metadata = {
   description: 'Browse free, role-specific cover letter templates tailored for job seekers.',
 };
 
-export const dynamic = 'force-dynamic';
+// Static generation with periodic revalidation, same as the individual
+// role pages — was force-dynamic (rendered fresh on every request), which
+// meant no caching at all for a page that just lists published templates.
+export const revalidate = 3600;
 
 export default async function CoverLetterTemplatesHub() {
   const pages = await getAllPublishedCoverLetterRolePages();

@@ -21,6 +21,7 @@ import { supabase } from '@/lib/supabase';
 import BackButton from '../_components/back-button';
 import CoverLetterPreviewFrame from '../_components/cover-letter-preview-frame';
 import CoverLetterOnboardingModal from '../_components/cover-letter-onboarding-modal';
+import BlogMarkdownRenderer from '@/components/BlogMarkdownRenderer';
 
 export default function RolePageClient({ page }: { page: CoverLetterRolePage }) {
   const router = useRouter();
@@ -96,8 +97,8 @@ export default function RolePageClient({ page }: { page: CoverLetterRolePage }) 
         )}
 
         {page.seo_content && (
-          <article className="prose max-w-none mb-10 whitespace-pre-line">
-            {page.seo_content}
+          <article className="mb-10">
+            <BlogMarkdownRenderer content={page.seo_content} />
           </article>
         )}
 

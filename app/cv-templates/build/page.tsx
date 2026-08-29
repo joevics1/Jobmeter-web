@@ -11,6 +11,10 @@ import BuildClient from './client';
 export const metadata = {
   title: 'Build Your CV | JobMeter',
   description: 'Fill in your details, pick a design, and generate your CV in minutes.',
+  // Only the role landing pages (e.g. /cv-templates/customer-service-representative)
+  // and the hub page should be indexed — this is a per-session builder
+  // screen, not a content page.
+  robots: { index: false, follow: false },
 };
 
 export default async function BuildPage({

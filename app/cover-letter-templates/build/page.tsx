@@ -9,6 +9,10 @@ import BuildClient from './client';
 export const metadata = {
   title: 'Build Your Cover Letter | JobMeter',
   description: 'Quick Create with your profile, edit the template, and download your cover letter in minutes.',
+  // Only the role landing pages (e.g. /cover-letter-templates/customer-service-representative)
+  // and the hub page should be indexed — this is a per-session builder
+  // screen, not a content page.
+  robots: { index: false, follow: false },
 };
 
 export default async function BuildPage({

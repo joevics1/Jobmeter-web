@@ -18,6 +18,7 @@ import { useCvOverflowCheck } from '@/lib/cv-template-pages/use-cv-overflow';
 import { supabase } from '@/lib/supabase';
 import BackButton from '../_components/back-button';
 import CVPreviewFrame from '../_components/cv-preview-frame';
+import BlogMarkdownRenderer from '@/components/BlogMarkdownRenderer';
 import CVOnboardingModal from '../_components/cv-onboarding-modal';
 
 export default function RolePageClient({ page }: { page: ContentRolePage }) {
@@ -94,8 +95,8 @@ export default function RolePageClient({ page }: { page: ContentRolePage }) {
         )}
 
         {page.seo_content && (
-          <article className="prose max-w-none mb-10 whitespace-pre-line">
-            {page.seo_content}
+          <article className="mb-10">
+            <BlogMarkdownRenderer content={page.seo_content} />
           </article>
         )}
 
