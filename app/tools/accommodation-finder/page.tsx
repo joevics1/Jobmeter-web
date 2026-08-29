@@ -159,14 +159,14 @@ export default async function AccommodationFinderPage() {
                 "@type": "WebPage",
                 "name": "Jobs with Accommodation | Jobmeter",
                 "description": "Browse job openings that include accommodation as a benefit, updated daily across sectors and locations.",
-                "url": "https://jobmeter.app/tools/accommodation-finder",
+                "url": "https://www.jobmeter.app/tools/accommodation-finder",
                 "inLanguage": "en",
                 "breadcrumb": {
                   "@type": "BreadcrumbList",
                   "itemListElement": [
-                    { "@type": "ListItem", "position": 1, "name": "Home",  "item": "https://jobmeter.app" },
-                    { "@type": "ListItem", "position": 2, "name": "Tools", "item": "https://jobmeter.app/tools" },
-                    { "@type": "ListItem", "position": 3, "name": "Jobs with Accommodation", "item": "https://jobmeter.app/tools/accommodation-finder" },
+                    { "@type": "ListItem", "position": 1, "name": "Home",  "item": "https://www.jobmeter.app" },
+                    { "@type": "ListItem", "position": 2, "name": "Tools", "item": "https://www.jobmeter.app/tools" },
+                    { "@type": "ListItem", "position": 3, "name": "Jobs with Accommodation", "item": "https://www.jobmeter.app/tools/accommodation-finder" },
                   ]
                 }
               },
@@ -185,11 +185,11 @@ export default async function AccommodationFinderPage() {
                 "name": "Related Job Finder Tools on Jobmeter",
                 "description": "Other free job finder tools available on jobmeter.app",
                 "itemListElement": [
-                  { "@type": "ListItem", "position": 1, "name": "Jobs with Visa Sponsorship",    "url": "https://jobmeter.app/tools/visa-finder" },
-                  { "@type": "ListItem", "position": 2, "name": "Remote Jobs Finder",             "url": "https://jobmeter.app/tools/remote-jobs-finder" },
-                  { "@type": "ListItem", "position": 3, "name": "Internship Finder",              "url": "https://jobmeter.app/tools/internship-finder" },
-                  { "@type": "ListItem", "position": 4, "name": "NYSC Jobs Finder",               "url": "https://jobmeter.app/tools/nysc-finder" },
-                  { "@type": "ListItem", "position": 5, "name": "Entry Level Jobs Finder",        "url": "https://jobmeter.app/tools/entry-level-finder" },
+                  { "@type": "ListItem", "position": 1, "name": "Jobs with Visa Sponsorship",    "url": "https://www.jobmeter.app/tools/visa-finder" },
+                  { "@type": "ListItem", "position": 2, "name": "Remote Jobs Finder",             "url": "https://www.jobmeter.app/tools/remote-jobs-finder" },
+                  { "@type": "ListItem", "position": 3, "name": "Internship Finder",              "url": "https://www.jobmeter.app/tools/internship-finder" },
+                  { "@type": "ListItem", "position": 4, "name": "NYSC Jobs Finder",               "url": "https://www.jobmeter.app/tools/nysc-finder" },
+                  { "@type": "ListItem", "position": 5, "name": "Entry Level Jobs Finder",        "url": "https://www.jobmeter.app/tools/entry-level-finder" },
                 ]
               },
               ...jobPostings,

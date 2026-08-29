@@ -79,7 +79,7 @@ export function jobPostingSchema(job: WorkerJob) {
       '@type': 'Organization',
       name: companyName(job),
     },
-    url: `https://jobmeter.app/jobs/${job.slug}`,
+    url: `https://www.jobmeter.app/jobs/${job.slug}`,
     identifier: {
       '@type': 'PropertyValue',
       name: companyName(job),

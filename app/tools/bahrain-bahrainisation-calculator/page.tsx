@@ -5,7 +5,7 @@ import AdUnit from '@/components/ads/AdUnit';
 import LocalizationQuotaCalculator from '../_shared/LocalizationQuotaCalculator';
 import RelatedToolsStrip from '@/components/tools/RelatedToolsStrip';
 
-const pageUrl = 'https://jobmeter.app/tools/bahrain-bahrainisation-calculator';
+const pageUrl = 'https://www.jobmeter.app/tools/bahrain-bahrainisation-calculator';
 
 export const metadata: Metadata = {
   title: 'Bahrainisation Ratio Calculator | JobMeter',
@@ -23,13 +23,13 @@ const jsonLd = [
   {
     '@context': 'https://schema.org', '@type': 'WebPage', name: 'Bahrainisation Ratio Calculator', url: pageUrl,
     description: "Calculate a company's Bahraini national employment ratio and understand Bahrain's training-incentive-led approach to workforce localization.",
-    inLanguage: 'en', isPartOf: { '@type': 'WebSite', name: 'Tools', url: 'https://jobmeter.app' },
+    inLanguage: 'en', isPartOf: { '@type': 'WebSite', name: 'Tools', url: 'https://www.jobmeter.app' },
   },
   {
     '@context': 'https://schema.org', '@type': 'BreadcrumbList',
     itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://jobmeter.app' },
-      { '@type': 'ListItem', position: 2, name: 'Tools', item: 'https://jobmeter.app/tools' },
+      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://www.jobmeter.app' },
+      { '@type': 'ListItem', position: 2, name: 'Tools', item: 'https://www.jobmeter.app/tools' },
       { '@type': 'ListItem', position: 3, name: 'Bahrainisation Calculator', item: pageUrl },
     ],
   },

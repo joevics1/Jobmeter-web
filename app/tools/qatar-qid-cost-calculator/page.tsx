@@ -5,7 +5,7 @@ import AdUnit from '@/components/ads/AdUnit';
 import QatarQIDCostCalculator from './QatarQIDCostCalculator';
 import RelatedToolsStrip from '@/components/tools/RelatedToolsStrip';
 
-const pageUrl = 'https://jobmeter.app/tools/qatar-qid-cost-calculator';
+const pageUrl = 'https://www.jobmeter.app/tools/qatar-qid-cost-calculator';
 
 export const metadata: Metadata = {
   title: 'Qatar QID Cost Calculator | Residence Permit Fees 2026 | JobMeter',
@@ -19,10 +19,10 @@ export const metadata: Metadata = {
 };
 
 const jsonLd = [
-  { '@context': 'https://schema.org', '@type': 'WebPage', name: 'Qatar QID Cost Calculator', url: pageUrl, description: 'Calculate the total cost of renewing a Qatar ID (QID), including optional add-ons.', inLanguage: 'en', isPartOf: { '@type': 'WebSite', name: 'Tools', url: 'https://jobmeter.app' } },
+  { '@context': 'https://schema.org', '@type': 'WebPage', name: 'Qatar QID Cost Calculator', url: pageUrl, description: 'Calculate the total cost of renewing a Qatar ID (QID), including optional add-ons.', inLanguage: 'en', isPartOf: { '@type': 'WebSite', name: 'Tools', url: 'https://www.jobmeter.app' } },
   { '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: [
-    { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://jobmeter.app' },
-    { '@type': 'ListItem', position: 2, name: 'Tools', item: 'https://jobmeter.app/tools' },
+    { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://www.jobmeter.app' },
+    { '@type': 'ListItem', position: 2, name: 'Tools', item: 'https://www.jobmeter.app/tools' },
     { '@type': 'ListItem', position: 3, name: 'Qatar QID Cost Calculator', item: pageUrl },
   ]},
   { '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: [

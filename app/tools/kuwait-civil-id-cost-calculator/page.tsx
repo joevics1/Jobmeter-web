@@ -5,7 +5,7 @@ import AdUnit from '@/components/ads/AdUnit';
 import KuwaitCivilIDCostCalculator from './KuwaitCivilIDCostCalculator';
 import RelatedToolsStrip from '@/components/tools/RelatedToolsStrip';
 
-const pageUrl = 'https://jobmeter.app/tools/kuwait-civil-id-cost-calculator';
+const pageUrl = 'https://www.jobmeter.app/tools/kuwait-civil-id-cost-calculator';
 
 export const metadata: Metadata = {
   title: 'Kuwait Civil ID & Residency Cost Calculator (2026) | JobMeter',
@@ -19,10 +19,10 @@ export const metadata: Metadata = {
 };
 
 const jsonLd = [
-  { '@context': 'https://schema.org', '@type': 'WebPage', name: 'Kuwait Civil ID & Residency Cost Calculator', url: pageUrl, description: "Calculate Kuwait's residency and Civil ID costs by sponsor category under the 2025/2026 reform.", inLanguage: 'en', isPartOf: { '@type': 'WebSite', name: 'Tools', url: 'https://jobmeter.app' } },
+  { '@context': 'https://schema.org', '@type': 'WebPage', name: 'Kuwait Civil ID & Residency Cost Calculator', url: pageUrl, description: "Calculate Kuwait's residency and Civil ID costs by sponsor category under the 2025/2026 reform.", inLanguage: 'en', isPartOf: { '@type': 'WebSite', name: 'Tools', url: 'https://www.jobmeter.app' } },
   { '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: [
-    { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://jobmeter.app' },
-    { '@type': 'ListItem', position: 2, name: 'Tools', item: 'https://jobmeter.app/tools' },
+    { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://www.jobmeter.app' },
+    { '@type': 'ListItem', position: 2, name: 'Tools', item: 'https://www.jobmeter.app/tools' },
     { '@type': 'ListItem', position: 3, name: 'Kuwait Civil ID Cost Calculator', item: pageUrl },
   ]},
   { '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: [

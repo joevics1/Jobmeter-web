@@ -5,7 +5,7 @@ import AdUnit from '@/components/ads/AdUnit';
 import Script from 'next/script';
 import RelatedToolsStrip from '@/components/tools/RelatedToolsStrip';
 
-const pageUrl = 'https://jobmeter.app/tools/job-offer-evaluator';
+const pageUrl = 'https://www.jobmeter.app/tools/job-offer-evaluator';
 
 export const metadata: Metadata = {
   title: 'Gulf Job Offer Evaluator: UAE Salary Calculator & True Compensation',
@@ -41,11 +41,11 @@ const jsonLd = [
     isPartOf: {
       '@type': 'WebSite',
       name: 'Tools',
-      url: 'https://jobmeter.app',
+      url: 'https://www.jobmeter.app',
     },
     primaryImageOfPage: {
       '@type': 'ImageObject',
-      url: 'https://jobmeter.app/og-job-evaluator.jpg',
+      url: 'https://www.jobmeter.app/og-job-evaluator.jpg',
     },
   },
   {
@@ -56,13 +56,13 @@ const jsonLd = [
         '@type': 'ListItem',
         position: 1,
         name: 'Home',
-        item: 'https://jobmeter.app',
+        item: 'https://www.jobmeter.app',
       },
       {
         '@type': 'ListItem',
         position: 2,
         name: 'Tools',
-        item: 'https://jobmeter.app/tools',
+        item: 'https://www.jobmeter.app/tools',
       },
       {
         '@type': 'ListItem',

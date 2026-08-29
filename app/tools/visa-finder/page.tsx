@@ -102,10 +102,10 @@ export default async function VisaFinderPage() {
       </div>
 
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify([
-        { "@context": "https://schema.org", "@type": "WebPage", "name": "Jobs with Visa Sponsorship | Jobmeter", "description": "Browse job openings that include visa sponsorship, updated daily across every sector and country Jobmeter covers.", "url": "https://jobmeter.app/tools/visa-finder", "inLanguage": "en", "breadcrumb": { "@type": "BreadcrumbList", "itemListElement": [
-          { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://jobmeter.app" },
-          { "@type": "ListItem", "position": 2, "name": "Tools", "item": "https://jobmeter.app/tools" },
-          { "@type": "ListItem", "position": 3, "name": "Jobs with Visa Sponsorship", "item": "https://jobmeter.app/tools/visa-finder" },
+        { "@context": "https://schema.org", "@type": "WebPage", "name": "Jobs with Visa Sponsorship | Jobmeter", "description": "Browse job openings that include visa sponsorship, updated daily across every sector and country Jobmeter covers.", "url": "https://www.jobmeter.app/tools/visa-finder", "inLanguage": "en", "breadcrumb": { "@type": "BreadcrumbList", "itemListElement": [
+          { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://www.jobmeter.app" },
+          { "@type": "ListItem", "position": 2, "name": "Tools", "item": "https://www.jobmeter.app/tools" },
+          { "@type": "ListItem", "position": 3, "name": "Jobs with Visa Sponsorship", "item": "https://www.jobmeter.app/tools/visa-finder" },
         ] } },
         { "@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [
           { "@type": "Question", "name": "How are these jobs identified on this page?", "acceptedAnswer": { "@type": "Answer", "text": "We filter for jobs where the employer explicitly marked visa assistance as available in the listing." } },
@@ -113,11 +113,11 @@ export default async function VisaFinderPage() {
           { "@type": "Question", "name": "Does sponsorship always mean permanent residency?", "acceptedAnswer": { "@type": "Answer", "text": "No -- some sponsored roles are for temporary work permits, others lead toward longer-term residency. Check each listing's details." } },
         ] },
         { "@context": "https://schema.org", "@type": "ItemList", "name": "Related Job Finder Tools on Jobmeter", "description": "Other free job finder tools available on jobmeter.app", "itemListElement": [
-          { "@type": "ListItem", "position": 1, "name": "Remote Jobs Finder", "url": "https://jobmeter.app/tools/remote-jobs-finder" },
-          { "@type": "ListItem", "position": 2, "name": "Internship Finder", "url": "https://jobmeter.app/tools/internship-finder" },
-          { "@type": "ListItem", "position": 3, "name": "NYSC Jobs Finder", "url": "https://jobmeter.app/tools/nysc-finder" },
-          { "@type": "ListItem", "position": 4, "name": "Jobs with Accommodation", "url": "https://jobmeter.app/tools/accommodation-finder" },
-          { "@type": "ListItem", "position": 5, "name": "Entry Level Jobs Finder", "url": "https://jobmeter.app/tools/entry-level-finder" },
+          { "@type": "ListItem", "position": 1, "name": "Remote Jobs Finder", "url": "https://www.jobmeter.app/tools/remote-jobs-finder" },
+          { "@type": "ListItem", "position": 2, "name": "Internship Finder", "url": "https://www.jobmeter.app/tools/internship-finder" },
+          { "@type": "ListItem", "position": 3, "name": "NYSC Jobs Finder", "url": "https://www.jobmeter.app/tools/nysc-finder" },
+          { "@type": "ListItem", "position": 4, "name": "Jobs with Accommodation", "url": "https://www.jobmeter.app/tools/accommodation-finder" },
+          { "@type": "ListItem", "position": 5, "name": "Entry Level Jobs Finder", "url": "https://www.jobmeter.app/tools/entry-level-finder" },
         ] },
         ...jobPostings,
       ]) }} />

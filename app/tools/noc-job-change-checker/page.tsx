@@ -5,7 +5,7 @@ import AdUnit from '../../../components/ads/AdUnit';
 import Script from 'next/script';
 import RelatedToolsStrip from '@/components/tools/RelatedToolsStrip';
 
-const pageUrl = 'https://jobmeter.app/tools/noc-job-change-checker';
+const pageUrl = 'https://www.jobmeter.app/tools/noc-job-change-checker';
 
 export const metadata: Metadata = {
   title: 'NOC / Job Change Eligibility Checker GCC 2026 | UAE, KSA, Qatar, Kuwait',
@@ -33,15 +33,15 @@ const jsonLd = [
     isPartOf: {
       '@type': 'WebSite',
       name: 'Gulf Job Meter',
-      url: 'https://jobmeter.app',
+      url: 'https://www.jobmeter.app',
     },
   },
   {
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
     itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://jobmeter.app' },
-      { '@type': 'ListItem', position: 2, name: 'Tools', item: 'https://jobmeter.app/tools' },
+      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://www.jobmeter.app' },
+      { '@type': 'ListItem', position: 2, name: 'Tools', item: 'https://www.jobmeter.app/tools' },
       { '@type': 'ListItem', position: 3, name: 'NOC Checker', item: pageUrl },
     ],
   },

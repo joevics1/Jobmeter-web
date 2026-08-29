@@ -5,7 +5,7 @@ import AdUnit from '@/components/ads/AdUnit';
 import Script from 'next/script';
 import RelatedToolsStrip from '@/components/tools/RelatedToolsStrip';
 
-const pageUrl = 'https://jobmeter.app/tools/relocation-budget-planner';
+const pageUrl = 'https://www.jobmeter.app/tools/relocation-budget-planner';
 
 export const metadata: Metadata = {
   title: 'Global Gulf Relocation Budget Planner 2026 | Move to UAE, Saudi & Qatar',
@@ -37,11 +37,11 @@ const jsonLd = [
     isPartOf: {
       '@type': 'WebSite',
       name: 'JobMeter Tools',
-      url: 'https://jobmeter.app',
+      url: 'https://www.jobmeter.app',
     },
     primaryImageOfPage: {
       '@type': 'ImageObject',
-      url: 'https://jobmeter.app/og-relocation-planner.jpg',
+      url: 'https://www.jobmeter.app/og-relocation-planner.jpg',
     },
   },
   {
@@ -52,13 +52,13 @@ const jsonLd = [
         '@type': 'ListItem',
         position: 1,
         name: 'Home',
-        item: 'https://jobmeter.app',
+        item: 'https://www.jobmeter.app',
       },
       {
         '@type': 'ListItem',
         position: 2,
         name: 'Tools',
-        item: 'https://jobmeter.app/tools',
+        item: 'https://www.jobmeter.app/tools',
       },
       {
         '@type': 'ListItem',

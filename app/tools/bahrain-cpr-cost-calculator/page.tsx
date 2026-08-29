@@ -5,7 +5,7 @@ import AdUnit from '@/components/ads/AdUnit';
 import BahrainCPRCostCalculator from './BahrainCPRCostCalculator';
 import RelatedToolsStrip from '@/components/tools/RelatedToolsStrip';
 
-const pageUrl = 'https://jobmeter.app/tools/bahrain-cpr-cost-calculator';
+const pageUrl = 'https://www.jobmeter.app/tools/bahrain-cpr-cost-calculator';
 
 export const metadata: Metadata = {
   title: 'Bahrain CPR & Work Permit Cost Calculator (2026) | JobMeter',
@@ -19,10 +19,10 @@ export const metadata: Metadata = {
 };
 
 const jsonLd = [
-  { '@context': 'https://schema.org', '@type': 'WebPage', name: 'Bahrain CPR & Work Permit Cost Calculator', url: pageUrl, description: 'Calculate the total cost of a Bahrain work permit renewal including CPR card and healthcare fees.', inLanguage: 'en', isPartOf: { '@type': 'WebSite', name: 'Tools', url: 'https://jobmeter.app' } },
+  { '@context': 'https://schema.org', '@type': 'WebPage', name: 'Bahrain CPR & Work Permit Cost Calculator', url: pageUrl, description: 'Calculate the total cost of a Bahrain work permit renewal including CPR card and healthcare fees.', inLanguage: 'en', isPartOf: { '@type': 'WebSite', name: 'Tools', url: 'https://www.jobmeter.app' } },
   { '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: [
-    { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://jobmeter.app' },
-    { '@type': 'ListItem', position: 2, name: 'Tools', item: 'https://jobmeter.app/tools' },
+    { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://www.jobmeter.app' },
+    { '@type': 'ListItem', position: 2, name: 'Tools', item: 'https://www.jobmeter.app/tools' },
     { '@type': 'ListItem', position: 3, name: 'Bahrain CPR Cost Calculator', item: pageUrl },
   ]},
   { '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: [

@@ -5,7 +5,7 @@ import AdUnit from '@/components/ads/AdUnit';
 import Script from 'next/script';
 import RelatedToolsStrip from '@/components/tools/RelatedToolsStrip';
 
-const pageUrl = 'https://jobmeter.app/tools/uae-gratuity-calculator';
+const pageUrl = 'https://www.jobmeter.app/tools/uae-gratuity-calculator';
 
 export const metadata: Metadata = {
   title: 'UAE Gratuity Calculator 2026 | End of Service Calculator UAE (MOHRE)',
@@ -35,13 +35,13 @@ export default function UAEGratuityPage() {
             "@type": "ListItem",
             "position": 1,
             "name": "Home",
-            "item": "https://jobmeter.app/"
+            "item": "https://www.jobmeter.app/"
           },
           {
             "@type": "ListItem",
             "position": 2,
             "name": "Tools",
-            "item": "https://jobmeter.app/tools"
+            "item": "https://www.jobmeter.app/tools"
           },
           {
             "@type": "ListItem",

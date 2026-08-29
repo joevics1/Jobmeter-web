@@ -5,7 +5,7 @@ import AdUnit from '@/components/ads/AdUnit';
 import Script from 'next/script';
 import RelatedToolsStrip from '@/components/tools/RelatedToolsStrip';
 
-const pageUrl = 'https://jobmeter.app/tools/saudi-visa-calculator';
+const pageUrl = 'https://www.jobmeter.app/tools/saudi-visa-calculator';
 
 export const metadata: Metadata = {
   title: 'Saudi Skill Visa Points Calculator | High-Skilled Work Permit KSA',
@@ -36,11 +36,11 @@ const jsonLd = [
     isPartOf: {
       '@type': 'WebSite',
       name: 'Tools',
-      url: 'https://jobmeter.app',
+      url: 'https://www.jobmeter.app',
     },
     primaryImageOfPage: {
       '@type': 'ImageObject',
-      url: 'https://jobmeter.app/og-saudi-visa-calculator.jpg',
+      url: 'https://www.jobmeter.app/og-saudi-visa-calculator.jpg',
     },
   },
   {
@@ -51,13 +51,13 @@ const jsonLd = [
         '@type': 'ListItem',
         position: 1,
         name: 'Home',
-        item: 'https://jobmeter.app',
+        item: 'https://www.jobmeter.app',
       },
       {
         '@type': 'ListItem',
         position: 2,
         name: 'Tools',
-        item: 'https://jobmeter.app/tools',
+        item: 'https://www.jobmeter.app/tools',
       },
       {
         '@type': 'ListItem',

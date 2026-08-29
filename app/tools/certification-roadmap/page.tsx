@@ -5,7 +5,7 @@ import AdUnit from '@/components/ads/AdUnit';
 import Script from 'next/script';
 import RelatedToolsStrip from '@/components/tools/RelatedToolsStrip';
 
-const pageUrl = 'https://jobmeter.app/tools/certification-roadmap';
+const pageUrl = 'https://www.jobmeter.app/tools/certification-roadmap';
 
 export const metadata: Metadata = {
   title: 'Gulf Certification Roadmap Tool: PMP, ACCA, CIPS, CIPD & IT Paths',
@@ -40,15 +40,15 @@ const jsonLd = [
     isPartOf: {
       '@type': 'WebSite',
       name: 'JobMeter Gulf',
-      url: 'https://jobmeter.app',
+      url: 'https://www.jobmeter.app',
     },
   },
   {
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
     itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://jobmeter.app' },
-      { '@type': 'ListItem', position: 2, name: 'Tools', item: 'https://jobmeter.app/tools' },
+      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://www.jobmeter.app' },
+      { '@type': 'ListItem', position: 2, name: 'Tools', item: 'https://www.jobmeter.app/tools' },
       { '@type': 'ListItem', position: 3, name: 'Certification Roadmap', item: pageUrl },
     ],
   },

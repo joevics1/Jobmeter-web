@@ -5,7 +5,7 @@ import AdUnit from '@/components/ads/AdUnit';
 import GratuityCalculatorShell from '../_shared/GratuityCalculatorShell';
 import RelatedToolsStrip from '@/components/tools/RelatedToolsStrip';
 
-const pageUrl = 'https://jobmeter.app/tools/kuwait-indemnity-calculator';
+const pageUrl = 'https://www.jobmeter.app/tools/kuwait-indemnity-calculator';
 
 export const metadata: Metadata = {
   title: 'Kuwait Indemnity (End-of-Service) Calculator | JobMeter',
@@ -24,13 +24,13 @@ const jsonLd = [
   {
     '@context': 'https://schema.org', '@type': 'WebPage', name: 'Kuwait Indemnity Calculator', url: pageUrl,
     description: 'Calculate end-of-service indemnity in Kuwait under Labour Law No. 6 of 2010, including resignation-based reductions.',
-    inLanguage: 'en', isPartOf: { '@type': 'WebSite', name: 'Tools', url: 'https://jobmeter.app' },
+    inLanguage: 'en', isPartOf: { '@type': 'WebSite', name: 'Tools', url: 'https://www.jobmeter.app' },
   },
   {
     '@context': 'https://schema.org', '@type': 'BreadcrumbList',
     itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://jobmeter.app' },
-      { '@type': 'ListItem', position: 2, name: 'Tools', item: 'https://jobmeter.app/tools' },
+      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://www.jobmeter.app' },
+      { '@type': 'ListItem', position: 2, name: 'Tools', item: 'https://www.jobmeter.app/tools' },
       { '@type': 'ListItem', position: 3, name: 'Kuwait Indemnity Calculator', item: pageUrl },
     ],
   },

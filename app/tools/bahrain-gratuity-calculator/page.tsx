@@ -5,7 +5,7 @@ import AdUnit from '@/components/ads/AdUnit';
 import GratuityCalculatorShell from '../_shared/GratuityCalculatorShell';
 import RelatedToolsStrip from '@/components/tools/RelatedToolsStrip';
 
-const pageUrl = 'https://jobmeter.app/tools/bahrain-gratuity-calculator';
+const pageUrl = 'https://www.jobmeter.app/tools/bahrain-gratuity-calculator';
 
 export const metadata: Metadata = {
   title: 'Bahrain Gratuity Calculator | End-of-Service Estimate | JobMeter',
@@ -24,13 +24,13 @@ const jsonLd = [
   {
     '@context': 'https://schema.org', '@type': 'WebPage', name: 'Bahrain Gratuity Calculator', url: pageUrl,
     description: "Estimate Bahrain's end-of-service gratuity under the traditional formula, with a note on the country's ongoing reform of the system.",
-    inLanguage: 'en', isPartOf: { '@type': 'WebSite', name: 'Tools', url: 'https://jobmeter.app' },
+    inLanguage: 'en', isPartOf: { '@type': 'WebSite', name: 'Tools', url: 'https://www.jobmeter.app' },
   },
   {
     '@context': 'https://schema.org', '@type': 'BreadcrumbList',
     itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://jobmeter.app' },
-      { '@type': 'ListItem', position: 2, name: 'Tools', item: 'https://jobmeter.app/tools' },
+      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://www.jobmeter.app' },
+      { '@type': 'ListItem', position: 2, name: 'Tools', item: 'https://www.jobmeter.app/tools' },
       { '@type': 'ListItem', position: 3, name: 'Bahrain Gratuity Calculator', item: pageUrl },
     ],
   },

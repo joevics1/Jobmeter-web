@@ -5,7 +5,7 @@ import AdUnit from '@/components/ads/AdUnit';
 import LocalizationQuotaCalculator from '../_shared/LocalizationQuotaCalculator';
 import RelatedToolsStrip from '@/components/tools/RelatedToolsStrip';
 
-const pageUrl = 'https://jobmeter.app/tools/oman-omanisation-calculator';
+const pageUrl = 'https://www.jobmeter.app/tools/oman-omanisation-calculator';
 
 export const metadata: Metadata = {
   title: 'Omanisation Quota Calculator | Sector Targets & Fee Impact | JobMeter',
@@ -23,13 +23,13 @@ const jsonLd = [
   {
     '@context': 'https://schema.org', '@type': 'WebPage', name: 'Omanisation Quota Calculator', url: pageUrl,
     description: "Calculate a company's Omanisation ratio against sector-specific targets and see the work-permit fee impact under Ministerial Decision 602/2025.",
-    inLanguage: 'en', isPartOf: { '@type': 'WebSite', name: 'Tools', url: 'https://jobmeter.app' },
+    inLanguage: 'en', isPartOf: { '@type': 'WebSite', name: 'Tools', url: 'https://www.jobmeter.app' },
   },
   {
     '@context': 'https://schema.org', '@type': 'BreadcrumbList',
     itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://jobmeter.app' },
-      { '@type': 'ListItem', position: 2, name: 'Tools', item: 'https://jobmeter.app/tools' },
+      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://www.jobmeter.app' },
+      { '@type': 'ListItem', position: 2, name: 'Tools', item: 'https://www.jobmeter.app/tools' },
       { '@type': 'ListItem', position: 3, name: 'Omanisation Calculator', item: pageUrl },
     ],
   },

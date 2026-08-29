@@ -5,7 +5,7 @@ import AdUnit from '@/components/ads/AdUnit';
 import GratuityCalculatorShell from '../_shared/GratuityCalculatorShell';
 import RelatedToolsStrip from '@/components/tools/RelatedToolsStrip';
 
-const pageUrl = 'https://jobmeter.app/tools/oman-eosb-calculator';
+const pageUrl = 'https://www.jobmeter.app/tools/oman-eosb-calculator';
 
 export const metadata: Metadata = {
   title: 'Oman End-of-Service Benefit (EOSB) Calculator 2026 | JobMeter',
@@ -24,13 +24,13 @@ const jsonLd = [
   {
     '@context': 'https://schema.org', '@type': 'WebPage', name: 'Oman EOSB Calculator', url: pageUrl,
     description: "Calculate Oman's end-of-service benefit under Royal Decree 53/2023, correctly split at the 31 July 2023 formula-change cutoff.",
-    inLanguage: 'en', isPartOf: { '@type': 'WebSite', name: 'Tools', url: 'https://jobmeter.app' },
+    inLanguage: 'en', isPartOf: { '@type': 'WebSite', name: 'Tools', url: 'https://www.jobmeter.app' },
   },
   {
     '@context': 'https://schema.org', '@type': 'BreadcrumbList',
     itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://jobmeter.app' },
-      { '@type': 'ListItem', position: 2, name: 'Tools', item: 'https://jobmeter.app/tools' },
+      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://www.jobmeter.app' },
+      { '@type': 'ListItem', position: 2, name: 'Tools', item: 'https://www.jobmeter.app/tools' },
       { '@type': 'ListItem', position: 3, name: 'Oman EOSB Calculator', item: pageUrl },
     ],
   },

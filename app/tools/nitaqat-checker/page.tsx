@@ -5,7 +5,7 @@ import AdUnit from '@/components/ads/AdUnit';
 import Script from 'next/script';
 import RelatedToolsStrip from '@/components/tools/RelatedToolsStrip';
 
-const pageUrl = 'https://jobmeter.app/tools/nitaqat-checker';
+const pageUrl = 'https://www.jobmeter.app/tools/nitaqat-checker';
 
 // Step 1: 100 Best Keywords (No years included)
 export const metadata: Metadata = {
@@ -59,15 +59,15 @@ const jsonLd = [
     isPartOf: {
       '@type': 'WebSite',
       name: 'Tools',
-      url: 'https://jobmeter.app',
+      url: 'https://www.jobmeter.app',
     },
   },
   {
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
     itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://jobmeter.app' },
-      { '@type': 'ListItem', position: 2, name: 'Tools', item: 'https://jobmeter.app/tools' },
+      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://www.jobmeter.app' },
+      { '@type': 'ListItem', position: 2, name: 'Tools', item: 'https://www.jobmeter.app/tools' },
       { '@type': 'ListItem', position: 3, name: 'Nitaqat Tier Checker', item: pageUrl },
     ],
   },

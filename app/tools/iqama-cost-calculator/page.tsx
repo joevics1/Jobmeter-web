@@ -5,7 +5,7 @@ import AdUnit from '@/components/ads/AdUnit';
 import Script from 'next/script';
 import RelatedToolsStrip from '@/components/tools/RelatedToolsStrip';
 
-const pageUrl = 'https://jobmeter.app/tools/iqama-cost-calculator';
+const pageUrl = 'https://www.jobmeter.app/tools/iqama-cost-calculator';
 
 export const metadata: Metadata = {
   title: 'Iqama Cost & Renewal Fee Calculator Saudi Arabia | Real Total Fees',
@@ -45,15 +45,15 @@ const jsonLd = [
     isPartOf: {
       '@type': 'WebSite',
       name: 'Gulf Jobmeter',
-      url: 'https://jobmeter.app',
+      url: 'https://www.jobmeter.app',
     },
   },
   {
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
     itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://jobmeter.app' },
-      { '@type': 'ListItem', position: 2, name: 'Tools', item: 'https://jobmeter.app/tools' },
+      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://www.jobmeter.app' },
+      { '@type': 'ListItem', position: 2, name: 'Tools', item: 'https://www.jobmeter.app/tools' },
       { '@type': 'ListItem', position: 3, name: 'Iqama Cost Calculator', item: pageUrl },
     ],
   },

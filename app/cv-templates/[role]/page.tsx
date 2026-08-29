@@ -29,7 +29,7 @@ export async function generateMetadata(
   const description =
     page.meta_description ||
     `Free ${page.role_label} CV template. Fill in your details, switch designs, and download — no sign-up required.`;
-  const url = `https://jobmeter.app/cv-templates/${params.role}`;
+  const url = `https://www.jobmeter.app/cv-templates/${params.role}`;
 
   return {
     title,
@@ -48,14 +48,14 @@ function buildSchema(page: NonNullable<Awaited<ReturnType<typeof getRolePage>>>,
       '@id': url,
       name: `${page.role_label} CV Template`,
       url,
-      isPartOf: { '@type': 'WebSite', name: 'JobMeter', url: 'https://jobmeter.app' },
+      isPartOf: { '@type': 'WebSite', name: 'JobMeter', url: 'https://www.jobmeter.app' },
     },
     {
       '@context': 'https://schema.org',
       '@type': 'BreadcrumbList',
       itemListElement: [
-        { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://jobmeter.app' },
-        { '@type': 'ListItem', position: 2, name: 'CV Templates', item: 'https://jobmeter.app/cv-templates' },
+        { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://www.jobmeter.app' },
+        { '@type': 'ListItem', position: 2, name: 'CV Templates', item: 'https://www.jobmeter.app/cv-templates' },
         { '@type': 'ListItem', position: 3, name: page.role_label, item: url },
       ],
     },
@@ -82,7 +82,7 @@ export default async function CVRolePage(
   const page = await getRolePage('cv', params.role);
   if (!page) notFound();
 
-  const url = `https://jobmeter.app/cv-templates/${params.role}`;
+  const url = `https://www.jobmeter.app/cv-templates/${params.role}`;
   const schemas = buildSchema(page, url);
 
   return (

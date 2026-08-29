@@ -26,7 +26,7 @@ export async function generateMetadata(
   const description =
     page.meta_description ||
     `Free ${page.role_label} cover letter template. Quick Create it with your own details, edit it, and download — no sign-up required to start.`;
-  const url = `https://jobmeter.app/cover-letter-templates/${params.role}`;
+  const url = `https://www.jobmeter.app/cover-letter-templates/${params.role}`;
 
   return {
     title,
@@ -45,14 +45,14 @@ function buildSchema(page: NonNullable<Awaited<ReturnType<typeof getCoverLetterR
       '@id': url,
       name: `${page.role_label} Cover Letter Template`,
       url,
-      isPartOf: { '@type': 'WebSite', name: 'JobMeter', url: 'https://jobmeter.app' },
+      isPartOf: { '@type': 'WebSite', name: 'JobMeter', url: 'https://www.jobmeter.app' },
     },
     {
       '@context': 'https://schema.org',
       '@type': 'BreadcrumbList',
       itemListElement: [
-        { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://jobmeter.app' },
-        { '@type': 'ListItem', position: 2, name: 'Cover Letter Templates', item: 'https://jobmeter.app/cover-letter-templates' },
+        { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://www.jobmeter.app' },
+        { '@type': 'ListItem', position: 2, name: 'Cover Letter Templates', item: 'https://www.jobmeter.app/cover-letter-templates' },
         { '@type': 'ListItem', position: 3, name: page.role_label, item: url },
       ],
     },
@@ -79,7 +79,7 @@ export default async function CoverLetterRolePage(
   const page = await getCoverLetterRolePage(params.role);
   if (!page) notFound();
 
-  const url = `https://jobmeter.app/cover-letter-templates/${params.role}`;
+  const url = `https://www.jobmeter.app/cover-letter-templates/${params.role}`;
   const schemas = buildSchema(page, url);
 
   return (

@@ -5,7 +5,7 @@ import AdUnit from '@/components/ads/AdUnit';
 import OmanResidentCardCostCalculator from './OmanResidentCardCostCalculator';
 import RelatedToolsStrip from '@/components/tools/RelatedToolsStrip';
 
-const pageUrl = 'https://jobmeter.app/tools/oman-resident-card-cost-calculator';
+const pageUrl = 'https://www.jobmeter.app/tools/oman-resident-card-cost-calculator';
 
 export const metadata: Metadata = {
   title: 'Oman Resident Card Cost Calculator (2026) | JobMeter',
@@ -19,10 +19,10 @@ export const metadata: Metadata = {
 };
 
 const jsonLd = [
-  { '@context': 'https://schema.org', '@type': 'WebPage', name: 'Oman Resident Card Cost Calculator', url: pageUrl, description: 'Calculate the total cost of renewing an Oman expatriate resident card under the 2025 ROP fee reform.', inLanguage: 'en', isPartOf: { '@type': 'WebSite', name: 'Tools', url: 'https://jobmeter.app' } },
+  { '@context': 'https://schema.org', '@type': 'WebPage', name: 'Oman Resident Card Cost Calculator', url: pageUrl, description: 'Calculate the total cost of renewing an Oman expatriate resident card under the 2025 ROP fee reform.', inLanguage: 'en', isPartOf: { '@type': 'WebSite', name: 'Tools', url: 'https://www.jobmeter.app' } },
   { '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: [
-    { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://jobmeter.app' },
-    { '@type': 'ListItem', position: 2, name: 'Tools', item: 'https://jobmeter.app/tools' },
+    { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://www.jobmeter.app' },
+    { '@type': 'ListItem', position: 2, name: 'Tools', item: 'https://www.jobmeter.app/tools' },
     { '@type': 'ListItem', position: 3, name: 'Oman Resident Card Cost Calculator', item: pageUrl },
   ]},
   { '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: [

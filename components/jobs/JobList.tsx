@@ -1134,7 +1134,7 @@ if (filters.remote) {
   return (
     <>
       <OrganizationSchema />
-      <WebSiteSchema searchAction={{ target: 'https://jobmeter.app/?q={search_term_string}', queryInput: 'required name=search_term_string' }} />
+      <WebSiteSchema searchAction={{ target: 'https://www.jobmeter.app/?q={search_term_string}', queryInput: 'required name=search_term_string' }} />
 
       <div className="min-h-screen" style={{ backgroundColor: theme.colors.background.muted }}>
 

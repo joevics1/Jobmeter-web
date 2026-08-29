@@ -165,7 +165,7 @@ export async function generateMetadata({
   if (!company) return { title: 'Company Not Found | JobMeter' };
 
   const keywords = company.seo_keywords?.join(', ') || 'careers, jobs, company';
-  const url = `https://jobmeter.app/company/${company.slug}`;
+  const url = `https://www.jobmeter.app/company/${company.slug}`;
   const title = `Jobs at ${company.name} | JobMeter`;
 
   return {

@@ -157,14 +157,14 @@ export default async function GraduateTraineeFinderPage() {
                 "@type": "WebPage",
                 "name": "Graduate & Trainee Jobs | Jobmeter",
                 "description": "Browse graduate trainee programs and entry-level trainee positions updated daily, for fresh graduates starting their career.",
-                "url": "https://jobmeter.app/tools/graduate-trainee-finder",
+                "url": "https://www.jobmeter.app/tools/graduate-trainee-finder",
                 "inLanguage": "en",
                 "breadcrumb": {
                   "@type": "BreadcrumbList",
                   "itemListElement": [
-                    { "@type": "ListItem", "position": 1, "name": "Home",  "item": "https://jobmeter.app" },
-                    { "@type": "ListItem", "position": 2, "name": "Tools", "item": "https://jobmeter.app/tools" },
-                    { "@type": "ListItem", "position": 3, "name": "Graduate & Trainee Jobs", "item": "https://jobmeter.app/tools/graduate-trainee-finder" },
+                    { "@type": "ListItem", "position": 1, "name": "Home",  "item": "https://www.jobmeter.app" },
+                    { "@type": "ListItem", "position": 2, "name": "Tools", "item": "https://www.jobmeter.app/tools" },
+                    { "@type": "ListItem", "position": 3, "name": "Graduate & Trainee Jobs", "item": "https://www.jobmeter.app/tools/graduate-trainee-finder" },
                   ]
                 }
               },
@@ -183,11 +183,11 @@ export default async function GraduateTraineeFinderPage() {
                 "name": "Related Job Finder Tools on Jobmeter",
                 "description": "Other free job finder tools available on jobmeter.app",
                 "itemListElement": [
-                  { "@type": "ListItem", "position": 1, "name": "Remote Jobs Finder",           "url": "https://jobmeter.app/tools/remote-jobs-finder" },
-                  { "@type": "ListItem", "position": 2, "name": "Internship Finder",             "url": "https://jobmeter.app/tools/internship-finder" },
-                  { "@type": "ListItem", "position": 3, "name": "NYSC Jobs Finder",              "url": "https://jobmeter.app/tools/nysc-finder" },
-                  { "@type": "ListItem", "position": 4, "name": "Jobs with Visa Sponsorship",    "url": "https://jobmeter.app/tools/visa-finder" },
-                  { "@type": "ListItem", "position": 5, "name": "Entry Level Jobs Finder",       "url": "https://jobmeter.app/tools/entry-level-finder" },
+                  { "@type": "ListItem", "position": 1, "name": "Remote Jobs Finder",           "url": "https://www.jobmeter.app/tools/remote-jobs-finder" },
+                  { "@type": "ListItem", "position": 2, "name": "Internship Finder",             "url": "https://www.jobmeter.app/tools/internship-finder" },
+                  { "@type": "ListItem", "position": 3, "name": "NYSC Jobs Finder",              "url": "https://www.jobmeter.app/tools/nysc-finder" },
+                  { "@type": "ListItem", "position": 4, "name": "Jobs with Visa Sponsorship",    "url": "https://www.jobmeter.app/tools/visa-finder" },
+                  { "@type": "ListItem", "position": 5, "name": "Entry Level Jobs Finder",       "url": "https://www.jobmeter.app/tools/entry-level-finder" },
                 ]
               },
               ...jobPostings,

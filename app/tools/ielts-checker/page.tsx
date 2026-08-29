@@ -4,7 +4,7 @@ import IELTSCheckerTool from './IELTSCheckerTool';
 import AdUnit from '@/components/ads/AdUnit';
 import RelatedToolsStrip from '@/components/tools/RelatedToolsStrip';
 
-const pageUrl = 'https://jobmeter.app/tools/ielts-checker';
+const pageUrl = 'https://www.jobmeter.app/tools/ielts-checker';
 
 export const metadata: Metadata = {
   title: 'GCC IELTS Requirement Checker 2026 | UAE, Saudi, Qatar & Gulf',
@@ -63,15 +63,15 @@ const jsonLd = [
     isPartOf: {
       '@type': 'WebSite',
       name: 'Gulf Job Meter',
-      url: 'https://jobmeter.app',
+      url: 'https://www.jobmeter.app',
     },
   },
   {
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
     itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://jobmeter.app' },
-      { '@type': 'ListItem', position: 2, name: 'Tools', item: 'https://jobmeter.app/tools' },
+      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://www.jobmeter.app' },
+      { '@type': 'ListItem', position: 2, name: 'Tools', item: 'https://www.jobmeter.app/tools' },
       { '@type': 'ListItem', position: 3, name: 'GCC IELTS Requirement Checker', item: pageUrl },
     ],
   },
@@ -84,7 +84,7 @@ const jsonLd = [
     description:
       'Instantly check IELTS, OET and English proficiency requirements for professional licensing and work visas across all GCC countries in 2026.',
     offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
-    provider: { '@type': 'Organization', name: 'Gulf Job Meter', url: 'https://jobmeter.app' },
+    provider: { '@type': 'Organization', name: 'Gulf Job Meter', url: 'https://www.jobmeter.app' },
   },
   {
     '@context': 'https://schema.org',

@@ -5,7 +5,7 @@ import AdUnit from '@/components/ads/AdUnit';
 import Script from 'next/script';
 import RelatedToolsStrip from '@/components/tools/RelatedToolsStrip';
 
-const pageUrl = 'https://jobmeter.app/tools/salary-benchmark';
+const pageUrl = 'https://www.jobmeter.app/tools/salary-benchmark';
 
 export const metadata: Metadata = {
   title: 'Gulf Salary Benchmark Tool: GCC Salary Guide & Market Calculator',
@@ -39,11 +39,11 @@ const jsonLd = [
     isPartOf: {
       '@type': 'WebSite',
       name: 'Tools',
-      url: 'https://jobmeter.app',
+      url: 'https://www.jobmeter.app',
     },
     primaryImageOfPage: {
       '@type': 'ImageObject',
-      url: 'https://jobmeter.app/og-salary-benchmark.jpg',
+      url: 'https://www.jobmeter.app/og-salary-benchmark.jpg',
     },
   },
   {
@@ -54,13 +54,13 @@ const jsonLd = [
         '@type': 'ListItem',
         position: 1,
         name: 'Home',
-        item: 'https://jobmeter.app',
+        item: 'https://www.jobmeter.app',
       },
       {
         '@type': 'ListItem',
         position: 2,
         name: 'Tools',
-        item: 'https://jobmeter.app/tools',
+        item: 'https://www.jobmeter.app/tools',
       },
       {
         '@type': 'ListItem',

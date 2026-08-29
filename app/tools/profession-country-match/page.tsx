@@ -3,7 +3,7 @@ import { Metadata } from 'next';
 import ProfessionCountryMatchTool from './ProfessionCountryMatchTool';
 import RelatedToolsStrip from '@/components/tools/RelatedToolsStrip';
 
-const pageUrl = 'https://jobmeter.app/tools/profession-country-match';
+const pageUrl = 'https://www.jobmeter.app/tools/profession-country-match';
 
 export const metadata: Metadata = {
   title: 'Profession to GCC Country Match Tool 2026 | Best Gulf Jobs by Career',
@@ -51,15 +51,15 @@ const jsonLd = [
     isPartOf: {
       '@type': 'WebSite',
       name: 'Gulf Job Meter',
-      url: 'https://jobmeter.app',
+      url: 'https://www.jobmeter.app',
     },
   },
   {
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
     itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://jobmeter.app' },
-      { '@type': 'ListItem', position: 2, name: 'Tools', item: 'https://jobmeter.app/tools' },
+      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://www.jobmeter.app' },
+      { '@type': 'ListItem', position: 2, name: 'Tools', item: 'https://www.jobmeter.app/tools' },
       { '@type': 'ListItem', position: 3, name: 'Profession to GCC Country Match Tool', item: pageUrl },
     ],
   },
@@ -72,7 +72,7 @@ const jsonLd = [
     description:
       'Match your profession to the best GCC country based on job demand, tax-free salaries, mega projects, visa ease and lifestyle in 2026.',
     offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
-    provider: { '@type': 'Organization', name: 'Gulf Job Meter', url: 'https://jobmeter.app' },
+    provider: { '@type': 'Organization', name: 'Gulf Job Meter', url: 'https://www.jobmeter.app' },
   },
   {
     '@context': 'https://schema.org',

@@ -5,7 +5,7 @@ import AdUnit from '@/components/ads/AdUnit';
 import Script from 'next/script';
 import RelatedToolsStrip from '@/components/tools/RelatedToolsStrip';
 
-const pageUrl = 'https://jobmeter.app/tools/kuwait-dependent-fee-calculator';
+const pageUrl = 'https://www.jobmeter.app/tools/kuwait-dependent-fee-calculator';
 
 export const metadata: Metadata = {
   title: 'Kuwait Dependent Fee Calculator (2026 Residency Reform) | JobMeter',
@@ -33,14 +33,14 @@ const jsonLd = [
     url: pageUrl,
     description: 'Calculate annual dependent residency fees in Kuwait under the 2025/2026 residency law reform, by sponsor category.',
     inLanguage: 'en',
-    isPartOf: { '@type': 'WebSite', name: 'Tools', url: 'https://jobmeter.app' },
+    isPartOf: { '@type': 'WebSite', name: 'Tools', url: 'https://www.jobmeter.app' },
   },
   {
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
     itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://jobmeter.app' },
-      { '@type': 'ListItem', position: 2, name: 'Tools', item: 'https://jobmeter.app/tools' },
+      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://www.jobmeter.app' },
+      { '@type': 'ListItem', position: 2, name: 'Tools', item: 'https://www.jobmeter.app/tools' },
       { '@type': 'ListItem', position: 3, name: 'Kuwait Dependent Fee Calculator', item: pageUrl },
     ],
   },

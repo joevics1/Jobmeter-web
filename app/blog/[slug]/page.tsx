@@ -126,7 +126,7 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   if (!post) return { title: 'Post Not Found | JobMeter' };
 
   const keywords = post.seo_keywords?.join(', ') || 'career, jobs, blog';
-  const url = `https://jobmeter.app/blog/${post.slug}`;
+  const url = `https://www.jobmeter.app/blog/${post.slug}`;
 
   return {
     title: post.meta_title,
@@ -201,7 +201,7 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
         datePublished={post.published_at}
         dateModified={post.updated_at}
         author={{ name: post.author_name }}
-        url={`https://jobmeter.app/blog/${post.slug}`}
+        url={`https://www.jobmeter.app/blog/${post.slug}`}
       />
       {post.faqs && Array.isArray(post.faqs) && post.faqs.length > 0 && (
         <FAQSchema faqs={post.faqs} />

@@ -5,7 +5,7 @@ import AdUnit from '@/components/ads/AdUnit';
 import GratuityCalculatorShell from '../_shared/GratuityCalculatorShell';
 import RelatedToolsStrip from '@/components/tools/RelatedToolsStrip';
 
-const pageUrl = 'https://jobmeter.app/tools/qatar-gratuity-calculator';
+const pageUrl = 'https://www.jobmeter.app/tools/qatar-gratuity-calculator';
 
 export const metadata: Metadata = {
   title: 'Qatar Gratuity Calculator | End-of-Service Benefit | JobMeter',
@@ -23,13 +23,13 @@ const jsonLd = [
   {
     '@context': 'https://schema.org', '@type': 'WebPage', name: 'Qatar Gratuity Calculator', url: pageUrl,
     description: "Calculate Qatar's end-of-service gratuity at 3 weeks' basic wage per year of service under Labour Law No. 14 of 2004.",
-    inLanguage: 'en', isPartOf: { '@type': 'WebSite', name: 'Tools', url: 'https://jobmeter.app' },
+    inLanguage: 'en', isPartOf: { '@type': 'WebSite', name: 'Tools', url: 'https://www.jobmeter.app' },
   },
   {
     '@context': 'https://schema.org', '@type': 'BreadcrumbList',
     itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://jobmeter.app' },
-      { '@type': 'ListItem', position: 2, name: 'Tools', item: 'https://jobmeter.app/tools' },
+      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://www.jobmeter.app' },
+      { '@type': 'ListItem', position: 2, name: 'Tools', item: 'https://www.jobmeter.app/tools' },
       { '@type': 'ListItem', position: 3, name: 'Qatar Gratuity Calculator', item: pageUrl },
     ],
   },
