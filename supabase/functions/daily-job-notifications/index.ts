@@ -288,6 +288,73 @@ async function sendExpoPushNotification(expoPushToken: string, message: string):
   }
 }
 
+// Build the same [country]/[slug] job URL structure used on the web app
+function buildJobUrl(job: { slug?: string | null; id: string; country?: string[] | null; location?: any }): string {
+  const countryArr: string[] = Array.isArray(job.country) ? job.country : [];
+  const first = countryArr.find((c) => c && c.toLowerCase() !== 'global');
+  let countrySlug = 'global';
+  if (first) {
+    countrySlug = first.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+  } else if (job.location && typeof job.location === 'object') {
+    const c = job.location.country || job.location.countries?.[0];
+    if (c && c.toLowerCase() !== 'global') {
+      countrySlug = c.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+    }
+  }
+  return `https://www.jobmeter.app/jobs/${countrySlug}/${job.slug || job.id}`;
+}
+
+// Send a Telegram DM to a linked user about a new job match
+async function sendTelegramMatchNotification(
+  supabase: any,
+  userId: string,
+  jobTitle: string,
+  companyName: string,
+  matchScore: number,
+  jobUrl: string
+): Promise<boolean> {
+  const botToken = Deno.env.get('TELEGRAM_BOT_TOKEN');
+  if (!botToken) return false;
+
+  try {
+    const { data: tgUser, error } = await supabase
+      .from('telegram_users')
+      .select('chat_id')
+      .eq('user_id', userId)
+      .not('linked_at', 'is', null)
+      .maybeSingle();
+
+    if (error || !tgUser) return false; // not linked to Telegram, nothing to do
+
+    const text =
+      `🎯 *${matchScore}% match*\n\n` +
+      `*${jobTitle}*\n` +
+      `🏢 ${companyName}\n\n` +
+      `[View & apply](${jobUrl})`;
+
+    const res = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: tgUser.chat_id,
+        text,
+        parse_mode: 'Markdown',
+        disable_web_page_preview: false,
+      }),
+    });
+
+    const result = await res.json();
+    if (!result.ok) {
+      console.error('Telegram sendMessage failed:', result);
+      return false;
+    }
+    return true;
+  } catch (error) {
+    console.error('Error sending Telegram match notification:', error);
+    return false;
+  }
+}
+
 // Main handler
 serve(async (req) => {
   const corsHeaders = {
@@ -381,7 +448,7 @@ serve(async (req) => {
       // Get the job (including application field for email checking)
       const { data: job, error: jobError } = await supabase
         .from('jobs')
-        .select('id, role, related_roles, ai_enhanced_roles, skills_required, ai_enhanced_skills, location, experience_level, salary_range, employment_type, sector, posted_date, application')
+        .select('id, title, slug, company, country, role, related_roles, ai_enhanced_roles, skills_required, ai_enhanced_skills, location, experience_level, salary_range, employment_type, sector, posted_date, application')
         .eq('id', job_id)
         .single();
 
@@ -540,6 +607,31 @@ serve(async (req) => {
             } else {
               savedCount++;
             }
+
+            // Fire off a real-time Telegram DM if this user has a linked bot chat.
+            // Fire-and-forget-ish but awaited so the function doesn't exit before it completes;
+            // failures are swallowed (logged only) so they never block match saving above.
+            try {
+              const jobUrl = buildJobUrl({ slug: job.slug, id: job.id, country: job.country, location: job.location });
+              const companyName = (job.company && typeof job.company === 'object' && job.company.name) || 'Confidential employer';
+              const sent = await sendTelegramMatchNotification(
+                supabase,
+                user.user_id,
+                job.title || jobRow.role || 'New job',
+                companyName,
+                matchScore,
+                jobUrl
+              );
+              if (sent) {
+                await supabase
+                  .from('server_match_results')
+                  .update({ telegram_notification_sent: true, telegram_notification_sent_at: new Date().toISOString() })
+                  .eq('user_id', user.user_id)
+                  .eq('job_id', job.id);
+              }
+            } catch (tgError) {
+              console.error(`Error sending Telegram notification to user ${user.user_id}:`, tgError);
+            }
           }
         } catch (error) {
           console.error(`Error processing user ${user.user_id}:`, error);
@@ -597,14 +689,15 @@ serve(async (req) => {
 
       console.log(`✅ Matched job ${job_id} to ${matchedCount} users, saved ${savedCount} results (>= 50%), marked ${premiumMatchesCount} premium matches for auto-apply`);
 
-      // Cleanup old matches (older than 72 hours)
+      // Cleanup old matches (older than 14 days — long enough for the Telegram
+      // bot and any digest flows to pick them up before we clear space).
       try {
-        const seventyTwoHoursAgo = new Date(Date.now() - 72 * 60 * 60 * 1000).toISOString();
+        const fourteenDaysAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString();
         await supabase
           .from('server_match_results')
           .delete()
-          .lt('computed_at', seventyTwoHoursAgo);
-        console.log(`🧹 Cleaned up matches older than 72 hours`);
+          .lt('computed_at', fourteenDaysAgo);
+        console.log(`🧹 Cleaned up matches older than 14 days`);
       } catch (cleanupError) {
         console.error('Error in cleanup:', cleanupError);
       }
