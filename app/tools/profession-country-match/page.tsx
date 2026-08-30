@@ -443,6 +443,11 @@ export default function ProfessionCountryMatchPage() {
 
 // AdUnit Component with corrected styles
 function AdUnit({ type }: { type: 'top' | 'middle' | 'bottom' }) {
+  // TEMP: ads paused 2026-08-30 during AdSense limited-ad-serving status.
+  // Remove this early return to restore (see app/RootLayoutClient.tsx for
+  // the matching site-wide toggle and revert note).
+  return null;
+
   const slot = type === 'top' ? '4198231153' : type === 'middle' ? '4690286797' : '9751041788';
   const isInArticle = type === 'middle';
 

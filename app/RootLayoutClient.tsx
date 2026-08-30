@@ -61,7 +61,12 @@ export default function RootLayoutClient({
   // Paystack checkout redirect mid-flow — moved here from the static
   // <head> in app/layout.tsx so it's conditional on the route.
   const adExcludedPrefixes = ['/auth', '/onboarding', '/talent'];
-  const shouldLoadAds = !adExcludedPrefixes.some((p) => pathname?.startsWith(p));
+  // TEMP: ads paused site-wide 2026-08-30 while AdSense's "limited ad
+  // serving" status is active (started 2026-08-19, invalid-traffic
+  // related). Plan is 2-5 days off, then flip this back to the line
+  // below. Revert by restoring:
+  // const shouldLoadAds = !adExcludedPrefixes.some((p) => pathname?.startsWith(p));
+  const shouldLoadAds = false;
 
   return (
     <div className="min-h-screen flex flex-col" style={{ backgroundColor: theme.colors.background.DEFAULT }}>
