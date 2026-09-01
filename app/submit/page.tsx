@@ -57,6 +57,13 @@ export default function SubmitJobPage() {
   const [showQuizUpgradeModal, setShowQuizUpgradeModal] = useState(false);
   const [showJobLimitModal, setShowJobLimitModal] = useState(false);
   const [jobLimitInfo, setJobLimitInfo] = useState<{ used: number; planCap: number | null }>({ used: 0, planCap: 2 });
+  const [jobQuota, setJobQuota] = useState<{
+    loaded: boolean;
+    canPublish: boolean;
+    used: number;
+    planCap: number | null; // null = unlimited
+    planLabel: string;
+  }>({ loaded: false, canPublish: true, used: 0, planCap: 2, planLabel: 'Free plan' });
   // Derived from the 3 checkboxes above — kept as plain values (not state) so
   // there's only ever one source of truth.
   const screeningEnabled = quizObjective || quizSpeed || quizWritten;
@@ -115,6 +122,23 @@ export default function SubmitJobPage() {
         setCompanies(userCompanies);
         setSelectedCompanyId(userCompanies[0].id);
       }
+
+      fetch(`/api/jobs/check-limit?userId=${user.id}`)
+        .then((r) => r.json())
+        .then((data) => {
+          const planLabel =
+            data.subscriptionPlan === 'job_posting_unlimited' ? 'Unlimited plan' :
+            data.subscriptionPlan === 'job_posting_basic' ? '3-job plan' :
+            'Free plan';
+          setJobQuota({
+            loaded: true,
+            canPublish: data.canPublish,
+            used: data.used,
+            planCap: data.unlimited ? null : data.planCap,
+            planLabel,
+          });
+        })
+        .catch(() => setJobQuota((prev) => ({ ...prev, loaded: true })));
     };
     checkUser();
   }, []);
@@ -299,14 +323,11 @@ export default function SubmitJobPage() {
     try {
       const { data: { user } } = await supabase.auth.getUser();
 
-      if (user) {
-        const limitCheck = await fetch(`/api/jobs/check-limit?userId=${user.id}`).then((r) => r.json());
-        if (!limitCheck.canPublish) {
-          setJobLimitInfo({ used: limitCheck.used, planCap: limitCheck.planCap });
-          setShowJobLimitModal(true);
-          setIsLoading(false);
-          return;
-        }
+      if (jobQuota.loaded && !jobQuota.canPublish) {
+        setJobLimitInfo({ used: jobQuota.used, planCap: jobQuota.planCap });
+        setShowJobLimitModal(true);
+        setIsLoading(false);
+        return;
       }
 
       // Get company details for the selected company
@@ -454,6 +475,13 @@ Posted Date: ${new Date().toISOString().split('T')[0]}`;
   };
 
   const handleSubmit = async () => {
+    // Checked here, synchronously against quota already loaded on page
+    // mount — runs before either branch below makes any server call.
+    if (jobQuota.loaded && !jobQuota.canPublish) {
+      setJobLimitInfo({ used: jobQuota.used, planCap: jobQuota.planCap });
+      setShowJobLimitModal(true);
+      return;
+    }
     if (activeTab === 'form') {
       await handleFormSubmit();
     } else {
@@ -510,6 +538,37 @@ Posted Date: ${new Date().toISOString().split('T')[0]}`;
       {/* Content */}
       <div className="px-4 py-4 pb-24">
         <div className="max-w-3xl mx-auto">
+
+        {jobQuota.loaded && (
+          <div
+            className="flex items-center justify-between gap-3 mb-4 px-4 py-3 rounded-xl border text-sm"
+            style={
+              jobQuota.canPublish
+                ? { backgroundColor: '#F8FAFC', borderColor: theme.colors.border.DEFAULT, color: theme.colors.text.secondary }
+                : { backgroundColor: '#FEF2F2', borderColor: '#FECACA', color: '#B91C1C' }
+            }
+          >
+            <span>
+              <span className="font-medium" style={{ color: jobQuota.canPublish ? theme.colors.text.primary : '#B91C1C' }}>
+                {jobQuota.planLabel}
+              </span>
+              {' · '}
+              {jobQuota.planCap === null
+                ? 'unlimited active jobs'
+                : `${jobQuota.used} of ${jobQuota.planCap} active job${jobQuota.planCap === 1 ? '' : 's'} used`}
+            </span>
+            {!jobQuota.canPublish && (
+              <button
+                onClick={() => { setJobLimitInfo({ used: jobQuota.used, planCap: jobQuota.planCap }); setShowJobLimitModal(true); }}
+                className="shrink-0 px-3 py-1.5 rounded-lg text-white text-xs font-medium"
+                style={{ backgroundColor: theme.colors.primary.DEFAULT }}
+              >
+                Upgrade
+              </button>
+            )}
+          </div>
+        )}
+
         {activeTab === 'form' ? (
           <div className="space-y-6">
             {/* Job Details */}
@@ -1139,11 +1198,15 @@ Posted Date: ${new Date().toISOString().split('T')[0]}`;
           disabled={activeTab === 'paste' ? isParsing : isLoading}
           className="w-full py-3 text-lg font-semibold"
           style={{
-            backgroundColor: (activeTab === 'paste' ? isParsing : isLoading) ? theme.colors.text.secondary : theme.colors.primary.DEFAULT,
+            backgroundColor: (activeTab === 'paste' ? isParsing : isLoading)
+              ? theme.colors.text.secondary
+              : (jobQuota.loaded && !jobQuota.canPublish) ? '#B91C1C' : theme.colors.primary.DEFAULT,
             color: theme.colors.primary.foreground,
           }}
         >
-          {activeTab === 'paste' ? (
+          {jobQuota.loaded && !jobQuota.canPublish && !isParsing && !isLoading ? (
+            <span>Upgrade to post another job</span>
+          ) : activeTab === 'paste' ? (
             isParsing ? (
               <span>Parsing...</span>
             ) : (
