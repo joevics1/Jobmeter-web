@@ -280,8 +280,13 @@ Return ONLY a valid JSON object with this structure:
 }
 
 export async function POST(request: NextRequest) {
+  // Parsed once, outside the try block, so the catch handler below can
+  // still access submissionId without re-reading the (already consumed)
+  // request body — re-reading it there was throwing and swallowing the
+  // real error.
+  let submissionId: string | undefined;
   try {
-    const { submissionId } = await request.json();
+    ({ submissionId } = await request.json());
 
     if (!submissionId) {
       return NextResponse.json(
@@ -446,8 +451,7 @@ export async function POST(request: NextRequest) {
   } catch (error: any) {
     console.error('Job processing error:', error);
     
-    // Update submission with error
-    const submissionId = (await request.json()).submissionId;
+    // Update submission with error (submissionId parsed once at the top of this handler)
     if (submissionId) {
       await supabaseAdmin
         .from('user_submitted_jobs')

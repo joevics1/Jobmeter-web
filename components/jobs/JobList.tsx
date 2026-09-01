@@ -155,6 +155,32 @@ export default function JobList({ siteType = 'global', initialJobs, initialCount
   const [latestJobsLoading, setLatestJobsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
 
+  // ── Featured tab state ──────────────────────────────────────────────────────
+  // Paid placement (see FEATURED_JOB_PRICE). Fetched directly from Supabase
+  // rather than the jobs-api worker, same as enrichWithApplyInApp below —
+  // the worker mirrors the jobs table but we don't want featured status to
+  // depend on its cache/refresh cycle.
+  const [featuredJobs, setFeaturedJobs] = useState<JobUI[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const fetchFeaturedJobs = async () => {
+      const { data, error } = await supabase
+        .from('jobs')
+        .select('id, slug, title, company, location, country, salary_range, type, employment_type, posted_date, created_at, sector, role_category, description, apply_in_app, screening_enabled, status, deadline')
+        .eq('is_featured', true)
+        .eq('status', 'active')
+        .gt('featured_until', new Date().toISOString())
+        .order('featured_at', { ascending: false })
+        .limit(5);
+      if (!cancelled && !error && data) {
+        setFeaturedJobs(data.map(transformJobToUIStatic));
+      }
+    };
+    fetchFeaturedJobs();
+    return () => { cancelled = true; };
+  }, []);
+
   // ── Matches tab state ───────────────────────────────────────────────────────
   const [jobs, setJobs] = useState<JobUI[]>([]);
   const [loading, setLoading] = useState(false);
@@ -1494,6 +1520,21 @@ if (filters.remote) {
               if (sortBy !== 'latest') params.set('sort', sortBy);
               router.replace(params.toString() ? `${pathname}?${params.toString()}` : pathname);
             }} isOpen={filtersOpen} onToggle={() => setFiltersOpen(!filtersOpen)} onClearAll={clearAllFilters} />
+
+            {/* Featured jobs — paid placement, shown at the top */}
+            {activeTab === 'latest' && currentPage === 1 && !filters.search && featuredJobs.length > 0 && (
+              <div className="pt-2 pb-1">
+                <div className="flex items-center gap-1.5 mb-2 px-1">
+                  <span className="text-amber-500">★</span>
+                  <h2 className="text-sm font-semibold" style={{ color: theme.colors.text.primary }}>Featured Jobs</h2>
+                </div>
+                <div className="space-y-3">
+                  {featuredJobs.map((job) => (
+                    <JobCard key={`featured-${job.id}`} job={job} savedJobs={savedJobs} appliedJobs={appliedJobs} onSave={handleSave} onApply={handleApply} onShowBreakdown={handleShowBreakdown} showMatch={false} />
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Loading spinner — shown while jobs haven't arrived yet */}
             {latestJobs.length === 0 && (

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { ArrowLeft, FileText, Clipboard, Plus, Building2, X, CheckCircle, AlertCircle, Sparkles } from 'lucide-react';
 import UpgradeModal from '@/components/jobs/UpgradeModal';
+import JobLimitModal from '@/components/jobs/JobLimitModal';
 import { theme } from '@/lib/theme';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -54,6 +55,8 @@ export default function SubmitJobPage() {
   const [quizWritten, setQuizWritten] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [showQuizUpgradeModal, setShowQuizUpgradeModal] = useState(false);
+  const [showJobLimitModal, setShowJobLimitModal] = useState(false);
+  const [jobLimitInfo, setJobLimitInfo] = useState<{ used: number; planCap: number | null }>({ used: 0, planCap: 2 });
   // Derived from the 3 checkboxes above — kept as plain values (not state) so
   // there's only ever one source of truth.
   const screeningEnabled = quizObjective || quizSpeed || quizWritten;
@@ -296,6 +299,16 @@ export default function SubmitJobPage() {
     try {
       const { data: { user } } = await supabase.auth.getUser();
 
+      if (user) {
+        const limitCheck = await fetch(`/api/jobs/check-limit?userId=${user.id}`).then((r) => r.json());
+        if (!limitCheck.canPublish) {
+          setJobLimitInfo({ used: limitCheck.used, planCap: limitCheck.planCap });
+          setShowJobLimitModal(true);
+          setIsLoading(false);
+          return;
+        }
+      }
+
       // Get company details for the selected company
       const selectedCompany = companies.find(c => c.id === selectedCompanyId);
       const companyName = selectedCompany?.name || '';
@@ -335,12 +348,12 @@ Application Phone: ${jobData.applicationPhone.trim() || 'Not specified'}
 Deadline: ${jobData.deadline || 'Not specified'}
 Posted Date: ${new Date().toISOString().split('T')[0]}`;
 
-      // Call edge function instead of direct insert (bypasses RLS)
-      const response = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/submit-job`, {
+      // Routed through /api/jobs/submit, which enforces the active-job
+      // limit before forwarding to the submit-job edge function (bypasses RLS)
+      const response = await fetch('/api/jobs/submit', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`,
         },
         body: JSON.stringify({
           rawContent: formattedJobText,
@@ -360,6 +373,12 @@ Posted Date: ${new Date().toISOString().split('T')[0]}`;
       const result = await response.json();
 
       if (!response.ok) {
+        if (result.error === 'JOB_LIMIT_REACHED') {
+          setJobLimitInfo({ used: result.used, planCap: result.planCap });
+          setShowJobLimitModal(true);
+          setIsLoading(false);
+          return;
+        }
         throw new Error(result.error || 'Failed to submit job');
       }
 
@@ -445,50 +464,43 @@ Posted Date: ${new Date().toISOString().split('T')[0]}`;
   return (
     <div className="min-h-screen" style={{ backgroundColor: theme.colors.background.muted }}>
       {/* Header */}
-      <div
-        className="pt-12 pb-8 px-6"
-        style={{
-          background: `linear-gradient(135deg, ${theme.colors.primary.DEFAULT} 0%, ${theme.colors.primary.dark} 100%)`,
-        }}
-      >
+      <div className="pt-8 pb-6 px-6 bg-white border-b border-gray-100">
         <div className="max-w-3xl mx-auto">
-        <div className="flex items-center gap-4 mb-4">
+        <div className="flex items-center gap-3 mb-5">
           <button
             onClick={() => router.back()}
-            className="p-2 rounded-lg hover:bg-white/20 transition-colors"
+            className="p-2 -ml-2 rounded-lg hover:bg-gray-100 transition-colors"
           >
-            <ArrowLeft size={24} className="text-white" />
+            <ArrowLeft size={22} className="text-gray-500" />
           </button>
           <div className="flex-1">
-            <h1 className="text-3xl font-bold text-white tracking-tight">Post a Job</h1>
-            <p className="text-white/80 mt-1">
-              Reach candidates on JobMeter — fill it in or paste a description and we'll do the rest
+            <h1 className="text-2xl font-bold tracking-tight text-gray-900">Post a job</h1>
+            <p className="text-gray-500 mt-0.5 text-sm">
+              Fill in the details, or paste a description and we&apos;ll do the rest
             </p>
           </div>
         </div>
 
         {/* Tab Switcher */}
-        <div className="flex gap-2 bg-white/15 rounded-xl p-1 mt-4 backdrop-blur-sm">
+        <div className="flex gap-1 bg-gray-100 rounded-xl p-1">
           <button
             onClick={() => setActiveTab('form')}
-            className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-lg font-medium transition-all ${
-              activeTab === 'form'
-                ? 'bg-white text-gray-900 shadow-sm'
-                : 'text-white/80 hover:text-white'
-            }`}
+            className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg font-medium text-sm transition-all"
+            style={activeTab === 'form'
+              ? { backgroundColor: 'white', color: theme.colors.text.primary, boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }
+              : { color: theme.colors.text.secondary }}
           >
-            <FileText size={20} />
+            <FileText size={17} style={activeTab === 'form' ? { color: theme.colors.primary.DEFAULT } : {}} />
             <span>Fill Form</span>
           </button>
           <button
             onClick={() => setActiveTab('paste')}
-            className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-lg font-medium transition-all ${
-              activeTab === 'paste'
-                ? 'bg-white text-gray-900 shadow-sm'
-                : 'text-white/80 hover:text-white'
-            }`}
+            className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg font-medium text-sm transition-all"
+            style={activeTab === 'paste'
+              ? { backgroundColor: 'white', color: theme.colors.text.primary, boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }
+              : { color: theme.colors.text.secondary }}
           >
-            <Clipboard size={20} />
+            <Clipboard size={17} style={activeTab === 'paste' ? { color: theme.colors.primary.DEFAULT } : {}} />
             <span>Paste Job</span>
           </button>
         </div>
@@ -847,6 +859,14 @@ Posted Date: ${new Date().toISOString().split('T')[0]}`;
         message="Screening quizzes are a paid feature. Upgrade your account to add one to your job posting."
       />
 
+      <JobLimitModal
+        isOpen={showJobLimitModal}
+        onClose={() => setShowJobLimitModal(false)}
+        email={user?.email || ''}
+        used={jobLimitInfo.used}
+        planCap={jobLimitInfo.planCap}
+      />
+
       {/* Company Section - Bottom */}
       <div className="px-4 pb-24">
         <section className="bg-white rounded-2xl p-6 sm:p-7 shadow-sm border border-gray-100">
@@ -1159,7 +1179,7 @@ Posted Date: ${new Date().toISOString().split('T')[0]}`;
                 Job submitted for review
               </DialogTitle>
               <DialogDescription className="mt-2" style={{ color: theme.colors.text.secondary }}>
-                We'll review it shortly and publish it once approved. You can track its status from your jobs list.
+                We&apos;ll review it shortly and publish it once approved. You can track its status from your jobs list.
               </DialogDescription>
             </div>
           </DialogHeader>

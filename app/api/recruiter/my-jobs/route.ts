@@ -17,7 +17,6 @@ export async function GET(req: NextRequest) {
       .from('user_submitted_jobs')
       .select('id, title, status, rejection_reason, apply_in_app, screening_enabled, duplicate_check, created_at')
       .eq('user_id', userId)
-      .eq('apply_in_app', true)
       .order('created_at', { ascending: false });
 
     if (subError) {
@@ -26,7 +25,7 @@ export async function GET(req: NextRequest) {
 
     const { data: liveJobs } = await supabase
       .from('jobs')
-      .select('id, title, status, duplicate_check')
+      .select('id, title, status, duplicate_check, is_featured, featured_until')
       .eq('posted_by_user_id', userId);
 
     const jobsByHash = new Map(
@@ -56,8 +55,16 @@ export async function GET(req: NextRequest) {
         statusLabel = 'Rejected';
         statusColor = '#DC2626';
       } else if (s.status === 'published' && matchedJob) {
-        statusLabel = matchedJob.status === 'active' ? 'Live' : 'Expired';
-        statusColor = matchedJob.status === 'active' ? '#16A34A' : '#6B7280';
+        if (matchedJob.status === 'active') {
+          statusLabel = 'Live';
+          statusColor = '#16A34A';
+        } else if (matchedJob.status === 'closed') {
+          statusLabel = 'Closed';
+          statusColor = '#6B7280';
+        } else {
+          statusLabel = 'Expired';
+          statusColor = '#6B7280';
+        }
       } else if (s.status === 'published') {
         // Approved but not yet linked to a live job row — rare transitional state
         statusLabel = 'Approved';
@@ -67,17 +74,23 @@ export async function GET(req: NextRequest) {
         statusColor = '#B45309';
       }
 
+      const isFeaturedNow = !!(matchedJob?.is_featured && matchedJob?.featured_until && new Date(matchedJob.featured_until) > new Date());
+
       return {
         submissionId: s.id,
         jobId: matchedJob?.id || null,
+        jobStatus: matchedJob?.status || null,
         title: s.title,
         statusLabel,
         statusColor,
         rejectionReason: s.rejection_reason,
+        applyInApp: s.apply_in_app,
         screeningEnabled: s.screening_enabled,
         applicantCount: matchedJob ? (applicantCounts[matchedJob.id] || 0) : 0,
         createdAt: s.created_at,
         canEdit: true,
+        isFeatured: isFeaturedNow,
+        featuredUntil: isFeaturedNow ? matchedJob.featured_until : null,
       };
     });
 

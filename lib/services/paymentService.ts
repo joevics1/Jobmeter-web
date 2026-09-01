@@ -16,7 +16,7 @@ export interface InitializePaymentParams {
   email: string;
   amount: number;
   userId: string;
-  paymentType: 'subscription' | 'credits';
+  paymentType: 'subscription' | 'credits' | 'job_listing' | 'featured_job';
   planId?: string;
   planType?: string;
   creditAmount?: number;
@@ -219,6 +219,94 @@ export async function handleSuccessfulPayment(paymentData: any) {
         });
       if (subInsertError) throw new Error(`Subscription insert failed: ${subInsertError.message}`);
     }
+
+    const { error: txError } = await supabaseAdmin
+      .from('payment_transactions')
+      .update({ status: 'completed' })
+      .eq('reference', paymentData.reference);
+    if (txError) console.error('[handleSuccessfulPayment] Transaction status update failed:', txError);
+
+    return { success: true };
+  }
+
+  // Job posting: either a one-time single-post credit (₦2,000, consumed by
+  // exactly one job publish), or a monthly subscription that raises the
+  // concurrent-active-job cap (basic = 3 jobs/₦5,000, unlimited = ₦20,000).
+  // Subscriptions follow the same pattern as talent_unlimited above.
+  if (paymentType === 'job_listing') {
+    if (planType === 'single_post') {
+      const { data: existingProfile } = await supabaseAdmin
+        .from('profiles')
+        .select('extra_job_slots')
+        .eq('id', userId)
+        .maybeSingle();
+
+      const { error: profileError } = await supabaseAdmin
+        .from('profiles')
+        .update({ extra_job_slots: (existingProfile?.extra_job_slots || 0) + 1 })
+        .eq('id', userId);
+      if (profileError) throw new Error(`Failed to add job posting credit: ${profileError.message}`);
+    } else if (planType === 'basic_monthly' || planType === 'unlimited_monthly') {
+      const subscriptionPlanType = planType === 'unlimited_monthly' ? 'job_posting_unlimited' : 'job_posting_basic';
+      const expiresAt = new Date();
+      expiresAt.setDate(expiresAt.getDate() + 30);
+
+      const { data: existingSub } = await supabaseAdmin
+        .from('user_subscriptions')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('plan_type', subscriptionPlanType)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (existingSub) {
+        const { error: subUpdateError } = await supabaseAdmin
+          .from('user_subscriptions')
+          .update({ is_active: true, started_at: new Date().toISOString(), expires_at: expiresAt.toISOString(), canceled_at: null })
+          .eq('id', existingSub.id);
+        if (subUpdateError) throw new Error(`Subscription update failed: ${subUpdateError.message}`);
+      } else {
+        const { error: subInsertError } = await supabaseAdmin
+          .from('user_subscriptions')
+          .insert({
+            user_id: userId,
+            plan_type: subscriptionPlanType,
+            is_active: true,
+            started_at: new Date().toISOString(),
+            expires_at: expiresAt.toISOString(),
+          });
+        if (subInsertError) throw new Error(`Subscription insert failed: ${subInsertError.message}`);
+      }
+    }
+
+    const { error: txError } = await supabaseAdmin
+      .from('payment_transactions')
+      .update({ status: 'completed' })
+      .eq('reference', paymentData.reference);
+    if (txError) console.error('[handleSuccessfulPayment] Transaction status update failed:', txError);
+
+    return { success: true };
+  }
+
+  // Featured job placement — shows at the top of /jobs for 7 days.
+  if (paymentType === 'featured_job') {
+    const jobId = metadata.job_id;
+    if (!jobId) throw new Error('No job_id found in featured_job payment metadata');
+
+    const featuredAt = new Date();
+    const featuredUntil = new Date();
+    featuredUntil.setDate(featuredUntil.getDate() + 7);
+
+    const { error: jobError } = await supabaseAdmin
+      .from('jobs')
+      .update({
+        is_featured: true,
+        featured_at: featuredAt.toISOString(),
+        featured_until: featuredUntil.toISOString(),
+      })
+      .eq('id', jobId);
+    if (jobError) throw new Error(`Failed to feature job: ${jobError.message}`);
 
     const { error: txError } = await supabaseAdmin
       .from('payment_transactions')

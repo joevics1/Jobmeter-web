@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import {
-  Briefcase, Send, FileText, Brain, FileSignature, MessageCircle, GraduationCap, Shield, FileCheck,
+  Briefcase, Send, FileText, Brain, FileSignature, MessageCircle, GraduationCap, Shield, FileCheck, ClipboardList, ListChecks,
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { theme } from '@/lib/theme';
@@ -16,7 +16,9 @@ interface FeatureCard {
 
 const features: FeatureCard[] = [
   { label: 'Browse Jobs', href: '/jobs', icon: Briefcase },
+  { label: 'My Applications', href: '/dashboard/applications', icon: ClipboardList },
   { label: 'Post a Job', href: '/submit', icon: Send },
+  { label: 'My Jobs', href: '/dashboard/recruiter', icon: ListChecks },
   { label: 'Create CV / Cover Letter', href: '/cv', icon: FileText },
   { label: 'Recruitment Practice Test', href: '/tools/quiz', icon: Brain },
   { label: 'Create Document', href: '/documents', icon: FileSignature },

@@ -195,6 +195,22 @@ export default function JobClient({ job, relatedJobs, companies, documentLinks, 
     ? TOOLS_NAV.filter((t) => t.title.toLowerCase().includes(countryKeyword)).slice(0, 3)
     : [];
 
+  // Records an external apply click (email / phone / link) against this
+  // job so it shows up in "My Applications" alongside in-app applications.
+  // Fire-and-forget: never blocks or delays the mailto/tel/external link
+  // the user is actually clicking.
+  const trackExternalApplication = (method: 'email' | 'phone' | 'link') => {
+    if (!user?.id) return; // only signed-in users have a profile to save to
+    fetch('/api/applications/external', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ jobId, userId: user.id, method }),
+    }).catch(() => {
+      // Non-critical — the user's application still goes through externally
+      // even if we fail to record it on their profile.
+    });
+  };
+
   const handleCopy = async (text: string, label: string) => {
     await navigator.clipboard.writeText(text);
     setCopied(label);
@@ -951,6 +967,7 @@ export default function JobClient({ job, relatedJobs, companies, documentLinks, 
                               <a
                                 href={`https://wa.me/${(job.application?.phone || job.application_phone || '').replace(/[^0-9]/g, '')}`}
                                 target="_blank" rel="nofollow noopener noreferrer"
+                                onClick={() => trackExternalApplication('phone')}
                                 className="px-4 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition-colors font-medium"
                               >
                                 WhatsApp
@@ -988,6 +1005,7 @@ export default function JobClient({ job, relatedJobs, companies, documentLinks, 
                             <div className="flex items-center gap-2">
                               <a
                                 href={`mailto:${(job.application?.email || job.application_email || '').replace('mailto:', '')}?subject=${encodeURIComponent(job.subject || `${job.title || 'Job'} Application`)}`}
+                                onClick={() => trackExternalApplication('email')}
                                 className="px-4 py-2 text-white text-sm rounded-lg hover:opacity-90 transition-opacity font-medium"
                                 style={{ backgroundColor: theme.colors.primary.DEFAULT }}
                               >
@@ -1026,6 +1044,7 @@ export default function JobClient({ job, relatedJobs, companies, documentLinks, 
                               <a
                                 href={job.application?.link || job.application?.url || job.application_url || ''}
                                 target="_blank" rel="nofollow noopener noreferrer"
+                                onClick={() => trackExternalApplication('link')}
                                 className="px-4 py-2 bg-purple-600 text-white text-sm rounded-lg hover:bg-purple-700 transition-colors font-medium"
                               >
                                 Apply Now

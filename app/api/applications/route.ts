@@ -70,6 +70,7 @@ export async function POST(req: NextRequest) {
           job_id: jobId,
           cover_letter: coverLetter || null,
           screening_attempt_id: job.screening_enabled ? screeningAttemptId : null,
+          application_method: 'in_app',
         },
         { onConflict: 'applicant_id,job_id' }
       )

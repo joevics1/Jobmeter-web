@@ -6,11 +6,12 @@ import { supabase } from '@/lib/supabase';
 interface PaymentOptions {
   email: string;
   amount: number;
-  paymentType: 'subscription' | 'credits';
+  paymentType: 'subscription' | 'credits' | 'job_listing' | 'featured_job';
   planId?: string;
   planType?: string;
   creditAmount?: number;
   callback_url?: string;
+  metadata?: Record<string, any>;
 }
 
 interface UsePaystackReturn {
@@ -47,6 +48,7 @@ export function usePaystack(): UsePaystackReturn {
           planType: options.planType,
           creditAmount: options.creditAmount,
           callback_url: options.callback_url,
+          metadata: options.metadata,
         }),
       });
 
