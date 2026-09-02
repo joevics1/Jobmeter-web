@@ -1,22 +1,15 @@
 import { NextResponse } from 'next/server';
+import { GEMINI_MODELS, getGeminiApiKeys } from '@/lib/gemini-client';
 
 export const maxDuration = 120; // Increased to 120 seconds for parsing
 
 const GEMINI_BASE_URL = 'https://generativelanguage.googleapis.com/v1beta/models';
 
-// Get API key at runtime (not module load time) to ensure it's available in Vercel
-function getGeminiApiKey(): string {
-  const key = process.env.GEMINI_API_KEY;
-  if (!key) {
-    throw new Error('GEMINI_API_KEY environment variable is not set');
-  }
-  return key;
-}
-
 async function parseCVWithGemini(cvText: string): Promise<any> {
-  const GEMINI_API_KEY = getGeminiApiKey();
-
-  const models = ['gemini-2.5-flash-lite', 'gemini-2.5-flash', 'gemini-2.5-pro'];
+  const apiKeys = getGeminiApiKeys();
+  if (apiKeys.length === 0) {
+    throw new Error('No Gemini API keys configured (GEMINI_API_KEY / GEMINI_API_KEY_2 / GEMINI_API_KEY_3)');
+  }
 
   const prompt = `Extract CV information into JSON. Return ONLY valid JSON, no markdown:
 
@@ -55,7 +48,8 @@ IMPORTANT FOR suggestedRoles:
 CV Text:
 ${cvText}`;
 
-  for (const model of models) {
+  for (const model of GEMINI_MODELS) {
+   for (const GEMINI_API_KEY of apiKeys) {
     const url = `${GEMINI_BASE_URL}/${model}:generateContent?key=${GEMINI_API_KEY}`;
     
     const controller = new AbortController();
@@ -156,8 +150,9 @@ ${cvText}`;
       if (process.env.NODE_ENV === 'development') {
         console.log(`❌ Model ${model} error:`, error.message);
       }
-      continue; // Try next model
+      continue; // Try next key/model
     }
+   }
   }
 
   throw new Error('All Gemini models failed to parse CV');
@@ -165,16 +160,11 @@ ${cvText}`;
 
 export async function POST(req: Request) {
   try {
-    // Validate API key at runtime
-    try {
-      getGeminiApiKey();
-    } catch (keyError) {
-      console.error('GEMINI_API_KEY validation error:', keyError);
+    // Validate API keys at runtime
+    if (getGeminiApiKeys().length === 0) {
+      console.error('No Gemini API keys configured');
       return NextResponse.json(
-        { 
-          error: 'GEMINI_API_KEY not configured',
-          details: process.env.NODE_ENV === 'development' ? (keyError instanceof Error ? keyError.message : 'Unknown error') : undefined
-        },
+        { error: 'GEMINI_API_KEY not configured' },
         { status: 500 }
       );
     }

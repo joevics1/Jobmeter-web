@@ -6,6 +6,7 @@
 // review/edit before rendering.
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
+import { callGeminiText } from '../_shared/gemini.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -52,27 +53,11 @@ serve(async (req) => {
     if (!apiKey) throw new Error('GEMINI_API_KEY environment variable is not set');
 
     // Single call, cheapest/fastest model — this is extraction, not authoring.
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 30000);
-
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${apiKey}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: `${PARSE_PROMPT}\n\n---\nTEXT TO PARSE:\n${rawText}` }] }],
-          generationConfig: { temperature: 0.1, maxOutputTokens: 3000 },
-        }),
-        signal: controller.signal,
-      }
+    const text = await callGeminiText(
+      `${PARSE_PROMPT}\n\n---\nTEXT TO PARSE:\n${rawText}`,
+      apiKey,
+      { temperature: 0.1, maxTokens: 3000, timeoutMs: 30000 }
     );
-    clearTimeout(timeoutId);
-
-    if (!response.ok) throw new Error(`Gemini API error: ${response.status}`);
-
-    const data = await response.json();
-    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
     const jsonText = text.replace(/^```json\s*/g, '').replace(/^```\s*/g, '').replace(/```\s*$/g, '').trim();
 
     let parsed: any;

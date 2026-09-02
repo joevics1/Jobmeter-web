@@ -6,6 +6,7 @@
 // opening/body/closing paragraphs someone in that role could adapt.
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
+import { callGeminiText } from '../_shared/gemini.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -43,42 +44,7 @@ Return ONLY the JSON object, no markdown, no explanations.`;
 async function callGeminiAPI(prompt: string): Promise<string> {
   const apiKey = Deno.env.get('GEMINI_API_KEY');
   if (!apiKey) throw new Error('GEMINI_API_KEY environment variable is not set');
-
-  const models = ['gemini-2.5-flash-lite', 'gemini-1.5-flash', 'gemini-2.0-flash', 'gemini-1.5-pro'];
-
-  for (const modelName of models) {
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 60000);
-
-      const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: { temperature: 0.6, maxOutputTokens: 4000 },
-          }),
-          signal: controller.signal,
-        }
-      );
-      clearTimeout(timeoutId);
-
-      if (!response.ok) {
-        if (response.status === 429) continue;
-        throw new Error(`Gemini API error: ${response.status}`);
-      }
-
-      const data = await response.json();
-      const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-      if (text) return text;
-    } catch (error: any) {
-      if (error.name === 'AbortError' || error.message?.includes('429')) continue;
-      if (modelName === models[models.length - 1]) throw error;
-    }
-  }
-  throw new Error('All Gemini models failed');
+  return callGeminiText(prompt, apiKey, { temperature: 0.6, maxTokens: 4000, timeoutMs: 60000 });
 }
 
 serve(async (req) => {

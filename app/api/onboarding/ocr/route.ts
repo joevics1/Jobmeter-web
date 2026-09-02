@@ -1,87 +1,27 @@
 import { NextResponse } from 'next/server';
+import { callGemini, getGeminiApiKeys } from '@/lib/gemini-client';
 
 export const maxDuration = 120; // Increased to 120 seconds for file processing
-
-// Get API keys at runtime (not module load time) to ensure they're available in Vercel
-function getGeminiApiKey(): string {
-  const key = process.env.GEMINI_API_KEY;
-  if (!key) {
-    throw new Error('GEMINI_API_KEY environment variable is not set');
-  }
-  return key;
-}
 
 function getOcrApiKey(): string {
   return process.env.OCR_SPACE_API_KEY || 'helloworld';
 }
 
-// Simple Gemini extraction - try models in order
+// Simple Gemini extraction - shared client already tries both models across
+// all configured keys before giving up
 async function extractWithGemini(base64Data: string, mimeType: string): Promise<string> {
-  const GEMINI_API_KEY = getGeminiApiKey();
-  const models = ['gemini-2.5-flash-lite', 'gemini-2.5-flash', 'gemini-2.5-pro'];
+  const { text } = await callGemini('Extract all text from this document verbatim. Preserve formatting and structure.', {
+    file: { mimeType, base64Data },
+    temperature: 0.1,
+    maxOutputTokens: 8192,
+    timeoutMs: 45000,
+  });
 
-  for (const model of models) {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_API_KEY}`;
-    
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 15000); // 15 second timeout
-
-    try {
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{
-            parts: [
-              { text: 'Extract all text from this document verbatim. Preserve formatting and structure.' },
-              { inlineData: { mimeType, data: base64Data } }
-            ]
-          }],
-          generationConfig: { temperature: 0.1, maxOutputTokens: 8192 }
-        }),
-        signal: controller.signal
-      });
-
-      clearTimeout(timeout);
-
-      if (!response.ok) {
-        const error = await response.text();
-        if (process.env.NODE_ENV === 'development') {
-          console.log(`❌ Model ${model} failed: ${response.status}`);
-        }
-        continue; // Try next model
-      }
-
-      const data = await response.json();
-      const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-      
-      if (!text || text.trim().length < 10) {
-        if (process.env.NODE_ENV === 'development') {
-          console.log(`❌ Model ${model} returned insufficient text`);
-        }
-        continue; // Try next model
-      }
-
-      if (process.env.NODE_ENV === 'development') {
-        console.log(`✅ Model ${model} extracted ${text.length} characters`);
-      }
-      return text.trim();
-    } catch (error: any) {
-      clearTimeout(timeout);
-      if (error.name === 'AbortError') {
-        if (process.env.NODE_ENV === 'development') {
-          console.log(`⏱️ Model ${model} timed out`);
-        }
-        continue; // Try next model
-      }
-      if (process.env.NODE_ENV === 'development') {
-        console.log(`❌ Model ${model} error:`, error.message);
-      }
-      continue; // Try next model
-    }
+  if (!text || text.trim().length < 10) {
+    throw new Error('Gemini returned insufficient text');
   }
 
-  throw new Error('All Gemini models failed to extract text');
+  return text.trim();
 }
 
 // OCR.space fallback
@@ -120,17 +60,11 @@ async function extractWithOCR(base64Data: string, mimeType: string, fileName: st
 
 export async function POST(req: Request) {
   try {
-    // Validate API key at runtime
-    let geminiKey: string;
-    try {
-      geminiKey = getGeminiApiKey();
-    } catch (keyError) {
-      console.error('GEMINI_API_KEY validation error:', keyError);
+    // Validate API keys at runtime
+    if (getGeminiApiKeys().length === 0) {
+      console.error('No Gemini API keys configured');
       return NextResponse.json(
-        { 
-          error: 'GEMINI_API_KEY not configured',
-          details: process.env.NODE_ENV === 'development' ? (keyError instanceof Error ? keyError.message : 'Unknown error') : undefined
-        },
+        { error: 'GEMINI_API_KEY not configured' },
         { status: 500 }
       );
     }

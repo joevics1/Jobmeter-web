@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { callGemini } from '@/lib/gemini-client';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
@@ -36,53 +37,9 @@ const SECTORS = [
 const EMPLOYMENT_TYPES = ['Full-time', 'Part-time', 'Contract', 'Freelance', 'Internship'];
 const EXPERIENCE_LEVELS = ['Entry Level', 'Junior', 'Mid-level', 'Senior', 'Lead', 'Executive'];
 
-const GEMINI_MODELS = [
-  'gemini-2.0-flash',
-  'gemini-2.0-flash-lite',
-  'gemini-2.5-flash',
-  'gemini-2.5-flash-lite',
-];
-
 async function callGeminiAI(prompt: string): Promise<string> {
-  const geminiApiKey = process.env.GEMINI_API_KEY;
-  if (!geminiApiKey) {
-    throw new Error('GEMINI_API_KEY environment variable is not set');
-  }
-
-  let lastError: Error | null = null;
-
-  for (const model of GEMINI_MODELS) {
-    try {
-      const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiApiKey}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: { temperature: 0.1, maxOutputTokens: 4096 },
-          }),
-        }
-      );
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Gemini API error (${response.status}): ${errorText}`);
-      }
-
-      const data = await response.json();
-      if (data.candidates?.[0]?.content?.parts?.[0]?.text) {
-        return data.candidates[0].content.parts[0].text;
-      }
-      throw new Error('Invalid response format from Gemini API');
-    } catch (error) {
-      console.error(`[parse-paste] Model ${model} failed:`, error);
-      lastError = error instanceof Error ? error : new Error(String(error));
-      continue;
-    }
-  }
-
-  throw new Error(`All Gemini models failed. Last error: ${lastError?.message || 'Unknown error'}`);
+  const { text } = await callGemini(prompt, { temperature: 0.1, maxOutputTokens: 4096 });
+  return text;
 }
 
 function buildPrompt(rawContent: string): string {

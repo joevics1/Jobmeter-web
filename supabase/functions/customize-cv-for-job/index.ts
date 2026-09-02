@@ -6,6 +6,7 @@
 // the other AI paths in this feature.
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
+import { callGeminiText } from '../_shared/gemini.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -31,27 +32,7 @@ Return ONLY the full CVData JSON object back, same shape as given, with only sum
 async function callGemini(prompt: string): Promise<string> {
   const apiKey = Deno.env.get('GEMINI_API_KEY');
   if (!apiKey) throw new Error('GEMINI_API_KEY environment variable is not set');
-
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 45000);
-
-  const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${apiKey}`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: { temperature: 0.4, maxOutputTokens: 4000 },
-      }),
-      signal: controller.signal,
-    }
-  );
-  clearTimeout(timeoutId);
-
-  if (!response.ok) throw new Error(`Gemini API error: ${response.status}`);
-  const data = await response.json();
-  return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+  return callGeminiText(prompt, apiKey, { temperature: 0.4, maxTokens: 4000, timeoutMs: 45000 });
 }
 
 serve(async (req) => {

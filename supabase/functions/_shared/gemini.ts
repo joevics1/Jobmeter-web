@@ -15,6 +15,15 @@ export const GEMINI_MODELS = [
 
 export const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models';
 
+// Key rotation: the primary key passed in by the caller, then
+// GEMINI_API_KEY_2 / GEMINI_API_KEY_3 as fallbacks if the primary key is
+// rate-limited. Every (model, key) pair is tried before giving up.
+function getApiKeys(primaryKey: string): string[] {
+  return [primaryKey, Deno.env.get('GEMINI_API_KEY_2'), Deno.env.get('GEMINI_API_KEY_3')].filter(
+    (k): k is string => !!k
+  );
+}
+
 interface GeminiCallOptions {
   temperature?: number;
   maxTokens?: number;
@@ -42,15 +51,17 @@ export async function callGeminiText(
   options: GeminiCallOptions = {}
 ): Promise<string> {
   const { temperature = 0.7, maxTokens = 8192, timeoutMs = 60000 } = options;
+  const keys = getApiKeys(apiKey);
 
   let lastError: Error | null = null;
 
   for (const model of GEMINI_MODELS) {
+   for (const key of keys) {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
     try {
-      const url = `${GEMINI_API_URL}/${model}:generateContent?key=${apiKey}`;
+      const url = `${GEMINI_API_URL}/${model}:generateContent?key=${key}`;
       const response = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -86,6 +97,7 @@ export async function callGeminiText(
       console.error(`Error with model ${model}:`, error);
       lastError = error as Error;
     }
+   }
   }
 
   throw lastError || new Error('All Gemini models failed');
@@ -102,15 +114,17 @@ export async function callGeminiMultimodal(
   options: GeminiCallOptions = {}
 ): Promise<string> {
   const { temperature = 0.1, maxTokens = 16384, timeoutMs = 90000 } = options;
+  const keys = getApiKeys(apiKey);
 
   let lastError: Error | null = null;
 
   for (const model of GEMINI_MODELS) {
+   for (const key of keys) {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
     try {
-      const url = `${GEMINI_API_URL}/${model}:generateContent?key=${apiKey}`;
+      const url = `${GEMINI_API_URL}/${model}:generateContent?key=${key}`;
       const response = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -151,6 +165,7 @@ export async function callGeminiMultimodal(
       console.error(`Error with model ${model}:`, error);
       lastError = error as Error;
     }
+   }
   }
 
   throw lastError || new Error('All Gemini models failed');
