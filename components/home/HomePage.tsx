@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import dynamic from 'next/dynamic';
 import { theme } from '@/lib/theme';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/context/AuthContext';
@@ -25,11 +24,6 @@ import {
 import Link from 'next/link';
 import Image from 'next/image';
 import AdUnit from '@/components/ads/AdUnit';
-
-const RecruiterAuthModal = dynamic(() => import('@/components/RecruiterAuthModal'), {
-  ssr: false,
-  loading: () => null
-});
 
 import { scoreJob, JobRow, UserOnboardingData } from '@/lib/matching/matchEngine';
 import { matchCacheService } from '@/lib/matching/matchCache';
@@ -170,7 +164,6 @@ export default function HomePage({ jobs: initialJobs, blogPosts, companies = [] 
   const router = useRouter();
   const { user, loading: authLoading, openAuthModal } = useAuth();
   const [activeTab, setActiveTab] = useState<'seekers' | 'recruiters'>('seekers');
-  const [recruiterModalOpen, setRecruiterModalOpen] = useState(false);
   const [userOnboardingData, setUserOnboardingData] = useState<UserOnboardingData | null>(null);
   const [processedJobs, setProcessedJobs] = useState<JobWithMatch[]>([]);
   const [matchingInProgress, setMatchingInProgress] = useState(false);
@@ -287,9 +280,12 @@ export default function HomePage({ jobs: initialJobs, blogPosts, companies = [] 
   const handleCTAClick = (type: 'seeker' | 'recruiter') => {
     if (type === 'seeker') {
       router.push('/jobs');
-    } else if (!user) {
-      setRecruiterModalOpen(true);
     } else {
+      // Previously opened a recruiter-specific signup modal here when
+      // signed out, implying you needed a separate "recruiter account" to
+      // post a job. You don't — any signed-in account can post, and
+      // /submit itself already redirects to sign-in (now via a working
+      // /auth page) if you're not signed in, same as everywhere else.
       router.push('/submit');
     }
   };
@@ -738,7 +734,7 @@ export default function HomePage({ jobs: initialJobs, blogPosts, companies = [] 
     <div className="prose prose-sm max-w-none">
       <h2 className="text-xl font-bold text-gray-900 mb-4">Your Trusted Partner in Global Job Search</h2>
       <p className="text-gray-700 leading-relaxed mb-4">
-        JobMeter connects job seekers with employment opportunities across multiple industries, experience levels, and countries. Whether you're searching for entry-level positions, professional careers, remote work, or specialized roles, our platform provides access to thousands of current job listings from direct employer postings and various sources across the web. Our intelligent job matching technology helps candidates find positions that align with their skills, experience, location preferences, and career aspirations.
+        JobMeter connects job seekers with employment opportunities across multiple industries, experience levels, and countries. Whether you&apos;re searching for entry-level positions, professional careers, remote work, or specialized roles, our platform provides access to thousands of current job listings from direct employer postings and various sources across the web. Our intelligent job matching technology helps candidates find positions that align with their skills, experience, location preferences, and career aspirations.
       </p>
       <p className="text-gray-700 leading-relaxed mb-4">
         <span className="font-semibold text-amber-600">Important Notice:</span> While we strive to provide quality listings, some jobs on our platform may come from third-party sources. We encourage job seekers to conduct their own research before applying. Always verify job details directly with the hiring company, research employers independently, and exercise caution when sharing personal information. Report any suspicious listings to help.jobmeter@gmail.com.
@@ -805,7 +801,6 @@ export default function HomePage({ jobs: initialJobs, blogPosts, companies = [] 
           </div>
         </section>
 
-        {recruiterModalOpen && <RecruiterAuthModal open={recruiterModalOpen} onOpenChange={setRecruiterModalOpen} />}
       </div>
     </>
   );
