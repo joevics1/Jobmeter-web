@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Building2, ArrowLeft, CheckCircle, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
+import { shouldAutoVerifyCompany } from '@/lib/companyVerification';
 import { useRouter } from 'next/navigation';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -81,6 +82,8 @@ export default function CompanyRegisterPage() {
         return;
       }
 
+      const autoVerified = shouldAutoVerifyCompany(user?.email, formData.website_url, formData.email);
+
       // Prepare company data
       const companyData = {
         name: formData.name,
@@ -108,7 +111,8 @@ export default function CompanyRegisterPage() {
           formData.industry ? `${formData.industry.toLowerCase()} jobs` : null,
         ].filter(Boolean),
         is_published: false,
-        is_verified: false,
+        is_verified: autoVerified,
+        verified_at: autoVerified ? new Date().toISOString() : null,
       };
 
       const { data, error: insertError } = await supabase

@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { SECTORS } from '@/lib/sectors';
+import { shouldAutoVerifyCompany } from '@/lib/companyVerification';
 
 const EMPLOYMENT_TYPES = ['Full-time', 'Part-time', 'Contract', 'Freelance', 'Internship'];
 const ANONYMOUS_OPTION = '__anonymous__';
@@ -191,6 +192,10 @@ export default function SubmitJobPage() {
         return;
       }
 
+      // Auto-verify only when the poster's own email domain matches the
+      // company's stated domain — see lib/companyVerification.ts.
+      const autoVerified = shouldAutoVerifyCompany(user.email, companyFormData.website_url, companyFormData.email);
+
       const { data, error } = await supabase
         .from('companies')
         .insert([{
@@ -211,7 +216,8 @@ export default function SubmitJobPage() {
           instagram_url: companyFormData.instagram_url || null,
           user_id: user.id,
           is_published: false,
-          is_verified: false,
+          is_verified: autoVerified,
+          verified_at: autoVerified ? new Date().toISOString() : null,
           meta_title: `${companyFormData.name} Careers & Jobs in Nigeria | JobMeter`,
           meta_description: companyFormData.tagline || `Join ${companyFormData.name}. Explore career opportunities and company culture.`,
           h1_title: `Careers at ${companyFormData.name}`,

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { callGemini } from '@/lib/gemini-client';
+import { safeSubmitLimit, getClientIp } from '@/lib/rate-limit';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 // Use service role key if available, otherwise fall back to anon key (less secure but works)
@@ -231,6 +232,15 @@ export async function POST(request: NextRequest) {
   // real error.
   let submissionId: string | undefined;
   try {
+    const ip = getClientIp(request);
+    const limit = await safeSubmitLimit(`${ip}:process-submission`);
+    if (!limit.success) {
+      return NextResponse.json(
+        { error: 'Too many requests — please slow down and try again shortly.' },
+        { status: 429, headers: { 'Retry-After': '60' } }
+      );
+    }
+
     ({ submissionId } = await request.json());
 
     if (!submissionId) {

@@ -25,6 +25,30 @@ export const ratelimit = new Ratelimit({
   prefix: 'ratelimit:jobmeter',
 });
 
+// Separate, much stricter limiter for job-submission endpoints
+// (/api/jobs/submit, /api/jobs/parse-paste, /api/jobs/process-submission).
+// These aren't page views — each one either creates a job submission or
+// spends a Gemini API call, so the generic 60-req/min page limiter is far
+// too loose here. Same fail-open behavior via safeLimit below.
+const SUBMIT_MAX_REQUESTS = Number(process.env.RATE_LIMIT_SUBMIT_MAX ?? 8);
+const SUBMIT_WINDOW_SECONDS = Number(process.env.RATE_LIMIT_SUBMIT_WINDOW_SECONDS ?? 600); // 10 min
+
+export const submitRatelimit = new Ratelimit({
+  redis,
+  limiter: Ratelimit.slidingWindow(SUBMIT_MAX_REQUESTS, `${SUBMIT_WINDOW_SECONDS} s`),
+  analytics: true,
+  prefix: 'ratelimit:jobmeter:submit',
+});
+
+export async function safeSubmitLimit(key: string): Promise<SafeLimitResult> {
+  try {
+    return await submitRatelimit.limit(key);
+  } catch (error) {
+    console.error('[rate-limit] Submit-limiter Redis call failed — failing open. Error:', error);
+    return { success: true, limit: SUBMIT_MAX_REQUESTS, remaining: SUBMIT_MAX_REQUESTS, reset: Date.now() };
+  }
+}
+
 export interface SafeLimitResult {
   success: boolean;
   limit: number;

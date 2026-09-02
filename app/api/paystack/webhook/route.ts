@@ -1,33 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import crypto from 'crypto';
-import { handleSuccessfulPayment } from '@/lib/services/paymentService';
+import { handlePaystackWebhook } from '@/lib/services/paystackWebhookHandler';
 
-export async function POST(request: NextRequest) {
-  try {
-    const rawBody = await request.text();
-    const signature = request.headers.get('x-paystack-signature');
-
-    // Verify webhook signature (security)
-    const hash = crypto
-      .createHmac('sha512', process.env.PAYSTACK_SECRET_KEY!)
-      .update(rawBody)
-      .digest('hex');
-
-    if (hash !== signature) {
-      return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
-    }
-
-    const event = JSON.parse(rawBody);
-
-    // Only process successful charge events
-    if (event.event === 'charge.success') {
-      await handleSuccessfulPayment(event.data);
-      console.log('Webhook: Credits added successfully for', event.data.reference);
-    }
-
-    return NextResponse.json({ status: 'success' });
-  } catch (error: any) {
-    console.error('Webhook error:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
+// Deprecated alias for app/api/payment/webhook — kept only in case this is
+// the URL currently configured in the Paystack dashboard. Both routes now
+// share one implementation (see paystackWebhookHandler.ts) instead of two
+// copies drifting apart. Once you've confirmed which URL Paystack is
+// actually calling, point it at /api/payment/webhook and delete this file.
+export async function POST(req: NextRequest) {
+  const body = await req.text();
+  await handlePaystackWebhook(body, req.headers.get('x-paystack-signature'));
+  return new NextResponse('Webhook Received', { status: 200 });
 }

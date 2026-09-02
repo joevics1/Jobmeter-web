@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { getJobQuota } from '@/lib/services/jobQuotaService';
+import { safeSubmitLimit, getClientIp } from '@/lib/rate-limit';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
@@ -12,6 +13,15 @@ const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 // credit only once the job submission actually succeeds.
 export async function POST(req: NextRequest) {
   try {
+    const ip = getClientIp(req);
+    const limit = await safeSubmitLimit(`${ip}:submit`);
+    if (!limit.success) {
+      return NextResponse.json(
+        { error: 'RATE_LIMITED', message: 'Too many job submissions — please slow down and try again shortly.' },
+        { status: 429, headers: { 'Retry-After': '60' } }
+      );
+    }
+
     const body = await req.json();
     const userId = body?.userId;
 

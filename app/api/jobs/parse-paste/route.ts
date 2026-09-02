@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { callGemini } from '@/lib/gemini-client';
+import { safeSubmitLimit, getClientIp } from '@/lib/rate-limit';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
@@ -119,6 +120,15 @@ function extractJson(raw: string): any {
 
 export async function POST(request: NextRequest) {
   try {
+    const ip = getClientIp(request);
+    const limit = await safeSubmitLimit(`${ip}:parse-paste`);
+    if (!limit.success) {
+      return NextResponse.json(
+        { error: 'Too many requests — please slow down and try again shortly.' },
+        { status: 429, headers: { 'Retry-After': '60' } }
+      );
+    }
+
     const { rawContent } = await request.json();
 
     if (!rawContent || typeof rawContent !== 'string' || !rawContent.trim()) {
