@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
-import { ArrowLeft, FileText, Clipboard, Plus, Building2, X, CheckCircle, AlertCircle, Sparkles } from 'lucide-react';
+import { ArrowLeft, FileText, Clipboard, Plus, Building2, X, CheckCircle, AlertCircle, Sparkles, Briefcase, MapPin, Wallet, Mail, StickyNote, ListChecks } from 'lucide-react';
 import UpgradeModal from '@/components/jobs/UpgradeModal';
 import JobLimitModal from '@/components/jobs/JobLimitModal';
 import { theme } from '@/lib/theme';
@@ -490,7 +490,7 @@ Posted Date: ${new Date().toISOString().split('T')[0]}`;
   };
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: theme.colors.background.muted }}>
+    <div className="min-h-screen" style={{ backgroundColor: '#EEF1F7' }}>
       {/* Header */}
       <div className="pt-8 pb-6 px-6 bg-white border-b border-gray-100">
         <div className="max-w-3xl mx-auto">
@@ -570,10 +570,15 @@ Posted Date: ${new Date().toISOString().split('T')[0]}`;
         )}
 
         {activeTab === 'form' ? (
-          <div className="space-y-6">
+          <div className="space-y-8">
             {/* Job Details */}
-            <section className="bg-white rounded-2xl p-6 sm:p-7 shadow-sm border border-gray-100">
-              <h2 className="text-xl font-bold mb-4 text-gray-900">Job Details</h2>
+            <section className="bg-white rounded-2xl p-6 sm:p-7 shadow-md shadow-gray-200/60 border border-gray-100/80">
+              <div className="flex items-center gap-2.5 mb-4">
+                <span className="flex items-center justify-center w-8 h-8 rounded-lg shrink-0" style={{ backgroundColor: `${theme.colors.primary.DEFAULT}14` }}>
+                  <Briefcase size={16} style={{ color: theme.colors.primary.DEFAULT }} />
+                </span>
+                <h2 className="text-xl font-bold text-gray-900">Job Details</h2>
+              </div>
               
               <div className="space-y-4">
                 <div>
@@ -582,7 +587,7 @@ Posted Date: ${new Date().toISOString().split('T')[0]}`;
                     placeholder="e.g., Senior React Developer"
                     value={jobData.title}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => setJobData({...jobData, title: e.target.value})}
-                    className="w-full"
+                    className="w-full bg-gray-50/70 focus:bg-white transition-colors"
                   />
                 </div>
 
@@ -591,7 +596,7 @@ Posted Date: ${new Date().toISOString().split('T')[0]}`;
                   <select
                     value={jobData.sector}
                     onChange={(e) => setJobData({...jobData, sector: e.target.value})}
-                    className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    className="w-full h-10 rounded-md border border-input bg-gray-50/70 focus:bg-white transition-colors px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                     style={{
                       borderColor: theme.colors.border.DEFAULT,
                       color: theme.colors.text.primary,
@@ -653,8 +658,13 @@ Posted Date: ${new Date().toISOString().split('T')[0]}`;
             <input type="hidden" value={jobData.companyWebsite} onChange={() => {}} />
 
             {/* Location */}
-            <section className="bg-white rounded-2xl p-6 sm:p-7 shadow-sm border border-gray-100">
-              <h2 className="text-xl font-bold mb-4 text-gray-900">Location *</h2>
+            <section className="bg-white rounded-2xl p-6 sm:p-7 shadow-md shadow-gray-200/60 border border-gray-100/80">
+              <div className="flex items-center gap-2.5 mb-4">
+                <span className="flex items-center justify-center w-8 h-8 rounded-lg shrink-0" style={{ backgroundColor: `${theme.colors.primary.DEFAULT}14` }}>
+                  <MapPin size={16} style={{ color: theme.colors.primary.DEFAULT }} />
+                </span>
+                <h2 className="text-xl font-bold text-gray-900">Location *</h2>
+              </div>
               
               <div className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -690,8 +700,13 @@ Posted Date: ${new Date().toISOString().split('T')[0]}`;
             </section>
 
             {/* Compensation & Requirements */}
-            <section className="bg-white rounded-2xl p-6 sm:p-7 shadow-sm border border-gray-100">
-              <h2 className="text-xl font-bold mb-4 text-gray-900">Compensation & Requirements</h2>
+            <section className="bg-white rounded-2xl p-6 sm:p-7 shadow-md shadow-gray-200/60 border border-gray-100/80">
+              <div className="flex items-center gap-2.5 mb-4">
+                <span className="flex items-center justify-center w-8 h-8 rounded-lg shrink-0" style={{ backgroundColor: `${theme.colors.primary.DEFAULT}14` }}>
+                  <Wallet size={16} style={{ color: theme.colors.primary.DEFAULT }} />
+                </span>
+                <h2 className="text-xl font-bold text-gray-900">Compensation &amp; Requirements</h2>
+              </div>
               
               <div className="space-y-4">
                 <div>
@@ -727,8 +742,13 @@ Posted Date: ${new Date().toISOString().split('T')[0]}`;
             </section>
 
             {/* Job Description */}
-            <section className="bg-white rounded-2xl p-6 sm:p-7 shadow-sm border border-gray-100">
-              <h2 className="text-xl font-bold mb-4 text-gray-900">Job Description</h2>
+            <section className="bg-white rounded-2xl p-6 sm:p-7 shadow-md shadow-gray-200/60 border border-gray-100/80">
+              <div className="flex items-center gap-2.5 mb-4">
+                <span className="flex items-center justify-center w-8 h-8 rounded-lg shrink-0" style={{ backgroundColor: `${theme.colors.primary.DEFAULT}14` }}>
+                  <FileText size={16} style={{ color: theme.colors.primary.DEFAULT }} />
+                </span>
+                <h2 className="text-xl font-bold text-gray-900">Job Description</h2>
+              </div>
               
               <div className="space-y-4">
                 <div>
@@ -737,7 +757,7 @@ Posted Date: ${new Date().toISOString().split('T')[0]}`;
                     placeholder="Describe the role, company culture, and what makes this opportunity special..."
                     value={jobData.description}
                     onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setJobData({...jobData, description: e.target.value})}
-                    className="min-h-[100px]"
+                    className="min-h-[100px] bg-gray-50/70 focus:bg-white transition-colors"
                   />
                 </div>
 
@@ -771,8 +791,13 @@ Posted Date: ${new Date().toISOString().split('T')[0]}`;
             </section>
 
             {/* Application Details */}
-            <section className="bg-white rounded-2xl p-6 sm:p-7 shadow-sm border border-gray-100">
-              <h2 className="text-xl font-bold mb-2 text-gray-900">Application Details{applyInApp ? '' : ' *'}</h2>
+            <section className="bg-white rounded-2xl p-6 sm:p-7 shadow-md shadow-gray-200/60 border border-gray-100/80">
+              <div className="flex items-center gap-2.5 mb-2">
+                <span className="flex items-center justify-center w-8 h-8 rounded-lg shrink-0" style={{ backgroundColor: `${theme.colors.primary.DEFAULT}14` }}>
+                  <Mail size={16} style={{ color: theme.colors.primary.DEFAULT }} />
+                </span>
+                <h2 className="text-xl font-bold text-gray-900">Application Details{applyInApp ? '' : ' *'}</h2>
+              </div>
               <p className="text-sm text-gray-600 mb-4">
                 {applyInApp
                   ? 'Optional — candidates will apply directly on JobMeter, but you can still list these as backup contact methods'
@@ -822,20 +847,30 @@ Posted Date: ${new Date().toISOString().split('T')[0]}`;
             </section>
 
             {/* Additional Notes */}
-            <section className="bg-white rounded-2xl p-6 sm:p-7 shadow-sm border border-gray-100">
-              <h2 className="text-xl font-bold mb-4 text-gray-900">Additional Notes</h2>
+            <section className="bg-white rounded-2xl p-6 sm:p-7 shadow-md shadow-gray-200/60 border border-gray-100/80">
+              <div className="flex items-center gap-2.5 mb-4">
+                <span className="flex items-center justify-center w-8 h-8 rounded-lg shrink-0" style={{ backgroundColor: `${theme.colors.primary.DEFAULT}14` }}>
+                  <StickyNote size={16} style={{ color: theme.colors.primary.DEFAULT }} />
+                </span>
+                <h2 className="text-xl font-bold text-gray-900">Additional Notes</h2>
+              </div>
               <Textarea
                 placeholder="Any additional information about this job posting..."
                 value={submissionNotes}
                 onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setSubmissionNotes(e.target.value)}
-                className="min-h-[80px]"
+                className="min-h-[80px] bg-gray-50/70 focus:bg-white transition-colors"
               />
             </section>
           </div>
         ) : (
-          <div className="space-y-6">
-            <section className="bg-white rounded-2xl p-6 sm:p-7 shadow-sm border border-gray-100">
-              <h2 className="text-xl font-bold mb-2 text-gray-900">Paste Job Description</h2>
+          <div className="space-y-8">
+            <section className="bg-white rounded-2xl p-6 sm:p-7 shadow-md shadow-gray-200/60 border border-gray-100/80">
+              <div className="flex items-center gap-2.5 mb-2">
+                <span className="flex items-center justify-center w-8 h-8 rounded-lg shrink-0" style={{ backgroundColor: `${theme.colors.primary.DEFAULT}14` }}>
+                  <Clipboard size={16} style={{ color: theme.colors.primary.DEFAULT }} />
+                </span>
+                <h2 className="text-xl font-bold text-gray-900">Paste Job Description</h2>
+              </div>
               <p className="text-sm text-gray-600 mb-4">
                 Paste the complete job description from any job board or company website.
                 JobMeter will extract and fill out the form for you to review and edit —
@@ -846,17 +881,22 @@ Posted Date: ${new Date().toISOString().split('T')[0]}`;
                 placeholder="Paste the complete job description here..."
                 value={pastedContent}
                 onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setPastedContent(e.target.value)}
-                className="min-h-[200px]"
+                className="min-h-[200px] bg-gray-50/70 focus:bg-white transition-colors"
               />
             </section>
 
-            <section className="bg-white rounded-2xl p-6 sm:p-7 shadow-sm border border-gray-100">
-              <h2 className="text-xl font-bold mb-4 text-gray-900">Additional Notes</h2>
+            <section className="bg-white rounded-2xl p-6 sm:p-7 shadow-md shadow-gray-200/60 border border-gray-100/80">
+              <div className="flex items-center gap-2.5 mb-4">
+                <span className="flex items-center justify-center w-8 h-8 rounded-lg shrink-0" style={{ backgroundColor: `${theme.colors.primary.DEFAULT}14` }}>
+                  <StickyNote size={16} style={{ color: theme.colors.primary.DEFAULT }} />
+                </span>
+                <h2 className="text-xl font-bold text-gray-900">Additional Notes</h2>
+              </div>
               <Textarea
                 placeholder="Any additional information about this job posting..."
                 value={submissionNotes}
                 onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setSubmissionNotes(e.target.value)}
-                className="min-h-[80px]"
+                className="min-h-[80px] bg-gray-50/70 focus:bg-white transition-colors"
               />
             </section>
           </div>
@@ -865,8 +905,13 @@ Posted Date: ${new Date().toISOString().split('T')[0]}`;
 
       {/* Apply in-app / Screening quiz — shared across form + paste tabs */}
       <div className="px-4 pb-4">
-        <section className="bg-white rounded-2xl p-6 sm:p-7 shadow-sm border border-gray-100 space-y-3">
-          <h2 className="text-xl font-bold mb-1 text-gray-900">Applications</h2>
+        <section className="bg-white rounded-2xl p-6 sm:p-7 shadow-md shadow-gray-200/60 border border-gray-100/80 space-y-3">
+          <div className="flex items-center gap-2.5 mb-1">
+            <span className="flex items-center justify-center w-8 h-8 rounded-lg shrink-0" style={{ backgroundColor: `${theme.colors.primary.DEFAULT}14` }}>
+              <ListChecks size={16} style={{ color: theme.colors.primary.DEFAULT }} />
+            </span>
+            <h2 className="text-xl font-bold text-gray-900">Applications</h2>
+          </div>
           <label className="flex items-center gap-2 text-sm text-gray-700">
             <input
               type="checkbox"
@@ -928,8 +973,13 @@ Posted Date: ${new Date().toISOString().split('T')[0]}`;
 
       {/* Company Section - Bottom */}
       <div className="px-4 pb-24">
-        <section className="bg-white rounded-2xl p-6 sm:p-7 shadow-sm border border-gray-100">
-          <h2 className="text-xl font-bold mb-4 text-gray-900">Company</h2>
+        <section className="bg-white rounded-2xl p-6 sm:p-7 shadow-md shadow-gray-200/60 border border-gray-100/80">
+          <div className="flex items-center gap-2.5 mb-4">
+            <span className="flex items-center justify-center w-8 h-8 rounded-lg shrink-0" style={{ backgroundColor: `${theme.colors.primary.DEFAULT}14` }}>
+              <Building2 size={16} style={{ color: theme.colors.primary.DEFAULT }} />
+            </span>
+            <h2 className="text-xl font-bold text-gray-900">Company</h2>
+          </div>
           
           {isLoadingCompanies ? (
             <div className="p-4 bg-gray-50 rounded-lg text-center">
@@ -952,7 +1002,7 @@ Posted Date: ${new Date().toISOString().split('T')[0]}`;
                           setSelectedCompanyId(e.target.value);
                         }
                       }}
-                      className="w-full h-10 rounded-md border border-gray-300 px-3 py-2 text-sm"
+                      className="w-full h-10 rounded-md border border-gray-300 bg-gray-50/70 focus:bg-white transition-colors px-3 py-2 text-sm"
                     >
                       {companies.map((company) => (
                         <option key={company.id} value={company.id}>
@@ -1022,7 +1072,7 @@ Posted Date: ${new Date().toISOString().split('T')[0]}`;
                       value={companyFormData.name}
                       onChange={(e) => setCompanyFormData({...companyFormData, name: e.target.value})}
                       required
-                      className="w-full"
+                      className="w-full bg-gray-50/70 focus:bg-white transition-colors"
                     />
                   </div>
                   <div>
@@ -1030,7 +1080,7 @@ Posted Date: ${new Date().toISOString().split('T')[0]}`;
                     <select
                       value={companyFormData.industry}
                       onChange={(e) => setCompanyFormData({...companyFormData, industry: e.target.value})}
-                      className="w-full h-10 rounded-md border border-gray-300 px-3 py-2 text-sm"
+                      className="w-full h-10 rounded-md border border-gray-300 bg-gray-50/70 focus:bg-white transition-colors px-3 py-2 text-sm"
                     >
                       <option value="">Select</option>
                       <option value="Technology">Technology</option>
@@ -1050,7 +1100,7 @@ Posted Date: ${new Date().toISOString().split('T')[0]}`;
                     value={companyFormData.description}
                     onChange={(e) => setCompanyFormData({...companyFormData, description: e.target.value})}
                     required
-                    className="w-full"
+                    className="w-full bg-gray-50/70 focus:bg-white transition-colors"
                     rows={3}
                   />
                 </div>
@@ -1060,7 +1110,7 @@ Posted Date: ${new Date().toISOString().split('T')[0]}`;
                     <select
                       value={companyFormData.company_size}
                       onChange={(e) => setCompanyFormData({...companyFormData, company_size: e.target.value})}
-                      className="w-full h-10 rounded-md border border-gray-300 px-3 py-2 text-sm"
+                      className="w-full h-10 rounded-md border border-gray-300 bg-gray-50/70 focus:bg-white transition-colors px-3 py-2 text-sm"
                     >
                       <option value="">Select</option>
                       <option value="1-10">1-10</option>
@@ -1076,7 +1126,7 @@ Posted Date: ${new Date().toISOString().split('T')[0]}`;
                       placeholder="https://example.com"
                       value={companyFormData.website_url}
                       onChange={(e) => setCompanyFormData({...companyFormData, website_url: e.target.value})}
-                      className="w-full"
+                      className="w-full bg-gray-50/70 focus:bg-white transition-colors"
                     />
                   </div>
                 </div>
@@ -1087,7 +1137,7 @@ Posted Date: ${new Date().toISOString().split('T')[0]}`;
                       placeholder="hr@company.com"
                       value={companyFormData.email}
                       onChange={(e) => setCompanyFormData({...companyFormData, email: e.target.value})}
-                      className="w-full"
+                      className="w-full bg-gray-50/70 focus:bg-white transition-colors"
                     />
                   </div>
                   <div>
@@ -1096,7 +1146,7 @@ Posted Date: ${new Date().toISOString().split('T')[0]}`;
                       placeholder="+234..."
                       value={companyFormData.phone}
                       onChange={(e) => setCompanyFormData({...companyFormData, phone: e.target.value})}
-                      className="w-full"
+                      className="w-full bg-gray-50/70 focus:bg-white transition-colors"
                     />
                   </div>
                 </div>
@@ -1120,7 +1170,7 @@ Posted Date: ${new Date().toISOString().split('T')[0]}`;
                           placeholder="e.g., 2010"
                           value={companyFormData.founded_year}
                           onChange={(e) => setCompanyFormData({...companyFormData, founded_year: e.target.value})}
-                          className="w-full"
+                          className="w-full bg-gray-50/70 focus:bg-white transition-colors"
                         />
                       </div>
                       <div>
@@ -1129,7 +1179,7 @@ Posted Date: ${new Date().toISOString().split('T')[0]}`;
                           placeholder="e.g., Lagos, Nigeria"
                           value={companyFormData.headquarters_location}
                           onChange={(e) => setCompanyFormData({...companyFormData, headquarters_location: e.target.value})}
-                          className="w-full"
+                          className="w-full bg-gray-50/70 focus:bg-white transition-colors"
                         />
                       </div>
                     </div>
@@ -1140,7 +1190,7 @@ Posted Date: ${new Date().toISOString().split('T')[0]}`;
                           placeholder="https://linkedin.com/company/..."
                           value={companyFormData.linkedin_url}
                           onChange={(e) => setCompanyFormData({...companyFormData, linkedin_url: e.target.value})}
-                          className="w-full"
+                          className="w-full bg-gray-50/70 focus:bg-white transition-colors"
                         />
                       </div>
                       <div>
@@ -1149,7 +1199,7 @@ Posted Date: ${new Date().toISOString().split('T')[0]}`;
                           placeholder="https://twitter.com/..."
                           value={companyFormData.twitter_url}
                           onChange={(e) => setCompanyFormData({...companyFormData, twitter_url: e.target.value})}
-                          className="w-full"
+                          className="w-full bg-gray-50/70 focus:bg-white transition-colors"
                         />
                       </div>
                     </div>
@@ -1160,7 +1210,7 @@ Posted Date: ${new Date().toISOString().split('T')[0]}`;
                           placeholder="https://facebook.com/..."
                           value={companyFormData.facebook_url}
                           onChange={(e) => setCompanyFormData({...companyFormData, facebook_url: e.target.value})}
-                          className="w-full"
+                          className="w-full bg-gray-50/70 focus:bg-white transition-colors"
                         />
                       </div>
                       <div>
@@ -1169,7 +1219,7 @@ Posted Date: ${new Date().toISOString().split('T')[0]}`;
                           placeholder="https://instagram.com/..."
                           value={companyFormData.instagram_url}
                           onChange={(e) => setCompanyFormData({...companyFormData, instagram_url: e.target.value})}
-                          className="w-full"
+                          className="w-full bg-gray-50/70 focus:bg-white transition-colors"
                         />
                       </div>
                     </div>
@@ -1252,7 +1302,7 @@ Posted Date: ${new Date().toISOString().split('T')[0]}`;
                 setShowSuccessModal(false);
                 router.push('/dashboard/recruiter');
               }}
-              className="w-full"
+              className="w-full bg-gray-50/70 focus:bg-white transition-colors"
               style={{
                 backgroundColor: theme.colors.primary.DEFAULT,
                 color: theme.colors.primary.foreground,
@@ -1276,7 +1326,7 @@ Posted Date: ${new Date().toISOString().split('T')[0]}`;
                 setActiveTab('form');
               }}
               variant="outline"
-              className="w-full"
+              className="w-full bg-gray-50/70 focus:bg-white transition-colors"
             >
               Post another job
             </Button>
