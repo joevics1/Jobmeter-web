@@ -10,6 +10,9 @@
 // Set up once deployed:
 //   curl -X POST "https://api.telegram.org/bot<TOKEN>/setWebhook" \
 //     -d "url=https://<project-ref>.supabase.co/functions/v1/telegram-bot"
+//
+// Uses the TELEGRAM_BOT_TOKEN_2 secret (not TELEGRAM_BOT_TOKEN, which is the
+// separate bot used for the job-posting channel).
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
@@ -19,7 +22,7 @@ const SITE_URL = 'https://www.jobmeter.app';
 // ─── Telegram API helpers ───────────────────────────────────────────────────
 
 function botApi(method: string) {
-  const token = Deno.env.get('TELEGRAM_BOT_TOKEN');
+  const token = Deno.env.get('TELEGRAM_BOT_TOKEN_2');
   return `https://api.telegram.org/bot${token}/${method}`;
 }
 
@@ -49,7 +52,7 @@ function answerCallbackQuery(callbackQueryId: string, text?: string) {
 async function getFileUrl(fileId: string): Promise<string | null> {
   const data = await tgCall('getFile', { file_id: fileId });
   if (!data?.ok) return null;
-  const token = Deno.env.get('TELEGRAM_BOT_TOKEN');
+  const token = Deno.env.get('TELEGRAM_BOT_TOKEN_2');
   return `https://api.telegram.org/file/bot${token}/${data.result.file_path}`;
 }
 
