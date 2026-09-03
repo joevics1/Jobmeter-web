@@ -124,7 +124,12 @@ export default function CertificationRoadmapPage() {
         {/* Top Ad */}
         <div className="max-w-6xl mx-auto px-6 py-4">
           {/* Added the required slot prop here */}
-          <AdUnit slot="top-ad-slot" />
+          {/* ADS PAUSED 2026-09-01 (post-restriction conservative rollout).
+   To re-enable: generate a NEW ad unit in AdSense dashboard
+   (Ads > By ad unit > Display ads) and update the slot below,
+   then uncomment this block.
+<AdUnit slot="top-ad-slot" />
+*/}
         </div>
 
         {/* Condensed intro */}
@@ -146,7 +151,12 @@ export default function CertificationRoadmapPage() {
         {/* Ad */}
         <div className="max-w-6xl mx-auto px-6 py-6">
           {/* Added the required slot prop here */}
-          <AdUnit slot="bottom-ad-slot" />
+          {/* ADS PAUSED 2026-09-01 (post-restriction conservative rollout).
+   To re-enable: generate a NEW ad unit in AdSense dashboard
+   (Ads > By ad unit > Display ads) and update the slot below,
+   then uncomment this block.
+<AdUnit slot="bottom-ad-slot" />
+*/}
         </div>
 
         {/* SEO Content Section - Aiming for 2000 Words */}

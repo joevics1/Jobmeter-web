@@ -260,7 +260,12 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
               </div>
 
               <div className="mb-8 min-h-[280px] flex items-center justify-center bg-gray-50 rounded">
-                <AdUnit slot="4198231153" format="auto" />
+                {/* ADS PAUSED 2026-09-01 (post-restriction conservative rollout).
+   To re-enable: generate a NEW ad unit in AdSense dashboard
+   (Ads > By ad unit > Display ads) and update the slot below,
+   then uncomment this block.
+<AdUnit slot="4198231153" format="auto" />
+*/}
               </div>
 
               <BlogMarkdownRenderer content={hasMidContent ? contentTop : post.content} />
@@ -268,14 +273,24 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
               {hasMidContent && (
                 <>
                   <div className="my-10 min-h-[300px] flex items-center justify-center bg-gray-50 rounded">
-                    <AdUnit slot="4690286797" format="fluid" layout="in-article" />
+                    {/* ADS PAUSED 2026-09-01 (post-restriction conservative rollout).
+   To re-enable: generate a NEW ad unit in AdSense dashboard
+   (Ads > By ad unit > Display ads) and update the slot below,
+   then uncomment this block.
+<AdUnit slot="4690286797" format="fluid" layout="in-article" />
+*/}
                   </div>
                   <BlogMarkdownRenderer content={contentBottom} />
                 </>
               )}
 
               <div className="my-10 min-h-[280px] flex items-center justify-center bg-gray-50 rounded">
-                <AdUnit slot="9751041788" format="auto" />
+                {/* ADS PAUSED 2026-09-01 (post-restriction conservative rollout).
+   To re-enable: generate a NEW ad unit in AdSense dashboard
+   (Ads > By ad unit > Display ads) and update the slot below,
+   then uncomment this block.
+<AdUnit slot="9751041788" format="auto" />
+*/}
               </div>
 
               {post.faqs && Array.isArray(post.faqs) && post.faqs.length > 0 && (

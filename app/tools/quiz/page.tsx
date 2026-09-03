@@ -169,7 +169,12 @@ export default function QuizPage() {
 
             {/* ── Ad 1: After How It Works ── */}
             <div className="mb-6">
-              <AdUnit slot="4198231153" format="auto" />
+              {/* ADS PAUSED 2026-09-01 (post-restriction conservative rollout).
+   To re-enable: generate a NEW ad unit in AdSense dashboard
+   (Ads > By ad unit > Display ads) and update the slot below,
+   then uncomment this block.
+<AdUnit slot="4198231153" format="auto" />
+*/}
             </div>
 
             {/* Select Company heading */}
@@ -186,7 +191,12 @@ export default function QuizPage() {
 
             {/* ── Ad 2: After Company Cards ── */}
             <div className="mt-8 mb-6">
-              <AdUnit slot="9751041788" format="auto" />
+              {/* ADS PAUSED 2026-09-01 (post-restriction conservative rollout).
+   To re-enable: generate a NEW ad unit in AdSense dashboard
+   (Ads > By ad unit > Display ads) and update the slot below,
+   then uncomment this block.
+<AdUnit slot="9751041788" format="auto" />
+*/}
             </div>
 
             <p className="text-xs text-gray-500 text-center mt-2 mb-6">
@@ -238,8 +248,18 @@ export default function QuizPage() {
 
           {/* ── Right: Desktop sidebar ads ──────────────────────────────── */}
           <aside className="hidden lg:flex flex-col gap-6 w-[300px] shrink-0 sticky top-20">
-            <AdUnit slot="9751041788" format="auto" style={{ display: 'block', width: '300px', minHeight: '250px' }} />
-            <AdUnit slot="4198231153" format="auto" style={{ display: 'block', width: '300px', minHeight: '250px' }} />
+            {/* ADS PAUSED 2026-09-01 (post-restriction conservative rollout).
+   To re-enable: generate a NEW ad unit in AdSense dashboard
+   (Ads > By ad unit > Display ads) and update the slot below,
+   then uncomment this block.
+<AdUnit slot="9751041788" format="auto" style={{ display: 'block', width: '300px', minHeight: '250px' }} />
+*/}
+            {/* ADS PAUSED 2026-09-01 (post-restriction conservative rollout).
+   To re-enable: generate a NEW ad unit in AdSense dashboard
+   (Ads > By ad unit > Display ads) and update the slot below,
+   then uncomment this block.
+<AdUnit slot="4198231153" format="auto" style={{ display: 'block', width: '300px', minHeight: '250px' }} />
+*/}
           </aside>
         </div>
 

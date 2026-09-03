@@ -1315,19 +1315,29 @@ if (filters.remote) {
 
                       {index === 0 && (
                         <div className="w-full overflow-hidden" style={{ margin: 0, padding: '3px 0' }}>
-                          <AdUnit slot={AD_SLOTS.BANNER} format="auto" style={{ display: 'block' }} />
+                          {/* ADS PAUSED 2026-09-01 (post-restriction conservative rollout).
+   To re-enable: generate a NEW ad unit in AdSense dashboard
+   (Ads > By ad unit > Display ads) and update the slot below,
+   then uncomment this block.
+<AdUnit slot={AD_SLOTS.BANNER} format="auto" style={{ display: 'block' }} />
+*/}
                         </div>
                       )}
 
                       {(index + 1) % 5 === 0 && (
                         <div className="w-full overflow-hidden" style={{ margin: 0, padding: '3px 0' }}>
-                          <AdUnit
+                          {/* ADS PAUSED 2026-09-01 (post-restriction conservative rollout).
+   To re-enable: generate a NEW ad unit in AdSense dashboard
+   (Ads > By ad unit > Display ads) and update the slot below,
+   then uncomment this block.
+<AdUnit
                             key={`infeed-match-${matchPage}-${index}`}
                             slot={AD_SLOTS.IN_FEED}
                             format="fluid"
                             layoutKey={AD_SLOTS.IN_FEED_LAYOUT_KEY}
                             style={{ display: 'block' }}
                           />
+*/}
                         </div>
                       )}
                     </React.Fragment>
@@ -1564,20 +1574,30 @@ if (filters.remote) {
                           {/* Ad after job card #1 */}
                           {index === 0 && (
                             <div className="w-full overflow-hidden" style={{ margin: 0, padding: '3px 0' }}>
-                              <AdUnit slot={AD_SLOTS.BANNER} format="auto" style={{ display: 'block' }} />
+                              {/* ADS PAUSED 2026-09-01 (post-restriction conservative rollout).
+   To re-enable: generate a NEW ad unit in AdSense dashboard
+   (Ads > By ad unit > Display ads) and update the slot below,
+   then uncomment this block.
+<AdUnit slot={AD_SLOTS.BANNER} format="auto" style={{ display: 'block' }} />
+*/}
                             </div>
                           )}
 
                           {/* Ad after every 5th job card: card 5, 10, 15, 20 (index 4,9,14,19) */}
                           {(index + 1) % 5 === 0 && (
                             <div className="w-full overflow-hidden" style={{ margin: 0, padding: '3px 0' }}>
-                              <AdUnit
+                              {/* ADS PAUSED 2026-09-01 (post-restriction conservative rollout).
+   To re-enable: generate a NEW ad unit in AdSense dashboard
+   (Ads > By ad unit > Display ads) and update the slot below,
+   then uncomment this block.
+<AdUnit
                                 key={`infeed-${currentPage}-${index}`}
                                 slot={AD_SLOTS.IN_FEED}
                                 format="fluid"
                                 layoutKey={AD_SLOTS.IN_FEED_LAYOUT_KEY}
                                 style={{ display: 'block' }}
                               />
+*/}
                             </div>
                           )}
                         </React.Fragment>
@@ -1590,21 +1610,31 @@ if (filters.remote) {
                     <div className="w-full flex justify-center overflow-hidden" style={{ margin: 0, padding: '3px 0' }}>
                       {/* Mobile: 320x250 */}
                       <div className="block lg:hidden" style={{ width: '320px', height: '250px' }}>
-                        <AdUnit
+                        {/* ADS PAUSED 2026-09-01 (post-restriction conservative rollout).
+   To re-enable: generate a NEW ad unit in AdSense dashboard
+   (Ads > By ad unit > Display ads) and update the slot below,
+   then uncomment this block.
+<AdUnit
                           key={`display-bottom-mobile-${currentPage}`}
                           slot={AD_SLOTS.DISPLAY_BOTTOM}
                           format="fixed"
                           style={{ display: 'inline-block', width: '320px', height: '250px' }}
                         />
+*/}
                       </div>
                       {/* Desktop: leaderboard */}
                       <div className="hidden lg:block" style={{ width: '728px', height: '90px' }}>
-                        <AdUnit
+                        {/* ADS PAUSED 2026-09-01 (post-restriction conservative rollout).
+   To re-enable: generate a NEW ad unit in AdSense dashboard
+   (Ads > By ad unit > Display ads) and update the slot below,
+   then uncomment this block.
+<AdUnit
                           key={`display-bottom-desktop-${currentPage}`}
                           slot={AD_SLOTS.DISPLAY_BOTTOM}
                           format="fixed"
                           style={{ display: 'inline-block', width: '728px', height: '90px' }}
                         />
+*/}
                       </div>
                     </div>
                   )}

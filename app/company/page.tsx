@@ -195,7 +195,12 @@ export default async function CompanyDirectoryPage({ searchParams }: Props) {
         {/* ── Display ad — top (slot 4198231153) ── */}
         <div className="bg-white border-b border-gray-100">
           <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-2">
-            <AdUnit slot="4198231153" format="auto" />
+            {/* ADS PAUSED 2026-09-01 (post-restriction conservative rollout).
+   To re-enable: generate a NEW ad unit in AdSense dashboard
+   (Ads > By ad unit > Display ads) and update the slot below,
+   then uncomment this block.
+<AdUnit slot="4198231153" format="auto" />
+*/}
           </div>
         </div>
 
@@ -328,19 +333,29 @@ export default async function CompanyDirectoryPage({ searchParams }: Props) {
                       {/* In-feed ad after every 9th company */}
                       {index % 9 === 8 && (
                         <div className="col-span-1 sm:col-span-2 lg:col-span-3">
-                          <AdUnit
+                          {/* ADS PAUSED 2026-09-01 (post-restriction conservative rollout).
+   To re-enable: generate a NEW ad unit in AdSense dashboard
+   (Ads > By ad unit > Display ads) and update the slot below,
+   then uncomment this block.
+<AdUnit
                             slot="9025117620"
                             format="fluid"
                             layout="in-feed"
                             layoutKey="-fb+5w+4e-db+86"
                           />
+*/}
                         </div>
                       )}
 
                       {/* In-article ad after every 18th company */}
                       {index % 18 === 17 && (
                         <div className="col-span-1 sm:col-span-2 lg:col-span-3 bg-white rounded-lg p-2">
-                          <AdUnit slot="4690286797" format="fluid" layout="in-article" />
+                          {/* ADS PAUSED 2026-09-01 (post-restriction conservative rollout).
+   To re-enable: generate a NEW ad unit in AdSense dashboard
+   (Ads > By ad unit > Display ads) and update the slot below,
+   then uncomment this block.
+<AdUnit slot="4690286797" format="fluid" layout="in-article" />
+*/}
                         </div>
                       )}
                     </React.Fragment>
@@ -350,16 +365,26 @@ export default async function CompanyDirectoryPage({ searchParams }: Props) {
 
               {/* Middle display ad — below company list */}
               <div className="my-6">
-                <AdUnit slot="9010641928" format="auto" />
+                {/* ADS PAUSED 2026-09-01 (post-restriction conservative rollout).
+   To re-enable: generate a NEW ad unit in AdSense dashboard
+   (Ads > By ad unit > Display ads) and update the slot below,
+   then uncomment this block.
+<AdUnit slot="9010641928" format="auto" />
+*/}
               </div>
 
               {/* Second in-article ad — bottom of list */}
               <div className="my-6 bg-white rounded-lg p-2">
-                <AdUnit
+                {/* ADS PAUSED 2026-09-01 (post-restriction conservative rollout).
+   To re-enable: generate a NEW ad unit in AdSense dashboard
+   (Ads > By ad unit > Display ads) and update the slot below,
+   then uncomment this block.
+<AdUnit
                   slot="8181708196"
                   format="fluid"
                   layout="in-article"
                 />
+*/}
               </div>
             </div>
 
@@ -370,18 +395,28 @@ export default async function CompanyDirectoryPage({ searchParams }: Props) {
                 {/* Sidebar display ad 1 — middle display slot */}
                 <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
                   <p className="text-[10px] text-gray-400 text-center pt-1">Advertisement</p>
-                  <AdUnit slot="9010641928" format="auto" />
+                  {/* ADS PAUSED 2026-09-01 (post-restriction conservative rollout).
+   To re-enable: generate a NEW ad unit in AdSense dashboard
+   (Ads > By ad unit > Display ads) and update the slot below,
+   then uncomment this block.
+<AdUnit slot="9010641928" format="auto" />
+*/}
                 </div>
 
                 {/* Sidebar in-feed ad */}
                 <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
                   <p className="text-[10px] text-gray-400 text-center pt-1">Advertisement</p>
-                  <AdUnit
+                  {/* ADS PAUSED 2026-09-01 (post-restriction conservative rollout).
+   To re-enable: generate a NEW ad unit in AdSense dashboard
+   (Ads > By ad unit > Display ads) and update the slot below,
+   then uncomment this block.
+<AdUnit
                     slot="9025117620"
                     format="fluid"
                     layout="in-feed"
                     layoutKey="-fb+5w+4e-db+86"
                   />
+*/}
                 </div>
               </div>
             </aside>

@@ -68,7 +68,12 @@ export default async function AccommodationFinderPage() {
 
       {/* Ad 1: Display Top - After How It Works */}
       <div className="px-4 md:px-6 py-6 max-w-7xl mx-auto">
-        <AdUnit slot="4198231153" format="auto" />
+        {/* ADS PAUSED 2026-09-01 (post-restriction conservative rollout).
+   To re-enable: generate a NEW ad unit in AdSense dashboard
+   (Ads > By ad unit > Display ads) and update the slot below,
+   then uncomment this block.
+<AdUnit slot="4198231153" format="auto" />
+*/}
       </div>
 
       <div className="px-4 md:px-6 py-6 max-w-7xl mx-auto">

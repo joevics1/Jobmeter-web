@@ -256,7 +256,12 @@ export default function TheoryQuizClient({ company }: { company: string }) {
 
           {/* Ad between score summary and question review */}
           <div className="mb-6">
-            <AdUnit slot="4198231153" format="auto" />
+            {/* ADS PAUSED 2026-09-01 (post-restriction conservative rollout).
+   To re-enable: generate a NEW ad unit in AdSense dashboard
+   (Ads > By ad unit > Display ads) and update the slot below,
+   then uncomment this block.
+<AdUnit slot="4198231153" format="auto" />
+*/}
           </div>
 
           <div className="space-y-4 mb-8">
@@ -297,7 +302,12 @@ export default function TheoryQuizClient({ company }: { company: string }) {
 
           {/* Ad after question review, before Try Again */}
           <div className="mb-6">
-            <AdUnit slot="9751041788" format="auto" />
+            {/* ADS PAUSED 2026-09-01 (post-restriction conservative rollout).
+   To re-enable: generate a NEW ad unit in AdSense dashboard
+   (Ads > By ad unit > Display ads) and update the slot below,
+   then uncomment this block.
+<AdUnit slot="9751041788" format="auto" />
+*/}
           </div>
 
           <button
@@ -383,7 +393,12 @@ export default function TheoryQuizClient({ company }: { company: string }) {
             itself only remounts (fresh ad request) when the segment changes
             at the midpoint push above. */}
         <div className="mb-4">
-          <AdUnit key={`quiz-${adSegment}`} slot="4198231153" format="auto" />
+          {/* ADS PAUSED 2026-09-01 (post-restriction conservative rollout).
+   To re-enable: generate a NEW ad unit in AdSense dashboard
+   (Ads > By ad unit > Display ads) and update the slot below,
+   then uncomment this block.
+<AdUnit key={`quiz-${adSegment}`} slot="4198231153" format="auto" />
+*/}
         </div>
 
         {/* Navigation */}

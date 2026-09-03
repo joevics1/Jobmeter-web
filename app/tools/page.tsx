@@ -145,7 +145,12 @@ export default function ToolsPage() {
 
       {/* ── AD 1: Top banner ── */}
       <div className="px-4 md:px-6 pt-6 max-w-6xl mx-auto">
-        <AdUnit slot="4198231153" format="auto" />
+        {/* ADS PAUSED 2026-09-01 (post-restriction conservative rollout).
+   To re-enable: generate a NEW ad unit in AdSense dashboard
+   (Ads > By ad unit > Display ads) and update the slot below,
+   then uncomment this block.
+<AdUnit slot="4198231153" format="auto" />
+*/}
       </div>
 
       <div className="px-4 md:px-6 py-8 max-w-6xl mx-auto">
@@ -191,7 +196,12 @@ export default function ToolsPage() {
                 {/* ── Conditional Middle AD ── */}
                 {showMiddleAd && index === 1 && (
                   <div className="py-2">
-                    <AdUnit slot="8181708196" format="fluid" layout="in-article" />
+                    {/* ADS PAUSED 2026-09-01 (post-restriction conservative rollout).
+   To re-enable: generate a NEW ad unit in AdSense dashboard
+   (Ads > By ad unit > Display ads) and update the slot below,
+   then uncomment this block.
+<AdUnit slot="8181708196" format="fluid" layout="in-article" />
+*/}
                   </div>
                 )}
               </React.Fragment>
@@ -201,7 +211,12 @@ export default function ToolsPage() {
 
         {/* ── AD 3: Bottom banner ── */}
         <div className="mt-12">
-          <AdUnit slot="9751041788" format="auto" />
+          {/* ADS PAUSED 2026-09-01 (post-restriction conservative rollout).
+   To re-enable: generate a NEW ad unit in AdSense dashboard
+   (Ads > By ad unit > Display ads) and update the slot below,
+   then uncomment this block.
+<AdUnit slot="9751041788" format="auto" />
+*/}
         </div>
       </div>
     </div>

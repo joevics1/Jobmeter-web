@@ -564,7 +564,12 @@ export default function InternshipFinderClient() {
         </div>
 
         <div className="mb-4">
-          <AdUnit slot="4198231153" format="auto" />
+          {/* ADS PAUSED 2026-09-01 (post-restriction conservative rollout).
+   To re-enable: generate a NEW ad unit in AdSense dashboard
+   (Ads > By ad unit > Display ads) and update the slot below,
+   then uncomment this block.
+<AdUnit slot="4198231153" format="auto" />
+*/}
         </div>
 
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
@@ -610,7 +615,12 @@ export default function InternshipFinderClient() {
 
       {totalPages > 1 && (
         <div className="my-6">
-          <AdUnit slot="9010641928" format="auto" />
+          {/* ADS PAUSED 2026-09-01 (post-restriction conservative rollout).
+   To re-enable: generate a NEW ad unit in AdSense dashboard
+   (Ads > By ad unit > Display ads) and update the slot below,
+   then uncomment this block.
+<AdUnit slot="9010641928" format="auto" />
+*/}
         </div>
       )}
 

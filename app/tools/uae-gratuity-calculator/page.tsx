@@ -118,7 +118,12 @@ export default function UAEGratuityPage() {
 
         {/* Ad Unit Component */}
         <div className="mb-6">
-          <AdUnit slot="7849102345" />
+          {/* ADS PAUSED 2026-09-01 (post-restriction conservative rollout).
+   To re-enable: generate a NEW ad unit in AdSense dashboard
+   (Ads > By ad unit > Display ads) and update the slot below,
+   then uncomment this block.
+<AdUnit slot="7849102345" />
+*/}
         </div>
 
         {/* Summary Introduction Container */}

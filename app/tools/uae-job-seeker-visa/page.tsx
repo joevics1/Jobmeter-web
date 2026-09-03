@@ -165,7 +165,12 @@ export default function UAEJobSeekerVisaPage() {
 
         {/* Top Ad */}
         <div className="max-w-6xl mx-auto px-6 py-4">
-          <AdUnit slot="4198231153" format="auto" />
+          {/* ADS PAUSED 2026-09-01 (post-restriction conservative rollout).
+   To re-enable: generate a NEW ad unit in AdSense dashboard
+   (Ads > By ad unit > Display ads) and update the slot below,
+   then uncomment this block.
+<AdUnit slot="4198231153" format="auto" />
+*/}
         </div>
 
         {/* Condensed intro — single line, smaller font */}
@@ -185,7 +190,12 @@ export default function UAEJobSeekerVisaPage() {
 
         {/* Middle Ad */}
         <div className="max-w-6xl mx-auto px-6 py-6">
-          <AdUnit slot="4690286797" format="fluid" layout="in-article" />
+          {/* ADS PAUSED 2026-09-01 (post-restriction conservative rollout).
+   To re-enable: generate a NEW ad unit in AdSense dashboard
+   (Ads > By ad unit > Display ads) and update the slot below,
+   then uncomment this block.
+<AdUnit slot="4690286797" format="fluid" layout="in-article" />
+*/}
         </div>
 
         {/* Detailed SEO & Educational Content */}
@@ -379,7 +389,12 @@ export default function UAEJobSeekerVisaPage() {
 
         {/* Bottom Ad */}
         <div className="max-w-6xl mx-auto px-6 py-8">
-          <AdUnit slot="9751041788" format="auto" />
+          {/* ADS PAUSED 2026-09-01 (post-restriction conservative rollout).
+   To re-enable: generate a NEW ad unit in AdSense dashboard
+   (Ads > By ad unit > Display ads) and update the slot below,
+   then uncomment this block.
+<AdUnit slot="9751041788" format="auto" />
+*/}
         </div>
       </div>
     </>

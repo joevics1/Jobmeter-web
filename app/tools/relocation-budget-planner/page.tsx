@@ -163,7 +163,12 @@ export default function RelocationBudgetPlannerPage() {
 
         {/* Top Ad */}
         <div className="max-w-6xl mx-auto px-6 py-6">
-          <AdUnit slot="4198231153" format="auto" />
+          {/* ADS PAUSED 2026-09-01 (post-restriction conservative rollout).
+   To re-enable: generate a NEW ad unit in AdSense dashboard
+   (Ads > By ad unit > Display ads) and update the slot below,
+   then uncomment this block.
+<AdUnit slot="4198231153" format="auto" />
+*/}
         </div>
 
         {/* Global Intro */}
@@ -184,7 +189,12 @@ export default function RelocationBudgetPlannerPage() {
 
         {/* Middle Ad */}
         <div className="max-w-6xl mx-auto px-6 py-8">
-          <AdUnit slot="4690286797" format="fluid" layout="in-article" />
+          {/* ADS PAUSED 2026-09-01 (post-restriction conservative rollout).
+   To re-enable: generate a NEW ad unit in AdSense dashboard
+   (Ads > By ad unit > Display ads) and update the slot below,
+   then uncomment this block.
+<AdUnit slot="4690286797" format="fluid" layout="in-article" />
+*/}
         </div>
 
         {/* SEO & EDUCATIONAL CONTENT (Expanded to ~2000 words) */}
@@ -347,7 +357,12 @@ export default function RelocationBudgetPlannerPage() {
 
         {/* Bottom Ad */}
         <div className="max-w-6xl mx-auto px-6 pb-16">
-          <AdUnit slot="9751041788" format="auto" />
+          {/* ADS PAUSED 2026-09-01 (post-restriction conservative rollout).
+   To re-enable: generate a NEW ad unit in AdSense dashboard
+   (Ads > By ad unit > Display ads) and update the slot below,
+   then uncomment this block.
+<AdUnit slot="9751041788" format="auto" />
+*/}
         </div>
       </div>
     </>

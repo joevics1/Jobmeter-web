@@ -248,7 +248,12 @@ export default function SaudiVisaPage() {
 
         {/* Top Ad Area */}
         <div className="max-w-6xl mx-auto px-6 py-4">
-          <AdUnit slot="4198231153" format="auto" className="my-4" />
+          {/* ADS PAUSED 2026-09-01 (post-restriction conservative rollout).
+   To re-enable: generate a NEW ad unit in AdSense dashboard
+   (Ads > By ad unit > Display ads) and update the slot below,
+   then uncomment this block.
+<AdUnit slot="4198231153" format="auto" className="my-4" />
+*/}
         </div>
 
         {/* Condensed Intro Container */}
@@ -269,7 +274,12 @@ export default function SaudiVisaPage() {
 
         {/* Middle Ad Area */}
         <div className="max-w-6xl mx-auto px-6 py-4">
-          <AdUnit slot="4690286797" layout="in-article" className="my-6" />
+          {/* ADS PAUSED 2026-09-01 (post-restriction conservative rollout).
+   To re-enable: generate a NEW ad unit in AdSense dashboard
+   (Ads > By ad unit > Display ads) and update the slot below,
+   then uncomment this block.
+<AdUnit slot="4690286797" layout="in-article" className="my-6" />
+*/}
         </div>
 
         {/* Extended Strategic Search Layout */}
@@ -536,7 +546,12 @@ export default function SaudiVisaPage() {
 
         {/* Bottom Ad Area */}
         <div className="max-w-6xl mx-auto px-6 py-4">
-          <AdUnit slot="9751041788" format="auto" className="my-4" />
+          {/* ADS PAUSED 2026-09-01 (post-restriction conservative rollout).
+   To re-enable: generate a NEW ad unit in AdSense dashboard
+   (Ads > By ad unit > Display ads) and update the slot below,
+   then uncomment this block.
+<AdUnit slot="9751041788" format="auto" className="my-4" />
+*/}
         </div>
       </div>
     </>
