@@ -221,8 +221,22 @@ function buildJobUrl(job: { slug?: string | null; id: string; country?: string[]
 }
 
 function formatJobMessage(job: any): string {
-  if (job.social && job.social.trim()) return job.social.trim();
-  // Fallback for jobs without a pre-generated social post
+  let body = job.social && job.social.trim() ? job.social.trim() : buildFallbackJobText(job);
+
+  // Drop the trailing "Apply: <url>" line — we already show a tap-through button below.
+  body = body.replace(/\n*apply:\s*https?:\/\/\S+\s*$/i, '').trim();
+
+  const lines = body.split('\n');
+  if (lines[0] && /^hiring:/i.test(lines[0])) {
+    lines[0] = `💼 *${lines[0].replace(/^hiring:\s*/i, '').trim()}*`;
+  }
+  if (lines[1] && /^location:/i.test(lines[1])) {
+    lines[1] = `📍 ${lines[1].replace(/^location:\s*/i, '').trim()}`;
+  }
+  return lines.join('\n');
+}
+
+function buildFallbackJobText(job: any): string {
   const companyName = (job.company && typeof job.company === 'object' && job.company.name) || 'Confidential employer';
   const locationParts: string[] = [];
   if (job.location && typeof job.location === 'object') {
@@ -231,7 +245,7 @@ function formatJobMessage(job: any): string {
   }
   if (Array.isArray(job.country) && job.country[0]) locationParts.push(job.country[0]);
   const locationStr = locationParts.join(', ') || 'Remote';
-  return `Hiring: ${job.title}\nCompany: ${companyName}\nLocation: ${locationStr}\n\nApply: ${buildJobUrl(job)}`;
+  return `Hiring: ${job.title}\nLocation: ${locationStr}\nCompany: ${companyName}`;
 }
 
 const JOB_SELECT = 'id, title, slug, company, country, location, sector, social, posted_date';
@@ -324,7 +338,7 @@ async function sendJobBatch(supabase: any, chatId: number, userId: string, secto
 
   for (const job of jobs) {
     await sendMessage(chatId, formatJobMessage(job), {
-      disable_web_page_preview: false,
+      disable_web_page_preview: true,
       reply_markup: { inline_keyboard: [[{ text: '✅ View & apply', url: buildJobUrl(job) }]] },
     });
   }

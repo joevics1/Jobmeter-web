@@ -339,7 +339,7 @@ async function sendTelegramMatchNotification(
         chat_id: tgUser.chat_id,
         text,
         parse_mode: 'Markdown',
-        disable_web_page_preview: false,
+        disable_web_page_preview: true,
       }),
     });
 
