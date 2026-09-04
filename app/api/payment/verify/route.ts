@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
     // Award credits + mark transaction complete
     await handleSuccessfulPayment(paymentData);
 
-    const planId = paymentData.metadata?.plan_id ?? 'apply-for-me';
+    const planId = paymentData.metadata?.plan_slug ?? 'apply-for-me';
 
     return NextResponse.json({
       success: true,

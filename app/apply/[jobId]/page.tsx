@@ -13,6 +13,7 @@ interface JobSummary {
   company: any;
   apply_in_app: boolean;
   screening_enabled: boolean;
+  status: string;
 }
 
 export default function ApplyPage() {
@@ -41,12 +42,17 @@ export default function ApplyPage() {
 
       const { data: jobData, error: jobError } = await supabase
         .from('jobs')
-        .select('id, title, company, apply_in_app, screening_enabled')
+        .select('id, title, company, apply_in_app, screening_enabled, status')
         .eq('id', jobId)
         .maybeSingle();
 
       if (jobError || !jobData || !jobData.apply_in_app) {
         setError('This job is not available for in-app applications.');
+        setLoading(false);
+        return;
+      }
+      if (jobData.status !== 'active') {
+        setError('This job is no longer accepting applications.');
         setLoading(false);
         return;
       }
@@ -147,7 +153,7 @@ export default function ApplyPage() {
       <div className="min-h-screen flex items-center justify-center px-4">
         <div className="text-center max-w-md">
           <CheckCircle2 className="mx-auto mb-4" size={48} color={theme.colors.primary.DEFAULT} />
-          <h1 className="text-xl font-semibold text-gray-900 mb-2">You've already applied</h1>
+          <h1 className="text-xl font-semibold text-gray-900 mb-2">You&apos;ve already applied</h1>
           <p className="text-gray-600 mb-6">
             You already have an application on file for <span className="font-medium">{job.title}</span>.
           </p>

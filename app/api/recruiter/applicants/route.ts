@@ -31,7 +31,7 @@ export async function GET(req: NextRequest) {
 
     const { data: applications, error: appsError } = await supabase
       .from('applications')
-      .select('id, applicant_id, cover_letter, created_at, screening_attempt_id')
+      .select('id, applicant_id, cover_letter, created_at, screening_attempt_id, application_method')
       .eq('job_id', jobId)
       .order('created_at', { ascending: false });
 
@@ -63,6 +63,7 @@ export async function GET(req: NextRequest) {
       id: a.id,
       applicantId: a.applicant_id,
       coverLetter: a.cover_letter,
+      applicationMethod: a.application_method,
       createdAt: a.created_at,
       applicant: profileMap.get(a.applicant_id) || null,
       screening: a.screening_attempt_id ? attemptMap.get(a.screening_attempt_id) || null : null,

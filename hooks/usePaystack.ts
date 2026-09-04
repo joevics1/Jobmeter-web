@@ -29,8 +29,8 @@ export function usePaystack(): UsePaystackReturn {
     setError(null);
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
         setError('User not authenticated');
         setLoading(false);
         return false;
@@ -38,11 +38,14 @@ export function usePaystack(): UsePaystackReturn {
 
       const response = await fetch('/api/payment/initialize', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`,
+        },
         body: JSON.stringify({
           email: options.email,
           amount: options.amount,
-          userId: user.id,
+          userId: session.user.id,
           paymentType: options.paymentType,
           planId: options.planId,
           planType: options.planType,

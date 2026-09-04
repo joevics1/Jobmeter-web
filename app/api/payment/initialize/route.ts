@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@supabase/supabase-js';
 import { initializePayment } from '@/lib/services/paymentService';
+import { JOB_POSTING_PLANS, FEATURED_JOB_PRICE, JobPostingPlanId } from '@/lib/constants/jobPricing';
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
 export async function POST(request: NextRequest) {
   try {
@@ -11,6 +16,22 @@ export async function POST(request: NextRequest) {
         { error: 'Missing required fields: email, amount, userId, paymentType' },
         { status: 400 }
       );
+    }
+
+    // SECURITY: verify the caller actually is the userId they claim to be,
+    // using their own Supabase access token — not just whatever the request
+    // body says. Without this, anyone could POST here with someone else's
+    // userId and have a payment credited to that person's account instead
+    // of their own.
+    const authHeader = request.headers.get('authorization');
+    const token = authHeader?.replace('Bearer ', '');
+    if (!token) {
+      return NextResponse.json({ error: 'Missing authorization token' }, { status: 401 });
+    }
+    const supabaseAuth = createClient(supabaseUrl, supabaseAnonKey);
+    const { data: { user: verifiedUser }, error: authError } = await supabaseAuth.auth.getUser(token);
+    if (authError || !verifiedUser || verifiedUser.id !== userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     if (paymentType === 'subscription' && (!planId || !planType)) {
@@ -27,23 +48,46 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (paymentType === 'job_listing' && !planType) {
-      return NextResponse.json(
-        { error: 'Job listing payments require planType (slots_1, slots_3, or unlimited)' },
-        { status: 400 }
-      );
-    }
-
-    if (paymentType === 'featured_job' && !metadata?.jobId) {
-      return NextResponse.json(
-        { error: 'Featured job payments require metadata.jobId' },
-        { status: 400 }
-      );
+    // SECURITY: never trust a client-supplied amount for payment types we
+    // define pricing for ourselves — recompute it from the same constants
+    // the paywall UI uses. Without this, a request crafted directly against
+    // this endpoint (bypassing the UI) could set amount to anything —
+    // e.g. pay ₦1 and still receive an unlimited job-posting subscription
+    // or a featured placement, since the webhook applies whatever
+    // paymentType/planType is in the metadata regardless of what was
+    // actually charged.
+    let verifiedAmount: number;
+    if (paymentType === 'job_listing') {
+      const plan = JOB_POSTING_PLANS[planType as JobPostingPlanId];
+      if (!plan) {
+        return NextResponse.json({ error: 'Unknown job listing plan' }, { status: 400 });
+      }
+      verifiedAmount = plan.amount;
+    } else if (paymentType === 'featured_job') {
+      if (!metadata?.jobId) {
+        return NextResponse.json({ error: 'Featured job payments require metadata.jobId' }, { status: 400 });
+      }
+      // Ownership check — without this, anyone could pay to feature a job
+      // that isn't theirs (e.g. a competitor's listing).
+      const supabaseCheck = createClient(supabaseUrl, supabaseAnonKey);
+      const { data: job } = await supabaseCheck
+        .from('jobs')
+        .select('posted_by_user_id')
+        .eq('id', metadata.jobId)
+        .maybeSingle();
+      if (!job || job.posted_by_user_id !== userId) {
+        return NextResponse.json({ error: 'You can only feature your own job listings' }, { status: 403 });
+      }
+      verifiedAmount = FEATURED_JOB_PRICE.amount;
+    } else {
+      // subscription / credits (legacy paths) still trust the client amount —
+      // same class of risk applies here too, flagged separately.
+      verifiedAmount = amount;
     }
 
     const result = await initializePayment({
       email,
-      amount,
+      amount: verifiedAmount,
       userId,
       paymentType,
       planId,

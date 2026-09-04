@@ -16,12 +16,19 @@ export async function POST(req: NextRequest) {
 
     const { data: job, error: jobError } = await supabase
       .from('jobs')
-      .select('id, apply_in_app, screening_enabled')
+      .select('id, apply_in_app, screening_enabled, status')
       .eq('id', jobId)
       .maybeSingle();
 
     if (jobError || !job) {
       return NextResponse.json({ error: 'Job not found' }, { status: 404 });
+    }
+
+    if (job.status !== 'active') {
+      return NextResponse.json(
+        { error: 'This job is no longer accepting applications' },
+        { status: 410 }
+      );
     }
 
     if (!job.apply_in_app) {

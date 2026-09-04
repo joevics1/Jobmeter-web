@@ -11,6 +11,7 @@ interface Applicant {
   id: string;
   applicantId: string;
   coverLetter: string | null;
+  applicationMethod: string;
   createdAt: string;
   applicant: { full_name: string; email: string; phone: string } | null;
   screening: {
@@ -123,6 +124,11 @@ export default function ApplicantsPage() {
                     </div>
                   )}
                 </div>
+                {a.applicationMethod && a.applicationMethod !== 'in_app' && (
+                  <p className="text-xs text-amber-600 mt-2 bg-amber-50 rounded px-2 py-1 inline-block">
+                    Applied via {a.applicationMethod === 'email' ? 'email' : a.applicationMethod === 'phone' ? 'WhatsApp/phone' : 'external link'} — no in-app details, this is a click-through record
+                  </p>
+                )}
                 {a.coverLetter && (
                   <p className="text-sm text-gray-600 mt-3 whitespace-pre-wrap border-t border-gray-100 pt-3">
                     {a.coverLetter}
