@@ -248,23 +248,52 @@ function buildFallbackJobText(job: any): string {
   return `Hiring: ${job.title}\nLocation: ${locationStr}\nCompany: ${companyName}`;
 }
 
-const JOB_SELECT = 'id, title, slug, company, country, location, sector, social, posted_date';
+const JOB_SELECT = 'id, title, slug, company, country, location, sector, role, social, posted_date';
 
-async function queryJobsForSector(
-  supabase: any,
-  sector: string,
-  excludeIds: string[],
-  limit: number,
-  recentSinceISO: string
-) {
+function titleCase(s: string): string {
+  return s.split(' ').map((w) => (w ? w.charAt(0).toUpperCase() + w.slice(1).toLowerCase() : w)).join(' ');
+}
+
+// Country isn't asked separately — derive it from what CV parsing / onboarding already captured.
+function deriveCountry(onboarding: { cv_location?: string | null; preferred_locations?: string[] | null }): string | null {
+  if (onboarding.cv_location) {
+    const parts = onboarding.cv_location.split(',').map((s) => s.trim()).filter(Boolean);
+    if (parts.length) return titleCase(parts[parts.length - 1]);
+  }
+  if (onboarding.preferred_locations && onboarding.preferred_locations.length) {
+    return titleCase(onboarding.preferred_locations[onboarding.preferred_locations.length - 1]);
+  }
+  return null;
+}
+
+function roleOrFilter(roles: string[]): string {
+  return roles
+    .slice(0, 6)
+    .map((r) => r.replace(/[%_,()]/g, '').trim())
+    .filter((r) => r.length > 2)
+    .map((r) => `role.ilike.%${r}%`)
+    .join(',');
+}
+
+function jobMatchesCountry(job: any, country: string): boolean {
+  const arr: string[] = Array.isArray(job.country) ? job.country : [];
+  return arr.some((c) => c.toLowerCase() === country.toLowerCase() || c.toLowerCase() === 'global');
+}
+
+// Fetches a generous candidate pool for one filter tier (role OR sector), newest-first,
+// active only, excluding anything already shown. Country preference is applied client-side
+// afterward so a thin country match never blocks the whole tier.
+async function queryCandidates(supabase: any, orFilter: string, excludeIds: string[], recentSinceISO: string, fetchSize: number) {
+  if (!orFilter) return [];
   let query = supabase
     .from('jobs')
     .select(JOB_SELECT)
     .eq('status', 'active')
-    .or(sectorOrFilter(sector))
+    .or(orFilter)
     .gte('posted_date', recentSinceISO)
     .order('posted_date', { ascending: false })
-    .limit(limit);
+    .order('created_at', { ascending: false })
+    .limit(fetchSize);
 
   if (excludeIds.length > 0) {
     query = query.not('id', 'in', `(${excludeIds.join(',')})`);
@@ -272,54 +301,106 @@ async function queryJobsForSector(
 
   const { data, error } = await query;
   if (error) {
-    console.error('queryJobsForSector error:', error);
+    console.error('queryCandidates error:', error);
     return [];
   }
   return data || [];
 }
 
-async function fetchJobBatch(supabase: any, primarySector: string, shownIds: string[], limit = 3) {
-  const recentSinceISO = new Date(Date.now() - RECENT_DAYS * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+type OnboardingBrief = { sector: string; targetRoles: string[]; country: string | null };
 
-  let collected = await queryJobsForSector(supabase, primarySector, shownIds, limit, recentSinceISO);
-  let usedRelated = false;
-  let relatedSectorUsed: string | null = null;
-
-  if (collected.length < limit) {
-    const related = RELATED_SECTORS[primarySector] || [];
-    for (const rs of related) {
-      if (collected.length >= limit) break;
-      const need = limit - collected.length;
-      const excludeNow = [...shownIds, ...collected.map((j: any) => j.id)];
-      const more = await queryJobsForSector(supabase, rs, excludeNow, need, recentSinceISO);
-      if (more.length > 0) {
-        collected = [...collected, ...more];
-        usedRelated = true;
-        relatedSectorUsed = rs;
-      }
-    }
-  }
-
-  return { jobs: collected, usedRelated, relatedSectorUsed };
+async function getOnboardingBrief(supabase: any, userId: string): Promise<OnboardingBrief | null> {
+  const { data } = await supabase
+    .from('onboarding_data')
+    .select('sector, target_roles, cv_location, preferred_locations')
+    .eq('user_id', userId)
+    .maybeSingle();
+  if (!data) return null;
+  const sector = data.sector && data.sector !== 'null' ? data.sector : null;
+  if (!sector) return null;
+  return {
+    sector,
+    targetRoles: Array.isArray(data.target_roles) ? data.target_roles : [],
+    country: deriveCountry({ cv_location: data.cv_location, preferred_locations: data.preferred_locations }),
+  };
 }
 
 async function getUserSector(supabase: any, userId: string): Promise<string | null> {
-  const { data } = await supabase
-    .from('onboarding_data')
-    .select('sector')
-    .eq('user_id', userId)
-    .maybeSingle();
-  const sector = data?.sector;
-  return sector && sector !== 'null' ? sector : null;
+  const brief = await getOnboardingBrief(supabase, userId);
+  return brief?.sector || null;
 }
 
-async function sendJobBatch(supabase: any, chatId: number, userId: string, sector: string, shownIds: string[]) {
-  const { jobs, usedRelated, relatedSectorUsed } = await fetchJobBatch(supabase, sector, shownIds, 3);
+/**
+ * Tiered job fetch: role match first (highest intent), then the user's sector,
+ * then related sectors — each tier newest-first, active-only, never repeating a
+ * job already shown. Country is preferred within every tier but relaxed rather
+ * than blocking results if there just isn't a local match.
+ */
+async function fetchTieredJobs(
+  supabase: any,
+  brief: OnboardingBrief,
+  excludeIds: string[],
+  limit = 3
+) {
+  const recentSinceISO = new Date(Date.now() - RECENT_DAYS * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+
+  const tiers: { label: string; or: string }[] = [];
+  const roleTerms = roleOrFilter(brief.targetRoles);
+  if (roleTerms) tiers.push({ label: 'role', or: roleTerms });
+  tiers.push({ label: 'sector', or: sectorOrFilter(brief.sector) });
+  for (const rs of RELATED_SECTORS[brief.sector] || []) {
+    tiers.push({ label: `related:${rs}`, or: sectorOrFilter(rs) });
+  }
+
+  let collected: any[] = [];
+  let usedTier: string | null = null;
+  let relaxedCountry = false;
+
+  for (const tier of tiers) {
+    if (collected.length >= limit) break;
+    const need = limit - collected.length;
+    const currentExclude = [...excludeIds, ...collected.map((j) => j.id)];
+    const candidates = await queryCandidates(supabase, tier.or, currentExclude, recentSinceISO, Math.max(need * 5, 15));
+    if (candidates.length === 0) continue;
+
+    let picked: any[];
+    if (brief.country) {
+      const inCountry = candidates.filter((j) => jobMatchesCountry(j, brief.country as string));
+      picked = inCountry.slice(0, need);
+      if (picked.length < need) {
+        const rest = candidates.filter((j) => !picked.some((p) => p.id === j.id)).slice(0, need - picked.length);
+        if (rest.length) {
+          picked = [...picked, ...rest];
+          relaxedCountry = true;
+        }
+      }
+    } else {
+      picked = candidates.slice(0, need);
+    }
+
+    if (picked.length > 0) {
+      collected = [...collected, ...picked];
+      if (!usedTier) usedTier = tier.label;
+      else if (usedTier !== tier.label && !usedTier.includes('+more')) usedTier = `${usedTier}+more`;
+    }
+  }
+
+  return { jobs: collected, usedTier, relaxedCountry };
+}
+
+async function sendJobBatch(supabase: any, chatId: number, userId: string, shownIds: string[]) {
+  const brief = await getOnboardingBrief(supabase, userId);
+  if (!brief) {
+    await sendMessage(chatId, `First, what sector are you interested in?`, { reply_markup: sectorKeyboard('browse') });
+    return;
+  }
+
+  const { jobs, usedTier } = await fetchTieredJobs(supabase, brief, shownIds, 3);
 
   if (jobs.length === 0) {
     await sendMessage(
       chatId,
-      `That's all the recent jobs I have for *${sector}* and related sectors right now. Check back soon, or browse everything on the web.`,
+      `That's all the recent jobs I have matching your role and *${brief.sector}* right now. Check back soon, or browse everything on the web.`,
       {
         reply_markup: {
           inline_keyboard: [
@@ -332,8 +413,11 @@ async function sendJobBatch(supabase: any, chatId: number, userId: string, secto
     return;
   }
 
-  if (usedRelated && relatedSectorUsed) {
-    await sendMessage(chatId, `That's all the recent *${sector}* jobs — here's a few from *${relatedSectorUsed}* too:`);
+  if (usedTier && usedTier.startsWith('related:')) {
+    const relatedSector = usedTier.split(':')[1].split('+')[0];
+    await sendMessage(chatId, `That's all the recent *${brief.sector}* jobs — here's a few from *${relatedSector}* too:`);
+  } else if (usedTier === 'sector' && brief.targetRoles.length > 0) {
+    await sendMessage(chatId, `No fresh matches for your exact role right now — here's what's new in *${brief.sector}*:`);
   }
 
   for (const job of jobs) {
@@ -343,8 +427,8 @@ async function sendJobBatch(supabase: any, chatId: number, userId: string, secto
     });
   }
 
-  const newShownIds = [...shownIds, ...jobs.map((j: any) => j.id)].slice(-60); // cap growth
-  await setState(supabase, chatId, { step: 'browsing', temp: { sector, shownIds: newShownIds } });
+  const newShownIds = [...shownIds, ...jobs.map((j: any) => j.id)].slice(-100); // cap growth
+  await setState(supabase, chatId, { step: 'browsing', temp: { sector: brief.sector, shownIds: newShownIds } });
 
   await sendMessage(chatId, `Want more?`, {
     reply_markup: {
@@ -356,13 +440,17 @@ async function sendJobBatch(supabase: any, chatId: number, userId: string, secto
   });
 }
 
-async function browseJobs(supabase: any, chatId: number, userId: string) {
+// Continuing a browse session (same sector) picks up where it left off instead of
+// restarting from the freshest 3 every time — that was showing "the same jobs" on repeat taps.
+async function browseJobs(supabase: any, chatId: number, userId: string, tgUser?: any) {
   const sector = await getUserSector(supabase, userId);
   if (!sector) {
     await sendMessage(chatId, `First, what sector are you interested in?`, { reply_markup: sectorKeyboard('browse') });
     return;
   }
-  await sendJobBatch(supabase, chatId, userId, sector, []);
+  const state = (tgUser?.state || {}) as BotState;
+  const shownIds = state.step === 'browsing' && state.temp?.sector === sector ? state.temp?.shownIds || [] : [];
+  await sendJobBatch(supabase, chatId, userId, shownIds);
 }
 
 // ─── Flows ───────────────────────────────────────────────────────────────────
@@ -744,21 +832,15 @@ serve(async (req) => {
           } else {
             await supabase.from('onboarding_data').update({ sector }).eq('user_id', tgUser.user_id);
             await sendMessage(chatId, `Got it — set your sector to *${sector}*.`);
-            await sendJobBatch(supabase, chatId, tgUser.user_id, sector, []);
+            await sendJobBatch(supabase, chatId, tgUser.user_id, []);
           }
         }
       } else if (data === 'more_jobs' || data === 'more_jobs_fresh') {
         if (!tgUser.linked_at) {
           await sendMessage(chatId, `Send /start first to log in or sign up.`);
         } else {
-          const sector = data === 'more_jobs' ? state.temp?.sector : null;
           const shownIds = data === 'more_jobs' ? state.temp?.shownIds || [] : [];
-          const effectiveSector = sector || (await getUserSector(supabase, tgUser.user_id));
-          if (!effectiveSector) {
-            await sendMessage(chatId, `What sector are you interested in?`, { reply_markup: sectorKeyboard('browse') });
-          } else {
-            await sendJobBatch(supabase, chatId, tgUser.user_id, effectiveSector, shownIds);
-          }
+          await sendJobBatch(supabase, chatId, tgUser.user_id, shownIds);
         }
       } else if (data === 'change_sector') {
         if (!tgUser.linked_at) {
@@ -784,7 +866,7 @@ serve(async (req) => {
     if (text && text.startsWith('/start')) {
       const payload = text.slice(6).trim();
       if (payload === 'browse' && tgUser.linked_at) {
-        await browseJobs(supabase, chatId, tgUser.user_id);
+        await browseJobs(supabase, chatId, tgUser.user_id, tgUser);
       } else {
         await handleStart(supabase, chatId, tgUser);
       }
@@ -797,7 +879,7 @@ serve(async (req) => {
 
     // Main menu button presses (linked users)
     if (tgUser.linked_at && text === '🔍 Browse jobs') {
-      await browseJobs(supabase, chatId, tgUser.user_id);
+      await browseJobs(supabase, chatId, tgUser.user_id, tgUser);
       return new Response('ok', { status: 200 });
     }
     if (tgUser.linked_at && text === '🏢 My sector') {

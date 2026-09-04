@@ -117,68 +117,110 @@ function buildFallbackJobText(job: any): string {
   return `Hiring: ${job.title}\nLocation: ${locationStr}\nCompany: ${companyName}`;
 }
 
-const JOB_SELECT = 'id, title, slug, company, country, location, sector, social, posted_date';
+const JOB_SELECT = 'id, title, slug, company, country, location, sector, role, social, posted_date';
 
-async function queryJobsForSector(supabase: any, sector: string, excludeIds: string[], limit: number, recentSinceISO: string) {
+function titleCase(s: string): string {
+  return s.split(' ').map((w) => (w ? w.charAt(0).toUpperCase() + w.slice(1).toLowerCase() : w)).join(' ');
+}
+
+function deriveCountry(onboarding: { cv_location?: string | null; preferred_locations?: string[] | null }): string | null {
+  if (onboarding.cv_location) {
+    const parts = onboarding.cv_location.split(',').map((s) => s.trim()).filter(Boolean);
+    if (parts.length) return titleCase(parts[parts.length - 1]);
+  }
+  if (onboarding.preferred_locations && onboarding.preferred_locations.length) {
+    return titleCase(onboarding.preferred_locations[onboarding.preferred_locations.length - 1]);
+  }
+  return null;
+}
+
+function roleOrFilter(roles: string[]): string {
+  return roles
+    .slice(0, 6)
+    .map((r) => r.replace(/[%_,()]/g, '').trim())
+    .filter((r) => r.length > 2)
+    .map((r) => `role.ilike.%${r}%`)
+    .join(',');
+}
+
+function jobMatchesCountry(job: any, country: string): boolean {
+  const arr: string[] = Array.isArray(job.country) ? job.country : [];
+  return arr.some((c) => c.toLowerCase() === country.toLowerCase() || c.toLowerCase() === 'global');
+}
+
+async function queryCandidates(supabase: any, orFilter: string, excludeIds: string[], recentSinceISO: string, fetchSize: number) {
+  if (!orFilter) return [];
   let query = supabase
     .from('jobs')
     .select(JOB_SELECT)
     .eq('status', 'active')
-    .or(sectorOrFilter(sector))
+    .or(orFilter)
     .gte('posted_date', recentSinceISO)
     .order('posted_date', { ascending: false })
-    .limit(limit);
+    .order('created_at', { ascending: false })
+    .limit(fetchSize);
   if (excludeIds.length > 0) query = query.not('id', 'in', `(${excludeIds.join(',')})`);
   const { data, error } = await query;
   if (error) {
-    console.error('queryJobsForSector error:', error);
+    console.error('queryCandidates error:', error);
     return [];
   }
   return data || [];
 }
 
-async function queryGeneralRecentJobs(supabase: any, excludeIds: string[], limit: number, recentSinceISO: string) {
-  let query = supabase
-    .from('jobs')
-    .select(JOB_SELECT)
-    .eq('status', 'active')
-    .gte('posted_date', recentSinceISO)
-    .order('posted_date', { ascending: false })
-    .limit(limit);
-  if (excludeIds.length > 0) query = query.not('id', 'in', `(${excludeIds.join(',')})`);
-  const { data, error } = await query;
-  if (error) {
-    console.error('queryGeneralRecentJobs error:', error);
-    return [];
-  }
-  return data || [];
+type OnboardingBrief = { sector: string; targetRoles: string[]; country: string | null };
+
+async function getOnboardingBrief(supabase: any, userId: string): Promise<OnboardingBrief | null> {
+  const { data } = await supabase
+    .from('onboarding_data')
+    .select('sector, target_roles, cv_location, preferred_locations')
+    .eq('user_id', userId)
+    .maybeSingle();
+  if (!data) return null;
+  const sector = data.sector && data.sector !== 'null' ? data.sector : null;
+  if (!sector) return null;
+  return {
+    sector,
+    targetRoles: Array.isArray(data.target_roles) ? data.target_roles : [],
+    country: deriveCountry({ cv_location: data.cv_location, preferred_locations: data.preferred_locations }),
+  };
 }
 
-async function fetchDigestJobs(supabase: any, sector: string | null, seenIds: string[]) {
+// Role match first, then the user's sector, then related sectors — mirrors telegram-bot's browsing logic.
+async function fetchDigestJobs(supabase: any, brief: OnboardingBrief | null, seenIds: string[]) {
   const recentSinceISO = new Date(Date.now() - RECENT_DAYS * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
-  if (!sector) {
-    return await queryGeneralRecentJobs(supabase, seenIds, DIGEST_BATCH_SIZE, recentSinceISO);
+  if (!brief) {
+    return await queryCandidates(supabase, 'status.eq.active', seenIds, recentSinceISO, DIGEST_BATCH_SIZE);
   }
 
-  let collected = await queryJobsForSector(supabase, sector, seenIds, DIGEST_BATCH_SIZE, recentSinceISO);
+  const tiers: string[] = [];
+  const roleTerms = roleOrFilter(brief.targetRoles);
+  if (roleTerms) tiers.push(roleTerms);
+  tiers.push(sectorOrFilter(brief.sector));
+  for (const rs of RELATED_SECTORS[brief.sector] || []) tiers.push(sectorOrFilter(rs));
 
-  if (collected.length < DIGEST_BATCH_SIZE) {
-    const related = RELATED_SECTORS[sector] || [];
-    for (const rs of related) {
-      if (collected.length >= DIGEST_BATCH_SIZE) break;
-      const need = DIGEST_BATCH_SIZE - collected.length;
-      const excludeNow = [...seenIds, ...collected.map((j: any) => j.id)];
-      const more = await queryJobsForSector(supabase, rs, excludeNow, need, recentSinceISO);
-      if (more.length > 0) collected = [...collected, ...more];
-    }
-  }
+  let collected: any[] = [];
 
-  if (collected.length < DIGEST_BATCH_SIZE) {
+  for (const orFilter of tiers) {
+    if (collected.length >= DIGEST_BATCH_SIZE) break;
     const need = DIGEST_BATCH_SIZE - collected.length;
-    const excludeNow = [...seenIds, ...collected.map((j: any) => j.id)];
-    const more = await queryGeneralRecentJobs(supabase, excludeNow, need, recentSinceISO);
-    if (more.length > 0) collected = [...collected, ...more];
+    const excludeNow = [...seenIds, ...collected.map((j) => j.id)];
+    const candidates = await queryCandidates(supabase, orFilter, excludeNow, recentSinceISO, Math.max(need * 5, 15));
+    if (candidates.length === 0) continue;
+
+    let picked: any[];
+    if (brief.country) {
+      const inCountry = candidates.filter((j) => jobMatchesCountry(j, brief.country as string));
+      picked = inCountry.slice(0, need);
+      if (picked.length < need) {
+        const rest = candidates.filter((j) => !picked.some((p) => p.id === j.id)).slice(0, need - picked.length);
+        picked = [...picked, ...rest];
+      }
+    } else {
+      picked = candidates.slice(0, need);
+    }
+    collected = [...collected, ...picked];
   }
 
   return collected;
@@ -235,15 +277,10 @@ serve(async (req) => {
           continue;
         }
 
-        const { data: onboarding } = await supabase
-          .from('onboarding_data')
-          .select('sector')
-          .eq('user_id', tgUser.user_id)
-          .maybeSingle();
-        const sector = onboarding?.sector && onboarding.sector !== 'null' ? onboarding.sector : null;
+        const brief = await getOnboardingBrief(supabase, tgUser.user_id);
 
         const seenIds: string[] = Array.isArray(tgUser.digest_seen_job_ids) ? tgUser.digest_seen_job_ids : [];
-        const jobs = await fetchDigestJobs(supabase, sector, seenIds);
+        const jobs = await fetchDigestJobs(supabase, brief, seenIds);
 
         if (jobs.length === 0) {
           skippedNoJobs++;
@@ -252,7 +289,7 @@ serve(async (req) => {
 
         await sendMessage(
           tgUser.chat_id,
-          `☀️ *Good morning!* Here's what's fresh${sector ? ` in *${sector}*` : ''} today:`
+          `☀️ *Good morning!* Here's what's fresh${brief ? ` in *${brief.sector}*` : ''} today:`
         );
 
         for (const job of jobs) {

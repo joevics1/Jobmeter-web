@@ -35,6 +35,11 @@ declare global {
 }
 
 const AdTopDisplay = () => {
+  // ADS PAUSED 2026-09-01 (post-restriction conservative rollout).
+  // To re-enable: generate a NEW ad unit in AdSense dashboard, update the
+  // slot below if needed, then remove this early return.
+  return null;
+
   useEffect(() => {
     try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch (e) {}
   }, []);
@@ -53,6 +58,9 @@ const AdTopDisplay = () => {
 };
 
 const AdInFeed = ({ index }: { index: number }) => {
+  // ADS PAUSED 2026-09-01 — see AdTopDisplay above for re-enable notes.
+  return null;
+
   useEffect(() => {
     try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch (e) {}
   }, []);
@@ -72,6 +80,9 @@ const AdInFeed = ({ index }: { index: number }) => {
 
 // Alternates between two in-article slots
 const AdInArticle = ({ nth }: { nth: number }) => {
+  // ADS PAUSED 2026-09-01 — see AdTopDisplay above for re-enable notes.
+  return null;
+
   useEffect(() => {
     try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch (e) {}
   }, []);

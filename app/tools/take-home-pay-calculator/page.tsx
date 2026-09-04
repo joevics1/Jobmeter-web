@@ -185,7 +185,10 @@ export default function TakeHomePayPage() {
       </div>
 
       <div className="max-w-7xl mx-auto px-6 py-8">
-        {/* Top Display Ad */}
+        {/* ADS PAUSED 2026-09-01 (post-restriction conservative rollout).
+           To re-enable: generate a NEW ad unit in AdSense dashboard
+           (Ads > By ad unit > Display ads) and update the slot below,
+           then uncomment this block.
         <div className="mb-10">
           <ins className="adsbygoogle"
                style={{ display: 'block' }}
@@ -195,6 +198,7 @@ export default function TakeHomePayPage() {
                data-full-width-responsive="true"></ins>
           <script dangerouslySetInnerHTML={{ __html: '(adsbygoogle = window.adsbygoogle || []).push({});' }} />
         </div>
+        */}
 
         {/* Condensed intro container matching the sample pattern */}
         <div className="max-w-7xl mx-auto pb-8">
@@ -207,7 +211,10 @@ export default function TakeHomePayPage() {
 
         <TakeHomePayCalculator />
 
-        {/* Middle In-Article Ad 1 */}
+        {/* ADS PAUSED 2026-09-01 (post-restriction conservative rollout).
+           To re-enable: generate a NEW ad unit in AdSense dashboard
+           (Ads > By ad unit > Display ads) and update the slot below,
+           then uncomment this block.
         <div className="my-12">
           <ins className="adsbygoogle"
                style={{ display: 'block', textAlign: 'center' }}
@@ -217,6 +224,7 @@ export default function TakeHomePayPage() {
                data-ad-slot="4690286797"></ins>
           <script dangerouslySetInnerHTML={{ __html: '(adsbygoogle = window.adsbygoogle || []).push({});' }} />
         </div>
+        */}
 
         {/* SEO Content Section — Expanded to 2000 words matching sample block layout */}
         <div className="prose prose-lg max-w-none bg-white dark:bg-gray-900 rounded-3xl border border-gray-200 dark:border-gray-800 shadow-sm overflow-hidden">
@@ -454,7 +462,10 @@ export default function TakeHomePayPage() {
 
         </div>
 
-        {/* Middle In-Article Ad 2 */}
+        {/* ADS PAUSED 2026-09-01 (post-restriction conservative rollout).
+           To re-enable: generate a NEW ad unit in AdSense dashboard
+           (Ads > By ad unit > Display ads) and update the slot below,
+           then uncomment this block.
         <div className="my-12">
           <ins className="adsbygoogle"
                style={{ display: 'block', textAlign: 'center' }}
@@ -464,8 +475,12 @@ export default function TakeHomePayPage() {
                data-ad-slot="8181708196"></ins>
           <script dangerouslySetInnerHTML={{ __html: '(adsbygoogle = window.adsbygoogle || []).push({});' }} />
         </div>
+        */}
 
-        {/* Bottom Display Ad */}
+        {/* ADS PAUSED 2026-09-01 (post-restriction conservative rollout).
+           To re-enable: generate a NEW ad unit in AdSense dashboard
+           (Ads > By ad unit > Display ads) and update the slot below,
+           then uncomment this block.
         <div className="mt-12 mb-8">
           <ins className="adsbygoogle"
                style={{ display: 'block' }}
@@ -475,6 +490,7 @@ export default function TakeHomePayPage() {
                data-full-width-responsive="true"></ins>
           <script dangerouslySetInnerHTML={{ __html: '(adsbygoogle = window.adsbygoogle || []).push({});' }} />
         </div>
+        */}
 
         {/* Additional SEO Content — Secondary compliance block to lock down the 2000-word footprint naturally */}
         <div className="prose prose-lg max-w-none mt-16 bg-white dark:bg-gray-900 rounded-3xl p-10 border border-gray-200 dark:border-gray-800 shadow-sm">
