@@ -305,7 +305,12 @@ export default function RoleFinderClient() {
           </div>
 
           {/* ── [AD: between summary and role cards] ─────────────────── */}
-          <AdUnit slot="4690286797" format="fluid" layout="in-article" />
+          {/* ADS PAUSED 2026-09-01 (post-restriction conservative rollout).
+   To re-enable: generate a NEW ad unit in AdSense dashboard
+   (Ads > By ad unit > Display ads) and update the slot below,
+   then uncomment this block.
+<AdUnit slot="4690286797" format="fluid" layout="in-article" />
+*/}
 
           <div className="flex items-center gap-2 pt-2">
             <Target size={20} className="text-blue-600" />

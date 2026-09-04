@@ -80,7 +80,12 @@ export default function ResourcePage() {
 
       {/* ── AD 1: Top banner — right below header ── */}
       <div className="px-4 md:px-6 pt-6 max-w-4xl mx-auto">
-        <AdUnit slot="4198231153" format="auto" />
+        {/* ADS PAUSED 2026-09-01 (post-restriction conservative rollout).
+   To re-enable: generate a NEW ad unit in AdSense dashboard
+   (Ads > By ad unit > Display ads) and update the slot below,
+   then uncomment this block.
+<AdUnit slot="4198231153" format="auto" />
+*/}
       </div>
 
       {/* Resource Cards */}
@@ -121,7 +126,12 @@ export default function ResourcePage() {
         {/* ── Conditional Middle AD ── */}
         {showMiddleAd && (
           <div className="mb-6">
-            <AdUnit slot="4690286797" format="fluid" layout="in-article" />
+            {/* ADS PAUSED 2026-09-01 (post-restriction conservative rollout).
+   To re-enable: generate a NEW ad unit in AdSense dashboard
+   (Ads > By ad unit > Display ads) and update the slot below,
+   then uncomment this block.
+<AdUnit slot="4690286797" format="fluid" layout="in-article" />
+*/}
           </div>
         )}
 
@@ -177,7 +187,12 @@ export default function ResourcePage() {
 
         {/* ── AD 3: Bottom banner — end of page ── */}
         <div className="mt-10">
-          <AdUnit slot="9751041788" format="auto" />
+          {/* ADS PAUSED 2026-09-01 (post-restriction conservative rollout).
+   To re-enable: generate a NEW ad unit in AdSense dashboard
+   (Ads > By ad unit > Display ads) and update the slot below,
+   then uncomment this block.
+<AdUnit slot="9751041788" format="auto" />
+*/}
         </div>
       </div>
     </div>

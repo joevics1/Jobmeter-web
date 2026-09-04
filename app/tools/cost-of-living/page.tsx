@@ -137,7 +137,12 @@ export default function CostOfLivingPage() {
 
         {/* Top Ad */}
         <div className="max-w-6xl mx-auto px-6 py-4">
-          <AdUnit slot="top-ad-slot" />
+          {/* ADS PAUSED 2026-09-01 (post-restriction conservative rollout).
+   To re-enable: generate a NEW ad unit in AdSense dashboard
+   (Ads > By ad unit > Display ads) and update the slot below,
+   then uncomment this block.
+<AdUnit slot="top-ad-slot" />
+*/}
         </div>
 
         {/* Intro Container */}
@@ -158,7 +163,12 @@ export default function CostOfLivingPage() {
 
         {/* Middle Ad */}
         <div className="max-w-6xl mx-auto px-6 py-6">
-          <AdUnit slot="middle-ad-slot" />
+          {/* ADS PAUSED 2026-09-01 (post-restriction conservative rollout).
+   To re-enable: generate a NEW ad unit in AdSense dashboard
+   (Ads > By ad unit > Display ads) and update the slot below,
+   then uncomment this block.
+<AdUnit slot="middle-ad-slot" />
+*/}
         </div>
 
         {/* SEO Content Section */}

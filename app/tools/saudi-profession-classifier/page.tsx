@@ -98,7 +98,12 @@ export default function SaudiProfessionClassifierPage() {
       <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
         {/* Top Display Ad */}
         <div className="max-w-5xl mx-auto px-4 pt-6">
-          <AdUnit slot="4198231153" format="auto" />
+          {/* ADS PAUSED 2026-09-01 (post-restriction conservative rollout).
+   To re-enable: generate a NEW ad unit in AdSense dashboard
+   (Ads > By ad unit > Display ads) and update the slot below,
+   then uncomment this block.
+<AdUnit slot="4198231153" format="auto" />
+*/}
         </div>
 
         {/* Hero Section */}
@@ -146,7 +151,12 @@ export default function SaudiProfessionClassifierPage() {
 
         {/* Ad 1 */}
         <div className="max-w-5xl mx-auto px-4 py-8">
-          <AdUnit slot="4690286797" format="fluid" layout="in-article" />
+          {/* ADS PAUSED 2026-09-01 (post-restriction conservative rollout).
+   To re-enable: generate a NEW ad unit in AdSense dashboard
+   (Ads > By ad unit > Display ads) and update the slot below,
+   then uncomment this block.
+<AdUnit slot="4690286797" format="fluid" layout="in-article" />
+*/}
         </div>
 
         {/* SEO Content Section - Matching Sample Structure */}
@@ -274,12 +284,22 @@ export default function SaudiProfessionClassifierPage() {
 
         {/* Ad 2 */}
         <div className="max-w-5xl mx-auto px-4 py-8">
-          <AdUnit slot="8181708196" format="fluid" layout="in-article" />
+          {/* ADS PAUSED 2026-09-01 (post-restriction conservative rollout).
+   To re-enable: generate a NEW ad unit in AdSense dashboard
+   (Ads > By ad unit > Display ads) and update the slot below,
+   then uncomment this block.
+<AdUnit slot="8181708196" format="fluid" layout="in-article" />
+*/}
         </div>
 
         {/* Bottom Ad */}
         <div className="max-w-5xl mx-auto px-4 pb-12">
-          <AdUnit slot="9751041788" format="auto" />
+          {/* ADS PAUSED 2026-09-01 (post-restriction conservative rollout).
+   To re-enable: generate a NEW ad unit in AdSense dashboard
+   (Ads > By ad unit > Display ads) and update the slot below,
+   then uncomment this block.
+<AdUnit slot="9751041788" format="auto" />
+*/}
         </div>
       </div>
     </>

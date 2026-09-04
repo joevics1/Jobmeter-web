@@ -73,7 +73,12 @@ export default async function InternshipFinderPage() {
 
         <RelatedToolsStrip />
 
-        <AdUnit slot="4198231153" format="auto" />
+        {/* ADS PAUSED 2026-09-01 (post-restriction conservative rollout).
+   To re-enable: generate a NEW ad unit in AdSense dashboard
+   (Ads > By ad unit > Display ads) and update the slot below,
+   then uncomment this block.
+<AdUnit slot="4198231153" format="auto" />
+*/}
 
         <div className="mt-12 mb-8">
           <h2 className="text-xl font-bold text-gray-900 mb-1">Explore More Job Finder Tools</h2>
@@ -146,7 +151,12 @@ export default async function InternshipFinderPage() {
           </article>
         </div>
 
-        <AdUnit slot="9751041788" format="auto" />
+        {/* ADS PAUSED 2026-09-01 (post-restriction conservative rollout).
+   To re-enable: generate a NEW ad unit in AdSense dashboard
+   (Ads > By ad unit > Display ads) and update the slot below,
+   then uncomment this block.
+<AdUnit slot="9751041788" format="auto" />
+*/}
 
         <script
           type="application/ld+json"

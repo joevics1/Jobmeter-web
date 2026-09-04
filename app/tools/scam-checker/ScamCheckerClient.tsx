@@ -132,7 +132,12 @@ export default function ScamCheckerClient() {
 
       {/* ── [AD: below warning banner] ─────────────────────────────── */}
       <div className="mb-6">
-        <AdUnit slot="4690286797" format="fluid" layout="in-article" />
+        {/* ADS PAUSED 2026-09-01 (post-restriction conservative rollout).
+   To re-enable: generate a NEW ad unit in AdSense dashboard
+   (Ads > By ad unit > Display ads) and update the slot below,
+   then uncomment this block.
+<AdUnit slot="4690286797" format="fluid" layout="in-article" />
+*/}
       </div>
 
       <div className="bg-white rounded-2xl p-6 shadow-sm mb-6" style={{ border: `1px solid ${theme.colors.border.DEFAULT}` }}>
@@ -216,7 +221,12 @@ export default function ScamCheckerClient() {
         <>
           {/* ── [AD: before entity detail] ───────────────────────────── */}
           <div className="mb-6">
-            <AdUnit slot="8181708196" format="fluid" layout="in-article" />
+            {/* ADS PAUSED 2026-09-01 (post-restriction conservative rollout).
+   To re-enable: generate a NEW ad unit in AdSense dashboard
+   (Ads > By ad unit > Display ads) and update the slot below,
+   then uncomment this block.
+<AdUnit slot="8181708196" format="fluid" layout="in-article" />
+*/}
           </div>
           <div className="bg-white rounded-2xl p-6 shadow-sm mb-6" style={{ border: `1px solid ${theme.colors.border.DEFAULT}` }}>
           <div className="flex items-start justify-between mb-4">

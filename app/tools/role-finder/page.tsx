@@ -38,7 +38,12 @@ export default function RoleFinderPage() {
 
       {/* Ad 1: Display Top */}
       <div className="px-4 sm:px-6 py-4 max-w-5xl mx-auto">
-        <AdUnit slot="4198231153" format="auto" />
+        {/* ADS PAUSED 2026-09-01 (post-restriction conservative rollout).
+   To re-enable: generate a NEW ad unit in AdSense dashboard
+   (Ads > By ad unit > Display ads) and update the slot below,
+   then uncomment this block.
+<AdUnit slot="4198231153" format="auto" />
+*/}
       </div>
 
       <RoleFinderClient />
@@ -170,7 +175,12 @@ export default function RoleFinderPage() {
         </div>
 
         {/* Ad 4: Display Bottom */}
-        <AdUnit slot="9751041788" format="auto" />
+        {/* ADS PAUSED 2026-09-01 (post-restriction conservative rollout).
+   To re-enable: generate a NEW ad unit in AdSense dashboard
+   (Ads > By ad unit > Display ads) and update the slot below,
+   then uncomment this block.
+<AdUnit slot="9751041788" format="auto" />
+*/}
 
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify([
           { "@context": "https://schema.org", "@type": "WebApplication", "name": "Alternative Role Finder", "description": "Free AI-powered career path finder. Discover jobs based on your skills, explore alternative career paths, get skill gap analysis and certification tips.", "url": "https://jobmeter.com/tools/role-finder", "applicationCategory": "CareerApplication", "operatingSystem": "Web", "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }, "featureList": ["Jobs based on my skills matching", "Alternative career paths discovery", "Skill gap analysis", "Certification recommendations", "AI career finder", "Career change ideas"] },

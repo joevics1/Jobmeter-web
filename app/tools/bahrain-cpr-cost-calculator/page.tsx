@@ -50,7 +50,12 @@ export default function BahrainCPRCostPage() {
             <p className="mt-4 text-blue-100 text-lg">Manama • Riffa • Muharraq • Isa Town</p>
           </div>
         </div>
-        <div className="max-w-6xl mx-auto px-6 py-4"><AdUnit slot="top-ad" /></div>
+        <div className="max-w-6xl mx-auto px-6 py-4">{/* ADS PAUSED 2026-09-01 (post-restriction conservative rollout).
+   To re-enable: generate a NEW ad unit in AdSense dashboard
+   (Ads > By ad unit > Display ads) and update the slot below,
+   then uncomment this block.
+<AdUnit slot="top-ad" />
+*/}</div>
         <div className="max-w-6xl mx-auto px-6 pb-8">
           <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 px-8 py-5 shadow-sm">
             <p className="text-[15px] text-center leading-snug text-gray-600 dark:text-gray-400">
@@ -62,7 +67,12 @@ export default function BahrainCPRCostPage() {
         <div className="max-w-6xl mx-auto px-6 pb-8"><BahrainCPRCostCalculator />
 
         <RelatedToolsStrip /></div>
-        <div className="max-w-6xl mx-auto px-6 py-6"><AdUnit slot="mid-page-ad" /></div>
+        <div className="max-w-6xl mx-auto px-6 py-6">{/* ADS PAUSED 2026-09-01 (post-restriction conservative rollout).
+   To re-enable: generate a NEW ad unit in AdSense dashboard
+   (Ads > By ad unit > Display ads) and update the slot below,
+   then uncomment this block.
+<AdUnit slot="mid-page-ad" />
+*/}</div>
         <div className="max-w-6xl mx-auto px-6 pb-16">
           <div className="bg-white dark:bg-gray-900 rounded-3xl border border-gray-200 dark:border-gray-800 shadow-sm overflow-hidden">
             <div className="px-10 pt-10 pb-8">

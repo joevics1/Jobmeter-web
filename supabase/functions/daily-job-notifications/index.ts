@@ -313,7 +313,7 @@ async function sendTelegramMatchNotification(
   matchScore: number,
   jobUrl: string
 ): Promise<boolean> {
-  const botToken = Deno.env.get('TELEGRAM_BOT_TOKEN');
+  const botToken = Deno.env.get('TELEGRAM_BOT_TOKEN_2');
   if (!botToken) return false;
 
   try {
@@ -339,7 +339,7 @@ async function sendTelegramMatchNotification(
         chat_id: tgUser.chat_id,
         text,
         parse_mode: 'Markdown',
-        disable_web_page_preview: false,
+        disable_web_page_preview: true,
       }),
     });
 

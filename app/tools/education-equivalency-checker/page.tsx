@@ -164,7 +164,12 @@ export default function EducationEquivalencyPage() {
 
         {/* Ad Unit - Top Display */}
         <div className="max-w-5xl mx-auto px-6 py-6">
-          <AdUnit slot="4198231153" format="auto" />
+          {/* ADS PAUSED 2026-09-01 (post-restriction conservative rollout).
+   To re-enable: generate a NEW ad unit in AdSense dashboard
+   (Ads > By ad unit > Display ads) and update the slot below,
+   then uncomment this block.
+<AdUnit slot="4198231153" format="auto" />
+*/}
         </div>
 
         {/* Intro Container - Added as requested */}
@@ -188,7 +193,12 @@ export default function EducationEquivalencyPage() {
 
         {/* In-article Ad */}
         <div className="max-w-5xl mx-auto px-6 py-10">
-          <AdUnit slot="4690286797" layout="in-article" />
+          {/* ADS PAUSED 2026-09-01 (post-restriction conservative rollout).
+   To re-enable: generate a NEW ad unit in AdSense dashboard
+   (Ads > By ad unit > Display ads) and update the slot below,
+   then uncomment this block.
+<AdUnit slot="4690286797" layout="in-article" />
+*/}
         </div>
 
         {/* Improved SEO Content - 2000 Word Section */}
@@ -342,7 +352,12 @@ export default function EducationEquivalencyPage() {
 
         {/* Bottom Ad */}
         <div className="max-w-5xl mx-auto px-6 py-10 border-t border-gray-200 dark:border-gray-800">
-          <AdUnit slot="9751041788" format="auto" />
+          {/* ADS PAUSED 2026-09-01 (post-restriction conservative rollout).
+   To re-enable: generate a NEW ad unit in AdSense dashboard
+   (Ads > By ad unit > Display ads) and update the slot below,
+   then uncomment this block.
+<AdUnit slot="9751041788" format="auto" />
+*/}
         </div>
 
         {/* Final CTA & Disclaimer */}

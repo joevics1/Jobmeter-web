@@ -71,7 +71,12 @@ export default function KuwaitIndemnityPage() {
           </div>
         </div>
 
-        <div className="max-w-6xl mx-auto px-6 py-4"><AdUnit slot="top-ad" /></div>
+        <div className="max-w-6xl mx-auto px-6 py-4">{/* ADS PAUSED 2026-09-01 (post-restriction conservative rollout).
+   To re-enable: generate a NEW ad unit in AdSense dashboard
+   (Ads > By ad unit > Display ads) and update the slot below,
+   then uncomment this block.
+<AdUnit slot="top-ad" />
+*/}</div>
 
         <div className="max-w-6xl mx-auto px-6 pb-8">
           <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 px-8 py-5 shadow-sm">
@@ -88,7 +93,12 @@ export default function KuwaitIndemnityPage() {
           <RelatedToolsStrip />
         </div>
 
-        <div className="max-w-6xl mx-auto px-6 py-6"><AdUnit slot="mid-page-ad" /></div>
+        <div className="max-w-6xl mx-auto px-6 py-6">{/* ADS PAUSED 2026-09-01 (post-restriction conservative rollout).
+   To re-enable: generate a NEW ad unit in AdSense dashboard
+   (Ads > By ad unit > Display ads) and update the slot below,
+   then uncomment this block.
+<AdUnit slot="mid-page-ad" />
+*/}</div>
 
         <div className="max-w-6xl mx-auto px-6 pb-16">
           <div className="bg-white dark:bg-gray-900 rounded-3xl border border-gray-200 dark:border-gray-800 shadow-sm overflow-hidden">

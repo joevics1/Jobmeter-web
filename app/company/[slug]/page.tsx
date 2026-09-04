@@ -279,7 +279,12 @@ export default async function CompanyProfilePage({
         ════════════════════════════════════════════════════════════════════ */}
         <div className="bg-white border-b border-gray-100">
           <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-2">
-            <AdUnit slot="4198231153" format="auto" />
+            {/* ADS PAUSED 2026-09-01 (post-restriction conservative rollout).
+   To re-enable: generate a NEW ad unit in AdSense dashboard
+   (Ads > By ad unit > Display ads) and update the slot below,
+   then uncomment this block.
+<AdUnit slot="4198231153" format="auto" />
+*/}
           </div>
         </div>
 
@@ -442,7 +447,12 @@ export default async function CompanyProfilePage({
                   After the description block — highest dwell-time position.
               ════════════════════════════════════════════════════════════ */}
               <div className="bg-white rounded-lg overflow-hidden">
-                <AdUnit slot="4690286797" format="fluid" layout="in-article" />
+                {/* ADS PAUSED 2026-09-01 (post-restriction conservative rollout).
+   To re-enable: generate a NEW ad unit in AdSense dashboard
+   (Ads > By ad unit > Display ads) and update the slot below,
+   then uncomment this block.
+<AdUnit slot="4690286797" format="fluid" layout="in-article" />
+*/}
               </div>
 
               {/* ── Company values ── */}
@@ -488,7 +498,12 @@ export default async function CompanyProfilePage({
                   are highly engaged; strong viewability position.
               ════════════════════════════════════════════════════════════ */}
               <div className="bg-white rounded-lg overflow-hidden">
-                <AdUnit slot="8181708196" format="fluid" layout="in-article" />
+                {/* ADS PAUSED 2026-09-01 (post-restriction conservative rollout).
+   To re-enable: generate a NEW ad unit in AdSense dashboard
+   (Ads > By ad unit > Display ads) and update the slot below,
+   then uncomment this block.
+<AdUnit slot="8181708196" format="fluid" layout="in-article" />
+*/}
               </div>
 
               {/* ── FAQs ── */}
@@ -765,7 +780,12 @@ export default async function CompanyProfilePage({
               Last scroll-triggered impression before user leaves the page.
           ════════════════════════════════════════════════════════════════ */}
           <div className="mt-8 bg-white rounded-lg overflow-hidden">
-            <AdUnit slot="9025117620" format="fluid" layout="in-feed" layoutKey="-fb+5w+4e-db+86" />
+            {/* ADS PAUSED 2026-09-01 (post-restriction conservative rollout).
+   To re-enable: generate a NEW ad unit in AdSense dashboard
+   (Ads > By ad unit > Display ads) and update the slot below,
+   then uncomment this block.
+<AdUnit slot="9025117620" format="fluid" layout="in-feed" layoutKey="-fb+5w+4e-db+86" />
+*/}
           </div>
 
         </div>

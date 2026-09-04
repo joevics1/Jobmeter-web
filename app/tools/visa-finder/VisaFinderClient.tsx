@@ -281,7 +281,12 @@ export default function VisaFinderClient() {
                 if ((idx + 1) % 5 === 0 && idx !== sortedJobs.length - 1) {
                   items.push(
                     <div key={`ad-${idx}`} className="px-4 py-2 border-b" style={{ borderColor: 'inherit' }}>
-                      <AdUnit slot="9025117620" format="fluid" layoutKey="-fb+5w+4e-db+86" />
+                      {/* ADS PAUSED 2026-09-01 (post-restriction conservative rollout).
+   To re-enable: generate a NEW ad unit in AdSense dashboard
+   (Ads > By ad unit > Display ads) and update the slot below,
+   then uncomment this block.
+<AdUnit slot="9025117620" format="fluid" layoutKey="-fb+5w+4e-db+86" />
+*/}
                     </div>
                   );
                 }

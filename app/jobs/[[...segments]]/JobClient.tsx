@@ -849,7 +849,12 @@ export default function JobClient({ job, relatedJobs, companies, documentLinks, 
               )}
 
               <div className="w-full overflow-hidden">
-                <AdUnit slot={AD_SLOTS.IN_ARTICLE} format="fluid" layout="in-article" style={{ display: 'block', textAlign: 'center', width: '100%' }} />
+                {/* ADS PAUSED 2026-09-01 (post-restriction conservative rollout).
+   To re-enable: generate a NEW ad unit in AdSense dashboard
+   (Ads > By ad unit > Display ads) and update the slot below,
+   then uncomment this block.
+<AdUnit slot={AD_SLOTS.IN_ARTICLE} format="fluid" layout="in-article" style={{ display: 'block', textAlign: 'center', width: '100%' }} />
+*/}
               </div>
 
               {(() => {

@@ -179,7 +179,12 @@ export default function JobOfferEvaluatorPage() {
         {/* Top Ad */}
         <div className="max-w-6xl mx-auto px-6 py-4">
           {/* Added 'slot' prop to fulfill AdUnitProps layout requirements */}
-          <AdUnit slot="job-evaluator-top" />
+          {/* ADS PAUSED 2026-09-01 (post-restriction conservative rollout).
+   To re-enable: generate a NEW ad unit in AdSense dashboard
+   (Ads > By ad unit > Display ads) and update the slot below,
+   then uncomment this block.
+<AdUnit slot="job-evaluator-top" />
+*/}
         </div>
 
         {/* Condensed intro — single line, smaller font */}
@@ -201,7 +206,12 @@ export default function JobOfferEvaluatorPage() {
         {/* Ad */}
         <div className="max-w-6xl mx-auto px-6 py-6">
           {/* Added 'slot' prop to fulfill AdUnitProps layout requirements */}
-          <AdUnit slot="job-evaluator-bottom" />
+          {/* ADS PAUSED 2026-09-01 (post-restriction conservative rollout).
+   To re-enable: generate a NEW ad unit in AdSense dashboard
+   (Ads > By ad unit > Display ads) and update the slot below,
+   then uncomment this block.
+<AdUnit slot="job-evaluator-bottom" />
+*/}
         </div>
 
         {/* SEO Content Section */}
