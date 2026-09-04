@@ -12,7 +12,7 @@ export default function BottomNavigation() {
   const pendingInvitations = usePendingInvitationsCount();
 
   // Pages that should show bottom menu
-  const allowedPaths = ['/jobs', '/documents', '/tools', '/resource', '/settings', '/dashboard'];
+  const allowedPaths = ['/jobs', '/docs', '/tools', '/resource', '/settings', '/dashboard'];
 
   // Check if current page is EXACTLY one of the bottom menu pages
   const shouldShow = allowedPaths.includes(pathname);
@@ -21,7 +21,7 @@ export default function BottomNavigation() {
 
   const navItems = [
     { label: 'Jobs', href: '/jobs', icon: Briefcase },
-    { label: 'Documents', href: '/documents', icon: FileText },
+    { label: 'CV & Docs', href: '/docs', icon: FileText },
     { label: 'Tools', href: '/tools', icon: Wrench },
     { label: 'Resources', href: '/resource', icon: BookOpen },
     { label: 'Settings', href: '/settings', icon: Settings },
