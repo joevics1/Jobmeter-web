@@ -29,7 +29,7 @@ export default function JobLimitModal({ isOpen, onClose, email, used, planCap }:
       amount: plan.amount,
       paymentType: 'job_listing',
       planType: selectedPlan,
-      callback_url: `${window.location.origin}/submit`,
+      callback_url: `${window.location.origin}/payment/callback?redirect=${encodeURIComponent('/submit')}`,
     });
   };
 

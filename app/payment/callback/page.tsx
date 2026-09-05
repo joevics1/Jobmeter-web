@@ -13,6 +13,10 @@ export default function PaymentCallbackPage() {
 
   useEffect(() => {
     const reference = searchParams.get('reference') || searchParams.get('trxref');
+    // Callers (JobLimitModal, FeatureJobModal, etc.) pass ?redirect=/wherever
+    // so this page can hand off to the right place once verification is
+    // done, instead of only knowing about the apply-for-me flow.
+    const redirect = searchParams.get('redirect');
 
     if (!reference) {
       setStatus('error');
@@ -42,12 +46,15 @@ export default function PaymentCallbackPage() {
         setPlanId(result.planId);
         setStatus('success');
 
-        // Redirect based on plan type returned from API
-        if (result.planId === 'apply-for-me') {
-          setTimeout(() => router.push('/apply-for-me/submit'), 1500);
-        } else {
-          setTimeout(() => router.push('/dashboard'), 1500);
-        }
+        // Prefer an explicit redirect target passed by the caller. Fall
+        // back to the legacy plan-based destinations for older links that
+        // don't pass one.
+        const destination = redirect
+          ? redirect
+          : result.planId === 'apply-for-me'
+            ? '/apply-for-me/submit'
+            : '/dashboard';
+        setTimeout(() => router.push(destination), 1500);
       } catch (err: any) {
         console.error('Error in callback:', err);
         setStatus('error');
@@ -94,7 +101,7 @@ export default function PaymentCallbackPage() {
           <CheckCircle className="w-12 h-12 text-green-600" />
         </div>
         <h1 className="text-4xl font-bold text-gray-900 mb-3">Payment Successful!</h1>
-        <p className="text-xl text-gray-600">Credits have been added to your account.</p>
+        <p className="text-xl text-gray-600">Your account has been updated.</p>
         <p className="mt-6 text-gray-500">Redirecting you...</p>
       </div>
     </div>

@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
       userId: user.id,
       paymentType: 'subscription',
       planType: TALENT_UNLIMITED_PLAN_TYPE,
-      callback_url: `${process.env.NEXT_PUBLIC_APP_URL}/talent?upgraded=1`,
+      callback_url: `${process.env.NEXT_PUBLIC_APP_URL}/payment/callback?redirect=${encodeURIComponent('/talent?upgraded=1')}`,
     });
 
     if (!result.success) {

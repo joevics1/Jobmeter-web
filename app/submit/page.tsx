@@ -563,7 +563,7 @@ Posted Date: ${new Date().toISOString().split('T')[0]}`;
                 ? 'unlimited active jobs'
                 : `${jobQuota.used} of ${jobQuota.planCap} active job${jobQuota.planCap === 1 ? '' : 's'} used`}
             </span>
-            {!jobQuota.canPublish && (
+            {jobQuota.planCap !== null && (
               <button
                 onClick={() => { setJobLimitInfo({ used: jobQuota.used, planCap: jobQuota.planCap }); setShowJobLimitModal(true); }}
                 className="shrink-0 px-3 py-1.5 rounded-lg text-white text-xs font-medium"

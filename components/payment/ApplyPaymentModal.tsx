@@ -105,12 +105,14 @@ export function ApplyPaymentModal({
       return;
     }
 
-    // Dynamic callback URL - Apply for Me goes to submit page, others to dashboard
+    // Dynamic redirect target - Apply for Me goes to submit page, others to dashboard.
+    // Routed through /payment/callback so the payment actually gets verified
+    // (and credits/subscription applied) before the user lands there.
     const successRedirect = selectedPackage === 'apply-for-me' 
       ? '/apply-for-me/submit' 
       : '/dashboard';
 
-    const callback_url = `${window.location.origin}${successRedirect}`;
+    const callback_url = `${window.location.origin}/payment/callback?redirect=${encodeURIComponent(successRedirect)}`;
 
     await initializePayment({
       email: userEmail,
