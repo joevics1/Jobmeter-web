@@ -141,7 +141,8 @@ const kbAccountChoice = {
 const kbMainMenu = {
   keyboard: [
     [{ text: '🔍 Browse jobs' }, { text: '🏢 My sector' }],
-    [{ text: '📋 My applications' }, { text: '👤 My profile' }],
+    [{ text: '🎯 My role' }, { text: '📋 My applications' }],
+    [{ text: '👤 My profile' }],
   ],
   resize_keyboard: true,
 };
@@ -153,6 +154,49 @@ function sectorKeyboard(context: 'onboard' | 'browse' | 'change') {
     if (SECTORS[i + 1]) row.push({ text: SECTORS[i + 1], callback_data: `sec:${i + 1}:${context}` });
     rows.push(row);
   }
+  return { inline_keyboard: rows };
+}
+
+// Common roles per sector, shown as quick-pick suggestions. Not exhaustive —
+// "Type my own" always covers anything not listed.
+const ROLE_SUGGESTIONS: Record<string, string[]> = {
+  'Information Technology & Software': ['Software Engineer', 'Frontend Developer', 'Backend Developer', 'DevOps Engineer', 'Data Analyst', 'IT Support Specialist'],
+  'Engineering & Manufacturing': ['Mechanical Engineer', 'Electrical Engineer', 'Civil Engineer', 'Production Supervisor', 'Quality Control Engineer'],
+  'Finance & Banking': ['Accountant', 'Financial Analyst', 'Bank Teller', 'Auditor', 'Investment Analyst'],
+  'Healthcare & Medical': ['Nurse', 'Doctor', 'Pharmacist', 'Medical Lab Scientist', 'Healthcare Administrator'],
+  'Education & Training': ['Teacher', 'Lecturer', 'Curriculum Developer', 'Training Coordinator', 'School Administrator'],
+  'Sales & Marketing': ['Sales Executive', 'Marketing Manager', 'Business Development Officer', 'Digital Marketer', 'Brand Manager'],
+  'Human Resources & Recruitment': ['HR Officer', 'Recruiter', 'HR Manager', 'Talent Acquisition Specialist', 'Payroll Officer'],
+  'Customer Service & Support': ['Customer Service Representative', 'Call Center Agent', 'Support Specialist', 'Client Relations Officer'],
+  'Media Advertising & Communications': ['Content Writer', 'Social Media Manager', 'PR Officer', 'Copywriter', 'Communications Specialist'],
+  'Design Arts & Creative': ['Graphic Designer', 'UI/UX Designer', 'Video Editor', 'Illustrator', 'Creative Director'],
+  'Construction & Real Estate': ['Site Engineer', 'Quantity Surveyor', 'Architect', 'Real Estate Agent', 'Project Manager'],
+  'Logistics Transport & Supply Chain': ['Logistics Coordinator', 'Supply Chain Analyst', 'Warehouse Manager', 'Procurement Officer', 'Driver'],
+  'Agriculture & Agribusiness': ['Agronomist', 'Farm Manager', 'Agricultural Extension Officer', 'Livestock Manager'],
+  'Energy & Utilities': ['Petroleum Engineer', 'Power Systems Engineer', 'Solar Technician', 'HSE Officer'],
+  'Legal & Compliance': ['Lawyer', 'Legal Officer', 'Compliance Officer', 'Paralegal', 'Company Secretary'],
+  'Government & Public Administration': ['Civil Servant', 'Policy Analyst', 'Public Relations Officer', 'Administrative Officer'],
+  'Retail & E-commerce': ['Store Manager', 'Sales Associate', 'E-commerce Manager', 'Inventory Manager'],
+  'Hospitality & Tourism': ['Hotel Manager', 'Chef', 'Front Desk Officer', 'Tour Guide', 'Event Planner'],
+  'Science & Research': ['Research Scientist', 'Lab Technician', 'Data Scientist', 'Research Analyst'],
+  'Security & Defense': ['Security Officer', 'Risk Analyst', 'Military Officer', 'Surveillance Officer'],
+  'Telecommunications': ['Network Engineer', 'Telecoms Technician', 'RF Engineer', 'Field Engineer'],
+  'Nonprofit & NGO': ['Program Officer', 'Project Coordinator', 'M&E Officer', 'Grants Manager'],
+  'Environment & Sustainability': ['Environmental Officer', 'Sustainability Analyst', 'HSE Officer', 'Conservation Officer'],
+  'Product Management & Operations': ['Product Manager', 'Operations Manager', 'Business Analyst', 'Project Manager'],
+  'Data & Analytics': ['Data Analyst', 'Data Scientist', 'Business Intelligence Analyst', 'Data Engineer'],
+};
+
+function roleKeyboard(sector: string, context: 'onboard' | 'change') {
+  const roles = ROLE_SUGGESTIONS[sector] || [];
+  const rows: { text: string; callback_data: string }[][] = [];
+  for (let i = 0; i < roles.length; i += 2) {
+    const row = [{ text: roles[i], callback_data: `role:${context}:${roles[i]}` }];
+    if (roles[i + 1]) row.push({ text: roles[i + 1], callback_data: `role:${context}:${roles[i + 1]}` });
+    rows.push(row);
+  }
+  rows.push([{ text: '✏️ Type my own role(s)', callback_data: `role_custom:${context}` }]);
+  if (context === 'change') rows.push([{ text: '⏭️ Keep current', callback_data: 'role_skip' }]);
   return { inline_keyboard: rows };
 }
 
@@ -603,6 +647,13 @@ async function askSignupSector(supabase: any, chatId: number, temp: Record<strin
   });
 }
 
+async function askSignupRole(supabase: any, chatId: number, temp: Record<string, any>) {
+  await setState(supabase, chatId, { step: 'signup_role', temp });
+  await sendMessage(chatId, `Got it. Any of these your target role? (or type your own)`, {
+    reply_markup: roleKeyboard(temp.sector, 'onboard'),
+  });
+}
+
 async function askSignupPassword(supabase: any, chatId: number, temp: Record<string, any>) {
   await setState(supabase, chatId, { step: 'signup_password', temp });
   await sendMessage(
@@ -628,6 +679,7 @@ async function completeSignup(
   const email: string = temp.email;
   const cv = temp.cv || {};
   const sector: string | undefined = temp.sector;
+  const chosenRoles: string[] | undefined = temp.roles;
 
   const { data: existingProfile } = await supabaseAdmin.from('profiles').select('id').eq('email', email).maybeSingle();
   if (existingProfile) {
@@ -679,7 +731,7 @@ async function completeSignup(
     cv_github: cv.github || null,
     cv_portfolio: cv.portfolio || null,
     cv_ai_suggested_roles: cv.suggestedRoles || [],
-    target_roles: cv.suggestedRoles || [],
+    target_roles: chosenRoles && chosenRoles.length ? chosenRoles : (cv.suggestedRoles || []),
     preferred_locations: cv.location ? [cv.location] : [],
     sector: sector || null,
     cv_text: temp.cvText || null,
@@ -692,7 +744,7 @@ async function completeSignup(
 
   await sendMessage(
     chatId,
-    `🎉 Account created! I've saved your CV details${sector ? ` and set your sector to *${sector}*` : ''}, so I'll start matching you to jobs right away and DM you here when something scores 50%+.`,
+    `🎉 Account created! I've saved your CV details${sector ? ` and set your sector to *${sector}*` : ''}${chosenRoles && chosenRoles.length ? ` and your target role to *${chosenRoles.join(', ')}*` : ''}, so I'll start matching you to jobs right away and DM you here when something scores 50%+.`,
     { reply_markup: kbMainMenu }
   );
   return true;
@@ -825,7 +877,7 @@ serve(async (req) => {
         if (!sector) {
           await sendMessage(chatId, `That option expired — please try again.`);
         } else if (context === 'onboard') {
-          await askSignupPassword(supabase, chatId, { ...state.temp, sector });
+          await askSignupRole(supabase, chatId, { ...state.temp, sector });
         } else if (context === 'browse' || context === 'change') {
           if (!tgUser.linked_at) {
             await sendMessage(chatId, `Send /start first to log in or sign up.`);
@@ -834,6 +886,31 @@ serve(async (req) => {
             await sendMessage(chatId, `Got it — set your sector to *${sector}*.`);
             await sendJobBatch(supabase, chatId, tgUser.user_id, []);
           }
+        }
+      } else if (data.startsWith('role:')) {
+        const rest = data.slice(5); // "<context>:<roleName>"
+        const sepIdx = rest.indexOf(':');
+        const context = rest.slice(0, sepIdx);
+        const roleName = rest.slice(sepIdx + 1);
+        if (context === 'onboard') {
+          await askSignupPassword(supabase, chatId, { ...state.temp, roles: [roleName] });
+        } else if (context === 'change') {
+          if (!tgUser.linked_at) {
+            await sendMessage(chatId, `Send /start first to log in or sign up.`);
+          } else {
+            await supabase.from('onboarding_data').update({ target_roles: [roleName] }).eq('user_id', tgUser.user_id);
+            await sendMessage(chatId, `Got it — set your target role to *${roleName}*.`, { reply_markup: kbMainMenu });
+          }
+        }
+      } else if (data.startsWith('role_custom:')) {
+        const context = data.split(':')[1];
+        await setState(supabase, chatId, { step: context === 'onboard' ? 'signup_role_custom' : 'change_role_custom', temp: state.temp });
+        await sendMessage(chatId, `Type the role(s) you want, separated by commas — e.g. "Project Manager, Product Owner".`);
+      } else if (data === 'role_skip') {
+        if (!tgUser.linked_at) {
+          await sendMessage(chatId, `Send /start first to log in or sign up.`);
+        } else {
+          await sendMessage(chatId, `No changes made to your target role.`, { reply_markup: kbMainMenu });
         }
       } else if (data === 'more_jobs' || data === 'more_jobs_fresh') {
         if (!tgUser.linked_at) {
@@ -891,6 +968,18 @@ serve(async (req) => {
       );
       return new Response('ok', { status: 200 });
     }
+    if (tgUser.linked_at && text === '🎯 My role') {
+      const brief = await getOnboardingBrief(supabase, tgUser.user_id);
+      if (!brief) {
+        await sendMessage(chatId, `Set your sector first, then I can suggest roles for it.`, { reply_markup: sectorKeyboard('browse') });
+        return new Response('ok', { status: 200 });
+      }
+      const currentRoles = brief.targetRoles.length ? brief.targetRoles.join(', ') : 'not set yet';
+      await sendMessage(chatId, `Your current target role: *${currentRoles}*\n\nPick a new one for *${brief.sector}*:`, {
+        reply_markup: roleKeyboard(brief.sector, 'change'),
+      });
+      return new Response('ok', { status: 200 });
+    }
     if (tgUser.linked_at && text === '📋 My applications') {
       await myApplications(supabase, chatId, tgUser.user_id);
       return new Response('ok', { status: 200 });
@@ -923,6 +1012,26 @@ serve(async (req) => {
             break;
           }
           await askSignupSector(supabase, chatId, { ...state.temp, email });
+          break;
+        }
+        case 'signup_role_custom': {
+          const roles = text.split(',').map((r) => r.trim()).filter(Boolean);
+          if (!roles.length) {
+            await sendMessage(chatId, `Send at least one role.`);
+            break;
+          }
+          await askSignupPassword(supabase, chatId, { ...state.temp, roles });
+          break;
+        }
+        case 'change_role_custom': {
+          const roles = text.split(',').map((r) => r.trim()).filter(Boolean);
+          if (!roles.length) {
+            await sendMessage(chatId, `Send at least one role.`);
+            break;
+          }
+          await supabase.from('onboarding_data').update({ target_roles: roles }).eq('user_id', tgUser.user_id);
+          await setState(supabase, chatId, { step: 'idle' });
+          await sendMessage(chatId, `Got it — set your target role(s) to *${roles.join(', ')}*.`, { reply_markup: kbMainMenu });
           break;
         }
         case 'signup_password': {
