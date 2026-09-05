@@ -51,10 +51,12 @@ export async function GET(req: NextRequest) {
 
       let statusLabel: string;
       let statusColor: string;
-      if (s.status === 'rejected') {
-        statusLabel = 'Rejected';
-        statusColor = '#DC2626';
-      } else if (s.status === 'published' && matchedJob) {
+      // A matching job row is ground truth — it means this submission was
+      // definitely acted on and published, regardless of what its own
+      // status column says (nothing reliably keeps that in sync once a
+      // job goes live, so a stale/incorrect 'rejected' should never hide
+      // an actually-live job).
+      if (matchedJob) {
         if (matchedJob.status === 'active') {
           statusLabel = 'Live';
           statusColor = '#16A34A';
@@ -69,6 +71,9 @@ export async function GET(req: NextRequest) {
         // Approved but not yet linked to a live job row — rare transitional state
         statusLabel = 'Approved';
         statusColor = '#16A34A';
+      } else if (s.status === 'rejected') {
+        statusLabel = 'Rejected';
+        statusColor = '#DC2626';
       } else {
         statusLabel = 'Pending review';
         statusColor = '#B45309';
