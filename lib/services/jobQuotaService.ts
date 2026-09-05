@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import { FREE_ACTIVE_JOB_LIMIT } from '@/lib/constants/jobPricing';
+import { FREE_ACTIVE_JOB_LIMIT, JOB_POSTING_PLANS } from '@/lib/constants/jobPricing';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -72,7 +72,7 @@ export async function getJobQuota(userId: string): Promise<JobQuota> {
   const planCap = unlimited
     ? Number.POSITIVE_INFINITY
     : subscription?.plan_type === 'job_posting_basic'
-      ? 3
+      ? FREE_ACTIVE_JOB_LIMIT + JOB_POSTING_PLANS.basic_monthly.extraActiveJobSlots
       : FREE_ACTIVE_JOB_LIMIT;
 
   const availableCredits = profile?.extra_job_slots ?? 0;

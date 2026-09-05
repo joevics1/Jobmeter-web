@@ -11,6 +11,12 @@
 //   (30 days per payment) that raise the concurrent-active-job cap for as
 //   long as the subscription is active. Tracked in user_subscriptions,
 //   same pattern as the existing talent_unlimited plan.
+//   basic_monthly's slots stack ON TOP of the free FREE_ACTIVE_JOB_LIMIT
+//   (2 free + 3 from the plan = 5 total while it's active), the same way
+//   a single_post credit stacks on top rather than replacing it. Once the
+//   subscription expires, the cap reverts to FREE_ACTIVE_JOB_LIMIT — any
+//   jobs already live over that stay live, but no new ones can be
+//   published until the count drops back under it.
 export const JOB_POSTING_PLANS = {
   single_post: {
     amount: 2000,
@@ -21,14 +27,14 @@ export const JOB_POSTING_PLANS = {
   basic_monthly: {
     amount: 5000,
     kind: 'subscription' as const,
-    activeJobCap: 3,
-    label: 'Up to 3 active jobs',
+    extraActiveJobSlots: 3, // on top of FREE_ACTIVE_JOB_LIMIT, not a total
+    label: 'Up to 5 active jobs',
     sublabel: '₦5,000/month',
   },
   unlimited_monthly: {
     amount: 20000,
     kind: 'subscription' as const,
-    activeJobCap: null, // unlimited
+    extraActiveJobSlots: null, // unlimited
     label: 'Unlimited active jobs',
     sublabel: '₦20,000/month',
   },

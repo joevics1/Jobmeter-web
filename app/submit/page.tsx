@@ -129,7 +129,7 @@ export default function SubmitJobPage() {
         .then((data) => {
           const planLabel =
             data.subscriptionPlan === 'job_posting_unlimited' ? 'Unlimited plan' :
-            data.subscriptionPlan === 'job_posting_basic' ? '3-job plan' :
+            data.subscriptionPlan === 'job_posting_basic' ? '5-job plan' :
             'Free plan';
           setJobQuota({
             loaded: true,
