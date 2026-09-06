@@ -2,7 +2,7 @@
 
 import React, { useMemo } from 'react';
 import Link from 'next/link';
-import { MapPin, Bookmark, BookmarkCheck, FileCheck, Trash2, Calendar, ExternalLink, Briefcase, Building2, Laptop, GraduationCap, Globe, Home, Rocket, Award, Heart, Stethoscope, ShoppingCart, Factory, Truck, Banknote, PenTool, Palette, Music, Camera, Utensils, FlaskConical, Cpu, BarChart3, CheckCircle2, AlertCircle, AlertTriangle } from 'lucide-react';
+import { MapPin, Bookmark, BookmarkCheck, FileCheck, Trash2, Calendar, ExternalLink, Briefcase, Building2, Laptop, GraduationCap, Globe, Home, Rocket, Award, Heart, Stethoscope, ShoppingCart, Factory, Truck, Banknote, PenTool, Palette, Music, Camera, Utensils, FlaskConical, Cpu, BarChart3, CheckCircle2, AlertCircle, AlertTriangle, Star } from 'lucide-react';
 import { theme } from '@/lib/theme';
 import { getCountrySlug } from '@/lib/countrySlugMap';
 
@@ -137,6 +137,8 @@ export interface JobUI {
    * separately instead), this only affects what shows up in JobList. */
   status?: string;
   deadline?: string;
+  /** Paid featured placement — currently active (is_featured && not yet featured_until). Renders a badge and is what JobList uses to pin a job to the top strip. */
+  isFeatured?: boolean;
 }
 
 
@@ -222,7 +224,7 @@ export default function JobCard({
     <div
       className="bg-white rounded-2xl p-5 mb-5 shadow-md hover:shadow-xl transition-all duration-300 border-2 relative overflow-hidden group"
       style={{
-        borderColor: showMatch ? matchTier.border : theme.colors.border.DEFAULT,
+        borderColor: job.isFeatured ? '#F59E0B' : (showMatch ? matchTier.border : theme.colors.border.DEFAULT),
         backgroundColor: theme.colors.card.DEFAULT,
       }}
     >
@@ -250,6 +252,14 @@ export default function JobCard({
           
           {/* Job Info */}
           <div className={`flex-1 min-w-0 ${isTopMatch ? 'pr-20' : ''}`}>
+            {job.isFeatured && (
+              <span
+                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold text-white mb-1.5"
+                style={{ backgroundColor: '#F59E0B' }}
+              >
+                <Star size={10} fill="currentColor" /> Featured
+              </span>
+            )}
             <h3
               className="text-lg font-semibold mb-1 line-clamp-2 leading-tight group-hover:text-blue-600 transition-colors"
               style={{ color: theme.colors.text.primary }}

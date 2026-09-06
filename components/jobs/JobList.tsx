@@ -139,6 +139,7 @@ function transformJobToUIStatic(job: any): JobUI {
     description: job.description || job.job_description || '',
     apply_in_app: !!job.apply_in_app, screening_enabled: !!job.screening_enabled,
     status: job.status, deadline: job.deadline,
+    isFeatured: true,
   };
 }
 
@@ -161,6 +162,7 @@ export default function JobList({ siteType = 'global', initialJobs, initialCount
   // the worker mirrors the jobs table but we don't want featured status to
   // depend on its cache/refresh cycle.
   const [featuredJobs, setFeaturedJobs] = useState<JobUI[]>([]);
+  const MAX_FEATURED_SLOTS = 5;
 
   useEffect(() => {
     let cancelled = false;
@@ -171,10 +173,17 @@ export default function JobList({ siteType = 'global', initialJobs, initialCount
         .eq('is_featured', true)
         .eq('status', 'active')
         .gt('featured_until', new Date().toISOString())
-        .order('featured_at', { ascending: false })
-        .limit(5);
+        .order('featured_at', { ascending: false });
       if (!cancelled && !error && data) {
-        setFeaturedJobs(data.map(transformJobToUIStatic));
+        // Only MAX_FEATURED_SLOTS show at once. With 5 or fewer active
+        // featured jobs, show all of them (most-recent first). With more,
+        // randomly pick which ones get the slot on each page load, so
+        // everyone who paid gets rotated through rather than only the
+        // most-recently-featured 5 ever being seen.
+        const selected = data.length <= MAX_FEATURED_SLOTS
+          ? data
+          : [...data].sort(() => Math.random() - 0.5).slice(0, MAX_FEATURED_SLOTS);
+        setFeaturedJobs(selected.map(transformJobToUIStatic));
       }
     };
     fetchFeaturedJobs();
@@ -951,8 +960,15 @@ export default function JobList({ siteType = 'global', initialJobs, initialCount
     if (activeTab !== 'latest') return [];
     if (latestJobsLoading && latestJobs.length === 0) return [];
 
+    const showingFeaturedStrip = !filters.search && featuredJobs.length > 0;
+    const featuredJobIds = showingFeaturedStrip ? new Set(featuredJobs.map(j => j.id)) : new Set<string>();
+
     return latestJobs.filter(job => {
       if (appliedJobs.includes(job.id)) return false;
+
+      // Already shown, badged, at the top via the featured strip — don't
+      // also show it plain further down the list.
+      if (featuredJobIds.has(job.id)) return false;
 
       // Exclude expired listings from the browsable list. Detail pages
       // deliberately still render expired jobs (kept out of Google's index
@@ -1044,7 +1060,7 @@ if (filters.remote) {
 
       return true;
     });
-  }, [latestJobs, filters, appliedJobs, latestJobsLoading, activeTab, initialCountry]);
+  }, [latestJobs, filters, appliedJobs, latestJobsLoading, activeTab, initialCountry, featuredJobs]);
 
   const sortedJobs = useMemo(() => {
     if (activeTab !== 'latest') return [];
