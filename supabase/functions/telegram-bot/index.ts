@@ -142,10 +142,36 @@ const kbMainMenu = {
   keyboard: [
     [{ text: '🔍 Browse jobs' }, { text: '🏢 My sector' }],
     [{ text: '🎯 My role' }, { text: '📋 My applications' }],
-    [{ text: '👤 My profile' }, { text: '📄 CV & Documents' }],
+    [{ text: '👤 My profile' }, { text: '📝 CV Templates' }],
+    [{ text: '🧰 My Tools' }],
   ],
   resize_keyboard: true,
 };
+
+// Career-prep tools first, then quick job-listing finders — plain outbound
+// links, no auth/state needed, same idea as the sector picker's grid layout.
+const TOOLS: { name: string; url: string }[] = [
+  { name: '🎯 Role Finder', url: `${SITE_URL}/tools/role-finder` },
+  { name: '📄 ATS CV Review', url: `${SITE_URL}/tools/ats-review` },
+  { name: '🎤 Interview Practice', url: `${SITE_URL}/tools/interview` },
+  { name: '🧭 Career Coach', url: `${SITE_URL}/tools/career` },
+  { name: '🧠 Aptitude Quiz', url: `${SITE_URL}/tools/quiz` },
+  { name: '🚩 Scam Checker', url: `${SITE_URL}/tools/scam-checker` },
+  { name: '🎓 Internship Finder', url: `${SITE_URL}/tools/internship-finder` },
+  { name: '👨‍🎓 Graduate Trainee Finder', url: `${SITE_URL}/tools/graduate-trainee-finder` },
+  { name: '🌱 Entry-Level Finder', url: `${SITE_URL}/tools/entry-level-finder` },
+  { name: '🏠 Remote Jobs Finder', url: `${SITE_URL}/tools/remote-jobs-finder` },
+];
+
+function toolsKeyboard() {
+  const rows: { text: string; url: string }[][] = [];
+  for (let i = 0; i < TOOLS.length; i += 2) {
+    const row = [{ text: TOOLS[i].name, url: TOOLS[i].url }];
+    if (TOOLS[i + 1]) row.push({ text: TOOLS[i + 1].name, url: TOOLS[i + 1].url });
+    rows.push(row);
+  }
+  return { inline_keyboard: rows };
+}
 
 function sectorKeyboard(context: 'onboard' | 'browse' | 'change') {
   const rows: { text: string; callback_data: string }[][] = [];
@@ -988,20 +1014,14 @@ serve(async (req) => {
       await myProfile(supabase, chatId, tgUser.user_id);
       return new Response('ok', { status: 200 });
     }
-    if (tgUser.linked_at && text === '📄 CV & Documents') {
-      await sendMessage(
-        chatId,
-        `Build a CV or cover letter, or browse everything you've created:`,
-        {
-          reply_markup: {
-            inline_keyboard: [
-              [{ text: '📝 CV templates', url: `${SITE_URL}/cv-templates` }],
-              [{ text: '✉️ Cover letter templates', url: `${SITE_URL}/cover-letter-templates` }],
-              [{ text: '📄 All my documents', url: `${SITE_URL}/documents` }],
-            ],
-          },
-        }
-      );
+    if (tgUser.linked_at && text === '📝 CV Templates') {
+      await sendMessage(chatId, `Build your CV from a professional template:`, {
+        reply_markup: { inline_keyboard: [[{ text: '📝 Open CV templates', url: `${SITE_URL}/cv-templates` }]] },
+      });
+      return new Response('ok', { status: 200 });
+    }
+    if (tgUser.linked_at && text === '🧰 My Tools') {
+      await sendMessage(chatId, `Pick a tool to open on jobmeter.app:`, { reply_markup: toolsKeyboard() });
       return new Response('ok', { status: 200 });
     }
 
