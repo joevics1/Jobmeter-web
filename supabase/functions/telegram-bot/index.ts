@@ -142,7 +142,7 @@ const kbMainMenu = {
   keyboard: [
     [{ text: '🔍 Browse jobs' }, { text: '🏢 My sector' }],
     [{ text: '🎯 My role' }, { text: '📋 My applications' }],
-    [{ text: '👤 My profile' }],
+    [{ text: '👤 My profile' }, { text: '📄 CV & Documents' }],
   ],
   resize_keyboard: true,
 };
@@ -986,6 +986,22 @@ serve(async (req) => {
     }
     if (tgUser.linked_at && text === '👤 My profile') {
       await myProfile(supabase, chatId, tgUser.user_id);
+      return new Response('ok', { status: 200 });
+    }
+    if (tgUser.linked_at && text === '📄 CV & Documents') {
+      await sendMessage(
+        chatId,
+        `Build a CV or cover letter, or browse everything you've created:`,
+        {
+          reply_markup: {
+            inline_keyboard: [
+              [{ text: '📝 CV templates', url: `${SITE_URL}/cv-templates` }],
+              [{ text: '✉️ Cover letter templates', url: `${SITE_URL}/cover-letter-templates` }],
+              [{ text: '📄 All my documents', url: `${SITE_URL}/documents` }],
+            ],
+          },
+        }
+      );
       return new Response('ok', { status: 200 });
     }
 
