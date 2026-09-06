@@ -53,6 +53,7 @@ const GoogleIcon = () => (
 );
 import { supabase } from '@/lib/supabase';
 import { theme } from '@/lib/theme';
+import { computeNextMonday } from '@/lib/talent';
 
 export default function OnboardingPage() {
   const router = useRouter();
@@ -161,6 +162,7 @@ export default function OnboardingPage() {
             cv_file_type: pending.cvFileType || null, cv_file_size: pending.cvFileSize || null,
             completed_at: new Date().toISOString(),
             talent_pool: pending.talentPool ?? false,
+            talent_visible_from: (pending.talentPool ?? false) ? computeNextMonday().toISOString() : null,
           }, { onConflict: 'user_id' });
 
           localStorage.removeItem('pending_onboarding_data');
@@ -411,6 +413,7 @@ export default function OnboardingPage() {
         cv_file_type: dataToSave.cvFileType || null, cv_file_size: dataToSave.cvFileSize || null,
         completed_at: new Date().toISOString(),
         talent_pool: talentPool,
+        talent_visible_from: talentPool ? computeNextMonday().toISOString() : null,
       }, { onConflict: 'user_id' });
       if (onboardingError) throw new Error('Failed to save onboarding data');
     } catch (error) {
