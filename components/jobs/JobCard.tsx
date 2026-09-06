@@ -2,7 +2,7 @@
 
 import React, { useMemo } from 'react';
 import Link from 'next/link';
-import { MapPin, Bookmark, BookmarkCheck, FileCheck, Trash2, Calendar, ExternalLink, Briefcase, Building2, Laptop, GraduationCap, Globe, Home, Rocket, Award, Heart, Stethoscope, ShoppingCart, Factory, Truck, Banknote, PenTool, Palette, Music, Camera, Utensils, FlaskConical, Cpu, BarChart3, CheckCircle2, AlertCircle, AlertTriangle, Star } from 'lucide-react';
+import { MapPin, Bookmark, BookmarkCheck, FileCheck, Trash2, Calendar, ExternalLink, Briefcase, Building2, Laptop, GraduationCap, Globe, Home, Rocket, Award, Heart, Stethoscope, ShoppingCart, Factory, Truck, Banknote, PenTool, Palette, Music, Camera, Utensils, FlaskConical, Cpu, BarChart3, CheckCircle2, AlertCircle, AlertTriangle, Star, Zap } from 'lucide-react';
 import { theme } from '@/lib/theme';
 import { getCountrySlug } from '@/lib/countrySlugMap';
 
@@ -379,15 +379,19 @@ export default function JobCard({
             <Link href={buildJobUrl(job.slug, job.country)} prefetch={false} className="block">
               <button
                 className={`px-4 py-2 rounded-lg font-medium text-sm flex items-center gap-2 transition-all hover:scale-105 ${
-                  isApplied 
-                    ? 'border border-red-200 bg-red-50 text-red-600 hover:bg-red-100' 
+                  isApplied
+                    ? 'border border-red-200 bg-red-50 text-red-600 hover:bg-red-100'
+                    : job.apply_in_app
+                    ? 'shadow-sm hover:shadow-md'
                     : 'border border-blue-200 bg-blue-50 text-blue-600 hover:bg-blue-100'
                 }`}
-                style={{
-                  backgroundColor: isApplied ? '#FEE2E2' : theme.colors.primary.DEFAULT + '10',
-                  borderColor: isApplied ? '#FCA5A5' : theme.colors.primary.DEFAULT + '30',
-                  color: isApplied ? '#DC2626' : theme.colors.primary.DEFAULT,
-                }}
+                style={
+                  isApplied
+                    ? { backgroundColor: '#FEE2E2', borderColor: '#FCA5A5', color: '#DC2626' }
+                    : job.apply_in_app
+                    ? { backgroundColor: theme.colors.success, borderColor: theme.colors.success, color: '#FFFFFF' }
+                    : { backgroundColor: theme.colors.primary.DEFAULT + '10', borderColor: theme.colors.primary.DEFAULT + '30', color: theme.colors.primary.DEFAULT }
+                }
               >
                 {isApplied ? (
                   <>
@@ -396,7 +400,7 @@ export default function JobCard({
                   </>
                 ) : job.apply_in_app ? (
                   <>
-                    <FileCheck size={16} />
+                    <Zap size={16} />
                     Quick Apply
                   </>
                 ) : (

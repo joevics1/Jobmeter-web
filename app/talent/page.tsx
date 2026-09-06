@@ -52,7 +52,10 @@ export default function TalentPoolPage() {
   const [location, setLocation] = useState('');
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(50);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [isUnlimited, setIsUnlimited] = useState(false);
   const [viewsUsedToday, setViewsUsedToday] = useState(0);
   const [dailyLimit, setDailyLimit] = useState(5);
@@ -97,28 +100,39 @@ export default function TalentPoolPage() {
     })();
   }, []);
 
-  const loadCandidates = useCallback(async () => {
+  const loadCandidates = useCallback(async (pageToLoad: number, append: boolean) => {
     if (!token) return;
-    setIsLoading(true);
+    if (append) setIsLoadingMore(true); else setIsLoading(true);
     try {
-      const params = new URLSearchParams({ category, keyword, location });
+      const params = new URLSearchParams({ category, keyword, location, page: String(pageToLoad) });
       const res = await fetch(`/api/talent?${params.toString()}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
       if (res.ok) {
-        setCandidates(data.candidates || []);
+        setCandidates((prev: Candidate[]) => (append ? [...prev, ...(data.candidates || [])] : (data.candidates || [])));
         setTotal(data.total || 0);
+        setPageSize(data.pageSize || 20);
+        setPage(pageToLoad);
         setIsUnlimited(!!data.isUnlimited);
         setViewsUsedToday(data.viewsUsedToday || 0);
         setDailyLimit(data.dailyViewLimit || 5);
       }
     } finally {
-      setIsLoading(false);
+      if (append) setIsLoadingMore(false); else setIsLoading(false);
     }
   }, [token, category, keyword, location]);
 
-  useEffect(() => { loadCandidates(); }, [loadCandidates]);
+  // Any filter change (or auth becoming ready) starts back at page 1 and
+  // replaces the list rather than appending to it.
+  useEffect(() => { loadCandidates(1, false); }, [token, category, keyword, location]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const loadMore = () => {
+    if (isLoading || isLoadingMore) return;
+    loadCandidates(page + 1, true);
+  };
+
+  const hasMore = candidates.length < total;
 
   const openCandidate = async (id: string) => {
     if (!token) return;
@@ -132,7 +146,18 @@ export default function TalentPoolPage() {
       }
       if (res.ok) {
         setSelected(data.candidate);
-        loadCandidates(); // refresh remaining-views count
+        // Refresh the views-used banner without resetting/truncating the
+        // already-loaded candidate list back to page 1.
+        try {
+          const params = new URLSearchParams({ category, keyword, location, page: '1' });
+          const r = await fetch(`/api/talent?${params.toString()}`, { headers: { Authorization: `Bearer ${token}` } });
+          const d = await r.json();
+          if (r.ok) {
+            setIsUnlimited(!!d.isUnlimited);
+            setViewsUsedToday(d.viewsUsedToday || 0);
+            setDailyLimit(d.dailyViewLimit || 5);
+          }
+        } catch {}
       }
     } finally {
       setDetailLoading(false);
@@ -218,6 +243,7 @@ export default function TalentPoolPage() {
           <h1 className="text-2xl font-bold" style={{ color: theme.colors.text.primary }}>Talent Pool</h1>
           <p className="text-sm mt-1" style={{ color: theme.colors.text.secondary }}>
             Candidates who've opted in to be discovered. Updated every Monday morning with new signups.
+            {total > 0 && <span className="ml-1 font-medium">{total} candidates match.</span>}
           </p>
         </div>
 
@@ -323,6 +349,20 @@ export default function TalentPoolPage() {
                 </div>
               </button>
             ))}
+          </div>
+        )}
+
+        {!isLoading && hasMore && (
+          <div className="flex justify-center pt-2">
+            <button
+              onClick={loadMore}
+              disabled={isLoadingMore}
+              className="px-5 py-2 rounded-lg text-sm font-medium border disabled:opacity-60 flex items-center gap-2"
+              style={{ borderColor: theme.colors.border.DEFAULT, color: theme.colors.text.secondary }}
+            >
+              {isLoadingMore && <Loader2 className="h-4 w-4 animate-spin" />}
+              {isLoadingMore ? 'Loading…' : `Load more (${candidates.length} of ${total})`}
+            </button>
           </div>
         )}
       </div>

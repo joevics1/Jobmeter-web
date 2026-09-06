@@ -34,7 +34,7 @@ export async function GET(req: NextRequest) {
     const keyword = (searchParams.get('keyword') || '').trim();
     const location = (searchParams.get('location') || '').trim();
     const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10));
-    const pageSize = 20;
+    const pageSize = 50;
 
     // Is this recruiter on a paid plan? Any active job-posting subscription
     // (basic or unlimited) now also unlocks unlimited Talent Pool access —
