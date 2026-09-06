@@ -8,7 +8,7 @@ export async function POST(req: NextRequest) {
   try {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
     const body = await req.json();
-    const { userId, applyInApp, screeningEnabled, screeningMode, screeningIncludesWritten } = body;
+    const { userId, applyInApp, screeningEnabled, screeningMode, screeningIncludesWritten, applicationQuestions } = body;
 
     if (!userId) {
       return NextResponse.json({ error: 'Missing userId' }, { status: 400 });
@@ -34,6 +34,9 @@ export async function POST(req: NextRequest) {
         screening_enabled: !!screeningEnabled,
         screening_mode: screeningMode === 'speed' ? 'speed' : 'standard',
         screening_includes_written: !!screeningIncludesWritten,
+        application_questions: applyInApp && Array.isArray(applicationQuestions)
+          ? applicationQuestions.filter((q: unknown) => typeof q === 'string' && q.trim()).slice(0, 10)
+          : [],
       })
       .eq('id', submission.id);
 

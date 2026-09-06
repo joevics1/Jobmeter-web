@@ -50,7 +50,9 @@ export default function SubmitJobPage() {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [pastedContent, setPastedContent] = useState('');
   const [submissionNotes, setSubmissionNotes] = useState('');
-  const [applyInApp, setApplyInApp] = useState(true);
+  const [applyInApp, setApplyInApp] = useState(false);
+  const [applicationQuestions, setApplicationQuestions] = useState<string[]>([]);
+  const MAX_APPLICATION_QUESTIONS = 10;
   const [quizObjective, setQuizObjective] = useState(false);
   const [quizSpeed, setQuizSpeed] = useState(false);
   const [quizWritten, setQuizWritten] = useState(false);
@@ -163,6 +165,9 @@ export default function SubmitJobPage() {
           screeningEnabled: applyInApp && screeningEnabled,
           screeningMode,
           screeningIncludesWritten: applyInApp && screeningEnabled && screeningIncludesWritten,
+          applicationQuestions: applyInApp
+            ? applicationQuestions.map((q) => q.trim()).filter(Boolean).slice(0, MAX_APPLICATION_QUESTIONS)
+            : [],
         }),
       });
     } catch (e) {
@@ -316,6 +321,11 @@ export default function SubmitJobPage() {
 
     if (!applyInApp && !jobData.applicationUrl.trim() && !jobData.applicationEmail.trim() && !jobData.applicationPhone.trim()) {
       alert('Please provide at least one application method (Email, URL, or Phone), or enable "Let candidates apply directly on JobMeter" below.');
+      return;
+    }
+
+    if (companies.length === 0) {
+      alert('Please add a company before posting a job. Once you\'ve added one, you can still choose to post this job anonymously.');
       return;
     }
 
@@ -502,7 +512,7 @@ Posted Date: ${new Date().toISOString().split('T')[0]}`;
         <div className="max-w-3xl mx-auto">
         <div className="flex items-center gap-3 mb-5">
           <button
-            onClick={() => router.back()}
+            onClick={() => router.push('/dashboard')}
             className="p-2 -ml-2 rounded-lg hover:bg-gray-100 transition-colors"
           >
             <ArrowLeft size={22} className="text-gray-500" />
@@ -806,40 +816,42 @@ Posted Date: ${new Date().toISOString().split('T')[0]}`;
               </div>
               <p className="text-sm text-gray-600 mb-4">
                 {applyInApp
-                  ? 'Optional — candidates will apply directly on JobMeter, but you can still list these as backup contact methods'
+                  ? 'Candidates apply directly on JobMeter, so backup contact methods are turned off below.'
                   : 'Provide at least one application method'}
               </p>
-              
+
               <div className="space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div>
-                    <label className="block text-sm font-semibold mb-2 text-gray-900">Email</label>
-                    <Input
-                      placeholder="jobs@company.com"
-                      type="email"
-                      value={jobData.applicationEmail}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setJobData({...jobData, applicationEmail: e.target.value})}
-                    />
+                {!applyInApp && (
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-sm font-semibold mb-2 text-gray-900">Email</label>
+                      <Input
+                        placeholder="jobs@company.com"
+                        type="email"
+                        value={jobData.applicationEmail}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setJobData({...jobData, applicationEmail: e.target.value})}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold mb-2 text-gray-900">URL</label>
+                      <Input
+                        placeholder="https://company.com/apply"
+                        type="url"
+                        value={jobData.applicationUrl}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setJobData({...jobData, applicationUrl: e.target.value})}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold mb-2 text-gray-900">Phone</label>
+                      <Input
+                        placeholder="+234 801 234 5678"
+                        type="tel"
+                        value={jobData.applicationPhone}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setJobData({...jobData, applicationPhone: e.target.value})}
+                      />
+                    </div>
                   </div>
-                  <div>
-                    <label className="block text-sm font-semibold mb-2 text-gray-900">URL</label>
-                    <Input
-                      placeholder="https://company.com/apply"
-                      type="url"
-                      value={jobData.applicationUrl}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setJobData({...jobData, applicationUrl: e.target.value})}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold mb-2 text-gray-900">Phone</label>
-                    <Input
-                      placeholder="+234 801 234 5678"
-                      type="tel"
-                      value={jobData.applicationPhone}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setJobData({...jobData, applicationPhone: e.target.value})}
-                    />
-                  </div>
-                </div>
+                )}
 
                 <div>
                   <label className="block text-sm font-semibold mb-2 text-gray-900">Application Deadline</label>
@@ -924,10 +936,15 @@ Posted Date: ${new Date().toISOString().split('T')[0]}`;
               checked={applyInApp}
               onChange={(e) => {
                 setApplyInApp(e.target.checked);
-                if (!e.target.checked) {
+                if (e.target.checked) {
+                  // These become hidden/inactive once in-app apply is on — clear
+                  // them so no stale value is silently submitted alongside it.
+                  setJobData((prev) => ({ ...prev, applicationEmail: '', applicationUrl: '', applicationPhone: '' }));
+                } else {
                   setQuizObjective(false);
                   setQuizSpeed(false);
                   setQuizWritten(false);
+                  setApplicationQuestions([]);
                   // Anonymous/no-company posting is only allowed for in-app applications —
                   // if this gets turned off, a real company becomes required.
                   setPostAnonymously(false);
@@ -957,6 +974,50 @@ Posted Date: ${new Date().toISOString().split('T')[0]}`;
                 Speed quiz
                 <span className="text-xs text-gray-400">(Coming soon)</span>
               </label>
+
+              <div className="pt-4">
+                <p className="text-sm font-medium text-gray-900">
+                  Application questions <span className="text-xs font-normal text-gray-500">— optional, up to {MAX_APPLICATION_QUESTIONS}, only for in-app applications</span>
+                </p>
+                <p className="text-xs text-gray-500 mt-0.5 mb-2">
+                  Candidates will answer these on the application form before submitting.
+                </p>
+                <div className="space-y-2">
+                  {applicationQuestions.map((q, i) => (
+                    <div key={i} className="flex items-center gap-2">
+                      <span className="text-xs font-medium text-gray-400 w-5 text-right shrink-0">{i + 1}.</span>
+                      <Input
+                        placeholder={`Question ${i + 1}`}
+                        value={q}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                          const next = [...applicationQuestions];
+                          next[i] = e.target.value;
+                          setApplicationQuestions(next);
+                        }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setApplicationQuestions(applicationQuestions.filter((_, idx) => idx !== i))}
+                        className="p-2 text-gray-400 hover:text-red-500 shrink-0"
+                        title="Remove question"
+                      >
+                        <X size={16} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+                {applicationQuestions.length < MAX_APPLICATION_QUESTIONS && (
+                  <button
+                    type="button"
+                    onClick={() => setApplicationQuestions([...applicationQuestions, ''])}
+                    className="mt-2 flex items-center gap-1.5 text-sm font-medium"
+                    style={{ color: theme.colors.primary.DEFAULT }}
+                  >
+                    <Plus size={16} />
+                    Add question
+                  </button>
+                )}
+              </div>
             </div>
           )}
         </section>
