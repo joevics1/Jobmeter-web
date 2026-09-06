@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { usePathname } from 'next/navigation';
 import Script from 'next/script';
@@ -68,9 +68,55 @@ export default function RootLayoutClient({
   // conservative, Auto-ads-only rollout for the next couple of weeks.
   const shouldLoadAds = !adExcludedPrefixes.some((p) => pathname?.startsWith(p));
 
+  // Engagement gate: hold off loading the Auto ads script until the
+  // visitor gives a genuine signal of reading the page — 5+ seconds of
+  // dwell time, or scrolling past 25% of the page, whichever comes
+  // first. This isn't specific to any one traffic source; it's meant to
+  // filter out accidental taps and instant bounces site-wide (relevant
+  // given the CTR anomaly seen around the Aug 2026 AdSense restriction).
+  //
+  // Because this state lives here in RootLayoutClient — which mounts
+  // once per hard page load and stays mounted across client-side
+  // navigation — the gate applies once per browser tab/session, not
+  // once per page view. A visitor who lands via a fresh link (e.g.
+  // tapped from WhatsApp) has to clear the gate once; after that,
+  // clicking around the site normally won't re-trigger it. Only a fresh
+  // hard reload resets it, which is the right moment to re-check, since
+  // that's equivalent to a brand new landing.
+  const [adsUnlocked, setAdsUnlocked] = useState(false);
+
+  useEffect(() => {
+    if (adsUnlocked) return;
+
+    let resolved = false;
+    const unlock = () => {
+      if (resolved) return;
+      resolved = true;
+      setAdsUnlocked(true);
+    };
+
+    const timerId = window.setTimeout(unlock, 5000);
+
+    const handleScroll = () => {
+      const scrollableHeight = document.documentElement.scrollHeight - window.innerHeight;
+      if (scrollableHeight <= 0) return; // page too short to scroll — rely on the timer only
+      const scrolledFraction = window.scrollY / scrollableHeight;
+      if (scrolledFraction >= 0.25) {
+        unlock();
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+
+    return () => {
+      window.clearTimeout(timerId);
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, [adsUnlocked]);
+
   return (
     <div className="min-h-screen flex flex-col" style={{ backgroundColor: theme.colors.background.DEFAULT }}>
-      {shouldLoadAds && (
+      {shouldLoadAds && adsUnlocked && (
         <Script
           async
           strategy="afterInteractive"
