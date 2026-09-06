@@ -29,13 +29,20 @@ export async function GET(req: NextRequest) {
 
   const result = applications.map((a) => {
     const job = jobsById.get(a.job_id);
+    // `company` is stored as jsonb ({ name, website, industry }), not a plain
+    // string — passing the raw object to the client crashed the page (React
+    // can't render an object as a child). Extract just the name here.
+    const companyName =
+      job && typeof job.company === 'object' && job.company !== null
+        ? (job.company as any).name || null
+        : (job?.company as string | null) || null;
     return {
       id: a.id,
       appliedAt: a.created_at,
       method: a.application_method,
       hasCoverLetter: !!a.cover_letter,
       job: job
-        ? { id: job.id, title: job.title, company: job.company, slug: job.slug, country: job.country, status: job.status }
+        ? { id: job.id, title: job.title, company: companyName, slug: job.slug, country: job.country, status: job.status }
         : null,
     };
   });

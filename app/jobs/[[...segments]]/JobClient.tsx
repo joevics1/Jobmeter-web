@@ -24,6 +24,8 @@ import {
   BookOpen,
   PenTool,
   CheckCircle2,
+  Zap,
+  ArrowRight,
 } from 'lucide-react';
 import { theme } from '@/lib/theme';
 import UpgradeModal from '@/components/jobs/UpgradeModal';
@@ -153,6 +155,7 @@ export default function JobClient({ job, relatedJobs, companies, documentLinks, 
   const [saved, setSaved] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [applied, setApplied] = useState(false);
+  const [hasAppliedInApp, setHasAppliedInApp] = useState(false);
   const [matchScore, setMatchScore] = useState<number | null>(null);
   const [matchBreakdown, setMatchBreakdown] = useState<any>(null);
   const [matchLoading, setMatchLoading] = useState(false);
@@ -267,7 +270,18 @@ export default function JobClient({ job, relatedJobs, companies, documentLinks, 
 
   const checkAuth = async () => {
     const { data: { session } } = await supabase.auth.getSession();
-    if (session) setUser(session.user);
+    if (session) {
+      setUser(session.user);
+      if (job.apply_in_app) {
+        const { data: existingApp } = await supabase
+          .from('applications')
+          .select('id')
+          .eq('job_id', jobId)
+          .eq('applicant_id', session.user.id)
+          .maybeSingle();
+        if (existingApp) setHasAppliedInApp(true);
+      }
+    }
   };
 
   // ─── Match score (for the small circle at the top of the page) ────────────
@@ -936,17 +950,42 @@ export default function JobClient({ job, relatedJobs, companies, documentLinks, 
                   <div className="space-y-3">
                     {/* Apply in-app on JobMeter */}
                     {job.apply_in_app && (
-                      <a
-                        href={`/apply/${job.id}`}
-                        className="w-full flex items-center justify-between gap-3 px-5 py-3.5 rounded-xl border-2 font-semibold text-sm transition-colors text-white"
-                        style={{ backgroundColor: theme.colors.primary.DEFAULT, borderColor: theme.colors.primary.DEFAULT }}
-                      >
-                        <span className="flex items-center gap-2">
-                          <CheckCircle2 size={16} />
-                          Apply on JobMeter
-                          {job.screening_enabled ? ' (quiz required)' : ''}
-                        </span>
-                      </a>
+                      hasAppliedInApp ? (
+                        <div
+                          className="w-full flex items-center gap-2.5 px-5 py-4 rounded-xl font-semibold text-sm border-2"
+                          style={{ backgroundColor: '#F0FDF4', borderColor: '#BBF7D0', color: '#15803D' }}
+                        >
+                          <span className="flex items-center justify-center w-8 h-8 rounded-full bg-green-100">
+                            <CheckCircle2 size={16} />
+                          </span>
+                          <span className="flex flex-col items-start leading-tight">
+                            <span className="text-base">Applied</span>
+                            <span className="text-xs font-normal opacity-80">You've already applied to this job on JobMeter</span>
+                          </span>
+                        </div>
+                      ) : (
+                        <a
+                          href={`/apply/${job.id}`}
+                          className="group w-full flex items-center justify-between gap-3 px-5 py-4 rounded-xl font-semibold text-sm transition-all text-white shadow-lg hover:shadow-xl hover:-translate-y-0.5"
+                          style={{
+                            background: `linear-gradient(135deg, ${theme.colors.primary.light}, ${theme.colors.primary.dark})`,
+                            boxShadow: `0 8px 20px -6px ${theme.colors.primary.DEFAULT}80`,
+                          }}
+                        >
+                          <span className="flex items-center gap-2.5">
+                            <span className="flex items-center justify-center w-8 h-8 rounded-full bg-white/20">
+                              <Zap size={16} className="fill-white" />
+                            </span>
+                            <span className="flex flex-col items-start leading-tight">
+                              <span className="text-base">Apply on JobMeter</span>
+                              {job.screening_enabled && (
+                                <span className="text-xs font-normal text-white/80">Quiz required to apply</span>
+                              )}
+                            </span>
+                          </span>
+                          <ArrowRight size={18} className="transition-transform group-hover:translate-x-1" />
+                        </a>
+                      )
                     )}
 
                     {!job.apply_in_app && (job.application?.phone || job.application_phone) && (

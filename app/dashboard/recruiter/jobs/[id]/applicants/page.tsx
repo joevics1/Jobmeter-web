@@ -5,7 +5,7 @@ import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import { theme } from '@/lib/theme';
-import { Loader2, ArrowLeft, CheckCircle2, XCircle, Mail, Phone } from 'lucide-react';
+import { Loader2, ArrowLeft, CheckCircle2, XCircle, Mail, Phone, ChevronRight } from 'lucide-react';
 
 interface Applicant {
   id: string;
@@ -89,9 +89,13 @@ export default function ApplicantsPage() {
         ) : (
           <div className="space-y-3">
             {applicants.map((a) => (
-              <div key={a.id} className="bg-white rounded-xl border border-gray-200 p-5">
-                <div className="flex items-start justify-between">
-                  <div>
+              <Link
+                key={a.id}
+                href={`/dashboard/recruiter/jobs/${jobId}/applicants/${a.id}`}
+                className="block bg-white rounded-xl border border-gray-200 p-5 hover:border-gray-300 hover:shadow-sm transition-all"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex-1 min-w-0">
                     <h2 className="font-medium text-gray-900">
                       {a.applicant?.full_name || 'Applicant'}
                     </h2>
@@ -108,21 +112,24 @@ export default function ApplicantsPage() {
                       )}
                     </div>
                   </div>
-                  {a.screening && (
-                    <div className="flex items-center gap-1.5 text-xs font-medium">
-                      {a.screening.passed ? (
-                        <CheckCircle2 size={14} color="#16A34A" />
-                      ) : (
-                        <XCircle size={14} color="#DC2626" />
-                      )}
-                      <span className={a.screening.passed ? 'text-green-700' : 'text-red-600'}>
-                        {a.screening.mcq_score}%
-                        {a.screening.written_score !== null && a.screening.written_score !== undefined
-                          ? ` MCQ / ${a.screening.written_score}% written`
-                          : ' MCQ'}
-                      </span>
-                    </div>
-                  )}
+                  <div className="flex items-center gap-2 shrink-0">
+                    {a.screening && (
+                      <div className="flex items-center gap-1.5 text-xs font-medium">
+                        {a.screening.passed ? (
+                          <CheckCircle2 size={14} color="#16A34A" />
+                        ) : (
+                          <XCircle size={14} color="#DC2626" />
+                        )}
+                        <span className={a.screening.passed ? 'text-green-700' : 'text-red-600'}>
+                          {a.screening.mcq_score}%
+                          {a.screening.written_score !== null && a.screening.written_score !== undefined
+                            ? ` MCQ / ${a.screening.written_score}% written`
+                            : ' MCQ'}
+                        </span>
+                      </div>
+                    )}
+                    <ChevronRight size={18} className="text-gray-300" />
+                  </div>
                 </div>
                 {a.applicationMethod && a.applicationMethod !== 'in_app' && (
                   <p className="text-xs text-amber-600 mt-2 bg-amber-50 rounded px-2 py-1 inline-block">
@@ -130,14 +137,14 @@ export default function ApplicantsPage() {
                   </p>
                 )}
                 {a.coverLetter && (
-                  <p className="text-sm text-gray-600 mt-3 whitespace-pre-wrap border-t border-gray-100 pt-3">
+                  <p className="text-sm text-gray-600 mt-3 whitespace-pre-wrap border-t border-gray-100 pt-3 line-clamp-2">
                     {a.coverLetter}
                   </p>
                 )}
                 <p className="text-xs text-gray-400 mt-3">
                   Applied {new Date(a.createdAt).toLocaleDateString()}
                 </p>
-              </div>
+              </Link>
             ))}
           </div>
         )}

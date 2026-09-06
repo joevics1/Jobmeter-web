@@ -8,7 +8,7 @@ export async function POST(req: NextRequest) {
   try {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
     const body = await req.json();
-    const { jobId, userId, coverLetter, screeningAttemptId } = body;
+    const { jobId, userId, coverLetter, screeningAttemptId, answers, applicantName, applicantEmail, applicantPhone } = body;
 
     if (!jobId || !userId) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
 
     const { data: job, error: jobError } = await supabase
       .from('jobs')
-      .select('id, apply_in_app, screening_enabled, status')
+      .select('id, apply_in_app, screening_enabled, status, application_questions')
       .eq('id', jobId)
       .maybeSingle();
 
@@ -69,6 +69,12 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    const questions: string[] = Array.isArray(job.application_questions) ? job.application_questions : [];
+    const cleanedAnswers = questions.map((q, i) => ({
+      question: q,
+      answer: (Array.isArray(answers) && typeof answers[i]?.answer === 'string' ? answers[i].answer : '').trim(),
+    }));
+
     const { data: application, error: insertError } = await supabase
       .from('applications')
       .upsert(
@@ -78,6 +84,10 @@ export async function POST(req: NextRequest) {
           cover_letter: coverLetter || null,
           screening_attempt_id: job.screening_enabled ? screeningAttemptId : null,
           application_method: 'in_app',
+          answers: cleanedAnswers,
+          applicant_name: applicantName || null,
+          applicant_email: applicantEmail || null,
+          applicant_phone: applicantPhone || null,
         },
         { onConflict: 'applicant_id,job_id' }
       )
