@@ -30,19 +30,22 @@ export async function GET(req: NextRequest) {
     const { admin } = recruiter;
 
     const { searchParams } = new URL(req.url);
-    const category = searchParams.get('category') || 'all'; // 'intern' | 'available' | 'all'
+    const category = searchParams.get('category') || 'all'; // 'intern' | 'all'
     const keyword = (searchParams.get('keyword') || '').trim();
     const location = (searchParams.get('location') || '').trim();
     const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10));
     const pageSize = 20;
 
-    // Is this recruiter on the unlimited plan? Determines whether we tell
-    // the client it can view everyone, or just today's remaining free slots.
+    // Is this recruiter on a paid plan? Any active job-posting subscription
+    // (basic or unlimited) now also unlocks unlimited Talent Pool access —
+    // there's no longer a separate talent-only plan to buy. The legacy
+    // talent_unlimited plan_type is kept here too in case anyone already
+    // holds one.
     const { data: subRows } = await admin
       .from('user_subscriptions')
       .select('id, expires_at')
       .eq('user_id', recruiter.id)
-      .eq('plan_type', TALENT_UNLIMITED_PLAN_TYPE)
+      .in('plan_type', [TALENT_UNLIMITED_PLAN_TYPE, 'job_posting_basic', 'job_posting_unlimited'])
       .eq('is_active', true)
       .gte('expires_at', new Date().toISOString())
       .limit(1);
@@ -109,8 +112,8 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    if (category === 'intern' || category === 'available') {
-      candidates = candidates.filter((c) => c.category === category);
+    if (category === 'intern') {
+      candidates = candidates.filter((c) => c.category === 'intern');
     }
 
     const total = candidates.length;

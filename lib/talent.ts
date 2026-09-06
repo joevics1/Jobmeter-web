@@ -2,7 +2,10 @@
 // Shared helpers for the Talent Pool pages feature.
 
 export const TALENT_FREE_DAILY_VIEW_LIMIT = 5;
-export const TALENT_UNLIMITED_PRICE_NAIRA = 10000;
+// Legacy plan_type from before Talent Pool access was folded into the
+// job-posting plans (see JOB_POSTING_PLANS in lib/constants/jobPricing.ts).
+// Kept only so any pre-existing talent_unlimited subscription row still
+// grants access; new purchases go through the job-posting plans instead.
 export const TALENT_UNLIMITED_PLAN_TYPE = 'talent_unlimited';
 
 /**

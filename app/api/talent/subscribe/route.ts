@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { initializePayment } from '@/lib/services/paymentService';
-import { TALENT_UNLIMITED_PLAN_TYPE, TALENT_UNLIMITED_PRICE_NAIRA } from '@/lib/talent';
+import { JOB_POSTING_PLANS, JobPostingPlanId } from '@/lib/constants/jobPricing';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
@@ -18,12 +18,19 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Not signed in' }, { status: 401 });
     }
 
+    const body = await req.json().catch(() => ({}));
+    const planType = body.planType as JobPostingPlanId;
+    if (planType !== 'basic_monthly' && planType !== 'unlimited_monthly') {
+      return NextResponse.json({ error: 'planType must be basic_monthly or unlimited_monthly' }, { status: 400 });
+    }
+    const plan = JOB_POSTING_PLANS[planType];
+
     const result = await initializePayment({
       email: user.email,
-      amount: TALENT_UNLIMITED_PRICE_NAIRA,
+      amount: plan.amount,
       userId: user.id,
-      paymentType: 'subscription',
-      planType: TALENT_UNLIMITED_PLAN_TYPE,
+      paymentType: 'job_listing',
+      planType,
       callback_url: `${process.env.NEXT_PUBLIC_APP_URL}/payment/callback?redirect=${encodeURIComponent('/talent?upgraded=1')}`,
     });
 

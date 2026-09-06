@@ -47,7 +47,7 @@ export default function TalentPoolPage() {
   const [isRecruiter, setIsRecruiter] = useState(false);
   const [token, setToken] = useState<string | null>(null);
 
-  const [category, setCategory] = useState<'available' | 'intern'>('available');
+  const [category, setCategory] = useState<'all' | 'intern'>('all');
   const [keyword, setKeyword] = useState('');
   const [location, setLocation] = useState('');
   const [candidates, setCandidates] = useState<Candidate[]>([]);
@@ -139,13 +139,14 @@ export default function TalentPoolPage() {
     }
   };
 
-  const startUpgrade = async () => {
+  const startUpgrade = async (planType: 'basic_monthly' | 'unlimited_monthly') => {
     if (!token) return;
     setUpgrading(true);
     try {
       const res = await fetch('/api/talent/subscribe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ planType }),
       });
       const data = await res.json();
       if (data.authorizationUrl) window.location.href = data.authorizationUrl;
@@ -237,14 +238,14 @@ export default function TalentPoolPage() {
               className="text-sm font-semibold px-4 py-1.5 rounded-lg text-white"
               style={{ backgroundColor: theme.colors.primary.DEFAULT }}
             >
-              Upgrade — ₦10,000/mo
+              Upgrade
             </button>
           )}
         </div>
 
         {/* Tabs */}
         <div className="flex gap-2">
-          {(['available', 'intern'] as const).map((c) => (
+          {(['all', 'intern'] as const).map((c) => (
             <button
               key={c}
               onClick={() => setCategory(c)}
@@ -253,7 +254,7 @@ export default function TalentPoolPage() {
                 ? { backgroundColor: theme.colors.primary.DEFAULT, color: '#fff' }
                 : { backgroundColor: '#fff', color: theme.colors.text.secondary, border: `1px solid ${theme.colors.border.DEFAULT}` }}
             >
-              {c === 'available' ? 'Available for Work' : 'Intern'}
+              {c === 'all' ? 'All' : 'Intern'}
             </button>
           ))}
         </div>
@@ -411,15 +412,24 @@ export default function TalentPoolPage() {
             </div>
             <h3 className="font-bold text-lg mb-1" style={{ color: theme.colors.text.primary }}>You've hit today's free limit</h3>
             <p className="text-sm text-gray-500 mb-5">
-              Free access includes {dailyLimit} full profile views a day. Upgrade for unlimited views, all month.
+              Free access includes {dailyLimit} full profile views a day. Any paid job-posting plan
+              gives you unlimited views, all month.
             </p>
             <button
-              onClick={startUpgrade}
+              onClick={() => startUpgrade('basic_monthly')}
               disabled={upgrading}
               className="w-full py-2.5 rounded-lg text-white font-semibold text-sm mb-2 disabled:opacity-60"
               style={{ backgroundColor: theme.colors.primary.DEFAULT }}
             >
-              {upgrading ? 'Redirecting to Paystack…' : 'Upgrade — ₦10,000/month'}
+              {upgrading ? 'Redirecting to Paystack…' : 'Basic plan — ₦5,000/month'}
+            </button>
+            <button
+              onClick={() => startUpgrade('unlimited_monthly')}
+              disabled={upgrading}
+              className="w-full py-2.5 rounded-lg font-semibold text-sm mb-2 border disabled:opacity-60"
+              style={{ borderColor: theme.colors.primary.DEFAULT, color: theme.colors.primary.DEFAULT }}
+            >
+              {upgrading ? 'Redirecting to Paystack…' : 'Unlimited plan — ₦20,000/month'}
             </button>
             <button onClick={() => setShowUpgrade(false)} className="text-sm text-gray-500">Maybe later</button>
           </div>

@@ -64,8 +64,8 @@ export async function POST(request: NextRequest) {
       }
       verifiedAmount = plan.amount;
     } else if (paymentType === 'featured_job') {
-      if (!metadata?.jobId) {
-        return NextResponse.json({ error: 'Featured job payments require metadata.jobId' }, { status: 400 });
+      if (!metadata?.job_id) {
+        return NextResponse.json({ error: 'Featured job payments require metadata.job_id' }, { status: 400 });
       }
       // Ownership check — without this, anyone could pay to feature a job
       // that isn't theirs (e.g. a competitor's listing).
@@ -73,7 +73,7 @@ export async function POST(request: NextRequest) {
       const { data: job } = await supabaseCheck
         .from('jobs')
         .select('posted_by_user_id')
-        .eq('id', metadata.jobId)
+        .eq('id', metadata.job_id)
         .maybeSingle();
       if (!job || job.posted_by_user_id !== userId) {
         return NextResponse.json({ error: 'You can only feature your own job listings' }, { status: 403 });
