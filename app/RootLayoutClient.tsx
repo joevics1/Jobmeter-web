@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { usePathname } from 'next/navigation';
 import Script from 'next/script';
@@ -69,22 +69,54 @@ export default function RootLayoutClient({
   const shouldLoadAds = !adExcludedPrefixes.some((p) => pathname?.startsWith(p));
 
   // Engagement gate: hold off loading the Auto ads script until the
-  // visitor gives a genuine signal of reading the page — 5+ seconds of
-  // dwell time, or scrolling past 25% of the page, whichever comes
-  // first. This isn't specific to any one traffic source; it's meant to
-  // filter out accidental taps and instant bounces site-wide (relevant
-  // given the CTR anomaly seen around the Aug 2026 AdSense restriction).
+  // visitor gives a genuine signal of reading the page. Two tiers:
   //
-  // Because this state lives here in RootLayoutClient — which mounts
-  // once per hard page load and stays mounted across client-side
-  // navigation — the gate applies once per browser tab/session, not
-  // once per page view. A visitor who lands via a fresh link (e.g.
-  // tapped from WhatsApp) has to clear the gate once; after that,
-  // clicking around the site normally won't re-trigger it. Only a fresh
-  // hard reload resets it, which is the right moment to re-check, since
-  // that's equivalent to a brand new landing.
+  // 1) WhatsApp in-app browser, detected via user-agent. This only
+  //    catches share-link taps that open inside WhatsApp's own webview —
+  //    a lot of WhatsApp-sourced traffic opens in the phone's default
+  //    browser instead, where this signal isn't visible at all. Still
+  //    worth using as one extra layer, on top of tier 2 below, not
+  //    instead of it. For these sessions specifically: no ads on the
+  //    first page view unless the visitor navigates to a second page,
+  //    or stays 10+ seconds on the first page — whichever comes first.
+  //
+  // 2) Everyone else (including WhatsApp taps that land in a regular
+  //    browser, invisible to the check above): 5+ seconds dwell, or
+  //    scrolling past 25% of the page, whichever comes first.
+  //
+  // Both tiers live at the RootLayoutClient level, which mounts once per
+  // hard page load and stays mounted across client-side navigation — so
+  // this is a once-per-tab-session gate, not once-per-page-view. Only a
+  // fresh hard reload resets it, which is the right moment to re-check,
+  // since that's equivalent to a brand new landing.
   const [adsUnlocked, setAdsUnlocked] = useState(false);
+  const [hasNavigatedAway, setHasNavigatedAway] = useState(false);
+  const initialPathnameRef = useRef(pathname);
+  const isWhatsAppUARef = useRef(false);
 
+  // Detect WhatsApp's in-app browser once, on mount.
+  useEffect(() => {
+    isWhatsAppUARef.current = /WhatsApp/i.test(navigator.userAgent);
+  }, []);
+
+  // Track whether the visitor has moved to a second page since landing —
+  // on its own this unlocks ads for tier 1 (WhatsApp UA) sessions.
+  useEffect(() => {
+    if (pathname !== initialPathnameRef.current) {
+      setHasNavigatedAway(true);
+    }
+  }, [pathname]);
+
+  useEffect(() => {
+    if (adsUnlocked) return;
+    if (hasNavigatedAway && isWhatsAppUARef.current) {
+      setAdsUnlocked(true);
+    }
+  }, [hasNavigatedAway, adsUnlocked]);
+
+  // Timer-based unlock path — 10s for tier 1, 5s (or 25% scroll) for
+  // tier 2. Runs once per "not yet unlocked" state; re-runs are guarded
+  // by the adsUnlocked check above and the dependency array below.
   useEffect(() => {
     if (adsUnlocked) return;
 
@@ -95,8 +127,12 @@ export default function RootLayoutClient({
       setAdsUnlocked(true);
     };
 
-    const timerId = window.setTimeout(unlock, 5000);
+    if (isWhatsAppUARef.current) {
+      const timerId = window.setTimeout(unlock, 10000);
+      return () => window.clearTimeout(timerId);
+    }
 
+    const timerId = window.setTimeout(unlock, 5000);
     const handleScroll = () => {
       const scrollableHeight = document.documentElement.scrollHeight - window.innerHeight;
       if (scrollableHeight <= 0) return; // page too short to scroll — rely on the timer only
