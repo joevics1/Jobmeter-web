@@ -18,6 +18,5 @@ ALTER TABLE applications ADD COLUMN IF NOT EXISTS applicant_name text;
 ALTER TABLE applications ADD COLUMN IF NOT EXISTS applicant_email text;
 ALTER TABLE applications ADD COLUMN IF NOT EXISTS applicant_phone text;
 
--- Prevent duplicate in-app applications to the same job by the same user.
-CREATE UNIQUE INDEX IF NOT EXISTS applications_unique_applicant_job
-  ON applications (applicant_id, job_id);
+-- NOTE: a unique constraint on (applicant_id, job_id) already existed
+-- (applications_applicant_id_job_id_key), so no new index is added here.
