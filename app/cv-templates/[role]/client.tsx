@@ -94,30 +94,12 @@ export default function RolePageClient({ page }: { page: ContentRolePage }) {
           </section>
         )}
 
-        {page.seo_content && (
-          <article className="mb-10">
-            <BlogMarkdownRenderer content={page.seo_content} />
-          </article>
-        )}
-
-        {page.faqs?.length > 0 && (
-          <section className="mb-10">
-            <h2 className="text-2xl font-bold mb-4">Frequently Asked Questions</h2>
-            <div className="space-y-4">
-              {page.faqs.map((f, i) => (
-                <div key={i}>
-                  <h3 className="font-semibold">{f.q}</h3>
-                  <p className="text-foreground">{f.a}</p>
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
-
         {/* Cross-cluster links — this page previously had no links out to
             the rest of the site. A finished CV is only useful with somewhere
-            to send it, so point straight at matching jobs and adjacent tools. */}
-        <section className="mb-24 pt-8 border-t border-border">
+            to send it, so point straight at matching jobs and adjacent tools.
+            Moved above the SEO content 2026-09-06 so it's visible without
+            scrolling past the SEO block first. */}
+        <section className="mb-10 pt-8 border-t border-border">
           <h2 className="text-lg font-bold mb-4">Next Steps</h2>
           <div className="flex flex-wrap gap-3 text-sm">
             <Link
@@ -140,6 +122,26 @@ export default function RolePageClient({ page }: { page: ContentRolePage }) {
             </Link>
           </div>
         </section>
+
+        {page.seo_content && (
+          <article className="mb-10">
+            <BlogMarkdownRenderer content={page.seo_content} />
+          </article>
+        )}
+
+        {page.faqs?.length > 0 && (
+          <section className="mb-24">
+            <h2 className="text-2xl font-bold mb-4">Frequently Asked Questions</h2>
+            <div className="space-y-4">
+              {page.faqs.map((f, i) => (
+                <div key={i}>
+                  <h3 className="font-semibold">{f.q}</h3>
+                  <p className="text-foreground">{f.a}</p>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
       </main>
 
       {/* Static action bar — fixed to bottom on mobile and desktop */}

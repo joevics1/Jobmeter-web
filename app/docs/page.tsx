@@ -42,13 +42,16 @@ const cards: HubCard[] = [
     icon: FileCheck2,
     accent: '#059669',
   },
-  {
-    title: 'AI CV & Cover Letter Builder',
-    description: 'Let AI write and format your CV and cover letter from scratch, tailored to the role you want.',
-    href: '/cv',
-    icon: Sparkles,
-    accent: '#DB2777',
-  },
+  // AI CV & Cover Letter Builder (/cv) card retired 2026-09-06 to save
+  // AI cost. The route itself is untouched — this just removes it from
+  // navigation. To bring it back, restore this card:
+  // {
+  //   title: 'AI CV & Cover Letter Builder',
+  //   description: 'Let AI write and format your CV and cover letter from scratch, tailored to the role you want.',
+  //   href: '/cv',
+  //   icon: Sparkles,
+  //   accent: '#DB2777',
+  // },
 ];
 
 export default function CvAndDocsHubPage() {
