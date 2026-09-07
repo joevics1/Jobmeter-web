@@ -268,11 +268,14 @@ export default function JobList({ siteType = 'global', initialJobs, initialCount
     locationSearch: '',
   });
 
-  // Country/remote-scoped featured jobs, mirroring the same inCountry ||
-  // isRemote rule the Best Match tab uses: a job shows when its own country
-  // is selected, when "Global" is selected (no restriction), and remote jobs
-  // additionally show under every country as well as under the dedicated
-  // Remote Jobs filter.
+  // Country/remote-scoped featured jobs:
+  // - "Global" selected → every featured job shows, no restriction.
+  // - A specific country selected (e.g. Nigeria) → only jobs whose own
+  //   country array includes it. A remote-tagged Nigeria job does NOT leak
+  //   into every other country's tab just because it's remote — remote-ness
+  //   only matters for the dedicated "Remote Jobs" filter below.
+  // - "Remote Jobs" filter selected → only jobs actually tagged remote,
+  //   regardless of which country they're scoped to.
   const featuredJobs = useMemo(() => {
     const selectedCountry = filters.country || detectedCountry;
 
@@ -294,8 +297,7 @@ export default function JobList({ siteType = 'global', initialJobs, initialCount
       if (!selectedCountry || selectedCountry === 'Global') return true;
 
       const jobCountries: string[] = Array.isArray((job as any).country) ? (job as any).country : [];
-      const inCountry = jobCountries.some((c) => c?.toLowerCase() === selectedCountry.toLowerCase());
-      return inCountry || isJobRemote(job);
+      return jobCountries.some((c) => c?.toLowerCase() === selectedCountry.toLowerCase());
     });
 
     return scoped.length <= MAX_FEATURED_SLOTS
