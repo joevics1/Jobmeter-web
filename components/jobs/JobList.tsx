@@ -19,7 +19,6 @@ import { matchCacheService } from '@/lib/matching/matchCache';
 import CreateCVModal from '@/components/cv/CreateCVModal';
 import CreateCoverLetterModal from '@/components/cv/CreateCoverLetterModal';
 import AdUnit from '@/components/ads/AdUnit';
-import MonetagBanner from '@/components/ads/MonetagBanner';
 import { COUNTRIES } from '@/lib/countries';
 
 import { OrganizationSchema, WebSiteSchema } from '@/components/seo/StructuredData';
@@ -1338,7 +1337,6 @@ if (filters.remote) {
    then uncomment this block.
 <AdUnit slot={AD_SLOTS.BANNER} format="auto" style={{ display: 'block' }} />
 */}
-                          <MonetagBanner zone="11744199" />
                         </div>
                       )}
 
@@ -1356,7 +1354,6 @@ if (filters.remote) {
                             style={{ display: 'block' }}
                           />
 */}
-                          <MonetagBanner zone="11744207" />
                         </div>
                       )}
                     </React.Fragment>
@@ -1599,7 +1596,6 @@ if (filters.remote) {
    then uncomment this block.
 <AdUnit slot={AD_SLOTS.BANNER} format="auto" style={{ display: 'block' }} />
 */}
-                              <MonetagBanner zone="11744199" />
                             </div>
                           )}
 
@@ -1618,7 +1614,6 @@ if (filters.remote) {
                                 style={{ display: 'block' }}
                               />
 */}
-                              <MonetagBanner zone="11744207" />
                             </div>
                           )}
                         </React.Fragment>
@@ -1642,7 +1637,6 @@ if (filters.remote) {
                           style={{ display: 'inline-block', width: '320px', height: '250px' }}
                         />
 */}
-                        <MonetagBanner zone="11744212" />
                       </div>
                       {/* Desktop: leaderboard */}
                       <div className="hidden lg:block" style={{ width: '728px', height: '90px' }}>
@@ -1657,7 +1651,6 @@ if (filters.remote) {
                           style={{ display: 'inline-block', width: '728px', height: '90px' }}
                         />
 */}
-                        <MonetagBanner zone="11744329" />
                       </div>
                     </div>
                   )}
