@@ -114,7 +114,7 @@ export default function RootLayout({
     <html lang="en">
       <head>
         <meta name="google-adsense-account" content="ca-pub-1119289641389825" />
-        <meta name="monetag" content="6b80d0da5cbd103001e7183efd46c68d" />
+        <meta name="monetag" content="4b1183cf39f1445fa33423f15417cc21" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link rel="preconnect" href="https://qyuzuooxenyjqnjplrya.supabase.co" />
