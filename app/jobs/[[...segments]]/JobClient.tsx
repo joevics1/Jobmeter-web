@@ -32,6 +32,7 @@ import UpgradeModal from '@/components/jobs/UpgradeModal';
 import { useToast } from '@/hooks/use-toast';
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion';
 import AdUnit from '@/components/ads/AdUnit';
+import MonetagBanner from '@/components/ads/MonetagBanner';
 import { TOOLS_NAV } from '@/lib/toolsNav';
 import type { DocumentLink, CvTemplateMatch } from './page';
 import { useAuth } from '@/context/AuthContext';
@@ -836,6 +837,10 @@ export default function JobClient({ job, relatedJobs, companies, documentLinks, 
                 )}
               </div>
 
+              <div className="w-full overflow-hidden">
+                <MonetagBanner zone="11744199" />
+              </div>
+
               {job.about_company && (
                 <div className="bg-white rounded-xl shadow-sm p-6">
                   <h2 className="text-xl font-semibold mb-4 text-gray-900">About the Company</h2>
@@ -869,6 +874,7 @@ export default function JobClient({ job, relatedJobs, companies, documentLinks, 
    then uncomment this block.
 <AdUnit slot={AD_SLOTS.IN_ARTICLE} format="fluid" layout="in-article" style={{ display: 'block', textAlign: 'center', width: '100%' }} />
 */}
+                <MonetagBanner zone="11744207" />
               </div>
 
               {(() => {
@@ -930,6 +936,10 @@ export default function JobClient({ job, relatedJobs, companies, documentLinks, 
                 }
                 return null;
               })()}
+
+              <div className="w-full overflow-hidden">
+                <MonetagBanner zone="11744212" />
+              </div>
 
               {/* How to Apply */}
               {isExpired ? (
@@ -1110,6 +1120,9 @@ export default function JobClient({ job, relatedJobs, companies, documentLinks, 
 
 
 {/* No "Apply for Me" on remote.jobmeter.app */}
+<div className="w-full overflow-hidden">
+  <MonetagBanner zone="11744329" />
+</div>
 <div className="bg-white rounded-xl shadow-sm p-6">
   <h2 className="text-xl font-semibold mb-4 text-gray-900">Join Our Communities</h2>
   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

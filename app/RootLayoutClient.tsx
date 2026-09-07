@@ -153,12 +153,25 @@ export default function RootLayoutClient({
   return (
     <div className="min-h-screen flex flex-col" style={{ backgroundColor: theme.colors.background.DEFAULT }}>
       {shouldLoadAds && adsUnlocked && (
-        <Script
-          async
-          strategy="afterInteractive"
-          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1119289641389825"
-          crossOrigin="anonymous"
-        />
+        <>
+          <Script
+            async
+            strategy="afterInteractive"
+            src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1119289641389825"
+            crossOrigin="anonymous"
+          />
+          {/* Monetag Vignette — a full-page interstitial, same category of risk
+              as AdSense's Auto Ads vignette noted above, so it rides the exact
+              same excluded-routes + engagement gate rather than loading
+              globally/unconditionally. */}
+          <Script
+            id="monetag-vignette"
+            strategy="afterInteractive"
+            dangerouslySetInnerHTML={{
+              __html: `(function(s){s.dataset.zone='11744320',s.src='https://n6wxm.com/vignette.min.js'})([document.documentElement, document.body].filter(Boolean).pop().appendChild(document.createElement('script')))`,
+            }}
+          />
+        </>
       )}
 
       {/* Header - hidden on bottom nav pages */}
