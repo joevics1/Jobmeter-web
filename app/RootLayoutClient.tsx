@@ -82,7 +82,7 @@ export default function RootLayoutClient({
   //
   // 2) Everyone else (including WhatsApp taps that land in a regular
   //    browser, invisible to the check above): 10+ seconds dwell, or
-  //    scrolling past 50% of the page, whichever comes first.
+  //    scrolling past 25% of the page, whichever comes first.
   //
   // Both tiers live at the RootLayoutClient level, which mounts once per
   // hard page load and stays mounted across client-side navigation — so
@@ -114,7 +114,7 @@ export default function RootLayoutClient({
     }
   }, [hasNavigatedAway, adsUnlocked]);
 
-  // Timer-based unlock path — 10s for tier 1, 10s (or 50% scroll) for
+  // Timer-based unlock path — 10s for tier 1, 10s (or 25% scroll) for
   // tier 2. Runs once per "not yet unlocked" state; re-runs are guarded
   // by the adsUnlocked check above and the dependency array below.
   useEffect(() => {
@@ -137,7 +137,7 @@ export default function RootLayoutClient({
       const scrollableHeight = document.documentElement.scrollHeight - window.innerHeight;
       if (scrollableHeight <= 0) return; // page too short to scroll — rely on the timer only
       const scrolledFraction = window.scrollY / scrollableHeight;
-      if (scrolledFraction >= 0.5) {
+      if (scrolledFraction >= 0.25) {
         unlock();
       }
     };
