@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { mapOnboardingToCVData } from '@/lib/cv-template-pages/onboarding-fetch';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -35,13 +36,13 @@ export async function GET(req: NextRequest, { params }: { params: { applicationI
       return NextResponse.json({ error: 'Not authorized to view this applicant' }, { status: 403 });
     }
 
+    // Same source of truth as the Settings "Edit Profile" page (onboarding_data,
+    // select('*')) mapped through the same mapOnboardingToCVData(), so recruiters
+    // see the exact same CV fields the candidate themselves can edit — not a
+    // hand-picked subset.
     const [{ data: profile }, { data: onboarding }, { data: attempt }] = await Promise.all([
       supabase.from('profiles').select('id, full_name, email, phone').eq('id', application.applicant_id).maybeSingle(),
-      supabase
-        .from('onboarding_data')
-        .select('cv_name, cv_summary, cv_roles, cv_skills, cv_location, cv_work_experience, cv_education, cv_linkedin, cv_github, cv_portfolio, experience_level, sector')
-        .eq('user_id', application.applicant_id)
-        .maybeSingle(),
+      supabase.from('onboarding_data').select('*').eq('user_id', application.applicant_id).maybeSingle(),
       application.screening_attempt_id
         ? supabase
             .from('screening_attempts')
@@ -51,26 +52,20 @@ export async function GET(req: NextRequest, { params }: { params: { applicationI
         : Promise.resolve({ data: null as any }),
     ]);
 
+    const cv = onboarding ? mapOnboardingToCVData(onboarding) : null;
+
     return NextResponse.json({
       jobTitle: job.title,
       applicant: {
         id: application.applicant_id,
         // The name/email/phone the candidate actually submitted with this
-        // application take priority over their (possibly since-changed) profile.
-        name: application.applicant_name || profile?.full_name || onboarding?.cv_name || 'Applicant',
-        email: application.applicant_email || profile?.email || '',
-        phone: application.applicant_phone || profile?.phone || '',
-        location: onboarding?.cv_location || '',
-        summary: onboarding?.cv_summary || '',
-        roles: onboarding?.cv_roles || [],
-        skills: onboarding?.cv_skills || [],
+        // application take priority over their (possibly since-changed) profile/CV.
+        name: application.applicant_name || profile?.full_name || cv?.personalDetails.name || 'Applicant',
+        email: application.applicant_email || profile?.email || cv?.personalDetails.email || '',
+        phone: application.applicant_phone || profile?.phone || cv?.personalDetails.phone || '',
         experienceLevel: onboarding?.experience_level || '',
         sector: onboarding?.sector || '',
-        workExperience: onboarding?.cv_work_experience || [],
-        education: onboarding?.cv_education || [],
-        linkedin: onboarding?.cv_linkedin || '',
-        github: onboarding?.cv_github || '',
-        portfolio: onboarding?.cv_portfolio || '',
+        cv,
       },
       application: {
         id: application.id,
@@ -86,3 +81,4 @@ export async function GET(req: NextRequest, { params }: { params: { applicationI
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
+

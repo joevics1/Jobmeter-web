@@ -5,6 +5,7 @@ import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import { theme } from '@/lib/theme';
+import type { CVData } from '@/lib/cv-template-pages/cv-data-types';
 import {
   Loader2,
   ArrowLeft,
@@ -18,6 +19,14 @@ import {
   Link as LinkIcon,
   Github,
   Linkedin,
+  FolderGit2,
+  Award,
+  BadgeCheck,
+  Languages,
+  Heart,
+  BookOpen,
+  HandHeart,
+  FileText,
 } from 'lucide-react';
 
 interface Detail {
@@ -27,17 +36,9 @@ interface Detail {
     name: string;
     email: string;
     phone: string;
-    location: string;
-    summary: string;
-    roles: string[];
-    skills: string[];
     experienceLevel: string;
     sector: string;
-    workExperience: any[];
-    education: any[];
-    linkedin: string;
-    github: string;
-    portfolio: string;
+    cv: CVData | null;
   };
   application: {
     id: string;
@@ -52,6 +53,17 @@ interface Detail {
     passed: boolean;
     time_taken_seconds: number;
   } | null;
+}
+
+function Section({ icon, title, children }: { icon: React.ReactNode; title: string; children: React.ReactNode }) {
+  return (
+    <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-4">
+      <h2 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-1.5">
+        {icon} {title}
+      </h2>
+      {children}
+    </div>
+  );
 }
 
 export default function ApplicantDetailPage() {
@@ -101,6 +113,7 @@ export default function ApplicantDetailPage() {
   }
 
   const { applicant, application, screening, jobTitle } = detail;
+  const cv = applicant.cv;
 
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4">
@@ -112,11 +125,14 @@ export default function ApplicantDetailPage() {
           <ArrowLeft size={15} /> Back to applicants
         </Link>
 
+        {/* Header */}
         <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-4">
           <div className="flex items-start justify-between gap-3">
             <div>
               <h1 className="text-xl font-semibold text-gray-900">{applicant.name}</h1>
-              <p className="text-sm text-gray-500">Applied for {jobTitle}</p>
+              <p className="text-sm text-gray-500">
+                {cv?.personalDetails.title ? `${cv.personalDetails.title} · ` : ''}Applied for {jobTitle}
+              </p>
             </div>
             {screening && (
               <div className="flex items-center gap-1.5 text-xs font-medium shrink-0">
@@ -146,30 +162,41 @@ export default function ApplicantDetailPage() {
                 <Phone size={14} /> {applicant.phone}
               </a>
             )}
-            {applicant.location && (
+            {cv?.personalDetails.location && (
               <span className="flex items-center gap-1.5">
-                <MapPin size={14} /> {applicant.location}
+                <MapPin size={14} /> {cv.personalDetails.location}
               </span>
             )}
           </div>
 
           <div className="flex flex-wrap items-center gap-3 mt-2 text-sm">
-            {applicant.linkedin && (
-              <a href={applicant.linkedin} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-blue-600 hover:underline">
+            {cv?.personalDetails.linkedin && (
+              <a href={cv.personalDetails.linkedin} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-blue-600 hover:underline">
                 <Linkedin size={14} /> LinkedIn
               </a>
             )}
-            {applicant.github && (
-              <a href={applicant.github} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-blue-600 hover:underline">
+            {cv?.personalDetails.github && (
+              <a href={cv.personalDetails.github} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-blue-600 hover:underline">
                 <Github size={14} /> GitHub
               </a>
             )}
-            {applicant.portfolio && (
-              <a href={applicant.portfolio} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-blue-600 hover:underline">
+            {cv?.personalDetails.portfolio && (
+              <a href={cv.personalDetails.portfolio} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-blue-600 hover:underline">
                 <LinkIcon size={14} /> Portfolio
               </a>
             )}
           </div>
+
+          {(applicant.experienceLevel || applicant.sector) && (
+            <div className="flex flex-wrap gap-1.5 mt-3">
+              {applicant.experienceLevel && (
+                <span className="text-xs bg-gray-100 text-gray-700 rounded-full px-2.5 py-1">{applicant.experienceLevel}</span>
+              )}
+              {applicant.sector && (
+                <span className="text-xs bg-gray-100 text-gray-700 rounded-full px-2.5 py-1">{applicant.sector}</span>
+              )}
+            </div>
+          )}
 
           <p className="text-xs text-gray-400 mt-4">
             Applied {new Date(application.createdAt).toLocaleDateString()} via{' '}
@@ -177,59 +204,174 @@ export default function ApplicantDetailPage() {
           </p>
         </div>
 
-        {applicant.summary && (
-          <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-4">
-            <h2 className="text-sm font-semibold text-gray-900 mb-2">Summary</h2>
-            <p className="text-sm text-gray-600 whitespace-pre-wrap">{applicant.summary}</p>
+        {!cv && (
+          <div className="bg-amber-50 border border-amber-200 text-amber-700 text-sm rounded-xl p-4 mb-4">
+            This candidate hasn&apos;t completed their CV profile yet — only their submitted application details are shown below.
           </div>
         )}
 
-        {(applicant.roles?.length > 0 || applicant.skills?.length > 0) && (
-          <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-4">
-            {applicant.roles?.length > 0 && (
+        {cv?.summary && (
+          <Section icon={<FileText size={14} />} title="Summary">
+            <p className="text-sm text-gray-600 whitespace-pre-wrap">{cv.summary}</p>
+          </Section>
+        )}
+
+        {((cv?.roles?.length ?? 0) > 0 || (cv?.skills?.length ?? 0) > 0) && (
+          <Section icon={<Briefcase size={14} />} title="Roles & Skills">
+            {(cv?.roles?.length ?? 0) > 0 && (
               <div className="mb-3">
-                <h2 className="text-sm font-semibold text-gray-900 mb-1.5 flex items-center gap-1.5"><Briefcase size={14} /> Roles</h2>
+                <p className="text-xs font-medium text-gray-500 mb-1.5">Roles</p>
                 <div className="flex flex-wrap gap-1.5">
-                  {applicant.roles.map((r, i) => (
+                  {cv!.roles!.map((r, i) => (
                     <span key={i} className="text-xs bg-gray-100 text-gray-700 rounded-full px-2.5 py-1">{r}</span>
                   ))}
                 </div>
               </div>
             )}
-            {applicant.skills?.length > 0 && (
+            {(cv?.skills?.length ?? 0) > 0 && (
               <div>
-                <h2 className="text-sm font-semibold text-gray-900 mb-1.5">Skills</h2>
+                <p className="text-xs font-medium text-gray-500 mb-1.5">Skills</p>
                 <div className="flex flex-wrap gap-1.5">
-                  {applicant.skills.map((s, i) => (
+                  {cv!.skills.map((s, i) => (
                     <span key={i} className="text-xs bg-blue-50 text-blue-700 rounded-full px-2.5 py-1">{s}</span>
                   ))}
                 </div>
               </div>
             )}
-          </div>
+          </Section>
         )}
 
-        {applicant.education?.length > 0 && (
-          <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-4">
-            <h2 className="text-sm font-semibold text-gray-900 mb-2 flex items-center gap-1.5"><GraduationCap size={14} /> Education</h2>
-            <div className="space-y-2 text-sm text-gray-600">
-              {applicant.education.map((ed: any, i: number) => (
-                <p key={i}>{typeof ed === 'string' ? ed : JSON.stringify(ed)}</p>
+        {(cv?.experience?.length ?? 0) > 0 && (
+          <Section icon={<Briefcase size={14} />} title="Work Experience">
+            <div className="space-y-4">
+              {cv!.experience!.map((exp, i) => (
+                <div key={i}>
+                  <p className="text-sm font-medium text-gray-900">{exp.role}{exp.company ? ` — ${exp.company}` : ''}</p>
+                  {exp.years && <p className="text-xs text-gray-400">{exp.years}</p>}
+                  {exp.bullets?.length > 0 && (
+                    <ul className="list-disc list-inside text-sm text-gray-600 mt-1 space-y-0.5">
+                      {exp.bullets.map((b, bi) => <li key={bi}>{b}</li>)}
+                    </ul>
+                  )}
+                </div>
               ))}
             </div>
-          </div>
+          </Section>
         )}
 
+        {(cv?.education?.length ?? 0) > 0 && (
+          <Section icon={<GraduationCap size={14} />} title="Education">
+            <div className="space-y-2">
+              {cv!.education!.map((ed, i) => (
+                <div key={i} className="text-sm text-gray-600">
+                  <p className="font-medium text-gray-900">{ed.degree}</p>
+                  <p>{ed.institution}{ed.years ? ` · ${ed.years}` : ''}</p>
+                </div>
+              ))}
+            </div>
+          </Section>
+        )}
+
+        {(cv?.projects?.length ?? 0) > 0 && (
+          <Section icon={<FolderGit2 size={14} />} title="Projects">
+            <div className="space-y-2">
+              {cv!.projects!.map((p, i) => (
+                <div key={i} className="text-sm text-gray-600">
+                  <p className="font-medium text-gray-900">{p.title}</p>
+                  {p.description && <p>{p.description}</p>}
+                </div>
+              ))}
+            </div>
+          </Section>
+        )}
+
+        {(cv?.certifications?.length ?? 0) > 0 && (
+          <Section icon={<BadgeCheck size={14} />} title="Certifications">
+            <div className="flex flex-wrap gap-1.5">
+              {cv!.certifications!.map((c, i) => (
+                <span key={i} className="text-xs bg-gray-100 text-gray-700 rounded-full px-2.5 py-1">
+                  {c.name}{c.issuer ? ` — ${c.issuer}` : ''}{c.year ? ` (${c.year})` : ''}
+                </span>
+              ))}
+            </div>
+          </Section>
+        )}
+
+        {(cv?.awards?.length ?? 0) > 0 && (
+          <Section icon={<Award size={14} />} title="Awards">
+            <div className="flex flex-wrap gap-1.5">
+              {cv!.awards!.map((a, i) => (
+                <span key={i} className="text-xs bg-gray-100 text-gray-700 rounded-full px-2.5 py-1">
+                  {a.title}{a.issuer ? ` — ${a.issuer}` : ''}{a.year ? ` (${a.year})` : ''}
+                </span>
+              ))}
+            </div>
+          </Section>
+        )}
+
+        {(cv?.accomplishments?.length ?? 0) > 0 && (
+          <Section icon={<Award size={14} />} title="Accomplishments">
+            <ul className="list-disc list-inside text-sm text-gray-600 space-y-0.5">
+              {cv!.accomplishments!.map((a, i) => <li key={i}>{a}</li>)}
+            </ul>
+          </Section>
+        )}
+
+        {(cv?.publications?.length ?? 0) > 0 && (
+          <Section icon={<BookOpen size={14} />} title="Publications">
+            <div className="space-y-1.5 text-sm text-gray-600">
+              {cv!.publications!.map((p, i) => (
+                <p key={i}>{p.title}{p.journal ? ` — ${p.journal}` : ''}{p.year ? ` (${p.year})` : ''}</p>
+              ))}
+            </div>
+          </Section>
+        )}
+
+        {(cv?.volunteerWork?.length ?? 0) > 0 && (
+          <Section icon={<HandHeart size={14} />} title="Volunteer Work">
+            <div className="space-y-2 text-sm text-gray-600">
+              {cv!.volunteerWork!.map((v, i) => (
+                <div key={i}>
+                  <p className="font-medium text-gray-900">{v.organization}{v.role ? ` — ${v.role}` : ''}</p>
+                  {v.duration && <p className="text-xs text-gray-400">{v.duration}</p>}
+                  {v.description && <p>{v.description}</p>}
+                </div>
+              ))}
+            </div>
+          </Section>
+        )}
+
+        {((cv?.languages?.length ?? 0) > 0 || (cv?.interests?.length ?? 0) > 0) && (
+          <Section icon={<Languages size={14} />} title="Languages & Interests">
+            {(cv?.languages?.length ?? 0) > 0 && (
+              <div className="mb-2">
+                <p className="text-xs font-medium text-gray-500 mb-1">Languages</p>
+                <p className="text-sm text-gray-600">{cv!.languages!.join(', ')}</p>
+              </div>
+            )}
+            {(cv?.interests?.length ?? 0) > 0 && (
+              <div>
+                <p className="text-xs font-medium text-gray-500 mb-1 flex items-center gap-1"><Heart size={12} /> Interests</p>
+                <p className="text-sm text-gray-600">{cv!.interests!.join(', ')}</p>
+              </div>
+            )}
+          </Section>
+        )}
+
+        {(cv?.additionalSections?.length ?? 0) > 0 && cv!.additionalSections!.map((s, i) => (
+          <Section key={i} icon={<FileText size={14} />} title={s.sectionName}>
+            <p className="text-sm text-gray-600 whitespace-pre-wrap">{s.content}</p>
+          </Section>
+        ))}
+
         {application.coverLetter && (
-          <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-4">
-            <h2 className="text-sm font-semibold text-gray-900 mb-2">Cover letter</h2>
+          <Section icon={<FileText size={14} />} title="Cover Letter">
             <p className="text-sm text-gray-600 whitespace-pre-wrap">{application.coverLetter}</p>
-          </div>
+          </Section>
         )}
 
         {application.answers?.length > 0 && (
-          <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-4">
-            <h2 className="text-sm font-semibold text-gray-900 mb-3">Application questions</h2>
+          <Section icon={<FileText size={14} />} title="Application Questions">
             <div className="space-y-4">
               {application.answers.map((a, i) => (
                 <div key={i}>
@@ -238,9 +380,10 @@ export default function ApplicantDetailPage() {
                 </div>
               ))}
             </div>
-          </div>
+          </Section>
         )}
       </div>
     </div>
   );
 }
+
