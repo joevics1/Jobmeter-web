@@ -169,12 +169,17 @@ export default function JobList({ siteType = 'global', initialJobs, initialCount
     const fetchFeaturedJobs = async () => {
       const { data, error } = await supabase
         .from('jobs')
-        .select('id, slug, title, company, location, country, salary_range, type, employment_type, posted_date, created_at, sector, role_category, description, apply_in_app, screening_enabled, status, deadline')
+        .select('id, slug, title, company, location, country, salary_range, employment_type, posted_date, created_at, sector, role_category, description, apply_in_app, screening_enabled, status, deadline')
         .eq('is_featured', true)
         .eq('status', 'active')
         .gt('featured_until', new Date().toISOString())
         .order('featured_at', { ascending: false });
-      if (!cancelled && !error && data) {
+      if (cancelled) return;
+      if (error) {
+        console.error('Failed to fetch featured jobs:', error);
+        return;
+      }
+      if (data) {
         // Only MAX_FEATURED_SLOTS show at once. With 5 or fewer active
         // featured jobs, show all of them (most-recent first). With more,
         // randomly pick which ones get the slot on each page load, so
