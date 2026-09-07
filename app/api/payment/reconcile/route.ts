@@ -24,12 +24,9 @@ export async function GET(req: NextRequest) {
 
   const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-  // TEMP (2026-09-07): widened from 3 to 30 days to catch a specific
-  // featured-job payment stuck from before the metadata.job_id fix, which
-  // predates the normal 3-day window. Revert to 3 days once confirmed
-  // fixed — no reason to make Paystack return a month of transactions on
-  // every hourly run once this one-off case is cleared.
-  const from = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+  // Look back 3 days — comfortably wider than the daily cron interval, so
+  // a single missed run doesn't let anything fall through the gap.
+  const from = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString();
 
   let page = 1;
   let reconciled = 0;
