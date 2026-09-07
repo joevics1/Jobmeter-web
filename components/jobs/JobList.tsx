@@ -161,7 +161,13 @@ export default function JobList({ siteType = 'global', initialJobs, initialCount
   // rather than the jobs-api worker, same as enrichWithApplyInApp below —
   // the worker mirrors the jobs table but we don't want featured status to
   // depend on its cache/refresh cycle.
-  const [featuredJobs, setFeaturedJobs] = useState<JobUI[]>([]);
+
+  // Raw fetch: every currently-valid featured job, regardless of country.
+  // Country/remote scoping and the MAX_FEATURED_SLOTS rotation are applied
+  // afterwards in the `featuredJobs` memo below, so switching the country
+  // filter re-scopes which featured jobs are eligible for a slot rather than
+  // rotating among a fixed global set.
+  const [allFeaturedJobs, setAllFeaturedJobs] = useState<JobUI[]>([]);
   const MAX_FEATURED_SLOTS = 5;
 
   useEffect(() => {
@@ -180,15 +186,7 @@ export default function JobList({ siteType = 'global', initialJobs, initialCount
         return;
       }
       if (data) {
-        // Only MAX_FEATURED_SLOTS show at once. With 5 or fewer active
-        // featured jobs, show all of them (most-recent first). With more,
-        // randomly pick which ones get the slot on each page load, so
-        // everyone who paid gets rotated through rather than only the
-        // most-recently-featured 5 ever being seen.
-        const selected = data.length <= MAX_FEATURED_SLOTS
-          ? data
-          : [...data].sort(() => Math.random() - 0.5).slice(0, MAX_FEATURED_SLOTS);
-        setFeaturedJobs(selected.map(transformJobToUIStatic));
+        setAllFeaturedJobs(data.map(transformJobToUIStatic));
       }
     };
     fetchFeaturedJobs();
@@ -269,6 +267,41 @@ export default function JobList({ siteType = 'global', initialJobs, initialCount
     // hardcoded state/region list per country.
     locationSearch: '',
   });
+
+  // Country/remote-scoped featured jobs, mirroring the same inCountry ||
+  // isRemote rule the Best Match tab uses: a job shows when its own country
+  // is selected, when "Global" is selected (no restriction), and remote jobs
+  // additionally show under every country as well as under the dedicated
+  // Remote Jobs filter.
+  const featuredJobs = useMemo(() => {
+    const selectedCountry = filters.country || detectedCountry;
+
+    const isJobRemote = (job: JobUI) => {
+      const jobLoc = job.rawLocation;
+      return (
+        (jobLoc && typeof jobLoc === 'object' && Boolean((jobLoc as Record<string, unknown>).remote)) ||
+        (typeof jobLoc === 'string' && jobLoc.toLowerCase().includes('remote')) ||
+        (job.type || '').toLowerCase().includes('remote')
+      );
+    };
+
+    const scoped = allFeaturedJobs.filter((job) => {
+      // Dedicated "Remote Jobs" filter — only actually-remote jobs qualify,
+      // same as the main list's remote filter.
+      if (filters.remote) return isJobRemote(job);
+
+      // "Global" (or no country selected yet) — no restriction.
+      if (!selectedCountry || selectedCountry === 'Global') return true;
+
+      const jobCountries: string[] = Array.isArray((job as any).country) ? (job as any).country : [];
+      const inCountry = jobCountries.some((c) => c?.toLowerCase() === selectedCountry.toLowerCase());
+      return inCountry || isJobRemote(job);
+    });
+
+    return scoped.length <= MAX_FEATURED_SLOTS
+      ? scoped
+      : [...scoped].sort(() => Math.random() - 0.5).slice(0, MAX_FEATURED_SLOTS);
+  }, [allFeaturedJobs, filters.country, filters.remote, detectedCountry]);
 
   // ── Refs to prevent duplicate fetches ──────────────────────────────────────
   const latestFetchedRef = useRef(false);
