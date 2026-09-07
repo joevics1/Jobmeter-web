@@ -768,6 +768,21 @@ export default function AuthModal({ open, onOpenChange, defaultMode = 'signup' }
                   </svg>
                   Continue with Google
                 </Button>
+
+                {/* Sign Up Link */}
+                <div className="text-center pt-2">
+                  <p className="text-sm text-gray-600">
+                    Don&apos;t have an account?{' '}
+                    <button
+                      type="button"
+                      onClick={() => setShowSignIn(false)}
+                      className="font-medium hover:underline"
+                      style={{ color: theme.colors.primary.DEFAULT }}
+                    >
+                      Sign Up
+                    </button>
+                  </p>
+                </div>
               </form>
             ) : (
               <form onSubmit={handleForgotPassword} className="space-y-4">
