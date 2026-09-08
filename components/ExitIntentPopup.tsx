@@ -17,6 +17,14 @@ const TelegramIcon = () => (
   </svg>
 );
 
+const JOBMETER_BOT_URL = 'https://t.me/JobMeter_Bot';
+
+const ArrowRightIcon = () => (
+  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
+  </svg>
+);
+
 const channels = {
   whatsapp: [
     { label: 'Global Jobs', href: 'https://whatsapp.com/channel/0029VbCmGF10Qeanq3dje41Z' },
@@ -118,8 +126,31 @@ export default function ExitIntentPopup() {
         <div className="px-6 pb-6 -mt-8 relative">
           <div className="bg-white rounded-2xl border border-gray-100 shadow-xl p-5">
             <p className="text-gray-600 text-center mb-4 text-sm">
-              Join <span className="font-semibold text-blue-600">5,000+</span> job seekers getting daily updates — pick your channel!
+              Join <span className="font-semibold text-blue-600">5,000+</span> job seekers getting daily updates!
             </p>
+
+            {/* JobMeter Bot — smart matching, not just a broadcast channel */}
+            <a
+              href={JOBMETER_BOT_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={handleSocialClick}
+              className="relative flex items-center gap-3 w-full p-3 mb-4 rounded-2xl bg-gradient-to-r from-[#0088cc] to-blue-600 text-white shadow-lg hover:shadow-xl transition-all hover:-translate-y-0.5"
+            >
+              <span className="absolute -top-2 -right-2 bg-amber-400 text-[10px] font-bold text-gray-900 px-1.5 py-0.5 rounded-full shadow">
+                NEW
+              </span>
+              <span className="flex items-center justify-center w-10 h-10 rounded-full bg-white/20 shrink-0">
+                <span className="text-white"><TelegramIcon /></span>
+              </span>
+              <span className="flex-1 text-left">
+                <span className="block text-sm font-bold leading-tight">Chat with JobMeter Bot</span>
+                <span className="block text-xs text-white/80 leading-tight">Get matched to jobs instantly, just for you</span>
+              </span>
+              <ArrowRightIcon />
+            </a>
+
+            <p className="text-center text-xs text-gray-400 mb-3">— or pick a channel for daily updates —</p>
 
             {/* WhatsApp section */}
             <div className="mb-3">
