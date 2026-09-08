@@ -21,7 +21,12 @@ export const RATE_LIMIT_ENFORCE = process.env.RATE_LIMIT_MODE === 'enforce';
 export const ratelimit = new Ratelimit({
   redis,
   limiter: Ratelimit.slidingWindow(MAX_REQUESTS, `${WINDOW_SECONDS} s`),
-  analytics: true,
+  // analytics: false (default) — the analytics option writes a *separate*
+  // pipelined Redis command on every single .limit() call purely to power
+  // Upstash's dashboard charts; it's not needed for the limiting itself to
+  // work. This middleware runs on every /jobs/* and /company/* request
+  // (i.e. most of the site's traffic), so that extra write was likely the
+  // single biggest driver of Redis command usage — not an attack.
   prefix: 'ratelimit:jobmeter',
 });
 
@@ -36,7 +41,7 @@ const SUBMIT_WINDOW_SECONDS = Number(process.env.RATE_LIMIT_SUBMIT_WINDOW_SECOND
 export const submitRatelimit = new Ratelimit({
   redis,
   limiter: Ratelimit.slidingWindow(SUBMIT_MAX_REQUESTS, `${SUBMIT_WINDOW_SECONDS} s`),
-  analytics: true,
+  // analytics: false (default) — see comment on `ratelimit` above.
   prefix: 'ratelimit:jobmeter:submit',
 });
 
