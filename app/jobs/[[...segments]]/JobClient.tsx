@@ -1110,6 +1110,11 @@ export default function JobClient({ job, relatedJobs, companies, documentLinks, 
               )}
 
 
+{/* Ad — between How to Apply and Join Our Communities */}
+<div className="w-full overflow-hidden flex justify-center py-2">
+  <AdsterraBanner {...ADSTERRA.BANNER_468x60} />
+</div>
+
 {/* No "Apply for Me" on remote.jobmeter.app */}
 <div className="bg-white rounded-xl shadow-sm p-6">
   <h2 className="text-xl font-semibold mb-4 text-gray-900">Join Our Communities</h2>

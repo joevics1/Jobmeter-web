@@ -20,8 +20,7 @@ import CreateCVModal from '@/components/cv/CreateCVModal';
 import CreateCoverLetterModal from '@/components/cv/CreateCoverLetterModal';
 import AdsterraTopBanner from '@/components/ads/AdsterraTopBanner';
 import AdsterraBanner from '@/components/ads/AdsterraBanner';
-import AdsterraNative from '@/components/ads/AdsterraNative';
-import { ADSTERRA, ADSTERRA_NATIVE_KEY } from '@/lib/constants/adsterraKeys';
+import { ADSTERRA } from '@/lib/constants/adsterraKeys';
 import AdUnit from '@/components/ads/AdUnit';
 import { COUNTRIES } from '@/lib/countries';
 
@@ -1386,7 +1385,7 @@ if (filters.remote) {
 
                       {(index + 1) % 5 === 0 && (
                         <div className="w-full overflow-hidden flex justify-center" style={{ margin: 0, padding: '8px 0' }}>
-                          <AdsterraNative key={`infeed-match-${matchPage}-${index}`} adKey={ADSTERRA_NATIVE_KEY} />
+                          <AdsterraBanner key={`infeed-match-${matchPage}-${index}`} {...ADSTERRA.BANNER_468x60} />
                         </div>
                       )}
                     </React.Fragment>
@@ -1630,7 +1629,7 @@ if (filters.remote) {
                           {/* Ad after every 5th job card: card 5, 10, 15, 20 (index 4,9,14,19) */}
                           {(index + 1) % 5 === 0 && (
                             <div className="w-full overflow-hidden flex justify-center" style={{ margin: 0, padding: '8px 0' }}>
-                              <AdsterraNative key={`infeed-${currentPage}-${index}`} adKey={ADSTERRA_NATIVE_KEY} />
+                              <AdsterraBanner key={`infeed-${currentPage}-${index}`} {...ADSTERRA.BANNER_468x60} />
                             </div>
                           )}
                         </React.Fragment>
