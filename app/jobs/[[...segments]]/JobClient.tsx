@@ -856,6 +856,11 @@ export default function JobClient({ job, relatedJobs, companies, documentLinks, 
                 </div>
               )}
 
+              {/* Ad — between Job Description and Required Skills */}
+              <div className="w-full overflow-hidden flex justify-center py-2">
+                <AdsterraBanner {...ADSTERRA.RECTANGLE_300x250} />
+              </div>
+
               {((job.skills_required && Array.isArray(job.skills_required) && job.skills_required.length > 0) ||
                 (job.skills && Array.isArray(job.skills) && job.skills.length > 0)) && (
                 <div className="bg-white rounded-xl shadow-sm p-6">
@@ -911,6 +916,11 @@ export default function JobClient({ job, relatedJobs, companies, documentLinks, 
                 }
                 return null;
               })()}
+
+              {/* Ad — between Qualifications and Benefits & Perks */}
+              <div className="w-full overflow-hidden flex justify-center py-2">
+                <AdsterraBanner {...ADSTERRA.RECTANGLE_160x300} />
+              </div>
 
               {(() => {
                 const benefitsArray = Array.isArray(job.benefits) ? job.benefits : [];
