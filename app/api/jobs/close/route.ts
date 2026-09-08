@@ -33,7 +33,14 @@ export async function POST(req: NextRequest) {
 
     const { error: updateError } = await supabase
       .from('jobs')
-      .update({ status: 'closed', updated_at: new Date().toISOString() })
+      .update({
+        status: 'closed',
+        // A closed job shouldn't keep occupying a paid featured slot or
+        // showing in the Featured strip.
+        is_featured: false,
+        featured_until: null,
+        updated_at: new Date().toISOString(),
+      })
       .eq('id', jobId);
 
     if (updateError) {
