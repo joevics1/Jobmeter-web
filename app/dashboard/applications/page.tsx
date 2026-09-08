@@ -61,7 +61,7 @@ export default function MyApplicationsPage() {
     <div className="min-h-screen px-4 py-8" style={{ backgroundColor: '#EEF1F7' }}>
       <div className="max-w-2xl mx-auto">
         <div className="flex items-center gap-3 mb-6">
-          <button onClick={() => router.back()} className="p-2 -ml-2 rounded-lg hover:bg-gray-200/50">
+          <button onClick={() => router.push('/dashboard')} className="p-2 -ml-2 rounded-lg hover:bg-gray-200/50">
             <ArrowLeft size={20} className="text-gray-500" />
           </button>
           <h1 className="text-2xl font-bold text-gray-900">My Applications</h1>

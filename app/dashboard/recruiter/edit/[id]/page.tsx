@@ -177,11 +177,11 @@ export default function EditSubmissionPage() {
             Your edits won't go live until they're reviewed again, even if this job was already live before.
           </p>
           <a
-            href="/dashboard/recruiter/jobs"
+            href="/dashboard/recruiter"
             className="inline-block px-6 py-3 rounded-lg text-white font-medium"
             style={{ backgroundColor: theme.colors.primary.DEFAULT }}
           >
-            Back to your jobs
+            Back to dashboard
           </a>
         </div>
       </div>
@@ -191,8 +191,8 @@ export default function EditSubmissionPage() {
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4">
       <div className="max-w-2xl mx-auto">
-        <a href="/dashboard/recruiter/jobs" className="flex items-center gap-1.5 text-sm text-gray-500 mb-4 hover:underline">
-          <ArrowLeft size={15} /> Back to your jobs
+        <a href="/dashboard/recruiter" className="flex items-center gap-1.5 text-sm text-gray-500 mb-4 hover:underline">
+          <ArrowLeft size={15} /> Back to dashboard
         </a>
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 sm:p-7 space-y-4">
           <h1 className="text-xl font-bold text-gray-900 mb-1">Edit job</h1>

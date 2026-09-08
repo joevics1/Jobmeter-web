@@ -69,7 +69,6 @@ function Section({ icon, title, children }: { icon: React.ReactNode; title: stri
 export default function ApplicantDetailPage() {
   const router = useRouter();
   const params = useParams();
-  const jobId = params.id as string;
   const applicationId = params.applicationId as string;
 
   const [loading, setLoading] = useState(true);
@@ -119,10 +118,10 @@ export default function ApplicantDetailPage() {
     <div className="min-h-screen bg-gray-50 py-8 px-4">
       <div className="max-w-2xl mx-auto">
         <Link
-          href={`/dashboard/recruiter/jobs/${jobId}/applicants`}
+          href="/dashboard/recruiter"
           className="flex items-center gap-1.5 text-sm text-gray-500 mb-4 hover:underline"
         >
-          <ArrowLeft size={15} /> Back to applicants
+          <ArrowLeft size={15} /> Back to dashboard
         </Link>
 
         {/* Header */}

@@ -75,8 +75,8 @@ export default function ApplicantsPage() {
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4">
       <div className="max-w-3xl mx-auto">
-        <Link href="/dashboard/recruiter/jobs" className="flex items-center gap-1.5 text-sm text-gray-500 mb-4 hover:underline">
-          <ArrowLeft size={15} /> Back to your jobs
+        <Link href="/dashboard/recruiter" className="flex items-center gap-1.5 text-sm text-gray-500 mb-4 hover:underline">
+          <ArrowLeft size={15} /> Back to dashboard
         </Link>
         <h1 className="text-xl font-semibold text-gray-900 mb-6">
           Applicants — {jobTitle}
