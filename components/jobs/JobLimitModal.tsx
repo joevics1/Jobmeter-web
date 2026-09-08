@@ -52,7 +52,7 @@ export default function JobLimitModal({ isOpen, onClose, email, used, planCap }:
           Free accounts can have {FREE_ACTIVE_JOB_LIMIT} active job listings at a time
           {planCap && planCap > FREE_ACTIVE_JOB_LIMIT ? ` (your plan currently allows ${planCap})` : ''}.
           You currently have {used}. Close an existing job from{' '}
-          <a href="/dashboard/recruiter" className="underline font-medium">My Jobs</a> to free up a
+          <a href="/dashboard/recruiter/jobs" className="underline font-medium">My Jobs</a> to free up a
           slot, or unlock more below.
         </p>
 

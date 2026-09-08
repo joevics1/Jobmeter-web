@@ -3,29 +3,31 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import {
-  Briefcase, Send, FileText, Brain, FileSignature, MessageCircle, GraduationCap, Shield, FileCheck, ClipboardList, ListChecks,
+  Briefcase, ClipboardList, FileText, Brain, FileSignature, MessageCircle, GraduationCap, Shield, FileCheck,
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { theme } from '@/lib/theme';
 
 interface FeatureCard {
   label: string;
+  desc: string;
   href: string;
   icon: React.ComponentType<any>;
+  color: string;
 }
 
+// Candidate-facing tools only — posting/managing jobs now lives in its own
+// Recruiter Dashboard at /dashboard/recruiter.
 const features: FeatureCard[] = [
-  { label: 'Browse Jobs', href: '/jobs', icon: Briefcase },
-  { label: 'My Applications', href: '/dashboard/applications', icon: ClipboardList },
-  { label: 'Post a Job', href: '/submit', icon: Send },
-  { label: 'My Jobs', href: '/dashboard/recruiter', icon: ListChecks },
-  { label: 'Create CV / Cover Letter', href: '/cv', icon: FileText },
-  { label: 'Recruitment Practice Test', href: '/tools/quiz', icon: Brain },
-  { label: 'Create Document', href: '/documents', icon: FileSignature },
-  { label: 'Interview Practice', href: '/tools/interview', icon: MessageCircle },
-  { label: 'Career Coach', href: '/tools/career', icon: GraduationCap },
-  { label: 'Check Job for Scam', href: '/tools/scam-checker', icon: Shield },
-  { label: 'Analyse Your CV', href: '/tools/ats-review', icon: FileCheck },
+  { label: 'Browse Jobs', desc: 'Search and filter open roles', href: '/jobs', icon: Briefcase, color: theme.colors.primary.DEFAULT },
+  { label: 'My Applications', desc: 'Track jobs you\u2019ve applied to', href: '/dashboard/applications', icon: ClipboardList, color: theme.colors.accent.blue },
+  { label: 'Create CV / Cover Letter', desc: 'Build a polished CV in minutes', href: '/cv', icon: FileText, color: theme.colors.accent.green },
+  { label: 'Recruitment Practice Test', desc: 'Prep with real recruiter questions', href: '/tools/quiz', icon: Brain, color: theme.colors.accent.gold },
+  { label: 'Create Document', desc: 'Contracts, letters, and more', href: '/documents', icon: FileSignature, color: theme.colors.accent.blue },
+  { label: 'Interview Practice', desc: 'Rehearse with an AI interviewer', href: '/tools/interview', icon: MessageCircle, color: theme.colors.accent.green },
+  { label: 'Career Coach', desc: 'Get personalized career guidance', href: '/tools/career', icon: GraduationCap, color: theme.colors.primary.DEFAULT },
+  { label: 'Check Job for Scam', desc: 'Verify a listing looks legitimate', href: '/tools/scam-checker', icon: Shield, color: theme.colors.accent.red },
+  { label: 'Analyse Your CV', desc: 'Get an ATS compatibility score', href: '/tools/ats-review', icon: FileCheck, color: theme.colors.accent.gold },
 ];
 
 export default function DashboardPage() {
@@ -52,16 +54,23 @@ export default function DashboardPage() {
           Everything you need, in one place.
         </p>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-          {features.map(({ label, href, icon: Icon }) => (
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          {features.map(({ label, desc, href, icon: Icon, color }) => (
             <Link
               key={href}
               href={href}
-              className="flex flex-col items-center justify-center gap-2 rounded-2xl py-6 px-3 text-center transition-transform hover:scale-[1.03] active:scale-[0.98]"
-              style={{ backgroundColor: theme.colors.primary.DEFAULT }}
+              className="flex flex-col gap-3 rounded-2xl p-4 bg-white border border-gray-100 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all"
             >
-              <Icon className="h-7 w-7 text-white" />
-              <span className="text-sm font-medium text-white leading-snug">{label}</span>
+              <div
+                className="w-11 h-11 rounded-xl flex items-center justify-center"
+                style={{ backgroundColor: `${color}15` }}
+              >
+                <Icon className="h-5 w-5" style={{ color }} />
+              </div>
+              <div>
+                <span className="block text-sm font-semibold text-gray-900 leading-snug">{label}</span>
+                <span className="block text-xs text-gray-500 mt-0.5 leading-snug">{desc}</span>
+              </div>
             </Link>
           ))}
         </div>
@@ -69,4 +78,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-

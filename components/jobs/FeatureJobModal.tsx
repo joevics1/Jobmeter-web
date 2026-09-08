@@ -25,7 +25,7 @@ export default function FeatureJobModal({ isOpen, onClose, email, jobId, jobTitl
       amount: FEATURED_JOB_PRICE.amount,
       paymentType: 'featured_job',
       metadata: { job_id: jobId },
-      callback_url: `${window.location.origin}/payment/callback?redirect=${encodeURIComponent('/dashboard/recruiter')}`,
+      callback_url: `${window.location.origin}/payment/callback?redirect=${encodeURIComponent('/dashboard/recruiter/jobs')}`,
     });
   };
 

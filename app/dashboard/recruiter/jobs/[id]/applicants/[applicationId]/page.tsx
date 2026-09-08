@@ -80,7 +80,7 @@ export default function ApplicantDetailPage() {
     const init = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
-        router.push('/auth?redirect=/dashboard/recruiter');
+        router.push('/auth?redirect=/dashboard/recruiter/jobs');
         return;
       }
       const res = await fetch(`/api/recruiter/applicants/${applicationId}?userId=${session.user.id}`);

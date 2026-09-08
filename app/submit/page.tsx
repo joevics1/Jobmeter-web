@@ -1367,7 +1367,7 @@ Posted Date: ${new Date().toISOString().split('T')[0]}`;
             <Button
               onClick={() => {
                 setShowSuccessModal(false);
-                router.push('/dashboard/recruiter');
+                router.push('/dashboard/recruiter/jobs');
               }}
               className="w-full bg-gray-50/70 focus:bg-white transition-colors"
               style={{

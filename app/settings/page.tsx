@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
-import { User, Bell, LogOut, ChevronRight, Mail, Shield, HelpCircle, LogIn, Info, Trash2, RefreshCw, CheckCircle, AlertTriangle, Briefcase, Send, LayoutDashboard, ExternalLink, Bookmark, PlusCircle, FileText } from 'lucide-react';
+import { User, Bell, LogOut, ChevronRight, Mail, Shield, HelpCircle, LogIn, Info, Trash2, RefreshCw, CheckCircle, AlertTriangle, Briefcase, Send, LayoutDashboard, ExternalLink, Bookmark, FileText } from 'lucide-react';
 import { theme } from '@/lib/theme';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -35,6 +35,9 @@ export default function SettingsPage() {
   const [loading, setLoading] = useState(true);
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [emailUpdates, setEmailUpdates] = useState(false);
+  // Whether this account has ever posted a job — determines whether the
+  // Recruiter Dashboard card shows up below.
+  const [isRecruiter, setIsRecruiter] = useState(false);
 
   // Admin panel state
   const [isAdmin, setIsAdmin] = useState(false);
@@ -56,10 +59,25 @@ export default function SettingsPage() {
     if (user) {
       loadProfileData();
       loadSettings();
+      checkIsRecruiter();
     } else {
       setProfileData(null);
     }
   }, [user]);
+
+  const checkIsRecruiter = async () => {
+    if (!user) return;
+    try {
+      const { data } = await supabase
+        .from('user_submitted_jobs')
+        .select('id')
+        .eq('user_id', user.id)
+        .limit(1);
+      setIsRecruiter(!!data && data.length > 0);
+    } catch (error) {
+      console.error('Error checking recruiter status:', error);
+    }
+  };
 
   const loadProfileData = async () => {
     if (!user) return;
@@ -191,21 +209,7 @@ export default function SettingsPage() {
     },
   ];
 
-  // ── Employer links — logged-in users only, any account type ────────────
-  const employerLinks = [
-    {
-      href: '/submit',
-      icon: <PlusCircle size={18} style={{ color: theme.colors.primary.DEFAULT }} />,
-      label: 'Post a Job',
-      desc: 'Submit a job for review — company optional',
-    },
-    {
-      href: '/dashboard/recruiter',
-      icon: <LayoutDashboard size={18} style={{ color: theme.colors.primary.DEFAULT }} />,
-      label: 'Your Jobs & Applicants',
-      desc: 'Track status and view applicants',
-    },
-  ];
+  // ── Employer links moved to the dedicated Recruiter Dashboard card below ──
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: theme.colors.background.muted }}>
@@ -360,6 +364,21 @@ export default function SettingsPage() {
               </div>
               <ChevronRight size={20} className="text-gray-400" />
             </Link>
+            {isRecruiter && (
+              <Link href="/dashboard/recruiter" className="flex items-center justify-between p-4 hover:bg-gray-50 transition-colors">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
+                    style={{ backgroundColor: theme.colors.accent.gold + '15' }}>
+                    <Briefcase size={20} style={{ color: theme.colors.accent.gold }} />
+                  </div>
+                  <div className="text-left">
+                    <h3 className="font-semibold text-gray-900">Recruiter Dashboard</h3>
+                    <p className="text-xs text-gray-500">Post jobs, view applicants, manage your company</p>
+                  </div>
+                </div>
+                <ChevronRight size={20} className="text-gray-400" />
+              </Link>
+            )}
             <Link href="/saved" className="flex items-center justify-between p-4 hover:bg-gray-50 transition-colors">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
@@ -446,34 +465,6 @@ export default function SettingsPage() {
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
                       style={{ backgroundColor: theme.colors.accent.gold + '15' }}>
-                      {link.icon}
-                    </div>
-                    <div className="text-left">
-                      <h3 className="font-semibold text-gray-900">{link.label}</h3>
-                      <p className="text-xs text-gray-500">{link.desc}</p>
-                    </div>
-                  </div>
-                  <ChevronRight size={20} className="text-gray-400" />
-                </Link>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* ── Post a Job — only shown to logged-in users ── */}
-        {user && (
-          <div className="mb-6">
-            <h2 className="text-base font-semibold mb-2 px-1 text-gray-700">Employer</h2>
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-              {employerLinks.map((link, i) => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className={`flex items-center justify-between p-4 hover:bg-gray-50 transition-colors ${i < employerLinks.length - 1 ? 'border-b border-gray-100' : ''}`}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
-                      style={{ backgroundColor: theme.colors.primary.DEFAULT + '15' }}>
                       {link.icon}
                     </div>
                     <div className="text-left">
