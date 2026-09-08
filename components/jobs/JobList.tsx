@@ -18,6 +18,10 @@ import { scoreJob, JobRow, UserOnboardingData } from '@/lib/matching/matchEngine
 import { matchCacheService } from '@/lib/matching/matchCache';
 import CreateCVModal from '@/components/cv/CreateCVModal';
 import CreateCoverLetterModal from '@/components/cv/CreateCoverLetterModal';
+import AdsterraTopBanner from '@/components/ads/AdsterraTopBanner';
+import AdsterraBanner from '@/components/ads/AdsterraBanner';
+import AdsterraNative from '@/components/ads/AdsterraNative';
+import { ADSTERRA, ADSTERRA_NATIVE_KEY } from '@/lib/constants/adsterraKeys';
 import AdUnit from '@/components/ads/AdUnit';
 import { COUNTRIES } from '@/lib/countries';
 
@@ -1257,6 +1261,11 @@ if (filters.remote) {
           </div>
         </div>
 
+        {/* Adsterra top banner — 728x90 desktop / 320x50 mobile, shown once above whichever tab is active */}
+        <div className="px-6 pb-2">
+          <AdsterraTopBanner />
+        </div>
+
         {/* Matches tab header */}
         {activeTab === 'matches' && (
           <div className="px-6 py-3">
@@ -1370,30 +1379,14 @@ if (filters.remote) {
                       <JobCard job={job} savedJobs={savedJobs} appliedJobs={appliedJobs} onSave={handleSave} onApply={handleApply} onShowBreakdown={handleShowBreakdown} showMatch={true} matchRank={globalIndex} />
 
                       {index === 0 && (
-                        <div className="w-full overflow-hidden" style={{ margin: 0, padding: '3px 0' }}>
-                          {/* ADS PAUSED 2026-09-01 (post-restriction conservative rollout).
-   To re-enable: generate a NEW ad unit in AdSense dashboard
-   (Ads > By ad unit > Display ads) and update the slot below,
-   then uncomment this block.
-<AdUnit slot={AD_SLOTS.BANNER} format="auto" style={{ display: 'block' }} />
-*/}
+                        <div className="w-full overflow-hidden flex justify-center" style={{ margin: 0, padding: '8px 0' }}>
+                          <AdsterraBanner {...ADSTERRA.RECTANGLE_300x250} />
                         </div>
                       )}
 
                       {(index + 1) % 5 === 0 && (
-                        <div className="w-full overflow-hidden" style={{ margin: 0, padding: '3px 0' }}>
-                          {/* ADS PAUSED 2026-09-01 (post-restriction conservative rollout).
-   To re-enable: generate a NEW ad unit in AdSense dashboard
-   (Ads > By ad unit > Display ads) and update the slot below,
-   then uncomment this block.
-<AdUnit
-                            key={`infeed-match-${matchPage}-${index}`}
-                            slot={AD_SLOTS.IN_FEED}
-                            format="fluid"
-                            layoutKey={AD_SLOTS.IN_FEED_LAYOUT_KEY}
-                            style={{ display: 'block' }}
-                          />
-*/}
+                        <div className="w-full overflow-hidden flex justify-center" style={{ margin: 0, padding: '8px 0' }}>
+                          <AdsterraNative key={`infeed-match-${matchPage}-${index}`} adKey={ADSTERRA_NATIVE_KEY} />
                         </div>
                       )}
                     </React.Fragment>
@@ -1629,31 +1622,15 @@ if (filters.remote) {
 
                           {/* Ad after job card #1 */}
                           {index === 0 && (
-                            <div className="w-full overflow-hidden" style={{ margin: 0, padding: '3px 0' }}>
-                              {/* ADS PAUSED 2026-09-01 (post-restriction conservative rollout).
-   To re-enable: generate a NEW ad unit in AdSense dashboard
-   (Ads > By ad unit > Display ads) and update the slot below,
-   then uncomment this block.
-<AdUnit slot={AD_SLOTS.BANNER} format="auto" style={{ display: 'block' }} />
-*/}
+                            <div className="w-full overflow-hidden flex justify-center" style={{ margin: 0, padding: '8px 0' }}>
+                              <AdsterraBanner {...ADSTERRA.RECTANGLE_300x250} />
                             </div>
                           )}
 
                           {/* Ad after every 5th job card: card 5, 10, 15, 20 (index 4,9,14,19) */}
                           {(index + 1) % 5 === 0 && (
-                            <div className="w-full overflow-hidden" style={{ margin: 0, padding: '3px 0' }}>
-                              {/* ADS PAUSED 2026-09-01 (post-restriction conservative rollout).
-   To re-enable: generate a NEW ad unit in AdSense dashboard
-   (Ads > By ad unit > Display ads) and update the slot below,
-   then uncomment this block.
-<AdUnit
-                                key={`infeed-${currentPage}-${index}`}
-                                slot={AD_SLOTS.IN_FEED}
-                                format="fluid"
-                                layoutKey={AD_SLOTS.IN_FEED_LAYOUT_KEY}
-                                style={{ display: 'block' }}
-                              />
-*/}
+                            <div className="w-full overflow-hidden flex justify-center" style={{ margin: 0, padding: '8px 0' }}>
+                              <AdsterraNative key={`infeed-${currentPage}-${index}`} adKey={ADSTERRA_NATIVE_KEY} />
                             </div>
                           )}
                         </React.Fragment>
@@ -1661,36 +1638,16 @@ if (filters.remote) {
                     </>
                   )}
 
-                  {/* Display bottom ad before pagination — 320x250 mobile, 728x90 desktop */}
+                  {/* Display bottom ad before pagination — 300x250 mobile, 728x90 desktop */}
                   {!latestJobsLoading && sortedJobs.length > 0 && (
-                    <div className="w-full flex justify-center overflow-hidden" style={{ margin: 0, padding: '3px 0' }}>
-                      {/* Mobile: 320x250 */}
-                      <div className="block lg:hidden" style={{ width: '320px', height: '250px' }}>
-                        {/* ADS PAUSED 2026-09-01 (post-restriction conservative rollout).
-   To re-enable: generate a NEW ad unit in AdSense dashboard
-   (Ads > By ad unit > Display ads) and update the slot below,
-   then uncomment this block.
-<AdUnit
-                          key={`display-bottom-mobile-${currentPage}`}
-                          slot={AD_SLOTS.DISPLAY_BOTTOM}
-                          format="fixed"
-                          style={{ display: 'inline-block', width: '320px', height: '250px' }}
-                        />
-*/}
+                    <div className="w-full flex justify-center overflow-hidden" style={{ margin: 0, padding: '8px 0' }}>
+                      {/* Mobile */}
+                      <div className="block lg:hidden">
+                        <AdsterraBanner {...ADSTERRA.RECTANGLE_300x250} />
                       </div>
                       {/* Desktop: leaderboard */}
-                      <div className="hidden lg:block" style={{ width: '728px', height: '90px' }}>
-                        {/* ADS PAUSED 2026-09-01 (post-restriction conservative rollout).
-   To re-enable: generate a NEW ad unit in AdSense dashboard
-   (Ads > By ad unit > Display ads) and update the slot below,
-   then uncomment this block.
-<AdUnit
-                          key={`display-bottom-desktop-${currentPage}`}
-                          slot={AD_SLOTS.DISPLAY_BOTTOM}
-                          format="fixed"
-                          style={{ display: 'inline-block', width: '728px', height: '90px' }}
-                        />
-*/}
+                      <div className="hidden lg:block">
+                        <AdsterraBanner {...ADSTERRA.LEADERBOARD_728x90} />
                       </div>
                     </div>
                   )}

@@ -32,6 +32,9 @@ import UpgradeModal from '@/components/jobs/UpgradeModal';
 import { useToast } from '@/hooks/use-toast';
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion';
 import AdUnit from '@/components/ads/AdUnit';
+import AdsterraTopBanner from '@/components/ads/AdsterraTopBanner';
+import AdsterraBanner from '@/components/ads/AdsterraBanner';
+import { ADSTERRA } from '@/lib/constants/adsterraKeys';
 import { TOOLS_NAV } from '@/lib/toolsNav';
 import type { DocumentLink, CvTemplateMatch } from './page';
 import { useAuth } from '@/context/AuthContext';
@@ -618,6 +621,9 @@ export default function JobClient({ job, relatedJobs, companies, documentLinks, 
             {/* LEFT COLUMN — Main Job Details */}
             <div className="lg:col-span-2 space-y-6">
 
+              {/* Adsterra top banner — 728x90 desktop / 320x50 mobile */}
+              <AdsterraTopBanner />
+
               {/* Job Header Card */}
               <div className="bg-white rounded-xl shadow-sm p-6">
                 <div className="flex items-start justify-between gap-3 mb-3">
@@ -862,13 +868,8 @@ export default function JobClient({ job, relatedJobs, companies, documentLinks, 
                 </div>
               )}
 
-              <div className="w-full overflow-hidden">
-                {/* ADS PAUSED 2026-09-01 (post-restriction conservative rollout).
-   To re-enable: generate a NEW ad unit in AdSense dashboard
-   (Ads > By ad unit > Display ads) and update the slot below,
-   then uncomment this block.
-<AdUnit slot={AD_SLOTS.IN_ARTICLE} format="fluid" layout="in-article" style={{ display: 'block', textAlign: 'center', width: '100%' }} />
-*/}
+              <div className="w-full overflow-hidden flex justify-center py-2">
+                <AdsterraBanner {...ADSTERRA.RECTANGLE_300x250} />
               </div>
 
               {(() => {
@@ -1244,6 +1245,13 @@ export default function JobClient({ job, relatedJobs, companies, documentLinks, 
 
             {/* RIGHT COLUMN — Sidebar */}
             <div className="lg:col-span-1 space-y-6">
+              {/* Desktop-only — this column stacks into the single mobile
+                  column below the lg breakpoint, and a 160x600 unit doesn't
+                  belong wedged into that stacked mobile flow. */}
+              <div className="hidden lg:flex justify-center">
+                <AdsterraBanner {...ADSTERRA.SKYSCRAPER_160x600} />
+              </div>
+
               <div className="bg-white rounded-xl shadow-sm overflow-hidden">
                 <div className="px-5 py-4 font-semibold text-base flex items-center gap-2" style={{ backgroundColor: `${theme.colors.primary.DEFAULT}10`, color: theme.colors.primary.DEFAULT }}>
                   <PenTool size={16} />
