@@ -142,15 +142,15 @@ const kbMainMenu = {
   keyboard: [
     [{ text: '🔍 Browse jobs' }, { text: '🏢 My sector' }],
     [{ text: '🎯 My role' }, { text: '📋 My applications' }],
-    [{ text: '👤 My profile' }, { text: '📝 CV Templates' }],
-    [{ text: '🧰 My Tools' }],
+    [{ text: '👤 My profile' }, { text: '🌍 Remote Jobs' }],
+    [{ text: '🧰 Tools' }, { text: '📝 CV Templates' }],
   ],
   resize_keyboard: true,
 };
 
-// Career-prep tools first, then quick job-listing finders — plain outbound
-// links, no auth/state needed, same idea as the sector picker's grid layout.
-const TOOLS: { name: string; url: string }[] = [
+// All 10 tools in one list — plain outbound links, no auth/state needed,
+// same idea as the sector picker's grid layout.
+const ALL_TOOLS: { name: string; url: string }[] = [
   { name: '🎯 Role Finder', url: `${SITE_URL}/tools/role-finder` },
   { name: '📄 ATS CV Review', url: `${SITE_URL}/tools/ats-review` },
   { name: '🎤 Interview Practice', url: `${SITE_URL}/tools/interview` },
@@ -163,11 +163,11 @@ const TOOLS: { name: string; url: string }[] = [
   { name: '🏠 Remote Jobs Finder', url: `${SITE_URL}/tools/remote-jobs-finder` },
 ];
 
-function toolsKeyboard() {
+function linkGridKeyboard(items: { name: string; url: string }[]) {
   const rows: { text: string; url: string }[][] = [];
-  for (let i = 0; i < TOOLS.length; i += 2) {
-    const row = [{ text: TOOLS[i].name, url: TOOLS[i].url }];
-    if (TOOLS[i + 1]) row.push({ text: TOOLS[i + 1].name, url: TOOLS[i + 1].url });
+  for (let i = 0; i < items.length; i += 2) {
+    const row = [{ text: items[i].name, url: items[i].url }];
+    if (items[i + 1]) row.push({ text: items[i + 1].name, url: items[i + 1].url });
     rows.push(row);
   }
   return { inline_keyboard: rows };
@@ -521,6 +521,90 @@ async function browseJobs(supabase: any, chatId: number, userId: string, tgUser?
   const state = (tgUser?.state || {}) as BotState;
   const shownIds = state.step === 'browsing' && state.temp?.sector === sector ? state.temp?.shownIds || [] : [];
   await sendJobBatch(supabase, chatId, userId, shownIds);
+}
+
+// ─── Remote jobs ─────────────────────────────────────────────────────────────
+// Country-first, then Global-tagged remote roles, then the usual
+// globally-remote-friendly markets (US/UK), then any remaining remote job.
+
+async function getUserCountryOnly(supabase: any, userId: string): Promise<string | null> {
+  const { data } = await supabase
+    .from('onboarding_data')
+    .select('cv_location, preferred_locations')
+    .eq('user_id', userId)
+    .maybeSingle();
+  if (!data) return null;
+  return deriveCountry({ cv_location: data.cv_location, preferred_locations: data.preferred_locations });
+}
+
+async function queryRemoteCandidates(supabase: any, countryOrFilter: string | null, excludeIds: string[], recentSinceISO: string, fetchSize: number) {
+  let query = supabase
+    .from('jobs')
+    .select(JOB_SELECT)
+    .eq('status', 'active')
+    .ilike('job_type', 'remote')
+    .gte('posted_date', recentSinceISO)
+    .order('posted_date', { ascending: false })
+    .order('created_at', { ascending: false })
+    .limit(fetchSize);
+
+  if (countryOrFilter) query = query.or(countryOrFilter);
+  if (excludeIds.length > 0) query = query.not('id', 'in', `(${excludeIds.join(',')})`);
+
+  const { data, error } = await query;
+  if (error) {
+    console.error('queryRemoteCandidates error:', error);
+    return [];
+  }
+  return data || [];
+}
+
+async function fetchRemoteJobs(supabase: any, country: string | null, excludeIds: string[], limit = 3) {
+  const recentSinceISO = new Date(Date.now() - RECENT_DAYS * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+
+  const tiers: (string | null)[] = [];
+  if (country) tiers.push(`country.cs.{${country}}`);
+  tiers.push(`country.cs.{Global}`);
+  tiers.push(`country.cs.{United States},country.cs.{United Kingdom}`);
+  tiers.push(null); // any remote job, no country constraint
+
+  let collected: any[] = [];
+  for (const tier of tiers) {
+    if (collected.length >= limit) break;
+    const need = limit - collected.length;
+    const exclude = [...excludeIds, ...collected.map((j) => j.id)];
+    const more = await queryRemoteCandidates(supabase, tier, exclude, recentSinceISO, need);
+    if (more.length > 0) collected = [...collected, ...more];
+  }
+  return collected;
+}
+
+async function sendRemoteJobBatch(supabase: any, chatId: number, userId: string, shownIds: string[]) {
+  const country = await getUserCountryOnly(supabase, userId);
+  const jobs = await fetchRemoteJobs(supabase, country, shownIds, 3);
+
+  if (jobs.length === 0) {
+    await sendMessage(
+      chatId,
+      `That's all the recent remote jobs I have right now. Check back soon, or browse everything on the web.`,
+      { reply_markup: { inline_keyboard: [[{ text: '🌐 Browse all jobs', url: `${SITE_URL}/jobs` }]] } }
+    );
+    return;
+  }
+
+  for (const job of jobs) {
+    await sendMessage(chatId, formatJobMessage(job), {
+      disable_web_page_preview: true,
+      reply_markup: { inline_keyboard: [[{ text: '✅ View & apply', url: buildJobUrl(job) }]] },
+    });
+  }
+
+  const newShownIds = [...shownIds, ...jobs.map((j: any) => j.id)].slice(-100);
+  await setState(supabase, chatId, { step: 'browsing_remote', temp: { shownIds: newShownIds } });
+
+  await sendMessage(chatId, `Want more?`, {
+    reply_markup: { inline_keyboard: [[{ text: '➡️ More remote jobs', callback_data: 'more_remote' }]] },
+  });
 }
 
 // ─── Flows ───────────────────────────────────────────────────────────────────
@@ -945,6 +1029,13 @@ serve(async (req) => {
           const shownIds = data === 'more_jobs' ? state.temp?.shownIds || [] : [];
           await sendJobBatch(supabase, chatId, tgUser.user_id, shownIds);
         }
+      } else if (data === 'more_remote') {
+        if (!tgUser.linked_at) {
+          await sendMessage(chatId, `Send /start first to log in or sign up.`);
+        } else {
+          const shownIds = state.step === 'browsing_remote' ? state.temp?.shownIds || [] : [];
+          await sendRemoteJobBatch(supabase, chatId, tgUser.user_id, shownIds);
+        }
       } else if (data === 'change_sector') {
         if (!tgUser.linked_at) {
           await sendMessage(chatId, `Send /start first to log in or sign up.`);
@@ -1020,8 +1111,14 @@ serve(async (req) => {
       });
       return new Response('ok', { status: 200 });
     }
-    if (tgUser.linked_at && text === '🧰 My Tools') {
-      await sendMessage(chatId, `Pick a tool to open on jobmeter.app:`, { reply_markup: toolsKeyboard() });
+    if (tgUser.linked_at && text === '🧰 Tools') {
+      await sendMessage(chatId, `Pick a tool to open on jobmeter.app:`, { reply_markup: linkGridKeyboard(ALL_TOOLS) });
+      return new Response('ok', { status: 200 });
+    }
+    if (tgUser.linked_at && text === '🌍 Remote Jobs') {
+      const state2 = (tgUser.state || {}) as BotState;
+      const shownIds = state2.step === 'browsing_remote' ? state2.temp?.shownIds || [] : [];
+      await sendRemoteJobBatch(supabase, chatId, tgUser.user_id, shownIds);
       return new Response('ok', { status: 200 });
     }
 
