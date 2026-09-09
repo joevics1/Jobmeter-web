@@ -7,6 +7,7 @@ import { ArrowLeft, FileText, Clipboard, Plus, Building2, X, CheckCircle, AlertC
 import UpgradeModal from '@/components/jobs/UpgradeModal';
 import JobLimitModal from '@/components/jobs/JobLimitModal';
 import PostSubmitUpsellModal from '@/components/jobs/PostSubmitUpsellModal';
+import FeatureUpsellModal from '@/components/jobs/FeatureUpsellModal';
 import { theme } from '@/lib/theme';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -50,6 +51,7 @@ export default function SubmitJobPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showUpsellModal, setShowUpsellModal] = useState(false);
+  const [showFeatureUpsellModal, setShowFeatureUpsellModal] = useState(false);
   const [pastedContent, setPastedContent] = useState('');
   const [submissionNotes, setSubmissionNotes] = useState('');
   const [applyInApp, setApplyInApp] = useState(false);
@@ -1375,7 +1377,9 @@ Posted Date: ${new Date().toISOString().split('T')[0]}`;
                 if (jobQuota.subscriptionPlan === null) {
                   setShowUpsellModal(true);
                 } else {
-                  router.push('/dashboard/recruiter/jobs');
+                  // Already paying — they have free Talent Pool access
+                  // included, so only Featured placement is worth pitching.
+                  setShowFeatureUpsellModal(true);
                 }
               }}
               className="w-full bg-gray-50/70 focus:bg-white transition-colors"
@@ -1417,6 +1421,14 @@ Posted Date: ${new Date().toISOString().split('T')[0]}`;
           router.push('/dashboard/recruiter/jobs');
         }}
         email={user?.email || ''}
+      />
+
+      <FeatureUpsellModal
+        isOpen={showFeatureUpsellModal}
+        onClose={() => {
+          setShowFeatureUpsellModal(false);
+          router.push('/dashboard/recruiter/jobs');
+        }}
       />
     </div>
   );
