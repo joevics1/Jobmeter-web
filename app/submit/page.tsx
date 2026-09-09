@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabase';
 import { ArrowLeft, FileText, Clipboard, Plus, Building2, X, CheckCircle, AlertCircle, Sparkles, Briefcase, MapPin, Wallet, Mail, StickyNote, ListChecks } from 'lucide-react';
 import UpgradeModal from '@/components/jobs/UpgradeModal';
 import JobLimitModal from '@/components/jobs/JobLimitModal';
+import PostSubmitUpsellModal from '@/components/jobs/PostSubmitUpsellModal';
 import { theme } from '@/lib/theme';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -48,6 +49,7 @@ export default function SubmitJobPage() {
   const [activeTab, setActiveTab] = useState<'form' | 'paste'>('form');
   const [isLoading, setIsLoading] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showUpsellModal, setShowUpsellModal] = useState(false);
   const [pastedContent, setPastedContent] = useState('');
   const [submissionNotes, setSubmissionNotes] = useState('');
   const [applyInApp, setApplyInApp] = useState(false);
@@ -66,7 +68,8 @@ export default function SubmitJobPage() {
     used: number;
     planCap: number | null; // null = unlimited
     planLabel: string;
-  }>({ loaded: false, canPublish: true, used: 0, planCap: 2, planLabel: 'Free plan' });
+    subscriptionPlan: string | null;
+  }>({ loaded: false, canPublish: true, used: 0, planCap: 1, planLabel: 'Free plan', subscriptionPlan: null });
   // Derived from the 3 checkboxes above — kept as plain values (not state) so
   // there's only ever one source of truth.
   const screeningEnabled = quizObjective || quizSpeed || quizWritten;
@@ -131,7 +134,8 @@ export default function SubmitJobPage() {
         .then((data) => {
           const planLabel =
             data.subscriptionPlan === 'job_posting_unlimited' ? 'Unlimited plan' :
-            data.subscriptionPlan === 'job_posting_basic' ? '5-job plan' :
+            data.subscriptionPlan === 'job_posting_basic' ? '3-job plan' :
+            data.subscriptionPlan === 'job_posting_starter' ? 'Starter plan' :
             'Free plan';
           setJobQuota({
             loaded: true,
@@ -139,6 +143,7 @@ export default function SubmitJobPage() {
             used: data.used,
             planCap: data.unlimited ? null : data.planCap,
             planLabel,
+            subscriptionPlan: data.subscriptionPlan || null,
           });
         })
         .catch(() => setJobQuota((prev) => ({ ...prev, loaded: true })));
@@ -1367,7 +1372,11 @@ Posted Date: ${new Date().toISOString().split('T')[0]}`;
             <Button
               onClick={() => {
                 setShowSuccessModal(false);
-                router.push('/dashboard/recruiter/jobs');
+                if (jobQuota.subscriptionPlan === null) {
+                  setShowUpsellModal(true);
+                } else {
+                  router.push('/dashboard/recruiter/jobs');
+                }
               }}
               className="w-full bg-gray-50/70 focus:bg-white transition-colors"
               style={{
@@ -1400,6 +1409,15 @@ Posted Date: ${new Date().toISOString().split('T')[0]}`;
           </div>
         </DialogContent>
       </Dialog>
+
+      <PostSubmitUpsellModal
+        isOpen={showUpsellModal}
+        onClose={() => {
+          setShowUpsellModal(false);
+          router.push('/dashboard/recruiter/jobs');
+        }}
+        email={user?.email || ''}
+      />
     </div>
   );
 }
