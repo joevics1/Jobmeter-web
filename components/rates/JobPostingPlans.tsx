@@ -112,7 +112,12 @@ export default function JobPostingPlans() {
         <PlanCard
           title="Free"
           price="₦0"
-          features={[`${FREE_ACTIVE_JOB_LIMIT} active job listing at a time`, 'No expiry while active', 'Standard visibility in listings']}
+          features={[
+            `${FREE_ACTIVE_JOB_LIMIT} active job listing at a time`,
+            'No expiry while active',
+            'Standard visibility in listings',
+            'Shared across our WhatsApp, Telegram, LinkedIn & Facebook groups, plus other job sites',
+          ]}
           cta={
             <Link
               href="/submit"
@@ -127,14 +132,22 @@ export default function JobPostingPlans() {
           title={JOB_POSTING_PLANS.starter_monthly.label}
           price={`₦${JOB_POSTING_PLANS.starter_monthly.amount.toLocaleString()}`}
           sublabel="per month"
-          features={['Same active-job limit as Free', 'Free Talent Pool access included']}
+          features={[
+            'Same active-job limit as Free',
+            'Free Talent Pool access included',
+            'Shared across our WhatsApp, Telegram, LinkedIn & Facebook groups, plus other job sites',
+          ]}
           cta={renderCta('starter_monthly')}
         />
         <PlanCard
           title={JOB_POSTING_PLANS.basic_monthly.label}
           price={`₦${JOB_POSTING_PLANS.basic_monthly.amount.toLocaleString()}`}
           sublabel="per month"
-          features={['Free Talent Pool access included', 'Renews monthly']}
+          features={[
+            'Free Talent Pool access included',
+            'Renews monthly',
+            'Shared across our WhatsApp, Telegram, LinkedIn & Facebook groups, plus other job sites',
+          ]}
           highlight
           cta={renderCta('basic_monthly', true)}
         />
@@ -142,7 +155,12 @@ export default function JobPostingPlans() {
           title={JOB_POSTING_PLANS.unlimited_monthly.label}
           price={`₦${JOB_POSTING_PLANS.unlimited_monthly.amount.toLocaleString()}`}
           sublabel="per month"
-          features={['No cap on active jobs', 'Free Talent Pool access included', 'Best for high-volume hiring']}
+          features={[
+            'No cap on active jobs',
+            'Free Talent Pool access included',
+            'Best for high-volume hiring',
+            'Shared across our WhatsApp, Telegram, LinkedIn & Facebook groups, plus other job sites',
+          ]}
           cta={renderCta('unlimited_monthly')}
         />
       </div>

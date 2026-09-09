@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
-import { User, Bell, LogOut, ChevronRight, Mail, Shield, HelpCircle, LogIn, Info, Trash2, RefreshCw, CheckCircle, AlertTriangle, Briefcase, Send, LayoutDashboard, ExternalLink, Bookmark, FileText } from 'lucide-react';
+import { User, Bell, LogOut, ChevronRight, Mail, Shield, HelpCircle, LogIn, Info, Trash2, RefreshCw, CheckCircle, AlertTriangle, Briefcase, Send, LayoutDashboard, ExternalLink, Bookmark } from 'lucide-react';
 import { theme } from '@/lib/theme';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -418,38 +418,8 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        {/* ── CV Templates (Beta) — internal testing link for the new isolated feature ── */}
-        <div className="mb-6">
-          <h2 className="text-base font-semibold mb-2 px-1 text-gray-700">Beta</h2>
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-            <Link href="/cv-templates" className="flex items-center justify-between p-4 hover:bg-gray-50 transition-colors border-b border-gray-100">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
-                  style={{ backgroundColor: theme.colors.accent.green + '15' }}>
-                  <FileText size={20} style={{ color: theme.colors.accent.green }} />
-                </div>
-                <div className="text-left">
-                  <h3 className="font-semibold text-gray-900">CV Templates (Beta)</h3>
-                  <p className="text-xs text-gray-500">Role-based CV pages — testing the new builder</p>
-                </div>
-              </div>
-              <ChevronRight size={20} className="text-gray-400" />
-            </Link>
-            <Link href="/cover-letter-templates" className="flex items-center justify-between p-4 hover:bg-gray-50 transition-colors">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
-                  style={{ backgroundColor: theme.colors.primary.DEFAULT + '15' }}>
-                  <FileText size={20} style={{ color: theme.colors.primary.DEFAULT }} />
-                </div>
-                <div className="text-left">
-                  <h3 className="font-semibold text-gray-900">Cover Letter Templates (Beta)</h3>
-                  <p className="text-xs text-gray-500">Role-based cover letter pages — testing the new builder</p>
-                </div>
-              </div>
-              <ChevronRight size={20} className="text-gray-400" />
-            </Link>
-          </div>
-        </div>
+        {/* ── CV Templates (Beta) and Cover Letter Templates (Beta) removed —
+             now live under the CV & Docs bottom nav tab instead. ── */}
         {/* ── Apply for Me — hidden for now (all 3 links) ──
              Re-enable by restoring the `user &&` block below. */}
         {false && user && (

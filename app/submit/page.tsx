@@ -519,7 +519,7 @@ Posted Date: ${new Date().toISOString().split('T')[0]}`;
         <div className="max-w-3xl mx-auto">
         <div className="flex items-center gap-3 mb-5">
           <button
-            onClick={() => router.push('/dashboard')}
+            onClick={() => router.push('/dashboard/recruiter')}
             className="p-2 -ml-2 rounded-lg hover:bg-gray-100 transition-colors"
           >
             <ArrowLeft size={22} className="text-gray-500" />
