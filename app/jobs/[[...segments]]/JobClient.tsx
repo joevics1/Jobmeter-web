@@ -873,10 +873,6 @@ export default function JobClient({ job, relatedJobs, companies, documentLinks, 
                 </div>
               )}
 
-              <div className="w-full overflow-hidden flex justify-center py-2">
-                <AdsterraBanner {...ADSTERRA.RECTANGLE_300x250} />
-              </div>
-
               {(() => {
                 const responsibilitiesArray = Array.isArray(job.responsibilities) ? job.responsibilities : [];
                 if (responsibilitiesArray.length > 0) {
@@ -1120,9 +1116,9 @@ export default function JobClient({ job, relatedJobs, companies, documentLinks, 
               )}
 
 
-{/* Ad — between How to Apply and Join Our Communities */}
+{/* Ad — between How to Apply and Join Our Communities (moved here from under Required Skills) */}
 <div className="w-full overflow-hidden flex justify-center py-2">
-  <AdsterraBanner {...ADSTERRA.BANNER_468x60} />
+  <AdsterraBanner {...ADSTERRA.RECTANGLE_300x250} />
 </div>
 
 {/* No "Apply for Me" on remote.jobmeter.app */}
@@ -1224,6 +1220,11 @@ export default function JobClient({ job, relatedJobs, companies, documentLinks, 
                   </Accordion>
                 </div>
               )}
+
+              {/* Ad — before Posted Date (moved here from under How to Apply) */}
+              <div className="w-full overflow-hidden flex justify-center py-2">
+                <AdsterraBanner {...ADSTERRA.BANNER_468x60} />
+              </div>
 
               {(job.posted_date || job.created_at) && (
                 <div className="bg-white rounded-xl shadow-sm p-6">
