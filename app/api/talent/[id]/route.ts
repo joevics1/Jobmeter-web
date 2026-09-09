@@ -34,7 +34,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
       .from('user_subscriptions')
       .select('id')
       .eq('user_id', recruiter.id)
-      .in('plan_type', [TALENT_UNLIMITED_PLAN_TYPE, 'job_posting_basic', 'job_posting_unlimited'])
+      .in('plan_type', [TALENT_UNLIMITED_PLAN_TYPE, 'job_posting_starter', 'job_posting_basic', 'job_posting_unlimited'])
       .eq('is_active', true)
       .gte('expires_at', new Date().toISOString())
       .limit(1);

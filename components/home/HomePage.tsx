@@ -18,7 +18,8 @@ import {
   Shield,
   Calendar,
   PlusCircle,
-  Globe
+  Globe,
+  X
 } from 'lucide-react';
 
 import Link from 'next/link';
@@ -164,6 +165,20 @@ export default function HomePage({ jobs: initialJobs, blogPosts, companies = [] 
   const router = useRouter();
   const { user, loading: authLoading, openAuthModal } = useAuth();
   const [activeTab, setActiveTab] = useState<'seekers' | 'recruiters'>('seekers');
+  const [showAdBanner, setShowAdBanner] = useState(true);
+
+  useEffect(() => {
+    if (localStorage.getItem('jm_hide_advertise_banner') === '1') {
+      setShowAdBanner(false);
+    }
+  }, []);
+
+  const dismissAdBanner = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setShowAdBanner(false);
+    localStorage.setItem('jm_hide_advertise_banner', '1');
+  };
   const [userOnboardingData, setUserOnboardingData] = useState<UserOnboardingData | null>(null);
   const [processedJobs, setProcessedJobs] = useState<JobWithMatch[]>([]);
   const [matchingInProgress, setMatchingInProgress] = useState(false);
@@ -293,6 +308,29 @@ export default function HomePage({ jobs: initialJobs, blogPosts, companies = [] 
   return (
     <>
       <div className="min-h-screen" style={{ backgroundColor: theme.colors.background.muted }}>
+        {/* ── Post Jobs & Advertise banner ── */}
+        {showAdBanner && (
+          <Link
+            href="/rates"
+            className="relative flex items-center justify-center gap-2 sm:gap-3 px-10 py-2.5 text-center text-white text-xs sm:text-sm"
+            style={{ background: `linear-gradient(90deg, ${theme.colors.primary.dark}, ${theme.colors.primary.DEFAULT})` }}
+          >
+            <span className="font-semibold">
+              📢 Post Jobs &amp; Advertise on JobMeter
+            </span>
+            <span className="hidden sm:inline text-white/85">
+              Reach thousands of active job seekers.
+            </span>
+            <span className="underline font-medium whitespace-nowrap">View our rates →</span>
+            <button
+              onClick={dismissAdBanner}
+              aria-label="Dismiss"
+              className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-white/20"
+            >
+              <X size={14} />
+            </button>
+          </Link>
+        )}
         {/* Hero Section */}
         <section className="relative px-6 py-16 overflow-hidden">
           <div className="absolute inset-0 z-0">

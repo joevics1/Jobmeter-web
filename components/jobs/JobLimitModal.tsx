@@ -14,7 +14,7 @@ interface JobLimitModalProps {
   planCap: number | null; // null = unlimited
 }
 
-const PLAN_ORDER: JobPostingPlanId[] = ['single_post', 'basic_monthly', 'unlimited_monthly'];
+const PLAN_ORDER: JobPostingPlanId[] = ['starter_monthly', 'basic_monthly', 'unlimited_monthly'];
 
 export default function JobLimitModal({ isOpen, onClose, email, used, planCap }: JobLimitModalProps) {
   const { initializePayment, loading, error } = usePaystack();

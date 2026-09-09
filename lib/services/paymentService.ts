@@ -229,25 +229,15 @@ export async function handleSuccessfulPayment(paymentData: any) {
     return { success: true };
   }
 
-  // Job posting: either a one-time single-post credit (₦2,000, consumed by
-  // exactly one job publish), or a monthly subscription that raises the
-  // concurrent-active-job cap (basic = 3 jobs/₦5,000, unlimited = ₦20,000).
-  // Subscriptions follow the same pattern as talent_unlimited above.
+  // Job posting: monthly subscriptions that raise the concurrent-active-job
+  // cap (starter = same as free/₦2,000, basic = 3 jobs/₦5,000, unlimited =
+  // ₦20,000). All follow the same pattern as talent_unlimited above.
   if (paymentType === 'job_listing') {
-    if (planType === 'single_post') {
-      const { data: existingProfile } = await supabaseAdmin
-        .from('profiles')
-        .select('extra_job_slots')
-        .eq('id', userId)
-        .maybeSingle();
-
-      const { error: profileError } = await supabaseAdmin
-        .from('profiles')
-        .update({ extra_job_slots: (existingProfile?.extra_job_slots || 0) + 1 })
-        .eq('id', userId);
-      if (profileError) throw new Error(`Failed to add job posting credit: ${profileError.message}`);
-    } else if (planType === 'basic_monthly' || planType === 'unlimited_monthly') {
-      const subscriptionPlanType = planType === 'unlimited_monthly' ? 'job_posting_unlimited' : 'job_posting_basic';
+    if (planType === 'starter_monthly' || planType === 'basic_monthly' || planType === 'unlimited_monthly') {
+      const subscriptionPlanType =
+        planType === 'unlimited_monthly' ? 'job_posting_unlimited'
+        : planType === 'basic_monthly' ? 'job_posting_basic'
+        : 'job_posting_starter';
       const expiresAt = new Date();
       expiresAt.setDate(expiresAt.getDate() + 30);
 
