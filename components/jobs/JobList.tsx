@@ -1260,6 +1260,19 @@ if (filters.remote) {
           </div>
         </div>
 
+        {/* Post Jobs & Advertise banner */}
+        <div className="px-6 pb-2">
+          <a
+            href="/rates"
+            className="relative flex items-center justify-center gap-2 sm:gap-3 px-8 py-2.5 rounded-xl text-center text-white text-xs sm:text-sm"
+            style={{ background: `linear-gradient(90deg, ${theme.colors.primary.dark}, ${theme.colors.primary.DEFAULT})` }}
+          >
+            <span className="font-semibold">📢 Post Jobs &amp; Advertise on JobMeter</span>
+            <span className="hidden sm:inline text-white/85">Reach thousands of active job seekers.</span>
+            <span className="underline font-medium whitespace-nowrap">View our rates →</span>
+          </a>
+        </div>
+
         {/* Adsterra top banner — 728x90 desktop / 320x50 mobile, shown once above whichever tab is active */}
         <div className="px-6 pb-2">
           <AdsterraTopBanner />

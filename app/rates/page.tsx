@@ -1,19 +1,23 @@
 import Link from 'next/link';
 import { Metadata } from 'next';
 import {
-  Send, Star, Users, Megaphone, CheckCircle2, ArrowRight, Mail,
+  Send, Star, Users, Megaphone, CheckCircle2, ArrowRight, Mail, Sparkles,
 } from 'lucide-react';
 import { theme } from '@/lib/theme';
 import { JOB_POSTING_PLANS, FEATURED_JOB_PRICE, FREE_ACTIVE_JOB_LIMIT } from '@/lib/constants/jobPricing';
+import JobPlanPayButton from '@/components/rates/JobPlanPayButton';
 
 export const metadata: Metadata = {
   title: 'Rates — Post Jobs & Advertise on JobMeter',
-  description: 'Job posting plans, featured placement, talent pool access, and advertising rates on JobMeter.',
+  description: 'Job posting plans, featured placement, and advertising rates on JobMeter.',
 };
 
 function PlanCard({
-  title, price, sublabel, features, highlight,
-}: { title: string; price: string; sublabel?: string; features: string[]; highlight?: boolean }) {
+  title, price, sublabel, features, highlight, cta,
+}: {
+  title: string; price: string; sublabel?: string; features: string[]; highlight?: boolean;
+  cta: React.ReactNode;
+}) {
   return (
     <div
       className={`rounded-2xl p-6 border ${highlight ? 'border-2 shadow-lg' : 'border-gray-100 shadow-sm'} bg-white flex flex-col`}
@@ -30,6 +34,7 @@ function PlanCard({
           </li>
         ))}
       </ul>
+      {cta}
     </div>
   );
 }
@@ -52,37 +57,53 @@ export default function RatesPage() {
         </div>
 
         {/* Job posting */}
-        <section className="mb-10">
+        <section className="mb-6">
           <div className="flex items-center gap-2 mb-4">
             <Send size={18} style={{ color: theme.colors.primary.DEFAULT }} />
-            <h2 className="text-lg font-semibold text-gray-900">Job Posting</h2>
+            <h2 className="text-lg font-semibold text-gray-900">Job Posting Rates</h2>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <PlanCard
               title="Free"
               price="₦0"
-              features={[`${FREE_ACTIVE_JOB_LIMIT} active job listings at a time`, 'No expiry while active', 'Standard visibility in listings']}
+              features={[`${FREE_ACTIVE_JOB_LIMIT} active job listing at a time`, 'No expiry while active', 'Standard visibility in listings']}
+              cta={
+                <Link
+                  href="/submit"
+                  className="mt-4 flex items-center justify-center gap-2 w-full py-2.5 rounded-xl font-semibold text-sm border"
+                  style={{ borderColor: theme.colors.primary.DEFAULT, color: theme.colors.primary.DEFAULT }}
+                >
+                  Post a Job
+                </Link>
+              }
             />
             <PlanCard
-              title={JOB_POSTING_PLANS.single_post.label}
-              price={`₦${JOB_POSTING_PLANS.single_post.amount.toLocaleString()}`}
-              sublabel={JOB_POSTING_PLANS.single_post.sublabel}
-              features={['One-time payment', 'Publish exactly one job beyond your free limit']}
+              title={JOB_POSTING_PLANS.starter_monthly.label}
+              price={`₦${JOB_POSTING_PLANS.starter_monthly.amount.toLocaleString()}`}
+              sublabel="per month"
+              features={['Same active-job limit as Free', 'Free Talent Pool access included']}
+              cta={<JobPlanPayButton planId="starter_monthly" />}
             />
             <PlanCard
               title={JOB_POSTING_PLANS.basic_monthly.label}
               price={`₦${JOB_POSTING_PLANS.basic_monthly.amount.toLocaleString()}`}
               sublabel="per month"
-              features={[`${FREE_ACTIVE_JOB_LIMIT + JOB_POSTING_PLANS.basic_monthly.extraActiveJobSlots} active jobs while subscribed`, 'Renews monthly']}
+              features={['Free Talent Pool access included', 'Renews monthly']}
+              highlight
+              cta={<JobPlanPayButton planId="basic_monthly" highlight />}
             />
             <PlanCard
               title={JOB_POSTING_PLANS.unlimited_monthly.label}
               price={`₦${JOB_POSTING_PLANS.unlimited_monthly.amount.toLocaleString()}`}
               sublabel="per month"
-              features={['No cap on active jobs', 'Best for high-volume hiring', 'Renews monthly']}
-              highlight
+              features={['No cap on active jobs', 'Free Talent Pool access included', 'Best for high-volume hiring']}
+              cta={<JobPlanPayButton planId="unlimited_monthly" />}
             />
           </div>
+          <p className="flex items-center gap-1.5 text-xs text-gray-500 mt-3">
+            <Sparkles size={13} style={{ color: theme.colors.accent.gold }} />
+            Any paid job posting plan also unlocks free, unlimited Talent Pool access — no separate fee.
+          </p>
         </section>
 
         {/* Featured placement */}
@@ -91,9 +112,9 @@ export default function RatesPage() {
             <Star size={18} style={{ color: theme.colors.accent.gold }} />
             <h2 className="text-lg font-semibold text-gray-900">Featured Placement</h2>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="max-w-sm">
             <PlanCard
-              title="Feature a Job"
+              title="Homepage Featured Job"
               price={`₦${FEATURED_JOB_PRICE.amount.toLocaleString()}`}
               sublabel={`${FEATURED_JOB_PRICE.durationDays} days`}
               features={[
@@ -102,21 +123,23 @@ export default function RatesPage() {
                 'Significantly higher visibility than a standard listing',
               ]}
               highlight
-            />
-            <PlanCard
-              title="Talent Pool Access"
-              price="₦10,000"
-              sublabel="30 days"
-              features={[
-                'Unlimited views of candidates who\u2019ve opted in to be discovered',
-                'Search and filter by skills, role, and location',
-                'Great alongside your own job postings',
-              ]}
+              cta={
+                <Link
+                  href="/dashboard/recruiter/jobs"
+                  className="mt-4 flex items-center justify-center gap-2 w-full py-2.5 rounded-xl font-semibold text-sm text-white"
+                  style={{ backgroundColor: theme.colors.primary.DEFAULT }}
+                >
+                  Feature a Job <ArrowRight size={15} />
+                </Link>
+              }
             />
           </div>
+          <p className="text-xs text-gray-500 mt-3">
+            Feature an existing job from your <Link href="/dashboard/recruiter/jobs" className="underline">jobs list</Link> — pay per job, no plan required.
+          </p>
         </section>
 
-        {/* Advertise with us */}
+        {/* Advertise with us — the only thing on this page you need to contact us for */}
         <section
           className="rounded-2xl p-8 text-center"
           style={{ background: `linear-gradient(135deg, ${theme.colors.primary.light}, ${theme.colors.primary.dark})` }}

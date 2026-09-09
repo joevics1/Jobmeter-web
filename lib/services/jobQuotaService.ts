@@ -15,7 +15,7 @@ export interface JobQuota {
   used: number;
   planCap: number; // Number.POSITIVE_INFINITY if unlimited subscription
   unlimited: boolean;
-  subscriptionPlan: 'job_posting_basic' | 'job_posting_unlimited' | null;
+  subscriptionPlan: 'job_posting_starter' | 'job_posting_basic' | 'job_posting_unlimited' | null;
   availableCredits: number;
   canPublish: boolean;
   // true when publishing would consume a single-post credit rather than
@@ -44,7 +44,7 @@ export async function getJobQuota(userId: string): Promise<JobQuota> {
         .select('plan_type, expires_at')
         .eq('user_id', userId)
         .eq('is_active', true)
-        .in('plan_type', ['job_posting_basic', 'job_posting_unlimited'])
+        .in('plan_type', ['job_posting_starter', 'job_posting_basic', 'job_posting_unlimited'])
         .gt('expires_at', new Date().toISOString())
         .order('expires_at', { ascending: false })
         .limit(1)
@@ -73,7 +73,9 @@ export async function getJobQuota(userId: string): Promise<JobQuota> {
     ? Number.POSITIVE_INFINITY
     : subscription?.plan_type === 'job_posting_basic'
       ? FREE_ACTIVE_JOB_LIMIT + JOB_POSTING_PLANS.basic_monthly.extraActiveJobSlots
-      : FREE_ACTIVE_JOB_LIMIT;
+      : subscription?.plan_type === 'job_posting_starter'
+        ? FREE_ACTIVE_JOB_LIMIT + JOB_POSTING_PLANS.starter_monthly.extraActiveJobSlots
+        : FREE_ACTIVE_JOB_LIMIT;
 
   const availableCredits = profile?.extra_job_slots ?? 0;
   const used = activeCount + pendingCount;
