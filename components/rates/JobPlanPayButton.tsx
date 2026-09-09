@@ -8,7 +8,9 @@ import { supabase } from '@/lib/supabase';
 import { usePaystack } from '@/hooks/usePaystack';
 import { JOB_POSTING_PLANS, JobPostingPlanId } from '@/lib/constants/jobPricing';
 
-export default function JobPlanPayButton({ planId, highlight }: { planId: JobPostingPlanId; highlight?: boolean }) {
+export default function JobPlanPayButton({
+  planId, highlight, label = 'Subscribe',
+}: { planId: JobPostingPlanId; highlight?: boolean; label?: string }) {
   const router = useRouter();
   const { initializePayment, loading, error } = usePaystack();
   const [checkingAuth, setCheckingAuth] = useState(false);
@@ -48,7 +50,7 @@ export default function JobPlanPayButton({ planId, highlight }: { planId: JobPos
         }
       >
         {busy && <Loader2 size={15} className="animate-spin" />}
-        {busy ? 'Redirecting...' : 'Pay with Paystack'}
+        {busy ? 'Redirecting...' : label}
       </button>
       {error && <p className="text-xs text-red-600 mt-2">{error}</p>}
     </div>
