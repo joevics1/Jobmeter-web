@@ -228,22 +228,27 @@ export default function JobClient({ job, relatedJobs, companies, documentLinks, 
     // Build canonical share URL using [country]/[slug] structure
     const origin = typeof window !== 'undefined' ? window.location.origin : '';
     const shareUrl = `${origin}${buildJobUrl(job)}`;
+    // Prefer the pre-written broadcast post (same text already used for
+    // WhatsApp/Telegram) over an auto-generated one-liner — reads better
+    // and keeps every share channel consistent. Falls back for jobs
+    // without one (e.g. older listings from before this field existed).
+    const shareText = job.social || `Check out this job: ${job.title} at ${getCompanyName()}`;
     if (navigator.share) {
       try {
         await navigator.share({
-          title: `${job.title} at ${getCompanyName()}`,
-          text: `Check out this job: ${job.title} at ${getCompanyName()}`,
-          url: shareUrl,
+          title: job.title,
+          text: shareText,
+          url: job.social ? undefined : shareUrl,
         });
       } catch (error: any) {
         if (error.name !== 'AbortError') {
-          await navigator.clipboard.writeText(shareUrl);
-          toast({ title: 'Link copied!', description: 'Job link copied to clipboard' });
+          await navigator.clipboard.writeText(job.social || `${shareText}\n${shareUrl}`);
+          toast({ title: 'Copied!', description: 'Job post copied to clipboard' });
         }
       }
     } else {
-      await navigator.clipboard.writeText(shareUrl);
-      toast({ title: 'Link copied!', description: 'Job link copied to clipboard' });
+      await navigator.clipboard.writeText(job.social || `${shareText}\n${shareUrl}`);
+      toast({ title: 'Copied!', description: 'Job post copied to clipboard' });
     }
   };
 
@@ -873,6 +878,10 @@ export default function JobClient({ job, relatedJobs, companies, documentLinks, 
                 </div>
               )}
 
+              <div className="w-full overflow-hidden flex justify-center py-2">
+                <AdsterraBanner {...ADSTERRA.RECTANGLE_300x250} />
+              </div>
+
               {(() => {
                 const responsibilitiesArray = Array.isArray(job.responsibilities) ? job.responsibilities : [];
                 if (responsibilitiesArray.length > 0) {
@@ -1116,9 +1125,9 @@ export default function JobClient({ job, relatedJobs, companies, documentLinks, 
               )}
 
 
-{/* Ad — between How to Apply and Join Our Communities (moved here from under Required Skills) */}
+{/* Ad — between How to Apply and Join Our Communities */}
 <div className="w-full overflow-hidden flex justify-center py-2">
-  <AdsterraBanner {...ADSTERRA.RECTANGLE_300x250} />
+  <AdsterraBanner {...ADSTERRA.BANNER_468x60} />
 </div>
 
 {/* No "Apply for Me" on remote.jobmeter.app */}
@@ -1220,11 +1229,6 @@ export default function JobClient({ job, relatedJobs, companies, documentLinks, 
                   </Accordion>
                 </div>
               )}
-
-              {/* Ad — before Posted Date (moved here from under How to Apply) */}
-              <div className="w-full overflow-hidden flex justify-center py-2">
-                <AdsterraBanner {...ADSTERRA.BANNER_468x60} />
-              </div>
 
               {(job.posted_date || job.created_at) && (
                 <div className="bg-white rounded-xl shadow-sm p-6">

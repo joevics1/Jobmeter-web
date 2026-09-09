@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { isRecruiterAccount } from '@/lib/isRecruiterAccount';
+import { sendNotification } from '@/lib/firebase-admin';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -50,6 +51,33 @@ export async function POST(req: NextRequest) {
       .single();
 
     if (insertError) throw insertError;
+
+    // Notify the candidate. This is a best-effort side effect — the
+    // invitation itself is already saved above, so a notification
+    // failure (missing token, expired token, Firebase hiccup) shouldn't
+    // fail the whole request. Same token table + stale-token cleanup
+    // pattern as app/api/send-daily-jobs/route.ts.
+    try {
+      const { data: tokens } = await admin
+        .from('notification_tokens')
+        .select('token')
+        .eq('user_id', candidateId);
+
+      if (tokens && tokens.length > 0) {
+        const title = 'New job invitation';
+        const body = `You've been invited to apply for ${job.title}`;
+        const data = { url: '/invitations', type: 'job_invitation', jobId };
+
+        for (const { token } of tokens) {
+          const result = await sendNotification(token, title, body, data);
+          if (!result.success && result.error?.toString().includes('not-registered')) {
+            await admin.from('notification_tokens').delete().eq('token', token);
+          }
+        }
+      }
+    } catch (notifyError) {
+      console.error('Failed to send invite notification (invite itself still saved):', notifyError);
+    }
 
     return NextResponse.json({ success: true, invite });
   } catch (err: any) {

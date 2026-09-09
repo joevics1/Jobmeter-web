@@ -21,7 +21,8 @@ interface FeatureCard {
 const features: FeatureCard[] = [
   { label: 'Browse Jobs', desc: 'Search and filter open roles', href: '/jobs', icon: Briefcase, color: theme.colors.primary.DEFAULT },
   { label: 'My Applications', desc: 'Track jobs you\u2019ve applied to', href: '/dashboard/applications', icon: ClipboardList, color: theme.colors.accent.blue },
-  { label: 'Create CV / Cover Letter', desc: 'Build a polished CV in minutes', href: '/cv', icon: FileText, color: theme.colors.accent.green },
+  { label: 'CV Templates', desc: 'Fill-in-the-blank templates, no AI needed', href: '/cv-templates', icon: FileText, color: theme.colors.accent.green },
+  { label: 'Cover Letter Templates', desc: 'Ready-made letters for your role', href: '/cover-letter-templates', icon: FileSignature, color: theme.colors.accent.blue },
   { label: 'Recruitment Practice Test', desc: 'Prep with real recruiter questions', href: '/tools/quiz', icon: Brain, color: theme.colors.accent.gold },
   { label: 'Create Document', desc: 'Contracts, letters, and more', href: '/documents', icon: FileSignature, color: theme.colors.accent.blue },
   { label: 'Interview Practice', desc: 'Rehearse with an AI interviewer', href: '/tools/interview', icon: MessageCircle, color: theme.colors.accent.green },

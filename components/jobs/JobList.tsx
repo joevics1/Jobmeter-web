@@ -143,6 +143,7 @@ function transformJobToUIStatic(job: any): JobUI {
     apply_in_app: !!job.apply_in_app, screening_enabled: !!job.screening_enabled,
     status: job.status, deadline: job.deadline,
     isFeatured: true,
+    social: job.social || undefined,
   };
 }
 
@@ -178,7 +179,7 @@ export default function JobList({ siteType = 'global', initialJobs, initialCount
     const fetchFeaturedJobs = async () => {
       const { data, error } = await supabase
         .from('jobs')
-        .select('id, slug, title, company, location, country, salary_range, employment_type, posted_date, created_at, sector, role_category, description, apply_in_app, screening_enabled, status, deadline')
+        .select('id, slug, title, company, location, country, salary_range, employment_type, posted_date, created_at, sector, role_category, description, apply_in_app, screening_enabled, status, deadline, social')
         .eq('is_featured', true)
         .eq('status', 'active')
         .gt('featured_until', new Date().toISOString())
