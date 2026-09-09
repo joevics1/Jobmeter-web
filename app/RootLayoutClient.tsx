@@ -61,12 +61,13 @@ export default function RootLayoutClient({
   // Paystack checkout redirect mid-flow — moved here from the static
   // <head> in app/layout.tsx so it's conditional on the route.
   const adExcludedPrefixes = ['/auth', '/onboarding', '/talent'];
-  // Ad pause lifted 2026-09-01 — AdSense's "limited ad serving" status
-  // cleared. Script re-enabled so Auto ads can run; manual <AdUnit/>
-  // placements site-wide remain individually commented out (see each
-  // file for re-enable instructions) as part of a deliberately
-  // conservative, Auto-ads-only rollout for the next couple of weeks.
-  const shouldLoadAds = !adExcludedPrefixes.some((p) => pathname?.startsWith(p));
+  // TEMP: AdSense paused again 2026-09-08 (per request — "just like
+  // before"). Manual <AdUnit/> placements site-wide are already
+  // commented out from the earlier pause and were never restored, so
+  // this one flag is sufficient to stop all AdSense/Auto ads. Revert by
+  // restoring:
+  // const shouldLoadAds = !adExcludedPrefixes.some((p) => pathname?.startsWith(p));
+  const shouldLoadAds = false;
 
   // Engagement gate: hold off loading the Auto ads script until the
   // visitor gives a genuine signal of reading the page. Two tiers:
