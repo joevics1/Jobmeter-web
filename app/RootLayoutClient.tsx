@@ -153,14 +153,16 @@ export default function RootLayoutClient({
 
   return (
     <div className="min-h-screen flex flex-col" style={{ backgroundColor: theme.colors.background.DEFAULT }}>
-      {shouldLoadAds && adsUnlocked && (
+      {/* Google AdSense — commented out per request (2026-09) to stop ads showing.
+          Re-enable by uncommenting this Script block. */}
+      {/* {shouldLoadAds && adsUnlocked && (
         <Script
           async
           strategy="afterInteractive"
           src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1119289641389825"
           crossOrigin="anonymous"
         />
-      )}
+      )} */}
 
       {/* Header - hidden on bottom nav pages */}
       {!hideHeader && <Header />}

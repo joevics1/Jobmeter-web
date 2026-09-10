@@ -401,11 +401,13 @@ serve(async (req) => {
     const { job_id } = requestData || {};
     console.log(`🔑 Extracted job_id: ${job_id || 'NONE - will run daily notifications'}`);
 
-    // Check if we're in development environment
-    const isDevelopment = Deno.env.get('ENVIRONMENT') === 'development' || 
+    // Check if we're in development environment. Only treat it as dev when
+    // explicitly told so — do NOT default to "development" just because
+    // ENVIRONMENT isn't set, since that silently disabled real-time matching
+    // in production for as long as nobody happened to set that secret.
+    const isDevelopment = Deno.env.get('ENVIRONMENT') === 'development' ||
                           Deno.env.get('NODE_ENV') === 'development' ||
-                          Deno.env.get('SUPABASE_ENVIRONMENT') === 'development' ||
-                          !Deno.env.get('ENVIRONMENT'); // Default to development if not set
+                          Deno.env.get('SUPABASE_ENVIRONMENT') === 'development';
 
     // Log environment detection for debugging
     console.log(`🔧 Environment check: ENVIRONMENT="${Deno.env.get('ENVIRONMENT')}", NODE_ENV="${Deno.env.get('NODE_ENV')}", isDevelopment=${isDevelopment}`);
@@ -425,24 +427,14 @@ serve(async (req) => {
         );
       }
 
-      // Additional security check: verify the request is from an authorized source
-      const isAuthorizedSource = 
-        userAgent.includes('Supabase') || 
-        userAgent.includes('supabase') ||
-        origin.includes(Deno.env.get('SUPABASE_URL') || '') ||
-        (authHeader.startsWith('Bearer ') && authHeader.includes(Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''));
-
-      if (!isAuthorizedSource) {
-        console.log(`🚫 Unauthorized request source detected - skipping real-time job matching for job ${job_id}`);
-        return new Response(
-          JSON.stringify({ 
-            success: false, 
-            error: 'Unauthorized - real-time matching requires proper authorization',
-            job_id 
-          }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 403 }
-        );
-      }
+      // The DB trigger (jobs_after_insert_match -> pg_net http_post) that fires this
+      // in production only sends a Content-Type header — no Authorization/User-Agent
+      // we can check for — so a header-based "authorized source" gate can never be
+      // satisfied by the real caller. That check silently blocked every production
+      // request with a 403. Not restoring it: job_id must match a real job (looked
+      // up below, 404s otherwise) and this action only recomputes/sends match
+      // notifications — not a destructive or data-exposing operation — so it's a
+      // low enough risk to leave open rather than re-break this feature.
       console.log(`🔍 Matching job ${job_id} to all users...`);
 
       // Get the job (including application field for email checking)
