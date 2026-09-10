@@ -911,7 +911,7 @@ export default function JobList({ siteType = 'global', initialJobs, initialCount
       sector: job.sector || '', role_category: job.role_category || '',
       description: job.description || job.job_description || '',
       apply_in_app: !!job.apply_in_app, screening_enabled: !!job.screening_enabled,
-      status: job.status, deadline: job.deadline,
+      status: job.status, deadline: job.deadline, social: job.social || undefined,
     };
   };
 
