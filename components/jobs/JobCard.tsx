@@ -2,7 +2,7 @@
 
 import React, { useMemo, useState } from 'react';
 import Link from 'next/link';
-import { MapPin, Bookmark, BookmarkCheck, FileCheck, Trash2, Calendar, ExternalLink, Briefcase, Building2, Laptop, GraduationCap, Globe, Home, Rocket, Award, Heart, Stethoscope, ShoppingCart, Factory, Truck, Banknote, PenTool, Palette, Music, Camera, Utensils, FlaskConical, Cpu, BarChart3, CheckCircle2, AlertCircle, AlertTriangle, Star, Zap, Share2, Check } from 'lucide-react';
+import { MapPin, Bookmark, BookmarkCheck, FileCheck, Trash2, Calendar, ExternalLink, Briefcase, Building2, Laptop, GraduationCap, Globe, Home, Rocket, Award, Heart, Stethoscope, ShoppingCart, Factory, Truck, Banknote, PenTool, Palette, Music, Camera, Utensils, FlaskConical, Cpu, BarChart3, CheckCircle2, AlertCircle, AlertTriangle, Star, Zap } from 'lucide-react';
 import { theme } from '@/lib/theme';
 import { getCountrySlug } from '@/lib/countrySlugMap';
 
@@ -210,37 +210,6 @@ export default function JobCard({
     onSave(job.id);
   };
 
-  const [justCopied, setJustCopied] = useState(false);
-
-  const handleShare = async (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    const origin = typeof window !== 'undefined' ? window.location.origin : '';
-    const shareUrl = `${origin}${buildJobUrl(job.slug, job.country)}`;
-    // Prefer the pre-written broadcast post — it reads far better than an
-    // auto-generated one-liner and is already what gets shared on
-    // WhatsApp/Telegram, so this keeps every share channel consistent.
-    // Falls back to a simple generated line for jobs without one (e.g.
-    // older listings from before this field existed).
-    const shareText = job.social || `Check out this job: ${job.title} at ${job.company}`;
-
-    if (navigator.share) {
-      try {
-        await navigator.share({ title: job.title, text: shareText, url: job.social ? undefined : shareUrl });
-      } catch (error: any) {
-        if (error.name !== 'AbortError') {
-          await navigator.clipboard.writeText(job.social || `${shareText}\n${shareUrl}`);
-          setJustCopied(true);
-          setTimeout(() => setJustCopied(false), 2000);
-        }
-      }
-    } else {
-      await navigator.clipboard.writeText(job.social || `${shareText}\n${shareUrl}`);
-      setJustCopied(true);
-      setTimeout(() => setJustCopied(false), 2000);
-    }
-  };
-
   const handleApply = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -405,20 +374,6 @@ export default function JobCard({
                 <BookmarkCheck size={18} style={{ color: theme.colors.primary.DEFAULT }} />
               ) : (
                 <Bookmark size={18} style={{ color: theme.colors.text.secondary }} />
-              )}
-            </button>
-
-            {/* Share Button */}
-            <button
-              onClick={handleShare}
-              className="p-2 rounded-lg border transition-all hover:scale-105"
-              style={{ borderColor: theme.colors.border.DEFAULT, backgroundColor: 'transparent' }}
-              title="Share job"
-            >
-              {justCopied ? (
-                <Check size={18} style={{ color: theme.colors.success }} />
-              ) : (
-                <Share2 size={18} style={{ color: theme.colors.text.secondary }} />
               )}
             </button>
 
