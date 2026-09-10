@@ -626,8 +626,11 @@ export default function JobClient({ job, relatedJobs, companies, documentLinks, 
             {/* LEFT COLUMN — Main Job Details */}
             <div className="lg:col-span-2 space-y-6">
 
-              {/* Adsterra top banner — 728x90 desktop / 320x50 mobile */}
-              <AdsterraTopBanner />
+              {/* ADSTERRA PAUSED 2026-09-08 — CPM too low to justify (₦0.20
+                 earned on 3000+ visitors / 20 clicks yesterday). Kept only
+                 the unit under "How to Apply" for now. To re-enable:
+                 <AdsterraTopBanner />
+              */}
 
               {/* Job Header Card */}
               <div className="bg-white rounded-xl shadow-sm p-6">
@@ -861,10 +864,11 @@ export default function JobClient({ job, relatedJobs, companies, documentLinks, 
                 </div>
               )}
 
-              {/* Ad — between Job Description and Required Skills */}
+              {/* ADSTERRA PAUSED 2026-09-08 — see note near top of LEFT COLUMN.
               <div className="w-full overflow-hidden flex justify-center py-2">
                 <AdsterraBanner {...ADSTERRA.RECTANGLE_300x250} />
               </div>
+              */}
 
               {((job.skills_required && Array.isArray(job.skills_required) && job.skills_required.length > 0) ||
                 (job.skills && Array.isArray(job.skills) && job.skills.length > 0)) && (
@@ -878,9 +882,11 @@ export default function JobClient({ job, relatedJobs, companies, documentLinks, 
                 </div>
               )}
 
+              {/* ADSTERRA PAUSED 2026-09-08 — see note near top of LEFT COLUMN.
               <div className="w-full overflow-hidden flex justify-center py-2">
                 <AdsterraBanner {...ADSTERRA.RECTANGLE_300x250} />
               </div>
+              */}
 
               {(() => {
                 const responsibilitiesArray = Array.isArray(job.responsibilities) ? job.responsibilities : [];
@@ -922,10 +928,11 @@ export default function JobClient({ job, relatedJobs, companies, documentLinks, 
                 return null;
               })()}
 
-              {/* Ad — between Qualifications and Benefits & Perks */}
+              {/* ADSTERRA PAUSED 2026-09-08 — see note near top of LEFT COLUMN.
               <div className="w-full overflow-hidden flex justify-center py-2">
                 <AdsterraBanner {...ADSTERRA.RECTANGLE_160x300} />
               </div>
+              */}
 
               {(() => {
                 const benefitsArray = Array.isArray(job.benefits) ? job.benefits : [];
@@ -1265,12 +1272,11 @@ export default function JobClient({ job, relatedJobs, companies, documentLinks, 
 
             {/* RIGHT COLUMN — Sidebar */}
             <div className="lg:col-span-1 space-y-6">
-              {/* Desktop-only — this column stacks into the single mobile
-                  column below the lg breakpoint, and a 160x600 unit doesn't
-                  belong wedged into that stacked mobile flow. */}
+              {/* ADSTERRA PAUSED 2026-09-08 — see note near top of LEFT COLUMN.
               <div className="hidden lg:flex justify-center">
                 <AdsterraBanner {...ADSTERRA.SKYSCRAPER_160x600} />
               </div>
+              */}
 
               <div className="bg-white rounded-xl shadow-sm overflow-hidden">
                 <div className="px-5 py-4 font-semibold text-base flex items-center gap-2" style={{ backgroundColor: `${theme.colors.primary.DEFAULT}10`, color: theme.colors.primary.DEFAULT }}>

@@ -1274,10 +1274,11 @@ if (filters.remote) {
           </a>
         </div>
 
-        {/* Adsterra top banner — 728x90 desktop / 320x50 mobile, shown once above whichever tab is active */}
+        {/* ADSTERRA PAUSED 2026-09-08 — CPM too low to justify. To re-enable:
         <div className="px-6 pb-2">
           <AdsterraTopBanner />
         </div>
+        */}
 
         {/* Matches tab header */}
         {activeTab === 'matches' && (
@@ -1390,18 +1391,18 @@ if (filters.remote) {
                   return (
                     <React.Fragment key={job.id}>
                       <JobCard job={job} savedJobs={savedJobs} appliedJobs={appliedJobs} onSave={handleSave} onApply={handleApply} onShowBreakdown={handleShowBreakdown} showMatch={true} matchRank={globalIndex} />
-
+                      {/* ADSTERRA PAUSED 2026-09-08 — CPM too low to justify. To re-enable:
                       {index === 0 && (
                         <div className="w-full overflow-hidden flex justify-center" style={{ margin: 0, padding: '8px 0' }}>
                           <AdsterraBanner {...ADSTERRA.RECTANGLE_300x250} />
                         </div>
                       )}
-
                       {(index + 1) % 5 === 0 && (
                         <div className="w-full overflow-hidden flex justify-center" style={{ margin: 0, padding: '8px 0' }}>
                           <AdsterraBanner key={`infeed-match-${matchPage}-${index}`} {...ADSTERRA.BANNER_468x60} />
                         </div>
                       )}
+                      */}
                     </React.Fragment>
                   );
                 })}
@@ -1632,38 +1633,35 @@ if (filters.remote) {
                       {paginatedJobs.map((job, index) => (
                         <React.Fragment key={job.id}>
                           <JobCard job={job} savedJobs={savedJobs} appliedJobs={appliedJobs} onSave={handleSave} onApply={handleApply} onShowBreakdown={handleShowBreakdown} showMatch={false} />
-
-                          {/* Ad after job card #1 */}
+                          {/* ADSTERRA PAUSED 2026-09-08 — CPM too low to justify. To re-enable:
                           {index === 0 && (
                             <div className="w-full overflow-hidden flex justify-center" style={{ margin: 0, padding: '8px 0' }}>
                               <AdsterraBanner {...ADSTERRA.RECTANGLE_300x250} />
                             </div>
                           )}
-
-                          {/* Ad after every 5th job card: card 5, 10, 15, 20 (index 4,9,14,19) */}
                           {(index + 1) % 5 === 0 && (
                             <div className="w-full overflow-hidden flex justify-center" style={{ margin: 0, padding: '8px 0' }}>
                               <AdsterraBanner key={`infeed-${currentPage}-${index}`} {...ADSTERRA.BANNER_468x60} />
                             </div>
                           )}
+                          */}
                         </React.Fragment>
                       ))}
                     </>
                   )}
 
-                  {/* Display bottom ad before pagination — 300x250 mobile, 728x90 desktop */}
+                  {/* ADSTERRA PAUSED 2026-09-08 — CPM too low to justify. To re-enable:
                   {!latestJobsLoading && sortedJobs.length > 0 && (
                     <div className="w-full flex justify-center overflow-hidden" style={{ margin: 0, padding: '8px 0' }}>
-                      {/* Mobile */}
                       <div className="block lg:hidden">
                         <AdsterraBanner {...ADSTERRA.RECTANGLE_300x250} />
                       </div>
-                      {/* Desktop: leaderboard */}
                       <div className="hidden lg:block">
                         <AdsterraBanner {...ADSTERRA.LEADERBOARD_728x90} />
                       </div>
                     </div>
                   )}
+                  */}
 
                   {totalPages > 1 && !latestJobsLoading && (
                     <div className="flex items-center justify-center py-6 space-x-2">
