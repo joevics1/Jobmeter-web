@@ -304,14 +304,41 @@ function buildJobUrl(job: { slug?: string | null; id: string; country?: string[]
   return `https://www.jobmeter.app/jobs/${countrySlug}/${job.slug || job.id}`;
 }
 
+// Same card formatting as the browsing/digest job cards: prefer the pre-generated
+// social post text, strip the redundant "Apply: <url>" line (button covers that),
+// bold the title, pin the location.
+function formatJobCard(job: { title?: string; social?: string | null; company?: any; location?: any; country?: string[] | null }): string {
+  const buildFallback = () => {
+    const companyName = (job.company && typeof job.company === 'object' && job.company.name) || 'Confidential employer';
+    const locationParts: string[] = [];
+    if (job.location && typeof job.location === 'object') {
+      if (job.location.city) locationParts.push(job.location.city);
+      if (job.location.state) locationParts.push(job.location.state);
+    }
+    if (Array.isArray(job.country) && job.country[0]) locationParts.push(job.country[0]);
+    const locationStr = locationParts.join(', ') || 'Remote';
+    return `Hiring: ${job.title}\nLocation: ${locationStr}\nCompany: ${companyName}`;
+  };
+
+  let body = job.social && job.social.trim() ? job.social.trim() : buildFallback();
+  body = body.replace(/\n*apply:\s*https?:\/\/\S+\s*$/i, '').trim();
+
+  const lines = body.split('\n');
+  if (lines[0] && /^hiring:/i.test(lines[0])) {
+    lines[0] = `💼 *${lines[0].replace(/^hiring:\s*/i, '').trim()}*`;
+  }
+  if (lines[1] && /^location:/i.test(lines[1])) {
+    lines[1] = `📍 ${lines[1].replace(/^location:\s*/i, '').trim()}`;
+  }
+  return lines.join('\n');
+}
+
 // Send a Telegram DM to a linked user about a new job match
 async function sendTelegramMatchNotification(
   supabase: any,
   userId: string,
-  jobTitle: string,
-  companyName: string,
-  matchScore: number,
-  jobUrl: string
+  job: { id: string; title: string; slug?: string | null; company?: any; country?: string[] | null; location?: any; social?: string | null },
+  matchScore: number
 ): Promise<boolean> {
   const botToken = Deno.env.get('TELEGRAM_BOT_TOKEN_2');
   if (!botToken) return false;
@@ -326,11 +353,8 @@ async function sendTelegramMatchNotification(
 
     if (error || !tgUser) return false; // not linked to Telegram, nothing to do
 
-    const text =
-      `🎯 *${matchScore}% match*\n\n` +
-      `*${jobTitle}*\n` +
-      `🏢 ${companyName}\n\n` +
-      `[View & apply](${jobUrl})`;
+    const jobUrl = buildJobUrl({ slug: job.slug, id: job.id, country: job.country, location: job.location });
+    const text = `🎯 *${matchScore}% match*\n\n${formatJobCard(job)}`;
 
     const res = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
       method: 'POST',
@@ -340,6 +364,7 @@ async function sendTelegramMatchNotification(
         text,
         parse_mode: 'Markdown',
         disable_web_page_preview: true,
+        reply_markup: { inline_keyboard: [[{ text: '✅ View & apply', url: jobUrl }]] },
       }),
     });
 
@@ -440,7 +465,7 @@ serve(async (req) => {
       // Get the job (including application field for email checking)
       const { data: job, error: jobError } = await supabase
         .from('jobs')
-        .select('id, title, slug, company, country, role, related_roles, ai_enhanced_roles, skills_required, ai_enhanced_skills, location, experience_level, salary_range, employment_type, sector, posted_date, application')
+        .select('id, title, slug, company, country, role, related_roles, ai_enhanced_roles, skills_required, ai_enhanced_skills, location, experience_level, salary_range, employment_type, sector, posted_date, application, social')
         .eq('id', job_id)
         .single();
 
@@ -604,16 +629,7 @@ serve(async (req) => {
             // Fire-and-forget-ish but awaited so the function doesn't exit before it completes;
             // failures are swallowed (logged only) so they never block match saving above.
             try {
-              const jobUrl = buildJobUrl({ slug: job.slug, id: job.id, country: job.country, location: job.location });
-              const companyName = (job.company && typeof job.company === 'object' && job.company.name) || 'Confidential employer';
-              const sent = await sendTelegramMatchNotification(
-                supabase,
-                user.user_id,
-                job.title || jobRow.role || 'New job',
-                companyName,
-                matchScore,
-                jobUrl
-              );
+              const sent = await sendTelegramMatchNotification(supabase, user.user_id, job, matchScore);
               if (sent) {
                 await supabase
                   .from('server_match_results')

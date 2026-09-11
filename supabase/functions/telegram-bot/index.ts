@@ -992,7 +992,10 @@ serve(async (req) => {
           if (!tgUser.linked_at) {
             await sendMessage(chatId, `Send /start first to log in or sign up.`);
           } else {
-            await supabase.from('onboarding_data').update({ sector }).eq('user_id', tgUser.user_id);
+            // upsert, not update: a login-only user may have no onboarding_data row
+            // yet — update() would silently affect 0 rows and never add them to
+            // the matching pool at all.
+            await supabase.from('onboarding_data').upsert({ user_id: tgUser.user_id, sector }, { onConflict: 'user_id' });
             await sendMessage(chatId, `Got it — set your sector to *${sector}*.`);
             await sendJobBatch(supabase, chatId, tgUser.user_id, []);
           }
@@ -1008,7 +1011,7 @@ serve(async (req) => {
           if (!tgUser.linked_at) {
             await sendMessage(chatId, `Send /start first to log in or sign up.`);
           } else {
-            await supabase.from('onboarding_data').update({ target_roles: [roleName] }).eq('user_id', tgUser.user_id);
+            await supabase.from('onboarding_data').upsert({ user_id: tgUser.user_id, target_roles: [roleName] }, { onConflict: 'user_id' });
             await sendMessage(chatId, `Got it — set your target role to *${roleName}*.`, { reply_markup: kbMainMenu });
           }
         }
@@ -1162,7 +1165,7 @@ serve(async (req) => {
             await sendMessage(chatId, `Send at least one role.`);
             break;
           }
-          await supabase.from('onboarding_data').update({ target_roles: roles }).eq('user_id', tgUser.user_id);
+          await supabase.from('onboarding_data').upsert({ user_id: tgUser.user_id, target_roles: roles }, { onConflict: 'user_id' });
           await setState(supabase, chatId, { step: 'idle' });
           await sendMessage(chatId, `Got it — set your target role(s) to *${roles.join(', ')}*.`, { reply_markup: kbMainMenu });
           break;
