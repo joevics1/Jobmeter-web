@@ -443,11 +443,12 @@ export default function ProfessionCountryMatchPage() {
 
 // AdUnit Component with corrected styles
 function AdUnit({ type }: { type: 'top' | 'middle' | 'bottom' }) {
-  // TEMP: ads paused 2026-08-30 during AdSense limited-ad-serving status.
-  // Remove this early return to restore (see app/RootLayoutClient.tsx for
-  // the matching site-wide toggle and revert note).
+  // ADS PAUSED 2026-09-11 (AdSense restriction cleared, doing a full
+  // reset before re-enabling one page at a time — blog first). To
+  // re-enable: generate FRESH ad units in AdSense dashboard (do not
+  // reuse the old slot IDs below), update them here, then uncomment.
   return null;
-
+  /*
   const slot = type === 'top' ? '4198231153' : type === 'middle' ? '4690286797' : '9751041788';
   const isInArticle = type === 'middle';
 
@@ -466,4 +467,5 @@ function AdUnit({ type }: { type: 'top' | 'middle' | 'bottom' }) {
       <script dangerouslySetInnerHTML={{ __html: `(adsbygoogle = window.adsbygoogle || []).push({});` }} />
     </div>
   );
+  */
 }

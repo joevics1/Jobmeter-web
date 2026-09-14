@@ -35,11 +35,12 @@ declare global {
 }
 
 const AdTopDisplay = () => {
-  // ADS PAUSED 2026-09-01 (post-restriction conservative rollout).
-  // To re-enable: generate a NEW ad unit in AdSense dashboard, update the
-  // slot below if needed, then remove this early return.
+  // ADS PAUSED 2026-09-11 (AdSense restriction cleared, doing a full
+  // reset before re-enabling one page at a time — blog first). To
+  // re-enable: generate a FRESH ad unit in AdSense dashboard (do not
+  // reuse the old slot ID below), update it here, then uncomment.
   return null;
-
+  /*
   useEffect(() => {
     try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch (e) {}
   }, []);
@@ -55,12 +56,14 @@ const AdTopDisplay = () => {
       />
     </div>
   );
+  */
 };
 
 const AdInFeed = ({ index }: { index: number }) => {
-  // ADS PAUSED 2026-09-01 — see AdTopDisplay above for re-enable notes.
+  // ADS PAUSED 2026-09-11 — see AdTopDisplay above for re-enable notes
+  // (generate a fresh ad unit, don't reuse the slot ID below).
   return null;
-
+  /*
   useEffect(() => {
     try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch (e) {}
   }, []);
@@ -76,13 +79,15 @@ const AdInFeed = ({ index }: { index: number }) => {
       />
     </div>
   );
+  */
 };
 
 // Alternates between two in-article slots
 const AdInArticle = ({ nth }: { nth: number }) => {
-  // ADS PAUSED 2026-09-01 — see AdTopDisplay above for re-enable notes.
+  // ADS PAUSED 2026-09-11 — see AdTopDisplay above for re-enable notes
+  // (generate fresh ad units, don't reuse the slot IDs below).
   return null;
-
+  /*
   useEffect(() => {
     try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch (e) {}
   }, []);
@@ -99,6 +104,7 @@ const AdInArticle = ({ nth }: { nth: number }) => {
       />
     </div>
   );
+  */
 };
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
