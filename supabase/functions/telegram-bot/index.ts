@@ -135,6 +135,7 @@ const kbAccountChoice = {
   inline_keyboard: [
     [{ text: '🔑 I have an account — Log in', callback_data: 'login' }],
     [{ text: '📄 New here — Sign up with my CV', callback_data: 'signup' }],
+    [{ text: '⚡ Just get job alerts (no CV needed)', callback_data: 'quick_setup' }],
   ],
 };
 
@@ -173,7 +174,7 @@ function linkGridKeyboard(items: { name: string; url: string }[]) {
   return { inline_keyboard: rows };
 }
 
-function sectorKeyboard(context: 'onboard' | 'browse' | 'change') {
+function sectorKeyboard(context: 'onboard' | 'browse' | 'change' | 'quick') {
   const rows: { text: string; callback_data: string }[][] = [];
   for (let i = 0; i < SECTORS.length; i += 2) {
     const row = [{ text: SECTORS[i], callback_data: `sec:${i}:${context}` }];
@@ -213,7 +214,7 @@ const ROLE_SUGGESTIONS: Record<string, string[]> = {
   'Data & Analytics': ['Data Analyst', 'Data Scientist', 'Business Intelligence Analyst', 'Data Engineer'],
 };
 
-function roleKeyboard(sector: string, context: 'onboard' | 'change') {
+function roleKeyboard(sector: string, context: 'onboard' | 'change' | 'quick') {
   const roles = ROLE_SUGGESTIONS[sector] || [];
   const rows: { text: string; callback_data: string }[][] = [];
   for (let i = 0; i < roles.length; i += 2) {
@@ -764,6 +765,67 @@ async function askSignupRole(supabase: any, chatId: number, temp: Record<string,
   });
 }
 
+// ─── Quick setup (no CV, no email, no password) ─────────────────────────────
+// Skips the whole account-creation conversation: pick a sector, pick a role,
+// done. A lightweight shadow account is created silently behind the scenes so
+// this plugs into the exact same matching/notification pipeline as a full
+// signup — the person tracked by their Telegram chat, never sees a password.
+
+function generateRandomPassword(): string {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
+  let pw = '';
+  for (let i = 0; i < 16; i++) pw += chars[Math.floor(Math.random() * chars.length)];
+  return pw;
+}
+
+async function startQuickSetup(supabase: any, chatId: number) {
+  await setState(supabase, chatId, { step: 'quick_sector' });
+  await sendMessage(chatId, `No problem — what sector are you looking for work in?`, {
+    reply_markup: sectorKeyboard('quick'),
+  });
+}
+
+async function askQuickRole(supabase: any, chatId: number, temp: Record<string, any>) {
+  await setState(supabase, chatId, { step: 'quick_role', temp });
+  await sendMessage(chatId, `And what role? (or type your own)`, {
+    reply_markup: roleKeyboard(temp.sector, 'quick'),
+  });
+}
+
+async function completeQuickSetup(supabaseAdmin: any, chatId: number, sector: string, roles: string[]) {
+  const email = `tg-${chatId}@telegram.jobmeter.local`;
+  const password = generateRandomPassword();
+
+  const { data: created, error: createError } = await supabaseAdmin.auth.admin.createUser({
+    email,
+    password,
+    email_confirm: true,
+    user_metadata: { source: 'telegram_quick_setup' },
+  });
+
+  if (createError || !created?.user) {
+    console.error('Error creating quick-setup user:', createError);
+    await sendMessage(chatId, `Something went wrong setting that up — please try again in a moment.`);
+    return;
+  }
+
+  const userId = created.user.id;
+
+  await supabaseAdmin.from('onboarding_data').insert({
+    user_id: userId,
+    sector,
+    target_roles: roles,
+  });
+
+  await linkAccount(supabaseAdmin, chatId, userId);
+
+  await sendMessage(
+    chatId,
+    `✅ You're set! I'll DM you here the moment a job scores 50%+ for *${roles.join(', ')}* in *${sector}*.\n\nWant even better matches? Send your CV anytime and I'll fill in your skills and experience too — no need to start over.`,
+    { reply_markup: kbMainMenu }
+  );
+}
+
 async function askSignupPassword(supabase: any, chatId: number, temp: Record<string, any>) {
   await setState(supabase, chatId, { step: 'signup_password', temp });
   await sendMessage(
@@ -969,6 +1031,8 @@ serve(async (req) => {
         await startLogin(supabase, chatId);
       } else if (data === 'signup') {
         await startSignup(supabase, chatId);
+      } else if (data === 'quick_setup') {
+        await startQuickSetup(supabase, chatId);
       } else if (data === 'use_cv_email') {
         const email = (state.temp?.cv?.email || '').trim().toLowerCase();
         if (email && isValidEmail(email)) {
@@ -988,6 +1052,8 @@ serve(async (req) => {
           await sendMessage(chatId, `That option expired — please try again.`);
         } else if (context === 'onboard') {
           await askSignupRole(supabase, chatId, { ...state.temp, sector });
+        } else if (context === 'quick') {
+          await askQuickRole(supabase, chatId, { sector });
         } else if (context === 'browse' || context === 'change') {
           if (!tgUser.linked_at) {
             await sendMessage(chatId, `Send /start first to log in or sign up.`);
@@ -1007,6 +1073,8 @@ serve(async (req) => {
         const roleName = rest.slice(sepIdx + 1);
         if (context === 'onboard') {
           await askSignupPassword(supabase, chatId, { ...state.temp, roles: [roleName] });
+        } else if (context === 'quick') {
+          await completeQuickSetup(supabase, chatId, state.temp?.sector, [roleName]);
         } else if (context === 'change') {
           if (!tgUser.linked_at) {
             await sendMessage(chatId, `Send /start first to log in or sign up.`);
@@ -1017,7 +1085,8 @@ serve(async (req) => {
         }
       } else if (data.startsWith('role_custom:')) {
         const context = data.split(':')[1];
-        await setState(supabase, chatId, { step: context === 'onboard' ? 'signup_role_custom' : 'change_role_custom', temp: state.temp });
+        const step = context === 'onboard' ? 'signup_role_custom' : context === 'quick' ? 'quick_role_custom' : 'change_role_custom';
+        await setState(supabase, chatId, { step, temp: state.temp });
         await sendMessage(chatId, `Type the role(s) you want, separated by commas — e.g. "Project Manager, Product Owner".`);
       } else if (data === 'role_skip') {
         if (!tgUser.linked_at) {
@@ -1157,6 +1226,15 @@ serve(async (req) => {
             break;
           }
           await askSignupPassword(supabase, chatId, { ...state.temp, roles });
+          break;
+        }
+        case 'quick_role_custom': {
+          const roles = text.split(',').map((r) => r.trim()).filter(Boolean);
+          if (!roles.length) {
+            await sendMessage(chatId, `Send at least one role.`);
+            break;
+          }
+          await completeQuickSetup(supabase, chatId, state.temp?.sector, roles);
           break;
         }
         case 'change_role_custom': {
