@@ -61,13 +61,11 @@ export default function RootLayoutClient({
   // Paystack checkout redirect mid-flow — moved here from the static
   // <head> in app/layout.tsx so it's conditional on the route.
   const adExcludedPrefixes = ['/auth', '/onboarding', '/talent'];
-  // TEMP: AdSense paused again 2026-09-08 (per request — "just like
-  // before"). Manual <AdUnit/> placements site-wide are already
-  // commented out from the earlier pause and were never restored, so
-  // this one flag is sufficient to stop all AdSense/Auto ads. Revert by
-  // restoring:
-  // const shouldLoadAds = !adExcludedPrefixes.some((p) => pathname?.startsWith(p));
-  const shouldLoadAds = false;
+  // AdSense re-enabled 2026-09-13 with fresh ad units on the blog pages
+  // (previous units retired after the restriction history). Manual
+  // <AdUnit/> placements elsewhere on the site remain individually
+  // commented out — only the two new blog units are live for now.
+  const shouldLoadAds = !adExcludedPrefixes.some((p) => pathname?.startsWith(p));
 
   // Engagement gate: hold off loading the Auto ads script until the
   // visitor gives a genuine signal of reading the page. Two tiers:
@@ -153,16 +151,15 @@ export default function RootLayoutClient({
 
   return (
     <div className="min-h-screen flex flex-col" style={{ backgroundColor: theme.colors.background.DEFAULT }}>
-      {/* Google AdSense — commented out per request (2026-09) to stop ads showing.
-          Re-enable by uncommenting this Script block. */}
-      {/* {shouldLoadAds && adsUnlocked && (
+      {/* Google AdSense — re-enabled 2026-09-13 with fresh blog ad units. */}
+      {shouldLoadAds && adsUnlocked && (
         <Script
           async
           strategy="afterInteractive"
           src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1119289641389825"
           crossOrigin="anonymous"
         />
-      )} */}
+      )}
 
       {/* Header - hidden on bottom nav pages */}
       {!hideHeader && <Header />}

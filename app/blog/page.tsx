@@ -162,12 +162,7 @@ export default async function BlogPage() {
                   {chunkIndex < postChunks.length - 1 && (
                     <div className="mt-10">
                       <div className="min-h-[300px] flex items-center justify-center bg-gray-50 rounded">
-                        {/* ADS PAUSED 2026-09-01 (post-restriction conservative rollout).
-   To re-enable: generate a NEW ad unit in AdSense dashboard
-   (Ads > By ad unit > Display ads) and update the slot below,
-   then uncomment this block.
-<AdUnit slot="4690286797" format="fluid" layout="in-article" />
-*/}
+                        <AdUnit slot="8136488733" format="auto" style={{ display: 'block' }} />
                       </div>
                     </div>
                   )}
