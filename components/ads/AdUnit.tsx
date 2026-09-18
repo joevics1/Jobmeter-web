@@ -73,6 +73,10 @@ export default function AdUnit({
       className={`adsbygoogle${className ? ` ${className}` : ''}`}
       style={{
         display: 'block',
+        // Explicit full width: inside a flex/shrink-to-fit parent an <ins>
+        // with no width collapses to 0px, and AdSense then logs
+        // "No slot size for availableWidth=0" and never fills the unit.
+        width: '100%',
         textAlign: layout === 'in-article' ? 'center' : undefined,
         ...style,
       }}

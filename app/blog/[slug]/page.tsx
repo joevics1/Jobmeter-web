@@ -272,7 +272,7 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
 
               {hasMidContent && (
                 <>
-                  <div className="my-10 min-h-[300px] flex items-center justify-center bg-gray-50 rounded">
+                  <div className="my-10 w-full">
                     <AdUnit slot="4576517672" format="auto" style={{ display: 'block' }} />
                   </div>
                   <BlogMarkdownRenderer content={contentBottom} />

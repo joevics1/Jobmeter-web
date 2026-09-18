@@ -161,7 +161,7 @@ export default async function BlogPage() {
                   </div>
                   {chunkIndex < postChunks.length - 1 && (
                     <div className="mt-10">
-                      <div className="min-h-[300px] flex items-center justify-center bg-gray-50 rounded">
+                      <div className="w-full">
                         <AdUnit slot="8136488733" format="auto" style={{ display: 'block' }} />
                       </div>
                     </div>
