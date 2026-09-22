@@ -10,6 +10,11 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const jobId = searchParams.get('jobId');
     const userId = searchParams.get('userId');
+    // 'newest' | 'oldest' | 'score' (score only meaningful when screening is on;
+    // falls back to newest for applicants with no screening attempt)
+    const sort = searchParams.get('sort') || 'newest';
+    // 'visible' (default) | 'hidden' | 'all'
+    const view = searchParams.get('view') || 'visible';
 
     if (!jobId || !userId) {
       return NextResponse.json({ error: 'Missing jobId or userId' }, { status: 400 });
@@ -29,15 +34,27 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Not authorized to view applicants for this job' }, { status: 403 });
     }
 
-    const { data: applications, error: appsError } = await supabase
+    let query = supabase
       .from('applications')
-      .select('id, applicant_id, cover_letter, created_at, screening_attempt_id, application_method')
+      .select('id, applicant_id, cover_letter, created_at, screening_attempt_id, application_method, hidden_at')
       .eq('job_id', jobId)
-      .order('created_at', { ascending: false });
+      .order('created_at', { ascending: sort === 'oldest' });
+
+    if (view === 'visible') query = query.is('hidden_at', null);
+    else if (view === 'hidden') query = query.not('hidden_at', 'is', null);
+    // view === 'all' → no filter
+
+    const { data: applications, error: appsError } = await query;
 
     if (appsError) {
       return NextResponse.json({ error: 'Failed to load applicants' }, { status: 500 });
     }
+
+    const { count: hiddenCount } = await supabase
+      .from('applications')
+      .select('id', { count: 'exact', head: true })
+      .eq('job_id', jobId)
+      .not('hidden_at', 'is', null);
 
     const applicantIds = (applications || []).map((a) => a.applicant_id);
     const attemptIds = (applications || [])
@@ -59,17 +76,39 @@ export async function GET(req: NextRequest) {
     const profileMap = new Map((profiles || []).map((p: any) => [p.id, p]));
     const attemptMap = new Map((attempts || []).map((a: any) => [a.id, a]));
 
-    const result = (applications || []).map((a: any) => ({
+    let result = (applications || []).map((a: any) => ({
       id: a.id,
       applicantId: a.applicant_id,
       coverLetter: a.cover_letter,
       applicationMethod: a.application_method,
       createdAt: a.created_at,
+      hiddenAt: a.hidden_at,
       applicant: profileMap.get(a.applicant_id) || null,
       screening: a.screening_attempt_id ? attemptMap.get(a.screening_attempt_id) || null : null,
     }));
 
-    return NextResponse.json({ jobTitle: job.title, screeningEnabled: job.screening_enabled, applicants: result });
+    if (sort === 'score') {
+      // Highest MCQ score first; applicants with no screening attempt sort last
+      // but keep their relative recency order among themselves.
+      result = result
+        .map((r, i) => ({ r, i }))
+        .sort((x, y) => {
+          const xs = x.r.screening?.mcq_score;
+          const ys = y.r.screening?.mcq_score;
+          if (xs == null && ys == null) return x.i - y.i;
+          if (xs == null) return 1;
+          if (ys == null) return -1;
+          return ys - xs;
+        })
+        .map(({ r }) => r);
+    }
+
+    return NextResponse.json({
+      jobTitle: job.title,
+      screeningEnabled: job.screening_enabled,
+      applicants: result,
+      hiddenCount: hiddenCount || 0,
+    });
   } catch (err) {
     console.error('Recruiter applicants fetch error:', err);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

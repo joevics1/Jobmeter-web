@@ -5,6 +5,55 @@ import { mapOnboardingToCVData } from '@/lib/cv-template-pages/onboarding-fetch'
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
+// Hide or restore an applicant from the recruiter's list. Never deletes the
+// underlying application row, so this is always reversible.
+export async function PATCH(req: NextRequest, { params }: { params: { applicationId: string } }) {
+  try {
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const applicationId = params.applicationId;
+    const body = await req.json();
+    const { userId, hidden } = body as { userId?: string; hidden?: boolean };
+
+    if (!userId || typeof hidden !== 'boolean') {
+      return NextResponse.json({ error: 'Missing userId or hidden' }, { status: 400 });
+    }
+
+    const { data: application, error: appError } = await supabase
+      .from('applications')
+      .select('id, job_id')
+      .eq('id', applicationId)
+      .maybeSingle();
+
+    if (appError || !application) {
+      return NextResponse.json({ error: 'Application not found' }, { status: 404 });
+    }
+
+    const { data: job } = await supabase
+      .from('jobs')
+      .select('id, posted_by_user_id')
+      .eq('id', application.job_id)
+      .maybeSingle();
+
+    if (!job || job.posted_by_user_id !== userId) {
+      return NextResponse.json({ error: 'Not authorized to modify this applicant' }, { status: 403 });
+    }
+
+    const { error: updateError } = await supabase
+      .from('applications')
+      .update({ hidden_at: hidden ? new Date().toISOString() : null })
+      .eq('id', applicationId);
+
+    if (updateError) {
+      return NextResponse.json({ error: 'Failed to update applicant' }, { status: 500 });
+    }
+
+    return NextResponse.json({ success: true, hidden });
+  } catch (err) {
+    console.error('PATCH /api/recruiter/applicants/[applicationId] error:', err);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}
+
 export async function GET(req: NextRequest, { params }: { params: { applicationId: string } }) {
   try {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
