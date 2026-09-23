@@ -143,14 +143,9 @@ export default function ToolsPage() {
         </div>
       </div>
 
-      {/* ── AD 1: Top banner ── */}
+      {/* ── AD 1: Top banner — Sept 2026 ad unit ── */}
       <div className="px-4 md:px-6 pt-6 max-w-6xl mx-auto">
-        {/* ADS PAUSED 2026-09-01 (post-restriction conservative rollout).
-   To re-enable: generate a NEW ad unit in AdSense dashboard
-   (Ads > By ad unit > Display ads) and update the slot below,
-   then uncomment this block.
-<AdUnit slot="4198231153" format="auto" />
-*/}
+        <AdUnit slot="1178418475" format="auto" />
       </div>
 
       <div className="px-4 md:px-6 py-8 max-w-6xl mx-auto">
@@ -209,14 +204,9 @@ export default function ToolsPage() {
           })}
         </div>
 
-        {/* ── AD 3: Bottom banner ── */}
+        {/* ── AD 3: Bottom banner — Sept 2026 ad unit ── */}
         <div className="mt-12">
-          {/* ADS PAUSED 2026-09-01 (post-restriction conservative rollout).
-   To re-enable: generate a NEW ad unit in AdSense dashboard
-   (Ads > By ad unit > Display ads) and update the slot below,
-   then uncomment this block.
-<AdUnit slot="9751041788" format="auto" />
-*/}
+          <AdUnit slot="1633803336" format="auto" />
         </div>
       </div>
     </div>

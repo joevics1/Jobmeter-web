@@ -162,7 +162,8 @@ export default async function BlogPage() {
                   {chunkIndex < postChunks.length - 1 && (
                     <div className="mt-10">
                       <div className="w-full">
-                        <AdUnit slot="8136488733" format="auto" style={{ display: 'block' }} />
+                        {/* Sept 2026 ad unit — display banner */}
+                        <AdUnit slot="1633803336" format="auto" style={{ display: 'block' }} />
                       </div>
                     </div>
                   )}

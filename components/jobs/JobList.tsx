@@ -1633,6 +1633,19 @@ if (filters.remote) {
                       {paginatedJobs.map((job, index) => (
                         <React.Fragment key={job.id}>
                           <JobCard job={job} savedJobs={savedJobs} appliedJobs={appliedJobs} onSave={handleSave} onApply={handleApply} onShowBreakdown={handleShowBreakdown} showMatch={false} />
+                          {/* Sept 2026 in-feed ad units — after the 2nd card, then after
+                              5 more (i.e. after the 7th). Only on page 1 of the feed so
+                              they don't reappear on every subsequent page. */}
+                          {currentPage === 1 && index === 1 && (
+                            <div className="w-full">
+                              <AdUnit slot="5327662455" format="fluid" layoutKey="-6t+ed+2i-1n-4w" />
+                            </div>
+                          )}
+                          {currentPage === 1 && index === 6 && (
+                            <div className="w-full">
+                              <AdUnit slot="1633803336" format="auto" />
+                            </div>
+                          )}
                           {/* ADSTERRA PAUSED 2026-09-08 — CPM too low to justify. To re-enable:
                           {index === 0 && (
                             <div className="w-full overflow-hidden flex justify-center" style={{ margin: 0, padding: '8px 0' }}>
