@@ -26,16 +26,12 @@ import { COUNTRIES } from '@/lib/countries';
 
 import { OrganizationSchema, WebSiteSchema } from '@/components/seo/StructuredData';
 
-// ─── Ad slot IDs ───────────────────────────────────────────────────────────────
+// ─── Ad slot IDs (Sept 2026 units — old units are archived, never reuse) ──────
 const AD_SLOTS = {
-  DISPLAY_TOP:         '4198231153',
-  BANNER:              '8152297343',
-  IN_ARTICLE_1:        '4690286797',
-  IN_ARTICLE_2:        '8181708196',
-  DISPLAY_BOTTOM:      '9751041788',
-  IN_FEED:             '9025117620',
-  IN_FEED_LAYOUT_KEY:  '-fb+5w+4e-db+86',
-  MIDDLE_DISPLAY:      '9010641928',
+  AFTER_FIRST_CARD:    '1769800630',   // display, responsive
+  BOTTOM:              '3434236090',   // display, responsive (above pagination)
+  IN_FEED:             ['7181909415', '5327662455'] as const, // rotated on every 5th card
+  IN_FEED_LAYOUT_KEY:  '-6t+ed+2i-1n-4w',
 } as const;
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -1403,6 +1399,22 @@ if (filters.remote) {
                         </div>
                       )}
                       */}
+                      {index === 0 && (
+                        <div className="w-full overflow-hidden" style={{ margin: 0, padding: '3px 0' }}>
+                          <AdUnit key={`first-match-${matchPage}`} slot={AD_SLOTS.AFTER_FIRST_CARD} format="auto" style={{ display: 'block' }} />
+                        </div>
+                      )}
+                      {(index + 1) % 5 === 0 && (
+                        <div className="w-full overflow-hidden" style={{ margin: 0, padding: '3px 0' }}>
+                          <AdUnit
+                            key={`infeed-match-${matchPage}-${index}`}
+                            slot={AD_SLOTS.IN_FEED[((index + 1) / 5 - 1) % AD_SLOTS.IN_FEED.length]}
+                            format="fluid"
+                            layoutKey={AD_SLOTS.IN_FEED_LAYOUT_KEY}
+                            style={{ display: 'block' }}
+                          />
+                        </div>
+                      )}
                     </React.Fragment>
                   );
                 })}
@@ -1633,19 +1645,6 @@ if (filters.remote) {
                       {paginatedJobs.map((job, index) => (
                         <React.Fragment key={job.id}>
                           <JobCard job={job} savedJobs={savedJobs} appliedJobs={appliedJobs} onSave={handleSave} onApply={handleApply} onShowBreakdown={handleShowBreakdown} showMatch={false} />
-                          {/* Sept 2026 in-feed ad units — after the 2nd card, then after
-                              5 more (i.e. after the 7th). Only on page 1 of the feed so
-                              they don't reappear on every subsequent page. */}
-                          {currentPage === 1 && index === 1 && (
-                            <div className="w-full">
-                              <AdUnit slot="5327662455" format="fluid" layoutKey="-6t+ed+2i-1n-4w" />
-                            </div>
-                          )}
-                          {currentPage === 1 && index === 6 && (
-                            <div className="w-full">
-                              <AdUnit slot="1633803336" format="auto" />
-                            </div>
-                          )}
                           {/* ADSTERRA PAUSED 2026-09-08 — CPM too low to justify. To re-enable:
                           {index === 0 && (
                             <div className="w-full overflow-hidden flex justify-center" style={{ margin: 0, padding: '8px 0' }}>
@@ -1658,6 +1657,22 @@ if (filters.remote) {
                             </div>
                           )}
                           */}
+                          {index === 0 && (
+                            <div className="w-full overflow-hidden" style={{ margin: 0, padding: '3px 0' }}>
+                              <AdUnit key={`first-latest-${currentPage}`} slot={AD_SLOTS.AFTER_FIRST_CARD} format="auto" style={{ display: 'block' }} />
+                            </div>
+                          )}
+                          {(index + 1) % 5 === 0 && (
+                            <div className="w-full overflow-hidden" style={{ margin: 0, padding: '3px 0' }}>
+                              <AdUnit
+                                key={`infeed-latest-${currentPage}-${index}`}
+                                slot={AD_SLOTS.IN_FEED[((index + 1) / 5 - 1) % AD_SLOTS.IN_FEED.length]}
+                                format="fluid"
+                                layoutKey={AD_SLOTS.IN_FEED_LAYOUT_KEY}
+                                style={{ display: 'block' }}
+                              />
+                            </div>
+                          )}
                         </React.Fragment>
                       ))}
                     </>
@@ -1675,6 +1690,13 @@ if (filters.remote) {
                     </div>
                   )}
                   */}
+
+                  {/* Display ad before pagination */}
+                  {!latestJobsLoading && sortedJobs.length > 0 && (
+                    <div className="w-full overflow-hidden" style={{ margin: 0, padding: '3px 0' }}>
+                      <AdUnit key={`display-bottom-${currentPage}`} slot={AD_SLOTS.BOTTOM} format="auto" style={{ display: 'block' }} />
+                    </div>
+                  )}
 
                   {totalPages > 1 && !latestJobsLoading && (
                     <div className="flex items-center justify-center py-6 space-x-2">
