@@ -121,12 +121,7 @@ export default function ResourcePage() {
         {/* ── Conditional Middle AD ── */}
         {showMiddleAd && (
           <div className="mb-6">
-            {/* ADS PAUSED 2026-09-01 (post-restriction conservative rollout).
-   To re-enable: generate a NEW ad unit in AdSense dashboard
-   (Ads > By ad unit > Display ads) and update the slot below,
-   then uncomment this block.
-<AdUnit slot="4690286797" format="fluid" layout="in-article" />
-*/}
+            <AdUnit slot="8855092895" format="fluid" layout="in-article" />
           </div>
         )}
 
