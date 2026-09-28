@@ -42,12 +42,7 @@ export default function ScamCheckerPage() {
 
       {/* Ad 1: Display Top - After How It Works */}
       <div className="max-w-4xl mx-auto px-6 py-6">
-        {/* ADS PAUSED 2026-09-01 (post-restriction conservative rollout).
-   To re-enable: generate a NEW ad unit in AdSense dashboard
-   (Ads > By ad unit > Display ads) and update the slot below,
-   then uncomment this block.
-<AdUnit slot="4198231153" format="auto" />
-*/}
+        <AdUnit slot="1769800630" format="auto" />
       </div>
 
       <ScamCheckerClient />
@@ -144,12 +139,7 @@ export default function ScamCheckerPage() {
 
         {/* Ad 4: Display Bottom - Before JSON-LD */}
         <div className="mt-6">
-          {/* ADS PAUSED 2026-09-01 (post-restriction conservative rollout).
-   To re-enable: generate a NEW ad unit in AdSense dashboard
-   (Ads > By ad unit > Display ads) and update the slot below,
-   then uncomment this block.
-<AdUnit slot="9751041788" format="auto" />
-*/}
+          <AdUnit slot="3434236090" format="auto" />
         </div>
 
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({

@@ -3,6 +3,7 @@ import { TakeHomePayCalculator } from './TakeHomePayCalculator';
 import type { Metadata } from 'next';
 import Script from 'next/script';
 
+import AdUnit from '@/components/ads/AdUnit';
 const pageUrl = 'https://www.jobmeter.app/tools/take-home-pay-calculator';
 
 export const metadata: Metadata = {
@@ -185,20 +186,7 @@ export default function TakeHomePayPage() {
       </div>
 
       <div className="max-w-7xl mx-auto px-6 py-8">
-        {/* ADS PAUSED 2026-09-01 (post-restriction conservative rollout).
-           To re-enable: generate a NEW ad unit in AdSense dashboard
-           (Ads > By ad unit > Display ads) and update the slot below,
-           then uncomment this block.
-        <div className="mb-10">
-          <ins className="adsbygoogle"
-               style={{ display: 'block' }}
-               data-ad-client="ca-pub-1119289641389825"
-               data-ad-slot="4198231153"
-               data-ad-format="auto"
-               data-full-width-responsive="true"></ins>
-          <script dangerouslySetInnerHTML={{ __html: '(adsbygoogle = window.adsbygoogle || []).push({});' }} />
-        </div>
-        */}
+        <div className="mb-10"><AdUnit slot="1769800630" format="auto" /></div>
 
         {/* Condensed intro container matching the sample pattern */}
         <div className="max-w-7xl mx-auto pb-8">
@@ -211,20 +199,7 @@ export default function TakeHomePayPage() {
 
         <TakeHomePayCalculator />
 
-        {/* ADS PAUSED 2026-09-01 (post-restriction conservative rollout).
-           To re-enable: generate a NEW ad unit in AdSense dashboard
-           (Ads > By ad unit > Display ads) and update the slot below,
-           then uncomment this block.
-        <div className="my-12">
-          <ins className="adsbygoogle"
-               style={{ display: 'block', textAlign: 'center' }}
-               data-ad-layout="in-article"
-               data-ad-format="fluid"
-               data-ad-client="ca-pub-1119289641389825"
-               data-ad-slot="4690286797"></ins>
-          <script dangerouslySetInnerHTML={{ __html: '(adsbygoogle = window.adsbygoogle || []).push({});' }} />
-        </div>
-        */}
+        <div className="my-12"><AdUnit slot="8855092895" format="fluid" layout="in-article" /></div>
 
         {/* SEO Content Section — Expanded to 2000 words matching sample block layout */}
         <div className="prose prose-lg max-w-none bg-white dark:bg-gray-900 rounded-3xl border border-gray-200 dark:border-gray-800 shadow-sm overflow-hidden">
@@ -462,35 +437,9 @@ export default function TakeHomePayPage() {
 
         </div>
 
-        {/* ADS PAUSED 2026-09-01 (post-restriction conservative rollout).
-           To re-enable: generate a NEW ad unit in AdSense dashboard
-           (Ads > By ad unit > Display ads) and update the slot below,
-           then uncomment this block.
-        <div className="my-12">
-          <ins className="adsbygoogle"
-               style={{ display: 'block', textAlign: 'center' }}
-               data-ad-layout="in-article"
-               data-ad-format="fluid"
-               data-ad-client="ca-pub-1119289641389825"
-               data-ad-slot="8181708196"></ins>
-          <script dangerouslySetInnerHTML={{ __html: '(adsbygoogle = window.adsbygoogle || []).push({});' }} />
-        </div>
-        */}
+        <div className="my-12"><AdUnit slot="1633803336" format="auto" /></div>
 
-        {/* ADS PAUSED 2026-09-01 (post-restriction conservative rollout).
-           To re-enable: generate a NEW ad unit in AdSense dashboard
-           (Ads > By ad unit > Display ads) and update the slot below,
-           then uncomment this block.
-        <div className="mt-12 mb-8">
-          <ins className="adsbygoogle"
-               style={{ display: 'block' }}
-               data-ad-client="ca-pub-1119289641389825"
-               data-ad-slot="9751041788"
-               data-ad-format="auto"
-               data-full-width-responsive="true"></ins>
-          <script dangerouslySetInnerHTML={{ __html: '(adsbygoogle = window.adsbygoogle || []).push({});' }} />
-        </div>
-        */}
+        <div className="mt-12 mb-8"><AdUnit slot="3434236090" format="auto" /></div>
 
         {/* Additional SEO Content — Secondary compliance block to lock down the 2000-word footprint naturally */}
         <div className="prose prose-lg max-w-none mt-16 bg-white dark:bg-gray-900 rounded-3xl p-10 border border-gray-200 dark:border-gray-800 shadow-sm">

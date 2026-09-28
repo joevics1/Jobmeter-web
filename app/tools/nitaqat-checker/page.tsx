@@ -137,12 +137,7 @@ export default function NitaqatCheckerPage() {
 
         {/* Ad Unit */}
         <div className="max-w-6xl mx-auto px-6 pt-8">
-          {/* ADS PAUSED 2026-09-01 (post-restriction conservative rollout).
-   To re-enable: generate a NEW ad unit in AdSense dashboard
-   (Ads > By ad unit > Display ads) and update the slot below,
-   then uncomment this block.
-<AdUnit slot="4690286797" />
-*/}
+          <AdUnit slot="1769800630" format="auto" />
         </div>
 
         {/* Container with text before the tool (Under the ad) */}

@@ -208,14 +208,14 @@ export async function generateStaticParams() {
 //
 // AD INVENTORY — 4 unique slots, no duplicates, same 4 on mobile + desktop:
 //
-//  ① slot 4198231153  top display        below breadcrumb, full width
-//  ② slot 4690286797  in-article fluid   after company description
-//  ③ slot 8181708196  in-article fluid   before FAQ section
-//  ④ slot 9025117620  in-feed fluid      bottom of page
+//  ① slot 1769800630  top display        below breadcrumb, full width
+//  ② slot 8855092895  in-article fluid   after company description
+//  ③ slot 1633803336  in-article fluid   before FAQ section
+//  ④ slot 7181909415  in-feed fluid      bottom of page
 //
 // Total impressions per page-view: 4
 // No slot is used more than once.
-// (Fixed bottom anchor unit — slot 9751041788 — removed: it rendered
+// (Fixed bottom anchor unit — removed: it rendered
 //  oversized on many pages and covered content instead of staying 50px.)
 //
 // ─────────────────────────────────────────────────────────────────────────────
@@ -273,18 +273,13 @@ export default async function CompanyProfilePage({
         </div>
 
         {/* ════════════════════════════════════════════════════════════════════
-            Ad ① — Top display · slot 4198231153
+            Ad ① — Top display · slot 1769800630
             Sits directly below breadcrumb, above cover image.
             Full width, format auto, both mobile and desktop.
         ════════════════════════════════════════════════════════════════════ */}
         <div className="bg-white border-b border-gray-100">
           <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-2">
-            {/* ADS PAUSED 2026-09-01 (post-restriction conservative rollout).
-   To re-enable: generate a NEW ad unit in AdSense dashboard
-   (Ads > By ad unit > Display ads) and update the slot below,
-   then uncomment this block.
-<AdUnit slot="4198231153" format="auto" />
-*/}
+            <AdUnit slot="1769800630" format="auto" />
           </div>
         </div>
 
@@ -443,16 +438,11 @@ export default async function CompanyProfilePage({
               </div>
 
               {/* ════════════════════════════════════════════════════════════
-                  Ad ② — In-article · slot 4690286797
+                  Ad ② — In-article · slot 8855092895
                   After the description block — highest dwell-time position.
               ════════════════════════════════════════════════════════════ */}
               <div className="bg-white rounded-lg overflow-hidden">
-                {/* ADS PAUSED 2026-09-01 (post-restriction conservative rollout).
-   To re-enable: generate a NEW ad unit in AdSense dashboard
-   (Ads > By ad unit > Display ads) and update the slot below,
-   then uncomment this block.
-<AdUnit slot="4690286797" format="fluid" layout="in-article" />
-*/}
+                <AdUnit slot="8855092895" format="fluid" layout="in-article" />
               </div>
 
               {/* ── Company values ── */}
@@ -493,17 +483,12 @@ export default async function CompanyProfilePage({
               )}
 
               {/* ════════════════════════════════════════════════════════════
-                  Ad ③ — In-article · slot 8181708196
+                  Ad ③ — In-article · slot 1633803336
                   Directly before FAQs — users pausing before reading Q&A
                   are highly engaged; strong viewability position.
               ════════════════════════════════════════════════════════════ */}
               <div className="bg-white rounded-lg overflow-hidden">
-                {/* ADS PAUSED 2026-09-01 (post-restriction conservative rollout).
-   To re-enable: generate a NEW ad unit in AdSense dashboard
-   (Ads > By ad unit > Display ads) and update the slot below,
-   then uncomment this block.
-<AdUnit slot="8181708196" format="fluid" layout="in-article" />
-*/}
+                <AdUnit slot="1633803336" format="auto" />
               </div>
 
               {/* ── FAQs ── */}
@@ -775,17 +760,12 @@ export default async function CompanyProfilePage({
           )}
 
           {/* ════════════════════════════════════════════════════════════════
-              Ad ④ — Bottom in-feed · slot 9025117620
+              Ad ④ — Bottom in-feed · slot 7181909415
               Full width, after similar companies, above anchor spacer.
               Last scroll-triggered impression before user leaves the page.
           ════════════════════════════════════════════════════════════════ */}
           <div className="mt-8 bg-white rounded-lg overflow-hidden">
-            {/* ADS PAUSED 2026-09-01 (post-restriction conservative rollout).
-   To re-enable: generate a NEW ad unit in AdSense dashboard
-   (Ads > By ad unit > Display ads) and update the slot below,
-   then uncomment this block.
-<AdUnit slot="9025117620" format="fluid" layout="in-feed" layoutKey="-fb+5w+4e-db+86" />
-*/}
+            <AdUnit slot="7181909415" format="fluid" layoutKey="-6t+ed+2i-1n-4w" />
           </div>
 
         </div>

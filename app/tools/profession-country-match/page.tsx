@@ -2,6 +2,7 @@
 import { Metadata } from 'next';
 import ProfessionCountryMatchTool from './ProfessionCountryMatchTool';
 import RelatedToolsStrip from '@/components/tools/RelatedToolsStrip';
+import AdUnit from '@/components/ads/AdUnit';
 
 const pageUrl = 'https://www.jobmeter.app/tools/profession-country-match';
 
@@ -178,7 +179,7 @@ export default function ProfessionCountryMatchPage() {
 
       {/* Top Ad */}
       <div className="max-w-6xl mx-auto px-6 py-4">
-        <AdUnit type="top" />
+        <AdSlot type="top" />
       </div>
 
       {/* Intro text box */}
@@ -199,7 +200,7 @@ export default function ProfessionCountryMatchPage() {
 
       {/* Middle Ad */}
       <div className="max-w-6xl mx-auto px-6 py-6">
-        <AdUnit type="middle" />
+        <AdSlot type="middle" />
       </div>
 
       {/* SEO Content */}
@@ -435,37 +436,19 @@ export default function ProfessionCountryMatchPage() {
 
       {/* Bottom Ad */}
       <div className="max-w-6xl mx-auto px-6 py-8 border-t border-gray-200 dark:border-gray-800">
-        <AdUnit type="bottom" />
+        <AdSlot type="bottom" />
       </div>
     </div>
   );
 }
 
-// AdUnit Component with corrected styles
-function AdUnit({ type }: { type: 'top' | 'middle' | 'bottom' }) {
-  // ADS PAUSED 2026-09-11 (AdSense restriction cleared, doing a full
-  // reset before re-enabling one page at a time — blog first). To
-  // re-enable: generate FRESH ad units in AdSense dashboard (do not
-  // reuse the old slot IDs below), update them here, then uncomment.
-  return null;
-  /*
-  const slot = type === 'top' ? '4198231153' : type === 'middle' ? '4690286797' : '9751041788';
-  const isInArticle = type === 'middle';
-
+// Local wrapper around the shared AdUnit component (Sept 2026 units)
+function AdSlot({ type }: { type: 'top' | 'middle' | 'bottom' }) {
   return (
     <div className="my-4">
-      <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1119289641389825" crossOrigin="anonymous"></script>
-      <ins
-        className="adsbygoogle"
-        style={{ display: 'block', textAlign: isInArticle ? 'center' : undefined }}
-        data-ad-client="ca-pub-1119289641389825"
-        data-ad-slot={slot}
-        data-ad-format={isInArticle ? "fluid" : "auto"}
-        data-ad-layout={isInArticle ? "in-article" : undefined}
-        data-full-width-responsive="true"
-      ></ins>
-      <script dangerouslySetInnerHTML={{ __html: `(adsbygoogle = window.adsbygoogle || []).push({});` }} />
+      {type === 'top' && <AdUnit slot="1769800630" format="auto" />}
+      {type === 'middle' && <AdUnit slot="8855092895" format="fluid" layout="in-article" />}
+      {type === 'bottom' && <AdUnit slot="3434236090" format="auto" />}
     </div>
   );
-  */
 }

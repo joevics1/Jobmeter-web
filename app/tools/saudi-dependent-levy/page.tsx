@@ -161,12 +161,7 @@ export default function SaudiDependentLevyPage() {
 
         {/* Top Ad */}
         <div className="max-w-6xl mx-auto px-6 py-4">
-          {/* ADS PAUSED 2026-09-01 (post-restriction conservative rollout).
-   To re-enable: generate a NEW ad unit in AdSense dashboard
-   (Ads > By ad unit > Display ads) and update the slot below,
-   then uncomment this block.
-<AdUnit slot="top-ad" />
-*/}
+          <AdUnit slot="1769800630" format="auto" />
         </div>
 
         {/* Condensed intro container before the tool inside white content card */}
@@ -187,12 +182,7 @@ export default function SaudiDependentLevyPage() {
 
         {/* Ad */}
         <div className="max-w-6xl mx-auto px-6 py-6">
-          {/* ADS PAUSED 2026-09-01 (post-restriction conservative rollout).
-   To re-enable: generate a NEW ad unit in AdSense dashboard
-   (Ads > By ad unit > Display ads) and update the slot below,
-   then uncomment this block.
-<AdUnit slot="mid-page-ad" />
-*/}
+          <AdUnit slot="3434236090" format="auto" />
         </div>
 
         {/* SEO Content Section — Designed perfectly around tools framework */}

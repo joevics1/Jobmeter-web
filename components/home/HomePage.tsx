@@ -451,12 +451,7 @@ export default function HomePage({ jobs: initialJobs, blogPosts, companies = [] 
         {/* ── AD 1: Top banner — high visibility after hero ── */}
         <section className="px-6 py-4" style={{ backgroundColor: theme.colors.background.muted }}>
           <div className="max-w-4xl mx-auto">
-            {/* ADS PAUSED 2026-09-01 (post-restriction conservative rollout).
-   To re-enable: generate a NEW ad unit in AdSense dashboard
-   (Ads > By ad unit > Display ads) and update the slot below,
-   then uncomment this block.
-<AdUnit slot="4198231153" format="auto" />
-*/}
+            <AdUnit slot="1769800630" format="auto" />
           </div>
         </section>
 
@@ -656,16 +651,7 @@ export default function HomePage({ jobs: initialJobs, blogPosts, companies = [] 
         {/* ── AD 2: In-article mid-page — natural break before countries ── */}
         <section className="px-6 py-4 bg-white">
           <div className="max-w-4xl mx-auto">
-            {/* ADS PAUSED 2026-09-01 (post-restriction conservative rollout).
-   To re-enable: generate a NEW ad unit in AdSense dashboard
-   (Ads > By ad unit > Display ads) and update the slot below,
-   then uncomment this block.
-<AdUnit
-              slot="4690286797"
-              format="fluid"
-              layout="in-article"
-            />
-*/}
+            <AdUnit slot="8855092895" format="fluid" layout="in-article" />
           </div>
         </section>
 
@@ -845,12 +831,7 @@ export default function HomePage({ jobs: initialJobs, blogPosts, companies = [] 
         {/* ── AD 3: Bottom banner — final impression before footer ── */}
         <section className="px-6 py-4 bg-gray-50">
           <div className="max-w-4xl mx-auto">
-            {/* ADS PAUSED 2026-09-01 (post-restriction conservative rollout).
-   To re-enable: generate a NEW ad unit in AdSense dashboard
-   (Ads > By ad unit > Display ads) and update the slot below,
-   then uncomment this block.
-<AdUnit slot="9751041788" format="auto" />
-*/}
+            <AdUnit slot="3434236090" format="auto" />
           </div>
         </section>
 

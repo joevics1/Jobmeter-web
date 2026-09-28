@@ -190,12 +190,7 @@ export default function IELTSCheckerPage() {
 
       {/* Top Ad */}
       <div className="max-w-6xl mx-auto px-6 py-6">
-        {/* ADS PAUSED 2026-09-01 (post-restriction conservative rollout).
-   To re-enable: generate a NEW ad unit in AdSense dashboard
-   (Ads > By ad unit > Display ads) and update the slot below,
-   then uncomment this block.
-<AdUnit slot="4198231153" format="auto" />
-*/}
+        <AdUnit slot="1769800630" format="auto" />
       </div>
 
       {/* Intro text box */}
@@ -216,12 +211,7 @@ export default function IELTSCheckerPage() {
 
       {/* Middle Ad */}
       <div className="max-w-6xl mx-auto px-6 py-8">
-        {/* ADS PAUSED 2026-09-01 (post-restriction conservative rollout).
-   To re-enable: generate a NEW ad unit in AdSense dashboard
-   (Ads > By ad unit > Display ads) and update the slot below,
-   then uncomment this block.
-<AdUnit slot="4690286797" layout="in-article" />
-*/}
+        <AdUnit slot="8855092895" format="fluid" layout="in-article" />
       </div>
 
       {/* SEO Content */}
@@ -432,12 +422,7 @@ export default function IELTSCheckerPage() {
 
       {/* Bottom Ad */}
       <div className="max-w-6xl mx-auto px-6 py-12">
-        {/* ADS PAUSED 2026-09-01 (post-restriction conservative rollout).
-   To re-enable: generate a NEW ad unit in AdSense dashboard
-   (Ads > By ad unit > Display ads) and update the slot below,
-   then uncomment this block.
-<AdUnit slot="9751041788" format="auto" />
-*/}
+        <AdUnit slot="3434236090" format="auto" />
       </div>
     </div>
   );

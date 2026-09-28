@@ -4,6 +4,7 @@ import React, { useState, useMemo } from 'react';
 import { format, differenceInDays } from 'date-fns';
 import { Calculator, Info } from 'lucide-react';
 
+import AdUnit from '@/components/ads/AdUnit';
 interface FormData {
   jurisdiction: 'mainland' | 'difc' | 'adgm' | 'other';
   basicSalary: number;
@@ -115,22 +116,7 @@ const GratuityCalculator: React.FC = () => {
 
   return (
     <div className="bg-white rounded-3xl shadow-xl p-8 max-w-4xl mx-auto">
-      {/* ADS PAUSED 2026-09-01 (post-restriction conservative rollout).
-         To re-enable: generate a NEW ad unit in AdSense dashboard
-         (Ads > By ad unit > Display ads) and update the slot below,
-         then uncomment this block.
-      <div className="mb-8">
-        <ins className="adsbygoogle"
-          style={{ display: 'block' }}
-          data-ad-client="ca-pub-1119289641389825"
-          data-ad-slot="9010641928"
-          data-ad-format="auto"
-          data-full-width-responsive="true"></ins>
-        <script>
-          (adsbygoogle = window.adsbygoogle || []).push({});
-        </script>
-      </div>
-      */}
+      <div className="mb-8"><AdUnit slot="1633803336" format="auto" /></div>
 
       <div className="grid md:grid-cols-2 gap-10">
         {/* Form */}
@@ -221,22 +207,7 @@ const GratuityCalculator: React.FC = () => {
         </div>
       )}
 
-      {/* ADS PAUSED 2026-09-01 (post-restriction conservative rollout).
-         To re-enable: generate a NEW ad unit in AdSense dashboard
-         (Ads > By ad unit > Display ads) and update the slot below,
-         then uncomment this block.
-      <div className="mt-12">
-        <ins className="adsbygoogle"
-          style={{ display: 'block' }}
-          data-ad-client="ca-pub-1119289641389825"
-          data-ad-slot="8344942808"
-          data-ad-format="auto"
-          data-full-width-responsive="true"></ins>
-        <script>
-          (adsbygoogle = window.adsbygoogle || []).push({});
-        </script>
-      </div>
-      */}
+      <div className="mt-12"><AdUnit slot="3434236090" format="auto" /></div>
     </div>
   );
 };

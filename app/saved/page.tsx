@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { Bookmark, CheckCircle2, MapPin, Calendar, RefreshCw } from 'lucide-react';
 import { theme } from '@/lib/theme';
+import AdUnit from '@/components/ads/AdUnit';
 import Link from 'next/link';
 import { scoreJob, JobRow, UserOnboardingData } from '@/lib/matching/matchEngine';
 import { matchCacheService } from '@/lib/matching/matchCache';
@@ -34,78 +35,29 @@ declare global {
   }
 }
 
-const AdTopDisplay = () => {
-  // ADS PAUSED 2026-09-11 (AdSense restriction cleared, doing a full
-  // reset before re-enabling one page at a time — blog first). To
-  // re-enable: generate a FRESH ad unit in AdSense dashboard (do not
-  // reuse the old slot ID below), update it here, then uncomment.
-  return null;
-  /*
-  useEffect(() => {
-    try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch (e) {}
-  }, []);
-  return (
-    <div className="mb-4">
-      <ins
-        className="adsbygoogle"
-        style={{ display: 'block' }}
-        data-ad-client="ca-pub-1119289641389825"
-        data-ad-slot="4198231153"
-        data-ad-format="auto"
-        data-full-width-responsive="true"
-      />
-    </div>
-  );
-  */
-};
+const AdTopDisplay = () => (
+  <div className="mb-4">
+    <AdUnit slot="1769800630" format="auto" />
+  </div>
+);
 
-const AdInFeed = ({ index }: { index: number }) => {
-  // ADS PAUSED 2026-09-11 — see AdTopDisplay above for re-enable notes
-  // (generate a fresh ad unit, don't reuse the slot ID below).
-  return null;
-  /*
-  useEffect(() => {
-    try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch (e) {}
-  }, []);
-  return (
-    <div className="my-2">
-      <ins
-        className="adsbygoogle"
-        style={{ display: 'block' }}
-        data-ad-format="fluid"
-        data-ad-layout-key="-fb+5w+4e-db+86"
-        data-ad-client="ca-pub-1119289641389825"
-        data-ad-slot="9025117620"
-      />
-    </div>
-  );
-  */
-};
+// Alternates between the two in-feed units
+const AdInFeed = ({ index }: { index: number }) => (
+  <div className="my-2">
+    <AdUnit
+      slot={index % 2 === 0 ? '7181909415' : '5327662455'}
+      format="fluid"
+      layoutKey="-6t+ed+2i-1n-4w"
+    />
+  </div>
+);
 
-// Alternates between two in-article slots
-const AdInArticle = ({ nth }: { nth: number }) => {
-  // ADS PAUSED 2026-09-11 — see AdTopDisplay above for re-enable notes
-  // (generate fresh ad units, don't reuse the slot IDs below).
-  return null;
-  /*
-  useEffect(() => {
-    try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch (e) {}
-  }, []);
-  const slot = nth % 2 === 0 ? '4690286797' : '8181708196';
-  return (
-    <div className="my-2">
-      <ins
-        className="adsbygoogle"
-        style={{ display: 'block', textAlign: 'center' }}
-        data-ad-layout="in-article"
-        data-ad-format="fluid"
-        data-ad-client="ca-pub-1119289641389825"
-        data-ad-slot={slot}
-      />
-    </div>
-  );
-  */
-};
+// Currently unused on this page; kept for future in-article placements
+const AdInArticle = (_props: { nth: number }) => (
+  <div className="my-2">
+    <AdUnit slot="8855092895" format="fluid" layout="in-article" />
+  </div>
+);
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 

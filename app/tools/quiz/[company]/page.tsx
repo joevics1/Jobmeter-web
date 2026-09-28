@@ -120,26 +120,8 @@ export default async function CompanyQuizPage({ params }: Props) {
 
         {/* ── Right: Desktop sidebar ads ──────────────────────────────── */}
         <aside className="hidden lg:flex flex-col gap-6 w-[300px] shrink-0 sticky top-20 pt-6">
-          {/* ADS PAUSED 2026-09-01 (post-restriction conservative rollout).
-   To re-enable: generate a NEW ad unit in AdSense dashboard
-   (Ads > By ad unit > Display ads) and update the slot below,
-   then uncomment this block.
-<AdUnit
-            slot="4198231153"
-            format="auto"
-            style={{ display: 'block', width: '300px', minHeight: '250px' }}
-          />
-*/}
-          {/* ADS PAUSED 2026-09-01 (post-restriction conservative rollout).
-   To re-enable: generate a NEW ad unit in AdSense dashboard
-   (Ads > By ad unit > Display ads) and update the slot below,
-   then uncomment this block.
-<AdUnit
-            slot="9751041788"
-            format="auto"
-            style={{ display: 'block', width: '300px', minHeight: '250px' }}
-          />
-*/}
+          <AdUnit slot="1769800630" format="auto" style={{ display: 'block', width: '300px', minHeight: '250px' }} />
+          <AdUnit slot="3434236090" format="auto" style={{ display: 'block', width: '300px', minHeight: '250px' }} />
         </aside>
       </div>
 

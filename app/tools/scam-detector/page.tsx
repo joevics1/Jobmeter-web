@@ -43,12 +43,7 @@ export default function ScamDetectorPage() {
 
       {/* Ad 1: Display Top - After How It Works */}
       <div className="px-6 py-6 max-w-4xl mx-auto">
-        {/* ADS PAUSED 2026-09-01 (post-restriction conservative rollout).
-   To re-enable: generate a NEW ad unit in AdSense dashboard
-   (Ads > By ad unit > Display ads) and update the slot below,
-   then uncomment this block.
-<AdUnit slot="4198231153" format="auto" />
-*/}
+        <AdUnit slot="1769800630" format="auto" />
       </div>
 
       <ScamDetectorClient />
@@ -158,12 +153,7 @@ export default function ScamDetectorPage() {
         </div>
 
         {/* Ad 4: Display Bottom */}
-        {/* ADS PAUSED 2026-09-01 (post-restriction conservative rollout).
-   To re-enable: generate a NEW ad unit in AdSense dashboard
-   (Ads > By ad unit > Display ads) and update the slot below,
-   then uncomment this block.
-<AdUnit slot="9751041788" format="auto" />
-*/}
+        <AdUnit slot="3434236090" format="auto" />
 
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
           "@context": "https://schema.org", "@type": "WebApplication", "name": "Job Scam Detector",

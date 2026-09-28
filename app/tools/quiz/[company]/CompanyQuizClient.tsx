@@ -203,12 +203,7 @@ export default function CompanyQuizClient({
       </div>
 
       <div className="max-w-4xl mx-auto px-4 py-8">
-        <div className="lg:hidden mb-6">{/* ADS PAUSED 2026-09-01 (post-restriction conservative rollout).
-   To re-enable: generate a NEW ad unit in AdSense dashboard
-   (Ads > By ad unit > Display ads) and update the slot below,
-   then uncomment this block.
-<AdUnit slot="4198231153" format="auto" />
-*/}</div>
+        <div className="lg:hidden mb-6"><AdUnit slot="1633803336" format="auto" /></div>
 
         <div className="text-center mb-8">
           <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-sm" style={{ backgroundColor: `${theme.colors.primary.DEFAULT}15` }}>
@@ -278,12 +273,7 @@ export default function CompanyQuizClient({
             too" / "Next Steps" reads as a distinct section rather than
             bleeding into the assessment picker above it. */}
         <div className="mt-10 pt-8 border-t border-gray-200">
-          {/* ADS PAUSED 2026-09-01 (post-restriction conservative rollout).
-   To re-enable: generate a NEW ad unit in AdSense dashboard
-   (Ads > By ad unit > Display ads) and update the slot below,
-   then uncomment this block.
-<AdUnit slot="9751041788" format="auto" />
-*/}
+          <AdUnit slot="1178418475" format="auto" />
         </div>
 
         <QuizCrossLinks currentCompany={company} />

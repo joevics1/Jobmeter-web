@@ -110,12 +110,7 @@ export default function KeywordCheckerClient() {
           </div>
 
           {/* ── [AD: between score and keyword grids] ────────────────── */}
-          {/* ADS PAUSED 2026-09-01 (post-restriction conservative rollout).
-   To re-enable: generate a NEW ad unit in AdSense dashboard
-   (Ads > By ad unit > Display ads) and update the slot below,
-   then uncomment this block.
-<AdUnit slot="4690286797" format="fluid" layout="in-article" />
-*/}
+          <AdUnit slot="8855092895" format="fluid" layout="in-article" />
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="bg-white rounded-xl p-5 shadow-sm" style={{ border: `1px solid ${theme.colors.border.DEFAULT}` }}>
