@@ -253,7 +253,7 @@ serve(async (req) => {
 
     const { data: linkedUsers, error: usersError } = await supabase
       .from('telegram_users')
-      .select('chat_id, user_id, digest_last_sent_date, digest_seen_job_ids')
+      .select('chat_id, user_id, digest_last_sent_date, digest_seen_job_ids, telegram_first_name')
       .not('linked_at', 'is', null)
       .not('user_id', 'is', null);
 
@@ -287,9 +287,17 @@ serve(async (req) => {
           continue;
         }
 
+        const { data: profileRow } = await supabase
+          .from('profiles')
+          .select('full_name')
+          .eq('id', tgUser.user_id)
+          .maybeSingle();
+        const rawName = (profileRow?.full_name || '').trim().split(/\s+/)[0] || (tgUser.telegram_first_name || '').trim();
+        const nameStr = rawName ? ` ${rawName.replace(/([_*`\[])/g, '\\$1')}` : '';
+
         await sendMessage(
           tgUser.chat_id,
-          `☀️ *Good morning!* Here's what's fresh${brief ? ` in *${brief.sector}*` : ''} today:`
+          `☀️ *Good morning${nameStr}!* Here's what's fresh${brief ? ` in *${brief.sector}*` : ''} today:`
         );
 
         for (const job of jobs) {
@@ -299,8 +307,11 @@ serve(async (req) => {
           });
         }
 
-        await sendMessage(tgUser.chat_id, `Want more like these?`, {
-          reply_markup: { inline_keyboard: [[{ text: '🔍 Browse more jobs', url: `https://t.me/JobMeter_Bot?start=browse` }]] },
+        const closingText = brief?.sector
+          ? `👀 ${rawName ? rawName.replace(/([_*`\[])/g, '\\$1') + ', m' : 'M'}ore *${brief.sector}* roles just dropped — see which ones fit you`
+          : `👀 ${rawName ? rawName.replace(/([_*`\[])/g, '\\$1') + ', m' : 'M'}ore roles just dropped that fit your profile — see which ones`;
+        await sendMessage(tgUser.chat_id, closingText, {
+          reply_markup: { inline_keyboard: [[{ text: '🔍 See my matches', url: `https://t.me/JobMeter_Bot?start=browse` }]] },
         });
 
         const newSeenIds = [...seenIds, ...jobs.map((j: any) => j.id)].slice(-30);

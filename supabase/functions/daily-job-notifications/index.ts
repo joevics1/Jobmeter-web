@@ -333,12 +333,18 @@ function formatJobCard(job: { title?: string; social?: string | null; company?: 
   return lines.join('\n');
 }
 
+// Escape Telegram legacy-Markdown special characters in user/job-supplied text
+function escapeMd(text: string): string {
+  return text.replace(/([_*`\[])/g, '\\$1');
+}
+
 // Send a Telegram DM to a linked user about a new job match
 async function sendTelegramMatchNotification(
   supabase: any,
   userId: string,
-  job: { id: string; title: string; slug?: string | null; company?: any; country?: string[] | null; location?: any; social?: string | null },
-  matchScore: number
+  job: { id: string; title: string; slug?: string | null; company?: any; country?: string[] | null; location?: any; social?: string | null; role?: string | null; sector?: string | null },
+  matchScore: number,
+  targetRoles: string[] = []
 ): Promise<boolean> {
   const botToken = Deno.env.get('TELEGRAM_BOT_TOKEN_2');
   if (!botToken) return false;
@@ -346,15 +352,39 @@ async function sendTelegramMatchNotification(
   try {
     const { data: tgUser, error } = await supabase
       .from('telegram_users')
-      .select('chat_id')
+      .select('chat_id, telegram_first_name')
       .eq('user_id', userId)
       .not('linked_at', 'is', null)
       .maybeSingle();
 
     if (error || !tgUser) return false; // not linked to Telegram, nothing to do
 
+    // Name: prefer the profile's full name (first word), fall back to the Telegram first name
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('full_name')
+      .eq('id', userId)
+      .maybeSingle();
+    const rawName = (profile?.full_name || '').trim().split(/\s+/)[0] || (tgUser.telegram_first_name || '').trim();
+    const firstName = escapeMd(rawName);
+
     const jobUrl = buildJobUrl({ slug: job.slug, id: job.id, country: job.country, location: job.location });
-    const text = `🎯 *${matchScore}% match*\n\n${formatJobCard(job)}`;
+    // Context: the user's own target role if this job matches it, else the job's sector
+    const jobRoles = (job.role || '').split(',').map((r) => r.trim().toLowerCase()).filter(Boolean);
+    const matchedRole = targetRoles.find((r) => jobRoles.includes(String(r).trim().toLowerCase()));
+    const context = matchedRole
+      ? ` for your *${escapeMd(String(matchedRole))}* search`
+      : job.sector && job.sector !== 'null'
+      ? ` in *${escapeMd(job.sector)}*`
+      : '';
+    const greeting = firstName ? `Hi ${firstName}, ` : 'Hi, ';
+    const headline =
+      matchScore >= 80
+        ? `🔥 ${greeting}I found a *${matchScore}% match*${context} — this one looks made for you`
+        : matchScore >= 60
+        ? `🎯 ${greeting}I found a *${matchScore}% match*${context}`
+        : `👀 ${greeting}I found a *${matchScore}% match*${context} — worth a look before others apply`;
+    const text = `${headline}\n\n${formatJobCard(job)}`;
 
     const res = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
       method: 'POST',
@@ -629,7 +659,7 @@ serve(async (req) => {
             // Fire-and-forget-ish but awaited so the function doesn't exit before it completes;
             // failures are swallowed (logged only) so they never block match saving above.
             try {
-              const sent = await sendTelegramMatchNotification(supabase, user.user_id, job, matchScore);
+              const sent = await sendTelegramMatchNotification(supabase, user.user_id, job, matchScore, user.target_roles || []);
               if (sent) {
                 await supabase
                   .from('server_match_results')
