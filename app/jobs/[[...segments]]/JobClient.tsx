@@ -46,7 +46,9 @@ import MatchScoreCircle from '@/components/jobs/MatchScoreCircle';
 // ─── Ad slot IDs ───────────────────────────────────────────────────────────────
 // Trimmed down to a single mid-content placement to stay within the AdSense ad limit.
 const AD_SLOTS = {
-  IN_ARTICLE: '3314340925',
+  IN_ARTICLE: '6922813139',        // after Job Description, before Required Skills
+  DISPLAY_MID: '7817006682',       // after Qualifications/Benefits, before How to Apply
+  DISPLAY_BOTTOM: '4927205184',    // after Posted Date
 } as const;
 
 // Namespaced per site so saved/applied state doesn't bleed across subdomains
@@ -870,6 +872,11 @@ export default function JobClient({ job, relatedJobs, companies, documentLinks, 
               </div>
               */}
 
+              {/* Ad 1 — in-article, after Job Description */}
+              <div className="w-full overflow-hidden" style={{ margin: 0, padding: '3px 0' }}>
+                <AdUnit slot={AD_SLOTS.IN_ARTICLE} format="fluid" layout="in-article" />
+              </div>
+
               {((job.skills_required && Array.isArray(job.skills_required) && job.skills_required.length > 0) ||
                 (job.skills && Array.isArray(job.skills) && job.skills.length > 0)) && (
                 <div className="bg-white rounded-xl shadow-sm p-6">
@@ -953,6 +960,11 @@ export default function JobClient({ job, relatedJobs, companies, documentLinks, 
                 }
                 return null;
               })()}
+
+              {/* Ad 2 — display, after Qualifications/Benefits, before How to Apply */}
+              <div className="w-full overflow-hidden" style={{ margin: 0, padding: '3px 0' }}>
+                <AdUnit slot={AD_SLOTS.DISPLAY_MID} format="auto" />
+              </div>
 
               {/* How to Apply */}
               {isExpired ? (
@@ -1253,6 +1265,11 @@ export default function JobClient({ job, relatedJobs, companies, documentLinks, 
                   )}
                 </div>
               )}
+
+              {/* Ad 3 — display, after Posted Date */}
+              <div className="w-full overflow-hidden" style={{ margin: 0, padding: '3px 0' }}>
+                <AdUnit slot={AD_SLOTS.DISPLAY_BOTTOM} format="auto" />
+              </div>
 
               {!isExpired && (job.application_url || (job.application && (job.application.url || job.application.link))) && (
                 <div className="bg-white rounded-xl shadow-sm p-6">
