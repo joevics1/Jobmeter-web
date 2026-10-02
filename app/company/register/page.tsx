@@ -38,7 +38,7 @@ export default function CompanyRegisterPage() {
     const checkUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        router.push('/auth/login?redirect=/company/register');
+        router.push('/auth?role=recruiter&redirect=/company/register');
         return;
       }
       setUser(user);

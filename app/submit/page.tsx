@@ -106,7 +106,7 @@ export default function SubmitJobPage() {
     const checkUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        router.push('/auth?redirect=/submit');
+        router.push('/auth?role=recruiter&redirect=/submit');
         return;
       }
       setUser(user);

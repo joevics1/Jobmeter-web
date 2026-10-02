@@ -26,11 +26,15 @@ import {
 interface RecruiterAuthModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  defaultMode?: 'signin' | 'signup';
+  // Where to send the recruiter after email sign-in/sign-up. Google sign-in
+  // goes through /auth/callback?role=recruiter and returns here too.
+  redirectTo?: string;
 }
 
-export default function RecruiterAuthModal({ open, onOpenChange }: RecruiterAuthModalProps) {
+export default function RecruiterAuthModal({ open, onOpenChange, defaultMode = 'signup', redirectTo = '/submit' }: RecruiterAuthModalProps) {
   const router = useRouter();
-  const [mode, setMode] = useState<'signin' | 'signup'>('signup');
+  const [mode, setMode] = useState<'signin' | 'signup'>(defaultMode);
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState('');
@@ -120,7 +124,7 @@ export default function RecruiterAuthModal({ open, onOpenChange }: RecruiterAuth
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/auth/callback?role=recruiter`,
+          redirectTo: `${window.location.origin}/auth/callback?role=recruiter&returnTo=${encodeURIComponent(redirectTo)}`,
         },
       });
       if (error) throw error;
@@ -201,7 +205,7 @@ export default function RecruiterAuthModal({ open, onOpenChange }: RecruiterAuth
             setTimeout(() => setMode('signin'), 2000);
           } else {
             handleClose();
-            router.push('/submit');
+            router.push(redirectTo);
           }
         }
       } catch (error: any) {
@@ -225,7 +229,7 @@ export default function RecruiterAuthModal({ open, onOpenChange }: RecruiterAuth
         }
 
         handleClose();
-        router.push('/submit');
+        router.push(redirectTo);
       } catch (error: any) {
         showMessage(error.message || 'Failed to sign in', 'error');
       }
@@ -382,7 +386,7 @@ export default function RecruiterAuthModal({ open, onOpenChange }: RecruiterAuth
               <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
               <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
             </svg>
-            Continue with Google
+            {mode === 'signup' ? 'Sign up with Google' : 'Sign in with Google'}
           </Button>
 
           <div className="text-center text-sm text-gray-600">
@@ -409,6 +413,11 @@ export default function RecruiterAuthModal({ open, onOpenChange }: RecruiterAuth
                 </button>
               </>
             )}
+          </div>
+
+          <div className="text-center text-xs text-gray-500">
+            Looking for jobs instead?{' '}
+            <a href="/" className="text-green-600 hover:underline">Back to JobMeter</a>
           </div>
           </>
           ) : (

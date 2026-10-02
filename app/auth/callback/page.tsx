@@ -46,7 +46,8 @@ export default function AuthCallback() {
               console.error("Recruiter profile setup error:", err);
             }
 
-            router.replace("/submit");
+            const recruiterDest = returnTo && returnTo.startsWith("/") && !returnTo.startsWith("//") && !returnTo.startsWith("/auth") ? returnTo : "/submit";
+            router.replace(recruiterDest);
             return;
           }
 

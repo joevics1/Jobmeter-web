@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import AuthModal from '@/components/AuthModal';
+import RecruiterAuthModal from '@/components/RecruiterAuthModal';
 import { theme } from '@/lib/theme';
 
 // This route exists purely to host the sign-in/sign-up modal for pages that
@@ -15,6 +16,11 @@ export default function AuthPage() {
   const searchParams = useSearchParams();
   const redirectTo = searchParams.get('redirect') || '/dashboard';
   const mode = searchParams.get('mode') === 'signup' ? 'signup' : 'signin';
+  // Recruiters (e.g. coming from /submit) get their own modal: no onboarding.
+  const RECRUITER_PATHS = ['/submit', '/dashboard/recruiter', '/company/register', '/rates'];
+  const isRecruiter =
+    searchParams.get('role') === 'recruiter' ||
+    RECRUITER_PATHS.some((p) => redirectTo === p || redirectTo.startsWith(p + '/') || redirectTo.startsWith(p + '?'));
 
   const [checking, setChecking] = useState(true);
   const [open, setOpen] = useState(false);
@@ -51,7 +57,17 @@ export default function AuthPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: theme.colors.background.muted }}>
-      {!checking && (
+      {!checking && (isRecruiter ? (
+        <RecruiterAuthModal
+          open={open}
+          onOpenChange={(next) => {
+            setOpen(next);
+            if (!next) router.push('/');
+          }}
+          defaultMode={searchParams.get('mode') === 'signin' ? 'signin' : 'signup'}
+          redirectTo={redirectTo}
+        />
+      ) : (
         <AuthModal
           open={open}
           onOpenChange={(next) => {
@@ -61,7 +77,7 @@ export default function AuthPage() {
           }}
           defaultMode={mode}
         />
-      )}
+      ))}
     </div>
   );
 }
