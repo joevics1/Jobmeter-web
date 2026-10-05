@@ -11,6 +11,14 @@ export default function BottomNavigation() {
   const pathname = usePathname();
   const pendingInvitations = usePendingInvitationsCount();
 
+  // Pages that should show bottom menu
+  const allowedPaths = ['/jobs', '/docs', '/tools', '/resource', '/settings', '/dashboard'];
+
+  // Check if current page is EXACTLY one of the bottom menu pages
+  const shouldShow = allowedPaths.includes(pathname);
+
+  if (!shouldShow) return null;
+
   const navItems = [
     { label: 'Jobs', href: '/jobs', icon: Briefcase },
     { label: 'CV & Docs', href: '/docs', icon: FileText },
@@ -19,23 +27,10 @@ export default function BottomNavigation() {
     { label: 'Settings', href: '/settings', icon: Settings },
   ];
 
-  // Highlight the matching section on nested pages too, e.g. /jobs/<slug>
-  // keeps "Jobs" active and /tools/<tool> keeps "Tools" active.
-  const sectionPrefixes: Record<string, string[]> = {
-    '/jobs': ['/jobs'],
-    '/docs': ['/docs', '/cv', '/documents'],
-    '/tools': ['/tools'],
-    '/resource': ['/resource'],
-    '/settings': ['/settings'],
-  };
-  const isActive = (href: string) =>
-    (sectionPrefixes[href] || [href]).some(
-      (prefix) => pathname === prefix || pathname?.startsWith(prefix + '/')
-    );
+  const isActive = (href: string) => pathname === href;
 
   return (
     <nav
-      aria-label="Main navigation"
       data-app-bottom-bar="true"
       className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t"
       style={{
@@ -52,7 +47,6 @@ export default function BottomNavigation() {
             <Link
               key={item.href}
               href={item.href}
-              aria-current={active ? 'page' : undefined}
               className={`
                 flex flex-col items-center justify-center 
                 flex-1 h-full transition-colors duration-200

@@ -623,7 +623,7 @@ export default function JobClient({ job, relatedJobs, companies, documentLinks, 
         </div>
 
         {/* Main Content */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pt-[96px] pb-6">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pt-[96px] pb-[110px] lg:pb-6">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
             {/* LEFT COLUMN — Main Job Details */}

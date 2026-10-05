@@ -40,12 +40,12 @@ export default function RootLayoutClient({
   // Bottom nav pages that show bottom navigation
   const bottomNavPages = ['/jobs', '/documents', '/cv', '/tools', '/settings', '/dashboard'];
   
-  // The bottom menu now shows on every page, including job details and the
-  // recruiter dashboard. Only the sign-in/onboarding flows and a live
-  // mock-interview session hide it, so nothing pulls the user out mid-flow.
-  const hideBottomNav =
+  // Hide bottom nav on job details pages and auth/onboarding pages
+  const hideBottomNav = 
+    (pathname?.startsWith('/jobs/') && pathname !== '/jobs') ||
     pathname?.startsWith('/auth') ||
     pathname?.startsWith('/onboarding') ||
+    (pathname?.startsWith('/dashboard') && pathname !== '/dashboard') ||
     (pathname?.startsWith('/tools/interview/') && pathname !== '/tools/interview');
 
   // Hide header on bottom nav pages (mobile-style pages) — except /dashboard,
@@ -180,12 +180,7 @@ export default function RootLayoutClient({
       {!hideBottomNav && <BottomNavigation />}
       
       {/* Footer - shown on pages without bottom nav */}
-      {showFooter && (
-        // Keep the footer clear of the fixed bottom menu (h-16 = 64px).
-        <div style={{ paddingBottom: hideBottomNav ? 0 : '64px' }}>
-          <Footer />
-        </div>
-      )}
+      {showFooter && <Footer />}
       
        {/* Cookie Modal */}
       <CookieModal />
