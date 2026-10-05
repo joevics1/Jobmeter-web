@@ -40,8 +40,14 @@ const CookieModal = () => {
 
     function recalcOffset() {
       const bars = Array.from(document.querySelectorAll<HTMLElement>(BOTTOM_BAR_SELECTOR));
-      const tallest = bars.reduce((max, el) => Math.max(max, el.offsetHeight), 0);
-      setOffset(tallest);
+      // Distance from the viewport bottom to the top edge of the highest bar,
+      // so stacked bars (page action bar lifted above the bottom menu) are
+      // both cleared, not just the tallest single one.
+      const highest = bars.reduce((max, el) => {
+        const rect = el.getBoundingClientRect();
+        return rect.height > 0 ? Math.max(max, window.innerHeight - rect.top) : max;
+      }, 0);
+      setOffset(Math.max(0, Math.round(highest)));
     }
 
     recalcOffset();

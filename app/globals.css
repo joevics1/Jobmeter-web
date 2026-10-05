@@ -117,3 +117,12 @@
     display: none;
   }
 }
+
+/* Global bottom menu (BottomNavigation) is now on every page. Pages that pin
+   their own action bar to the bottom (submit, CV/cover-letter builders,
+   document editor, edit) mark it with data-app-bottom-bar — lift those above
+   the 64px menu instead of letting the menu cover their buttons. Unlayered on
+   purpose so it beats Tailwind's bottom-0 utility. */
+body:has(nav[data-app-bottom-bar]) div[data-app-bottom-bar] {
+  bottom: 64px;
+}
