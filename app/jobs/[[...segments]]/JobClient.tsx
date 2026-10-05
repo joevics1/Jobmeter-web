@@ -539,9 +539,9 @@ export default function JobClient({ job, relatedJobs, companies, documentLinks, 
     <>
       <div className="min-h-screen bg-gray-50">
 
-        {/* Fixed 2-row header */}
+        {/* Fixed 2-row job bar — sits below the site header (top-16, z-40) so the main menu stays reachable */}
         <div
-          className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200 shadow-sm transition-transform duration-300"
+          className="fixed top-16 left-0 right-0 z-40 bg-white border-b border-gray-200 shadow-sm transition-transform duration-300"
           style={{ transform: headerVisible ? 'translateY(0)' : 'translateY(-100%)' }}
         >
           <div className="border-b border-gray-100">

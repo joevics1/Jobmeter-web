@@ -48,9 +48,7 @@ export default function RootLayoutClient({
     (pathname?.startsWith('/dashboard') && pathname !== '/dashboard') ||
     (pathname?.startsWith('/tools/interview/') && pathname !== '/tools/interview');
 
-  // Hide header on bottom nav pages (mobile-style pages) — except /dashboard,
-  // which shows both the header and bottom nav.
-  const hideHeader = bottomNavPages.includes(pathname || '') && pathname !== '/dashboard';
+  // The top header (with the mobile menu) now shows on every page.
 
   // Show footer on pages that don't have bottom nav
   const showFooter = !bottomNavPages.includes(pathname || '') && !hideBottomNav;
@@ -161,8 +159,8 @@ export default function RootLayoutClient({
         />
       )}
 
-      {/* Header - hidden on bottom nav pages */}
-      {!hideHeader && <Header />}
+      {/* Top header with the mobile menu — shown on every page */}
+      <Header />
 
       {/* Main content with bottom padding for nav (unless hidden) */}
       <main 
@@ -170,7 +168,6 @@ export default function RootLayoutClient({
         style={{ 
           backgroundColor: theme.colors.background.muted,
           paddingBottom: hideBottomNav && !showFooter ? '0' : '80px',
-          paddingTop: hideHeader ? '0px' : undefined
         }}
       >
         {children}
