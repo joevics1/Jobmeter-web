@@ -3,14 +3,22 @@ import { mapJobToSchema } from '@/lib/mapJobToSchema';
 import JobClient from './JobClient';
 import JobList from '@/components/jobs/JobList';
 import { Metadata } from 'next';
-import { cache } from 'react';
+import { cache, Suspense } from 'react';
 import { getAllPublishedTemplateParams } from '@/lib/document-templates-data';
 import { getDocumentType, getDocumentCountry } from '@/lib/document-types';
 import { getRolePage } from '@/lib/cv-template-pages/data';
 import { createClient as createSupabaseServerClient } from '@/lib/supabase/server';
 
-export const dynamic = 'force-dynamic';
-export const revalidate = false;
+// Statically generated on first request (on-demand ISR), then served from the
+// cache instead of running a serverless function + Supabase query every time.
+// Each new deployment starts with a fresh page cache, so a redeploy updates
+// every job page's markup. Job *data* (status, edits) refreshes at most daily.
+export const revalidate = 86400;
+export const dynamicParams = true;
+
+export async function generateStaticParams() {
+  return [];
+}
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.jobmeter.app';
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -153,7 +161,7 @@ const getJob = cache(async (slug: string) => {
         apikey: SUPABASE_ANON_KEY,
         Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
       },
-      next: { revalidate: false },
+      next: { revalidate: 86400 },
     }
   );
   if (!res.ok) return null;
@@ -193,7 +201,7 @@ const getRelatedJobs = cache(async (currentJob: any) => {
         apikey: SUPABASE_ANON_KEY,
         Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
       },
-      next: { revalidate: false },
+      next: { revalidate: 86400 },
     }
   );
   if (!res.ok) return [];
@@ -306,7 +314,10 @@ export default async function JobPage({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
         />
         <main className="min-h-screen bg-white">
-          <JobList />
+          {/* JobList reads useSearchParams, so it needs a Suspense boundary on a static page */}
+          <Suspense fallback={<div className="min-h-screen" />}>
+            <JobList />
+          </Suspense>
         </main>
       </>
     );

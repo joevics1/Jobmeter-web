@@ -494,19 +494,28 @@ export default function JobList({ siteType = 'global', initialJobs, initialCount
       }
       const hasVisited = localStorage.getItem('has_visited_jobs');
       if (!hasVisited) {
-        try {
-          const response = await fetch('/api/geo');
-          const data = await response.json();
-          // api/geo now returns null when the visitor's country isn't
-          // recognized, rather than guessing 'Nigeria' for everyone it
-          // can't place — leave detectedCountry unset so the popup defaults
-          // to 'Global' instead of confidently showing the wrong country.
-          if (data.country) {
-            setDetectedCountry(data.country);
-            setFilters(prev => ({ ...prev, country: data.country }));
+        // Ask the server only once per browser: the answer is remembered
+        // ('' = checked but country not recognised), even if the visitor
+        // never confirms the popup. Failures aren't stored, so they retry.
+        const cachedGeo = localStorage.getItem('geo_detected_country');
+        let country: string | null = cachedGeo ? cachedGeo : null;
+        if (cachedGeo === null) {
+          try {
+            const response = await fetch('/api/geo');
+            const data = await response.json();
+            // api/geo returns null when the visitor's country isn't
+            // recognized, rather than guessing 'Nigeria' for everyone it
+            // can't place — leave detectedCountry unset so the popup defaults
+            // to 'Global' instead of confidently showing the wrong country.
+            country = data.country || null;
+            localStorage.setItem('geo_detected_country', country || '');
+          } catch {
+            // Network/API failure — same reasoning, don't guess a country.
           }
-        } catch {
-          // Network/API failure — same reasoning, don't guess a country.
+        }
+        if (country) {
+          setDetectedCountry(country);
+          setFilters(prev => ({ ...prev, country }));
         }
         setShowCountryPopup(true);
       } else {

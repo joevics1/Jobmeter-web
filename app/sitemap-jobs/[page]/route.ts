@@ -86,7 +86,7 @@ ${jobs
     return new Response(sitemap, {
       headers: {
         'Content-Type': 'application/xml',
-        'Cache-Control': 'public, max-age=3600, s-maxage=3600',
+        'Cache-Control': 'public, max-age=3600, s-maxage=86400, stale-while-revalidate=86400',
       },
     });
   } catch (error) {
@@ -95,5 +95,5 @@ ${jobs
   }
 }
 
-export const revalidate = 3600;
+export const revalidate = 86400;
         

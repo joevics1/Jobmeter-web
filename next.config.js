@@ -52,7 +52,9 @@ const nextConfig = {
     removeConsole: process.env.NODE_ENV === 'production',
   },
   images: {
-    formats: ['image/avif', 'image/webp'],
+    // Site barely uses images; skip Vercel's image optimizer entirely
+    // (no /_next/image function calls or transformation billing).
+    unoptimized: true,
     remotePatterns: [
       { protocol: 'https', hostname: 'images.unsplash.com' },
       { protocol: 'https', hostname: 'unsplash.com' },
@@ -67,7 +69,7 @@ const nextConfig = {
         headers: [
           {
             key: 'Cache-Control',
-            value: 'public, s-maxage=86400, stale-while-revalidate=86400',
+            value: 'public, s-maxage=3600, stale-while-revalidate=86400',
           },
           { key: 'Vary', value: '' },
         ],
@@ -79,7 +81,7 @@ const nextConfig = {
         headers: [
           {
             key: 'Cache-Control',
-            value: 'public, s-maxage=86400, stale-while-revalidate=86400',
+            value: 'public, s-maxage=3600, stale-while-revalidate=86400',
           },
           { key: 'Vary', value: '' },
         ],
@@ -90,7 +92,7 @@ const nextConfig = {
         headers: [
           {
             key: 'Cache-Control',
-            value: 'public, s-maxage=86400, stale-while-revalidate=86400',
+            value: 'public, s-maxage=3600, stale-while-revalidate=86400',
           },
         ],
       },
@@ -100,7 +102,7 @@ const nextConfig = {
         headers: [
           {
             key: 'Cache-Control',
-            value: 'public, s-maxage=86400, stale-while-revalidate=86400',
+            value: 'public, s-maxage=3600, stale-while-revalidate=86400',
           },
         ],
       },

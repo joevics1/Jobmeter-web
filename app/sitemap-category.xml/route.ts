@@ -65,7 +65,7 @@ ${urls}
       status: 200,
       headers: {
         'Content-Type': 'application/xml',
-        'Cache-Control': 'public, max-age=3600, s-maxage=3600, stale-while-revalidate=86400',
+        'Cache-Control': 'public, max-age=3600, s-maxage=86400, stale-while-revalidate=86400',
       },
     });
   } catch (err) {
@@ -74,5 +74,7 @@ ${urls}
   }
 }
 
+// Stays force-dynamic on purpose: if it were prerendered at build and a
+// Supabase env var were missing, a failed/empty sitemap would be baked in.
+// The s-maxage header above makes the CDN serve it from cache instead.
 export const dynamic = 'force-dynamic';
-export const revalidate = 3600;
