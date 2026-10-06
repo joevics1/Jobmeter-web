@@ -44,13 +44,12 @@ import MatchBreakdownModal from '@/components/jobs/MatchBreakdownModal';
 import MatchScoreCircle from '@/components/jobs/MatchScoreCircle';
 
 // ─── Ad slot IDs ───────────────────────────────────────────────────────────────
-// 3 units total (kept low on purpose — high CTR + past AdSense limit on these pages).
+// Trimmed down to a single mid-content placement to stay within the AdSense ad limit.
 const AD_SLOTS = {
-  IN_ARTICLE: '6922813139',               // Ad 1: after Job Description, before Required Skills
-  DISPLAY_RESPONSIBILITIES: '1633803336', // Ad 2: between Responsibilities and Qualifications
-  NATIVE_APPLY: '7181909415',             // Ad 3: native in-feed, under How to Apply
+  IN_ARTICLE: '6922813139',        // after Job Description, before Required Skills
+  DISPLAY_MID: '7817006682',       // after Qualifications/Benefits, before How to Apply
+  DISPLAY_BOTTOM: '4927205184',    // after Posted Date
 } as const;
-const NATIVE_LAYOUT_KEY = '-6t+ed+2i-1n-4w';
 
 // Namespaced per site so saved/applied state doesn't bleed across subdomains
 // if a user ever visits multiple sites on the same browser.
@@ -916,11 +915,6 @@ export default function JobClient({ job, relatedJobs, companies, documentLinks, 
                 return null;
               })()}
 
-              {/* Ad 2 — display, between Key Responsibilities and Qualifications */}
-              <div className="w-full overflow-hidden" style={{ margin: 0, padding: '3px 0' }}>
-                <AdUnit slot={AD_SLOTS.DISPLAY_RESPONSIBILITIES} format="auto" />
-              </div>
-
               {(() => {
                 const qualificationsArray = Array.isArray(job.qualifications) ? job.qualifications : [];
                 if (qualificationsArray.length > 0) {
@@ -966,6 +960,11 @@ export default function JobClient({ job, relatedJobs, companies, documentLinks, 
                 }
                 return null;
               })()}
+
+              {/* Ad 2 — display, after Qualifications/Benefits, before How to Apply */}
+              <div className="w-full overflow-hidden" style={{ margin: 0, padding: '3px 0' }}>
+                <AdUnit slot={AD_SLOTS.DISPLAY_MID} format="auto" />
+              </div>
 
               {/* How to Apply */}
               {isExpired ? (
@@ -1145,9 +1144,9 @@ export default function JobClient({ job, relatedJobs, companies, documentLinks, 
               )}
 
 
-{/* Ad 3 — native in-feed, under How to Apply (replaces the Adsterra banner) */}
-<div className="w-full overflow-hidden" style={{ margin: 0, padding: '3px 0' }}>
-  <AdUnit slot={AD_SLOTS.NATIVE_APPLY} format="fluid" layoutKey={NATIVE_LAYOUT_KEY} />
+{/* Ad — between How to Apply and Join Our Communities */}
+<div className="w-full overflow-hidden flex justify-center py-2">
+  <AdsterraBanner {...ADSTERRA.BANNER_468x60} />
 </div>
 
 {/* No "Apply for Me" on remote.jobmeter.app */}
@@ -1266,6 +1265,11 @@ export default function JobClient({ job, relatedJobs, companies, documentLinks, 
                   )}
                 </div>
               )}
+
+              {/* Ad 3 — display, after Posted Date */}
+              <div className="w-full overflow-hidden" style={{ margin: 0, padding: '3px 0' }}>
+                <AdUnit slot={AD_SLOTS.DISPLAY_BOTTOM} format="auto" />
+              </div>
 
               {!isExpired && (job.application_url || (job.application && (job.application.url || job.application.link))) && (
                 <div className="bg-white rounded-xl shadow-sm p-6">
