@@ -49,6 +49,7 @@ const AD_SLOTS = {
   IN_ARTICLE: '6922813139',        // after Job Description, before Required Skills
   DISPLAY_MID: '7817006682',       // after Qualifications/Benefits, before How to Apply
   DISPLAY_BOTTOM: '4927205184',    // above About the Company
+  DISPLAY_RESPONSIBILITIES: '1633803336', // between Key Responsibilities and Qualifications
 } as const;
 
 // Namespaced per site so saved/applied state doesn't bleed across subdomains
@@ -919,6 +920,11 @@ export default function JobClient({ job, relatedJobs, companies, documentLinks, 
                 }
                 return null;
               })()}
+
+              {/* Ad 4 — display, between Key Responsibilities and Qualifications */}
+              <div className="w-full overflow-hidden" style={{ margin: 0, padding: '3px 0' }}>
+                <AdUnit slot={AD_SLOTS.DISPLAY_RESPONSIBILITIES} format="auto" />
+              </div>
 
               {(() => {
                 const qualificationsArray = Array.isArray(job.qualifications) ? job.qualifications : [];
