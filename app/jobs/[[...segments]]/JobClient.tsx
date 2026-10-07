@@ -48,7 +48,7 @@ import MatchScoreCircle from '@/components/jobs/MatchScoreCircle';
 const AD_SLOTS = {
   IN_ARTICLE: '6922813139',        // after Job Description, before Required Skills
   DISPLAY_MID: '7817006682',       // after Qualifications/Benefits, before How to Apply
-  DISPLAY_BOTTOM: '4927205184',    // after Posted Date
+  DISPLAY_BOTTOM: '4927205184',    // above About the Company
 } as const;
 
 // Namespaced per site so saved/applied state doesn't bleed across subdomains
@@ -852,6 +852,11 @@ export default function JobClient({ job, relatedJobs, companies, documentLinks, 
                 )}
               </div>
 
+              {/* Ad 1 — display, above About the Company */}
+              <div className="w-full overflow-hidden" style={{ margin: 0, padding: '3px 0' }}>
+                <AdUnit slot={AD_SLOTS.DISPLAY_BOTTOM} format="auto" />
+              </div>
+
               {job.about_company && (
                 <div className="bg-white rounded-xl shadow-sm p-6">
                   <h2 className="text-xl font-semibold mb-4 text-gray-900">About the Company</h2>
@@ -872,7 +877,7 @@ export default function JobClient({ job, relatedJobs, companies, documentLinks, 
               </div>
               */}
 
-              {/* Ad 1 — in-article, after Job Description */}
+              {/* Ad 2 — in-article, after Job Description */}
               <div className="w-full overflow-hidden" style={{ margin: 0, padding: '3px 0' }}>
                 <AdUnit slot={AD_SLOTS.IN_ARTICLE} format="fluid" layout="in-article" />
               </div>
@@ -961,7 +966,7 @@ export default function JobClient({ job, relatedJobs, companies, documentLinks, 
                 return null;
               })()}
 
-              {/* Ad 2 — display, after Qualifications/Benefits, before How to Apply */}
+              {/* Ad 3 — display, after Qualifications/Benefits, before How to Apply */}
               <div className="w-full overflow-hidden" style={{ margin: 0, padding: '3px 0' }}>
                 <AdUnit slot={AD_SLOTS.DISPLAY_MID} format="auto" />
               </div>
@@ -1265,11 +1270,6 @@ export default function JobClient({ job, relatedJobs, companies, documentLinks, 
                   )}
                 </div>
               )}
-
-              {/* Ad 3 — display, after Posted Date */}
-              <div className="w-full overflow-hidden" style={{ margin: 0, padding: '3px 0' }}>
-                <AdUnit slot={AD_SLOTS.DISPLAY_BOTTOM} format="auto" />
-              </div>
 
               {!isExpired && (job.application_url || (job.application && (job.application.url || job.application.link))) && (
                 <div className="bg-white rounded-xl shadow-sm p-6">
