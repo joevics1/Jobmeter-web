@@ -430,7 +430,7 @@ export default function JobClient({ job, relatedJobs, companies, documentLinks, 
       const res = await fetch(`${SIMILAR_JOBS_WORKER_URL}?${params.toString()}`);
       if (!res.ok) throw new Error('Related jobs fetch failed');
       const data = await res.json();
-      setSimilarJobs(data.jobs || []);
+      setSimilarJobs((data.jobs || []).slice(0, 10));
     } catch (error) {
       console.error('Error loading similar jobs:', error);
     }
@@ -1327,7 +1327,7 @@ export default function JobClient({ job, relatedJobs, companies, documentLinks, 
                   </div>
                   <div className="px-5 py-4">
                     <div className="space-y-4">
-                      {similarJobs.map((similarJob) => (
+                      {similarJobs.slice(0, 10).map((similarJob) => (
                         <a
                           key={similarJob.id}
                           href={buildJobUrl(similarJob)}
