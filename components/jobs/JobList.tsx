@@ -514,8 +514,10 @@ export default function JobList({ siteType = 'global', initialJobs, initialCount
           }
         }
         if (country) {
-          setDetectedCountry(country);
-          setFilters(prev => ({ ...prev, country }));
+          // const copy so TypeScript keeps the string type inside the closure
+          const detected: string = country;
+          setDetectedCountry(detected);
+          setFilters(prev => ({ ...prev, country: detected }));
         }
         setShowCountryPopup(true);
       } else {
