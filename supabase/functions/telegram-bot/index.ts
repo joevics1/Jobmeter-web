@@ -145,6 +145,7 @@ const kbMainMenu = {
     [{ text: '🎯 My role' }, { text: '📋 My applications' }],
     [{ text: '👤 My profile' }, { text: '🌍 Remote Jobs' }],
     [{ text: '🧰 Tools' }, { text: '📝 CV Templates' }],
+    [{ text: '📍 My country' }],
   ],
   resize_keyboard: true,
 };
@@ -172,6 +173,104 @@ function linkGridKeyboard(items: { name: string; url: string }[]) {
     rows.push(row);
   }
   return { inline_keyboard: rows };
+}
+
+// ─── Country resolution (kept in sync across telegram-bot, telegram-daily-digest, daily-job-notifications) ───
+// "Global" = remote jobs that aren't tied to one country: tagged Global or a broad region.
+const REGION_TAGS = ['Global', 'Africa', 'LATAM', 'Eastern Europe', 'Europe', 'Middle East', 'Asia'];
+const KNOWN_COUNTRIES = [
+  'Nigeria', 'Ghana', 'Kenya', 'South Africa', 'Egypt', 'Ethiopia', 'Morocco', 'Sierra Leone', 'Tanzania', 'Uganda',
+  'Rwanda', 'Senegal', 'Cameroon', 'Zambia', 'Zimbabwe', 'Botswana', 'Namibia', 'Algeria', 'Tunisia', 'Ivory Coast',
+  'United Arab Emirates', 'Saudi Arabia', 'Qatar', 'Oman', 'Kuwait', 'Bahrain', 'Jordan', 'Turkey',
+  'United Kingdom', 'United States', 'Canada', 'Australia', 'New Zealand', 'Ireland', 'Germany', 'France', 'Netherlands',
+  'Spain', 'Italy', 'Portugal', 'Poland', 'Sweden', 'Norway', 'Switzerland',
+  'India', 'Pakistan', 'Bangladesh', 'Nepal', 'Philippines', 'Singapore', 'Malaysia', 'Indonesia', 'China', 'Japan',
+  'Mexico', 'Argentina', 'Brazil', 'Colombia', 'Chile',
+];
+const COUNTRY_ALIASES: Record<string, string> = {
+  uk: 'United Kingdom', 'great britain': 'United Kingdom', england: 'United Kingdom', britain: 'United Kingdom',
+  usa: 'United States', us: 'United States', america: 'United States', 'united states of america': 'United States',
+  uae: 'United Arab Emirates', dubai: 'United Arab Emirates', 'abu dhabi': 'United Arab Emirates',
+  "cote d'ivoire": 'Ivory Coast', ksa: 'Saudi Arabia',
+  remote: 'Global', global: 'Global', worldwide: 'Global', anywhere: 'Global',
+};
+// Nigerian cities/states, for profile locations written without the country ("Lagos", "Ogun State").
+const NIGERIA_HINTS = new Set([
+  'lagos', 'abuja', 'fct', 'port harcourt', 'ibadan', 'kano', 'kaduna', 'enugu', 'benin city', 'ilorin', 'owerri', 'uyo',
+  'abeokuta', 'jos', 'akure', 'abakaliki', 'aba', 'lekki', 'ikeja', 'ikorodu', 'ogun', 'rivers', 'delta', 'oyo', 'ondo',
+  'osun', 'ekiti', 'akwa ibom', 'anambra', 'imo', 'edo', 'kwara', 'plateau', 'abia', 'kogi', 'bayelsa', 'cross river',
+  'benue', 'nasarawa', 'sokoto', 'kebbi', 'zamfara', 'katsina', 'borno', 'yobe', 'adamawa', 'taraba', 'gombe', 'bauchi',
+  'jigawa', 'ebonyi',
+]);
+
+// Exact canonical name only ('Nigeria', 'Global') — what the bot stores when a user picks a country.
+function canonicalExact(input: string | null | undefined): string | null {
+  const t = (input || '').trim().toLowerCase();
+  if (!t) return null;
+  if (t === 'global') return 'Global';
+  return KNOWN_COUNTRIES.find((c) => c.toLowerCase() === t) || null;
+}
+
+// Free-text (typed input / profile location parts): also accepts aliases like "UK", "UAE", "Remote".
+function canonicalCountry(input: string | null | undefined): string | null {
+  const t = (input || '').trim().toLowerCase();
+  if (!t) return null;
+  return COUNTRY_ALIASES[t] || canonicalExact(t);
+}
+
+// One country per user: an explicit pick in preferred_locations wins; otherwise the country in
+// their JobMeter profile location ("Lagos, Nigeria" → Nigeria). null = unknown.
+function resolveCountry(o: { cv_location?: string | null; preferred_locations?: string[] | null }): string | null {
+  const prefs = o.preferred_locations || [];
+  for (let i = prefs.length - 1; i >= 0; i--) {
+    const c = canonicalExact(prefs[i]);
+    if (c) return c;
+  }
+  const parts = (o.cv_location || '').split(',').map((s) => s.trim()).filter(Boolean);
+  for (let i = parts.length - 1; i >= 0; i--) {
+    const c = canonicalCountry(parts[i]);
+    if (c) return c;
+  }
+  for (const p of [...parts, ...prefs]) {
+    if (NIGERIA_HINTS.has(p.trim().toLowerCase().replace(/\s+state$/, ''))) return 'Nigeria';
+  }
+  return null;
+}
+
+// PostgREST `or` filter on jobs.country for a resolved country.
+function countryOrFilter(country: string): string {
+  const parts = REGION_TAGS.map((t) => `country.cs.{${t}}`);
+  if (country !== 'Global') parts.unshift(`country.cs.{${country}}`);
+  return parts.join(',');
+}
+
+// ─── Country picker ──────────────────────────────────────────────────────────
+// Quick-pick buttons. `value` is the exact string stored / used against jobs.country[].
+const COUNTRY_OPTIONS: { label: string; value: string }[] = [
+  { label: '🇳🇬 Nigeria', value: 'Nigeria' },
+  { label: '🇬🇭 Ghana', value: 'Ghana' },
+  { label: '🇰🇪 Kenya', value: 'Kenya' },
+  { label: '🇿🇦 South Africa', value: 'South Africa' },
+  { label: '🇦🇪 UAE', value: 'United Arab Emirates' },
+  { label: '🇬🇧 United Kingdom', value: 'United Kingdom' },
+  { label: '🇺🇸 United States', value: 'United States' },
+  { label: '🇨🇦 Canada', value: 'Canada' },
+  { label: '🌍 Global remote only', value: 'Global' },
+];
+
+function countryKeyboard(context: 'onboard' | 'quick' | 'change') {
+  const rows: { text: string; callback_data: string }[][] = [];
+  for (let i = 0; i < COUNTRY_OPTIONS.length; i += 2) {
+    const row = [{ text: COUNTRY_OPTIONS[i].label, callback_data: `cty:${i}:${context}` }];
+    if (COUNTRY_OPTIONS[i + 1]) row.push({ text: COUNTRY_OPTIONS[i + 1].label, callback_data: `cty:${i + 1}:${context}` });
+    rows.push(row);
+  }
+  rows.push([{ text: '✏️ Type my country', callback_data: `cty:other:${context}` }]);
+  return { inline_keyboard: rows };
+}
+
+function countryPhrase(country: string): string {
+  return country === 'Global' ? 'remote jobs open to anyone worldwide' : `jobs in *${country}* (plus global remote roles)`;
 }
 
 function sectorKeyboard(context: 'onboard' | 'browse' | 'change' | 'quick') {
@@ -321,22 +420,6 @@ function buildFallbackJobText(job: any): string {
 
 const JOB_SELECT = 'id, title, slug, company, country, location, sector, role, social, posted_date';
 
-function titleCase(s: string): string {
-  return s.split(' ').map((w) => (w ? w.charAt(0).toUpperCase() + w.slice(1).toLowerCase() : w)).join(' ');
-}
-
-// Country isn't asked separately — derive it from what CV parsing / onboarding already captured.
-function deriveCountry(onboarding: { cv_location?: string | null; preferred_locations?: string[] | null }): string | null {
-  if (onboarding.cv_location) {
-    const parts = onboarding.cv_location.split(',').map((s) => s.trim()).filter(Boolean);
-    if (parts.length) return titleCase(parts[parts.length - 1]);
-  }
-  if (onboarding.preferred_locations && onboarding.preferred_locations.length) {
-    return titleCase(onboarding.preferred_locations[onboarding.preferred_locations.length - 1]);
-  }
-  return null;
-}
-
 function roleOrFilter(roles: string[]): string {
   return roles
     .slice(0, 6)
@@ -346,15 +429,10 @@ function roleOrFilter(roles: string[]): string {
     .join(',');
 }
 
-function jobMatchesCountry(job: any, country: string): boolean {
-  const arr: string[] = Array.isArray(job.country) ? job.country : [];
-  return arr.some((c) => c.toLowerCase() === country.toLowerCase() || c.toLowerCase() === 'global');
-}
-
 // Fetches a generous candidate pool for one filter tier (role OR sector), newest-first,
-// active only, excluding anything already shown. Country preference is applied client-side
-// afterward so a thin country match never blocks the whole tier.
-async function queryCandidates(supabase: any, orFilter: string, excludeIds: string[], recentSinceISO: string, fetchSize: number) {
+// active only, excluding anything already shown. When the user has a country, only that
+// country's jobs plus global remote roles are returned.
+async function queryCandidates(supabase: any, orFilter: string, excludeIds: string[], recentSinceISO: string, fetchSize: number, country: string | null = null) {
   if (!orFilter) return [];
   let query = supabase
     .from('jobs')
@@ -365,6 +443,11 @@ async function queryCandidates(supabase: any, orFilter: string, excludeIds: stri
     .order('posted_date', { ascending: false })
     .order('created_at', { ascending: false })
     .limit(fetchSize);
+
+  if (country) {
+    query = query.or(countryOrFilter(country));
+    if (country === 'Global') query = query.ilike('job_type', 'remote');
+  }
 
   if (excludeIds.length > 0) {
     query = query.not('id', 'in', `(${excludeIds.join(',')})`);
@@ -392,7 +475,7 @@ async function getOnboardingBrief(supabase: any, userId: string): Promise<Onboar
   return {
     sector,
     targetRoles: Array.isArray(data.target_roles) ? data.target_roles : [],
-    country: deriveCountry({ cv_location: data.cv_location, preferred_locations: data.preferred_locations }),
+    country: resolveCountry({ cv_location: data.cv_location, preferred_locations: data.preferred_locations }),
   };
 }
 
@@ -404,8 +487,8 @@ async function getUserSector(supabase: any, userId: string): Promise<string | nu
 /**
  * Tiered job fetch: role match first (highest intent), then the user's sector,
  * then related sectors — each tier newest-first, active-only, never repeating a
- * job already shown. Country is preferred within every tier but relaxed rather
- * than blocking results if there just isn't a local match.
+ * job already shown. If the user has a country, every tier is limited to that
+ * country plus global remote roles.
  */
 async function fetchTieredJobs(
   supabase: any,
@@ -425,29 +508,12 @@ async function fetchTieredJobs(
 
   let collected: any[] = [];
   let usedTier: string | null = null;
-  let relaxedCountry = false;
 
   for (const tier of tiers) {
     if (collected.length >= limit) break;
     const need = limit - collected.length;
     const currentExclude = [...excludeIds, ...collected.map((j) => j.id)];
-    const candidates = await queryCandidates(supabase, tier.or, currentExclude, recentSinceISO, Math.max(need * 5, 15));
-    if (candidates.length === 0) continue;
-
-    let picked: any[];
-    if (brief.country) {
-      const inCountry = candidates.filter((j) => jobMatchesCountry(j, brief.country as string));
-      picked = inCountry.slice(0, need);
-      if (picked.length < need) {
-        const rest = candidates.filter((j) => !picked.some((p) => p.id === j.id)).slice(0, need - picked.length);
-        if (rest.length) {
-          picked = [...picked, ...rest];
-          relaxedCountry = true;
-        }
-      }
-    } else {
-      picked = candidates.slice(0, need);
-    }
+    const picked = await queryCandidates(supabase, tier.or, currentExclude, recentSinceISO, need, brief.country);
 
     if (picked.length > 0) {
       collected = [...collected, ...picked];
@@ -456,7 +522,7 @@ async function fetchTieredJobs(
     }
   }
 
-  return { jobs: collected, usedTier, relaxedCountry };
+  return { jobs: collected, usedTier };
 }
 
 async function sendJobBatch(supabase: any, chatId: number, userId: string, shownIds: string[]) {
@@ -471,11 +537,12 @@ async function sendJobBatch(supabase: any, chatId: number, userId: string, shown
   if (jobs.length === 0) {
     await sendMessage(
       chatId,
-      `That's all the recent jobs I have matching your role and *${brief.sector}* right now. Check back soon, or browse everything on the web.`,
+      `That's all the recent jobs I have matching your role and *${brief.sector}*${brief.country ? (brief.country === 'Global' ? ' (global remote)' : ` in *${brief.country}*`) : ''} right now. I'll send fresh ones every morning.`,
       {
         reply_markup: {
           inline_keyboard: [
             [{ text: '🏢 Try a different sector', callback_data: 'change_sector' }],
+            [{ text: '📍 Change country', callback_data: 'change_country' }],
             [{ text: '🌐 Browse all jobs', url: `${SITE_URL}/jobs` }],
           ],
         },
@@ -535,7 +602,7 @@ async function getUserCountryOnly(supabase: any, userId: string): Promise<string
     .eq('user_id', userId)
     .maybeSingle();
   if (!data) return null;
-  return deriveCountry({ cv_location: data.cv_location, preferred_locations: data.preferred_locations });
+  return resolveCountry({ cv_location: data.cv_location, preferred_locations: data.preferred_locations });
 }
 
 async function queryRemoteCandidates(supabase: any, countryOrFilter: string | null, excludeIds: string[], recentSinceISO: string, fetchSize: number) {
@@ -564,10 +631,15 @@ async function fetchRemoteJobs(supabase: any, country: string | null, excludeIds
   const recentSinceISO = new Date(Date.now() - RECENT_DAYS * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
   const tiers: (string | null)[] = [];
-  if (country) tiers.push(`country.cs.{${country}}`);
-  tiers.push(`country.cs.{Global}`);
-  tiers.push(`country.cs.{United States},country.cs.{United Kingdom}`);
-  tiers.push(null); // any remote job, no country constraint
+  if (country) {
+    // Known country: that country's remote roles, then global remote roles — nothing else.
+    if (country !== 'Global') tiers.push(`country.cs.{${country}}`);
+    tiers.push(REGION_TAGS.map((t) => `country.cs.{${t}}`).join(','));
+  } else {
+    tiers.push(`country.cs.{Global}`);
+    tiers.push(`country.cs.{United States},country.cs.{United Kingdom}`);
+    tiers.push(null); // any remote job, no country constraint
+  }
 
   let collected: any[] = [];
   for (const tier of tiers) {
@@ -618,7 +690,7 @@ async function handleStart(supabase: any, chatId: number, tgUser: any) {
   await setState(supabase, chatId, { step: 'idle' });
   await sendMessage(
     chatId,
-    `👋 Welcome to *JobMeter* — I find jobs matched to you, and DM you the moment a great one comes in.\n\nDo you already have a JobMeter account?`,
+    `👋 Welcome to *JobMeter* — I send fresh jobs for your role straight to this chat *every morning*, and ping you the moment a great match appears.\n\nDo you already have a JobMeter account?`,
     { reply_markup: kbAccountChoice }
   );
 }
@@ -666,11 +738,29 @@ async function handleLoginPassword(
   }
 
   await linkAccount(supabase, chatId, data.user.id);
-  await sendMessage(
-    chatId,
-    `✅ Logged in! Your Telegram is now linked to your JobMeter account.\n\nI'll DM you here whenever a job scores 50%+ for you. What would you like to do?`,
-    { reply_markup: kbMainMenu }
-  );
+
+  // Existing JobMeter users usually already have a country on their profile — use it, don't re-ask.
+  const { data: ob } = await supabase
+    .from('onboarding_data')
+    .select('cv_location, preferred_locations')
+    .eq('user_id', data.user.id)
+    .maybeSingle();
+  const profileCountry = ob ? resolveCountry({ cv_location: ob.cv_location, preferred_locations: ob.preferred_locations }) : null;
+
+  if (profileCountry) {
+    await sendMessage(
+      chatId,
+      `✅ Logged in! Your Telegram is now linked to your JobMeter account.\n\n📍 I'll send you fresh ${countryPhrase(profileCountry)} every morning, based on your JobMeter profile — plus an instant ping when something is a 50%+ match. Wrong country? Tap *📍 My country* to change it.`,
+      { reply_markup: kbMainMenu }
+    );
+  } else {
+    await sendMessage(
+      chatId,
+      `✅ Logged in! Your Telegram is now linked to your JobMeter account.\n\nI'll send you fresh jobs every morning and ping you when something is a 50%+ match. One thing first — where do you want to work?`,
+      { reply_markup: kbMainMenu }
+    );
+    await sendMessage(chatId, `Pick your country, or global remote:`, { reply_markup: countryKeyboard('change') });
+  }
 }
 
 async function startSignup(supabase: any, chatId: number) {
@@ -792,7 +882,21 @@ async function askQuickRole(supabase: any, chatId: number, temp: Record<string, 
   });
 }
 
-async function completeQuickSetup(supabaseAdmin: any, chatId: number, sector: string, roles: string[]) {
+async function askQuickCountry(supabase: any, chatId: number, temp: Record<string, any>) {
+  await setState(supabase, chatId, { step: 'quick_country', temp });
+  await sendMessage(chatId, `Last one — where do you want to work? I'll send jobs from there, plus remote roles open to anyone worldwide.`, {
+    reply_markup: countryKeyboard('quick'),
+  });
+}
+
+async function askSignupCountry(supabase: any, chatId: number, temp: Record<string, any>) {
+  await setState(supabase, chatId, { step: 'signup_country', temp });
+  await sendMessage(chatId, `Where do you want to work? I'll send jobs from there, plus remote roles open to anyone worldwide.`, {
+    reply_markup: countryKeyboard('onboard'),
+  });
+}
+
+async function completeQuickSetup(supabaseAdmin: any, chatId: number, sector: string, roles: string[], country: string) {
   const email = `tg-${chatId}@telegram.jobmeter.local`;
   const password = generateRandomPassword();
 
@@ -815,15 +919,31 @@ async function completeQuickSetup(supabaseAdmin: any, chatId: number, sector: st
     user_id: userId,
     sector,
     target_roles: roles,
+    preferred_locations: [country],
   });
 
   await linkAccount(supabaseAdmin, chatId, userId);
 
   await sendMessage(
     chatId,
-    `✅ You're set! I'll DM you here the moment a job scores 50%+ for *${roles.join(', ')}* in *${sector}*.\n\nWant even better matches? Send your CV anytime and I'll fill in your skills and experience too — no need to start over.`,
+    `✅ You're set! Every morning I'll send you fresh *${roles.join(', ')}* ${countryPhrase(country)} in *${sector}* — and I'll ping you right away when something is a 50%+ match.\n\nWant sharper picks? Send your CV anytime and I'll fill in your skills and experience too — no need to start over.`,
     { reply_markup: kbMainMenu }
   );
+}
+
+async function applyCountryChoice(supabase: any, chatId: number, tgUser: any, state: BotState, context: string, country: string) {
+  if (context === 'onboard') {
+    await askSignupPassword(supabase, chatId, { ...state.temp, country });
+  } else if (context === 'quick') {
+    await completeQuickSetup(supabase, chatId, state.temp?.sector, state.temp?.roles || [], country);
+  } else if (!tgUser.linked_at) {
+    await sendMessage(chatId, `Send /start first to log in or sign up.`);
+  } else {
+    await supabase.from('onboarding_data').upsert({ user_id: tgUser.user_id, preferred_locations: [country] }, { onConflict: 'user_id' });
+    await setState(supabase, chatId, { step: 'idle' });
+    await sendMessage(chatId, `Done — I'll send ${countryPhrase(country)} from now on, including every morning.`, { reply_markup: kbMainMenu });
+    await sendJobBatch(supabase, chatId, tgUser.user_id, []);
+  }
 }
 
 async function askSignupPassword(supabase: any, chatId: number, temp: Record<string, any>) {
@@ -904,7 +1024,7 @@ async function completeSignup(
     cv_portfolio: cv.portfolio || null,
     cv_ai_suggested_roles: cv.suggestedRoles || [],
     target_roles: chosenRoles && chosenRoles.length ? chosenRoles : (cv.suggestedRoles || []),
-    preferred_locations: cv.location ? [cv.location] : [],
+    preferred_locations: temp.country ? [temp.country] : (cv.location ? [cv.location] : []),
     sector: sector || null,
     cv_text: temp.cvText || null,
     cv_file_name: temp.fileName || null,
@@ -916,7 +1036,7 @@ async function completeSignup(
 
   await sendMessage(
     chatId,
-    `🎉 Account created! I've saved your CV details${sector ? ` and set your sector to *${sector}*` : ''}${chosenRoles && chosenRoles.length ? ` and your target role to *${chosenRoles.join(', ')}*` : ''}, so I'll start matching you to jobs right away and DM you here when something scores 50%+.`,
+    `🎉 Account created! I've saved your CV details${sector ? ` and set your sector to *${sector}*` : ''}${chosenRoles && chosenRoles.length ? ` and your target role to *${chosenRoles.join(', ')}*` : ''}${temp.country ? ` and your location to *${temp.country === 'Global' ? 'global remote' : temp.country}*` : ''}. Every morning I'll send you fresh jobs here, and I'll ping you right away when something scores 50%+.`,
     { reply_markup: kbMainMenu }
   );
   return true;
@@ -1072,9 +1192,9 @@ serve(async (req) => {
         const context = rest.slice(0, sepIdx);
         const roleName = rest.slice(sepIdx + 1);
         if (context === 'onboard') {
-          await askSignupPassword(supabase, chatId, { ...state.temp, roles: [roleName] });
+          await askSignupCountry(supabase, chatId, { ...state.temp, roles: [roleName] });
         } else if (context === 'quick') {
-          await completeQuickSetup(supabase, chatId, state.temp?.sector, [roleName]);
+          await askQuickCountry(supabase, chatId, { ...state.temp, roles: [roleName] });
         } else if (context === 'change') {
           if (!tgUser.linked_at) {
             await sendMessage(chatId, `Send /start first to log in or sign up.`);
@@ -1082,6 +1202,26 @@ serve(async (req) => {
             await supabase.from('onboarding_data').upsert({ user_id: tgUser.user_id, target_roles: [roleName] }, { onConflict: 'user_id' });
             await sendMessage(chatId, `Got it — set your target role to *${roleName}*.`, { reply_markup: kbMainMenu });
           }
+        }
+      } else if (data.startsWith('cty:')) {
+        const [, idxStr, context] = data.split(':');
+        if (idxStr === 'other') {
+          const step = context === 'onboard' ? 'signup_country_custom' : context === 'quick' ? 'quick_country_custom' : 'change_country_custom';
+          await setState(supabase, chatId, { step, temp: state.temp });
+          await sendMessage(chatId, `Type your country — e.g. "Nigeria", "Ghana" or "United Kingdom". (For remote-only, type "Global".)`);
+        } else {
+          const country = COUNTRY_OPTIONS[parseInt(idxStr, 10)]?.value;
+          if (!country) {
+            await sendMessage(chatId, `That option expired — please try again.`);
+          } else {
+            await applyCountryChoice(supabase, chatId, tgUser, state, context, country);
+          }
+        }
+      } else if (data === 'change_country') {
+        if (!tgUser.linked_at) {
+          await sendMessage(chatId, `Send /start first to log in or sign up.`);
+        } else {
+          await sendMessage(chatId, `Where do you want to work?`, { reply_markup: countryKeyboard('change') });
         }
       } else if (data.startsWith('role_custom:')) {
         const context = data.split(':')[1];
@@ -1169,6 +1309,12 @@ serve(async (req) => {
       });
       return new Response('ok', { status: 200 });
     }
+    if (tgUser.linked_at && text === '📍 My country') {
+      const brief = await getOnboardingBrief(supabase, tgUser.user_id);
+      const cur = brief?.country ? (brief.country === 'Global' ? 'global remote only' : brief.country) : 'not set yet';
+      await sendMessage(chatId, `Your current job location: *${cur}*\n\nPick a new one:`, { reply_markup: countryKeyboard('change') });
+      return new Response('ok', { status: 200 });
+    }
     if (tgUser.linked_at && text === '📋 My applications') {
       await myApplications(supabase, chatId, tgUser.user_id);
       return new Response('ok', { status: 200 });
@@ -1225,7 +1371,7 @@ serve(async (req) => {
             await sendMessage(chatId, `Send at least one role.`);
             break;
           }
-          await askSignupPassword(supabase, chatId, { ...state.temp, roles });
+          await askSignupCountry(supabase, chatId, { ...state.temp, roles });
           break;
         }
         case 'quick_role_custom': {
@@ -1234,7 +1380,7 @@ serve(async (req) => {
             await sendMessage(chatId, `Send at least one role.`);
             break;
           }
-          await completeQuickSetup(supabase, chatId, state.temp?.sector, roles);
+          await askQuickCountry(supabase, chatId, { ...state.temp, roles });
           break;
         }
         case 'change_role_custom': {
@@ -1246,6 +1392,20 @@ serve(async (req) => {
           await supabase.from('onboarding_data').upsert({ user_id: tgUser.user_id, target_roles: roles }, { onConflict: 'user_id' });
           await setState(supabase, chatId, { step: 'idle' });
           await sendMessage(chatId, `Got it — set your target role(s) to *${roles.join(', ')}*.`, { reply_markup: kbMainMenu });
+          break;
+        }
+        case 'signup_country_custom':
+        case 'quick_country_custom':
+        case 'change_country_custom': {
+          const ctx = state.step === 'signup_country_custom' ? 'onboard' : state.step === 'quick_country_custom' ? 'quick' : 'change';
+          const country = canonicalCountry(text);
+          if (!country) {
+            await sendMessage(chatId, `I didn't recognise that country. Type the full country name (e.g. "Kenya"), "Global" for remote-only, or pick from the list:`, {
+              reply_markup: countryKeyboard(ctx),
+            });
+            break;
+          }
+          await applyCountryChoice(supabase, chatId, tgUser, state, ctx, country);
           break;
         }
         case 'signup_password': {
