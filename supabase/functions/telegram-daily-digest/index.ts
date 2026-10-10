@@ -15,6 +15,7 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { countryOrFilter, resolveCountry } from '../_shared/country.ts';
 
 const SITE_URL = 'https://www.jobmeter.app';
 const RECENT_DAYS = 14;
@@ -118,75 +119,6 @@ function buildFallbackJobText(job: any): string {
 }
 
 const JOB_SELECT = 'id, title, slug, company, country, location, sector, role, social, posted_date';
-
-// ─── Country resolution (kept in sync across telegram-bot, telegram-daily-digest, daily-job-notifications) ───
-// "Global" = remote jobs that aren't tied to one country: tagged Global or a broad region.
-const REGION_TAGS = ['Global', 'Africa', 'LATAM', 'Eastern Europe', 'Europe', 'Middle East', 'Asia'];
-const KNOWN_COUNTRIES = [
-  'Nigeria', 'Ghana', 'Kenya', 'South Africa', 'Egypt', 'Ethiopia', 'Morocco', 'Sierra Leone', 'Tanzania', 'Uganda',
-  'Rwanda', 'Senegal', 'Cameroon', 'Zambia', 'Zimbabwe', 'Botswana', 'Namibia', 'Algeria', 'Tunisia', 'Ivory Coast',
-  'United Arab Emirates', 'Saudi Arabia', 'Qatar', 'Oman', 'Kuwait', 'Bahrain', 'Jordan', 'Turkey',
-  'United Kingdom', 'United States', 'Canada', 'Australia', 'New Zealand', 'Ireland', 'Germany', 'France', 'Netherlands',
-  'Spain', 'Italy', 'Portugal', 'Poland', 'Sweden', 'Norway', 'Switzerland',
-  'India', 'Pakistan', 'Bangladesh', 'Nepal', 'Philippines', 'Singapore', 'Malaysia', 'Indonesia', 'China', 'Japan',
-  'Mexico', 'Argentina', 'Brazil', 'Colombia', 'Chile',
-];
-const COUNTRY_ALIASES: Record<string, string> = {
-  uk: 'United Kingdom', 'great britain': 'United Kingdom', england: 'United Kingdom', britain: 'United Kingdom',
-  usa: 'United States', us: 'United States', america: 'United States', 'united states of america': 'United States',
-  uae: 'United Arab Emirates', dubai: 'United Arab Emirates', 'abu dhabi': 'United Arab Emirates',
-  "cote d'ivoire": 'Ivory Coast', ksa: 'Saudi Arabia',
-  remote: 'Global', global: 'Global', worldwide: 'Global', anywhere: 'Global',
-};
-// Nigerian cities/states, for profile locations written without the country ("Lagos", "Ogun State").
-const NIGERIA_HINTS = new Set([
-  'lagos', 'abuja', 'fct', 'port harcourt', 'ibadan', 'kano', 'kaduna', 'enugu', 'benin city', 'ilorin', 'owerri', 'uyo',
-  'abeokuta', 'jos', 'akure', 'abakaliki', 'aba', 'lekki', 'ikeja', 'ikorodu', 'ogun', 'rivers', 'delta', 'oyo', 'ondo',
-  'osun', 'ekiti', 'akwa ibom', 'anambra', 'imo', 'edo', 'kwara', 'plateau', 'abia', 'kogi', 'bayelsa', 'cross river',
-  'benue', 'nasarawa', 'sokoto', 'kebbi', 'zamfara', 'katsina', 'borno', 'yobe', 'adamawa', 'taraba', 'gombe', 'bauchi',
-  'jigawa', 'ebonyi',
-]);
-
-// Exact canonical name only ('Nigeria', 'Global') — what the bot stores when a user picks a country.
-function canonicalExact(input: string | null | undefined): string | null {
-  const t = (input || '').trim().toLowerCase();
-  if (!t) return null;
-  if (t === 'global') return 'Global';
-  return KNOWN_COUNTRIES.find((c) => c.toLowerCase() === t) || null;
-}
-
-// Free-text (typed input / profile location parts): also accepts aliases like "UK", "UAE", "Remote".
-function canonicalCountry(input: string | null | undefined): string | null {
-  const t = (input || '').trim().toLowerCase();
-  if (!t) return null;
-  return COUNTRY_ALIASES[t] || canonicalExact(t);
-}
-
-// One country per user: an explicit pick in preferred_locations wins; otherwise the country in
-// their JobMeter profile location ("Lagos, Nigeria" → Nigeria). null = unknown.
-function resolveCountry(o: { cv_location?: string | null; preferred_locations?: string[] | null }): string | null {
-  const prefs = o.preferred_locations || [];
-  for (let i = prefs.length - 1; i >= 0; i--) {
-    const c = canonicalExact(prefs[i]);
-    if (c) return c;
-  }
-  const parts = (o.cv_location || '').split(',').map((s) => s.trim()).filter(Boolean);
-  for (let i = parts.length - 1; i >= 0; i--) {
-    const c = canonicalCountry(parts[i]);
-    if (c) return c;
-  }
-  for (const p of [...parts, ...prefs]) {
-    if (NIGERIA_HINTS.has(p.trim().toLowerCase().replace(/\s+state$/, ''))) return 'Nigeria';
-  }
-  return null;
-}
-
-// PostgREST `or` filter on jobs.country for a resolved country.
-function countryOrFilter(country: string): string {
-  const parts = REGION_TAGS.map((t) => `country.cs.{${t}}`);
-  if (country !== 'Global') parts.unshift(`country.cs.{${country}}`);
-  return parts.join(',');
-}
 
 function roleOrFilter(roles: string[]): string {
   return roles
@@ -352,7 +284,13 @@ serve(async (req) => {
           ? `👀 ${rawName ? rawName.replace(/([_*`\[])/g, '\\$1') + ', m' : 'M'}ore *${brief.sector}* roles just dropped — see which ones fit you`
           : `👀 ${rawName ? rawName.replace(/([_*`\[])/g, '\\$1') + ', m' : 'M'}ore roles just dropped that fit your profile — see which ones`;
         await sendMessage(tgUser.chat_id, closingText, {
-          reply_markup: { inline_keyboard: [[{ text: '🔍 See my matches', url: `https://t.me/JobMeter_Bot?start=browse` }]] },
+          reply_markup: {
+            inline_keyboard: [
+              [{ text: '🔍 See my matches', url: `https://t.me/JobMeter_Bot?start=browse` }],
+              // Country not known yet → one tap to set it, so tomorrow's picks are filtered to where they work.
+              ...(brief && !brief.country ? [[{ text: '📍 Set my country', callback_data: 'change_country' }]] : []),
+            ],
+          },
         });
 
         const newSeenIds = [...seenIds, ...jobs.map((j: any) => j.id)].slice(-30);
