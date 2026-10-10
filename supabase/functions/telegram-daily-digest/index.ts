@@ -119,19 +119,73 @@ function buildFallbackJobText(job: any): string {
 
 const JOB_SELECT = 'id, title, slug, company, country, location, sector, role, social, posted_date';
 
-function titleCase(s: string): string {
-  return s.split(' ').map((w) => (w ? w.charAt(0).toUpperCase() + w.slice(1).toLowerCase() : w)).join(' ');
+// ─── Country resolution (kept in sync across telegram-bot, telegram-daily-digest, daily-job-notifications) ───
+// "Global" = remote jobs that aren't tied to one country: tagged Global or a broad region.
+const REGION_TAGS = ['Global', 'Africa', 'LATAM', 'Eastern Europe', 'Europe', 'Middle East', 'Asia'];
+const KNOWN_COUNTRIES = [
+  'Nigeria', 'Ghana', 'Kenya', 'South Africa', 'Egypt', 'Ethiopia', 'Morocco', 'Sierra Leone', 'Tanzania', 'Uganda',
+  'Rwanda', 'Senegal', 'Cameroon', 'Zambia', 'Zimbabwe', 'Botswana', 'Namibia', 'Algeria', 'Tunisia', 'Ivory Coast',
+  'United Arab Emirates', 'Saudi Arabia', 'Qatar', 'Oman', 'Kuwait', 'Bahrain', 'Jordan', 'Turkey',
+  'United Kingdom', 'United States', 'Canada', 'Australia', 'New Zealand', 'Ireland', 'Germany', 'France', 'Netherlands',
+  'Spain', 'Italy', 'Portugal', 'Poland', 'Sweden', 'Norway', 'Switzerland',
+  'India', 'Pakistan', 'Bangladesh', 'Nepal', 'Philippines', 'Singapore', 'Malaysia', 'Indonesia', 'China', 'Japan',
+  'Mexico', 'Argentina', 'Brazil', 'Colombia', 'Chile',
+];
+const COUNTRY_ALIASES: Record<string, string> = {
+  uk: 'United Kingdom', 'great britain': 'United Kingdom', england: 'United Kingdom', britain: 'United Kingdom',
+  usa: 'United States', us: 'United States', america: 'United States', 'united states of america': 'United States',
+  uae: 'United Arab Emirates', dubai: 'United Arab Emirates', 'abu dhabi': 'United Arab Emirates',
+  "cote d'ivoire": 'Ivory Coast', ksa: 'Saudi Arabia',
+  remote: 'Global', global: 'Global', worldwide: 'Global', anywhere: 'Global',
+};
+// Nigerian cities/states, for profile locations written without the country ("Lagos", "Ogun State").
+const NIGERIA_HINTS = new Set([
+  'lagos', 'abuja', 'fct', 'port harcourt', 'ibadan', 'kano', 'kaduna', 'enugu', 'benin city', 'ilorin', 'owerri', 'uyo',
+  'abeokuta', 'jos', 'akure', 'abakaliki', 'aba', 'lekki', 'ikeja', 'ikorodu', 'ogun', 'rivers', 'delta', 'oyo', 'ondo',
+  'osun', 'ekiti', 'akwa ibom', 'anambra', 'imo', 'edo', 'kwara', 'plateau', 'abia', 'kogi', 'bayelsa', 'cross river',
+  'benue', 'nasarawa', 'sokoto', 'kebbi', 'zamfara', 'katsina', 'borno', 'yobe', 'adamawa', 'taraba', 'gombe', 'bauchi',
+  'jigawa', 'ebonyi',
+]);
+
+// Exact canonical name only ('Nigeria', 'Global') — what the bot stores when a user picks a country.
+function canonicalExact(input: string | null | undefined): string | null {
+  const t = (input || '').trim().toLowerCase();
+  if (!t) return null;
+  if (t === 'global') return 'Global';
+  return KNOWN_COUNTRIES.find((c) => c.toLowerCase() === t) || null;
 }
 
-function deriveCountry(onboarding: { cv_location?: string | null; preferred_locations?: string[] | null }): string | null {
-  if (onboarding.cv_location) {
-    const parts = onboarding.cv_location.split(',').map((s) => s.trim()).filter(Boolean);
-    if (parts.length) return titleCase(parts[parts.length - 1]);
+// Free-text (typed input / profile location parts): also accepts aliases like "UK", "UAE", "Remote".
+function canonicalCountry(input: string | null | undefined): string | null {
+  const t = (input || '').trim().toLowerCase();
+  if (!t) return null;
+  return COUNTRY_ALIASES[t] || canonicalExact(t);
+}
+
+// One country per user: an explicit pick in preferred_locations wins; otherwise the country in
+// their JobMeter profile location ("Lagos, Nigeria" → Nigeria). null = unknown.
+function resolveCountry(o: { cv_location?: string | null; preferred_locations?: string[] | null }): string | null {
+  const prefs = o.preferred_locations || [];
+  for (let i = prefs.length - 1; i >= 0; i--) {
+    const c = canonicalExact(prefs[i]);
+    if (c) return c;
   }
-  if (onboarding.preferred_locations && onboarding.preferred_locations.length) {
-    return titleCase(onboarding.preferred_locations[onboarding.preferred_locations.length - 1]);
+  const parts = (o.cv_location || '').split(',').map((s) => s.trim()).filter(Boolean);
+  for (let i = parts.length - 1; i >= 0; i--) {
+    const c = canonicalCountry(parts[i]);
+    if (c) return c;
+  }
+  for (const p of [...parts, ...prefs]) {
+    if (NIGERIA_HINTS.has(p.trim().toLowerCase().replace(/\s+state$/, ''))) return 'Nigeria';
   }
   return null;
+}
+
+// PostgREST `or` filter on jobs.country for a resolved country.
+function countryOrFilter(country: string): string {
+  const parts = REGION_TAGS.map((t) => `country.cs.{${t}}`);
+  if (country !== 'Global') parts.unshift(`country.cs.{${country}}`);
+  return parts.join(',');
 }
 
 function roleOrFilter(roles: string[]): string {
@@ -143,12 +197,7 @@ function roleOrFilter(roles: string[]): string {
     .join(',');
 }
 
-function jobMatchesCountry(job: any, country: string): boolean {
-  const arr: string[] = Array.isArray(job.country) ? job.country : [];
-  return arr.some((c) => c.toLowerCase() === country.toLowerCase() || c.toLowerCase() === 'global');
-}
-
-async function queryCandidates(supabase: any, orFilter: string, excludeIds: string[], recentSinceISO: string, fetchSize: number) {
+async function queryCandidates(supabase: any, orFilter: string, excludeIds: string[], recentSinceISO: string, fetchSize: number, country: string | null = null) {
   if (!orFilter) return [];
   let query = supabase
     .from('jobs')
@@ -159,6 +208,10 @@ async function queryCandidates(supabase: any, orFilter: string, excludeIds: stri
     .order('posted_date', { ascending: false })
     .order('created_at', { ascending: false })
     .limit(fetchSize);
+  if (country) {
+    query = query.or(countryOrFilter(country));
+    if (country === 'Global') query = query.ilike('job_type', 'remote');
+  }
   if (excludeIds.length > 0) query = query.not('id', 'in', `(${excludeIds.join(',')})`);
   const { data, error } = await query;
   if (error) {
@@ -182,7 +235,7 @@ async function getOnboardingBrief(supabase: any, userId: string): Promise<Onboar
   return {
     sector,
     targetRoles: Array.isArray(data.target_roles) ? data.target_roles : [],
-    country: deriveCountry({ cv_location: data.cv_location, preferred_locations: data.preferred_locations }),
+    country: resolveCountry({ cv_location: data.cv_location, preferred_locations: data.preferred_locations }),
   };
 }
 
@@ -206,20 +259,8 @@ async function fetchDigestJobs(supabase: any, brief: OnboardingBrief | null, see
     if (collected.length >= DIGEST_BATCH_SIZE) break;
     const need = DIGEST_BATCH_SIZE - collected.length;
     const excludeNow = [...seenIds, ...collected.map((j) => j.id)];
-    const candidates = await queryCandidates(supabase, orFilter, excludeNow, recentSinceISO, Math.max(need * 5, 15));
-    if (candidates.length === 0) continue;
-
-    let picked: any[];
-    if (brief.country) {
-      const inCountry = candidates.filter((j) => jobMatchesCountry(j, brief.country as string));
-      picked = inCountry.slice(0, need);
-      if (picked.length < need) {
-        const rest = candidates.filter((j) => !picked.some((p) => p.id === j.id)).slice(0, need - picked.length);
-        picked = [...picked, ...rest];
-      }
-    } else {
-      picked = candidates.slice(0, need);
-    }
+    // With a country: that country's jobs plus global remote roles only.
+    const picked = await queryCandidates(supabase, orFilter, excludeNow, recentSinceISO, need, brief.country);
     collected = [...collected, ...picked];
   }
 

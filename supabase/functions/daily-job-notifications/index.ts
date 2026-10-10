@@ -333,6 +333,84 @@ function formatJobCard(job: { title?: string; social?: string | null; company?: 
   return lines.join('\n');
 }
 
+// ─── Country resolution (kept in sync across telegram-bot, telegram-daily-digest, daily-job-notifications) ───
+// "Global" = remote jobs that aren't tied to one country: tagged Global or a broad region.
+const REGION_TAGS = ['Global', 'Africa', 'LATAM', 'Eastern Europe', 'Europe', 'Middle East', 'Asia'];
+const KNOWN_COUNTRIES = [
+  'Nigeria', 'Ghana', 'Kenya', 'South Africa', 'Egypt', 'Ethiopia', 'Morocco', 'Sierra Leone', 'Tanzania', 'Uganda',
+  'Rwanda', 'Senegal', 'Cameroon', 'Zambia', 'Zimbabwe', 'Botswana', 'Namibia', 'Algeria', 'Tunisia', 'Ivory Coast',
+  'United Arab Emirates', 'Saudi Arabia', 'Qatar', 'Oman', 'Kuwait', 'Bahrain', 'Jordan', 'Turkey',
+  'United Kingdom', 'United States', 'Canada', 'Australia', 'New Zealand', 'Ireland', 'Germany', 'France', 'Netherlands',
+  'Spain', 'Italy', 'Portugal', 'Poland', 'Sweden', 'Norway', 'Switzerland',
+  'India', 'Pakistan', 'Bangladesh', 'Nepal', 'Philippines', 'Singapore', 'Malaysia', 'Indonesia', 'China', 'Japan',
+  'Mexico', 'Argentina', 'Brazil', 'Colombia', 'Chile',
+];
+const COUNTRY_ALIASES: Record<string, string> = {
+  uk: 'United Kingdom', 'great britain': 'United Kingdom', england: 'United Kingdom', britain: 'United Kingdom',
+  usa: 'United States', us: 'United States', america: 'United States', 'united states of america': 'United States',
+  uae: 'United Arab Emirates', dubai: 'United Arab Emirates', 'abu dhabi': 'United Arab Emirates',
+  "cote d'ivoire": 'Ivory Coast', ksa: 'Saudi Arabia',
+  remote: 'Global', global: 'Global', worldwide: 'Global', anywhere: 'Global',
+};
+// Nigerian cities/states, for profile locations written without the country ("Lagos", "Ogun State").
+const NIGERIA_HINTS = new Set([
+  'lagos', 'abuja', 'fct', 'port harcourt', 'ibadan', 'kano', 'kaduna', 'enugu', 'benin city', 'ilorin', 'owerri', 'uyo',
+  'abeokuta', 'jos', 'akure', 'abakaliki', 'aba', 'lekki', 'ikeja', 'ikorodu', 'ogun', 'rivers', 'delta', 'oyo', 'ondo',
+  'osun', 'ekiti', 'akwa ibom', 'anambra', 'imo', 'edo', 'kwara', 'plateau', 'abia', 'kogi', 'bayelsa', 'cross river',
+  'benue', 'nasarawa', 'sokoto', 'kebbi', 'zamfara', 'katsina', 'borno', 'yobe', 'adamawa', 'taraba', 'gombe', 'bauchi',
+  'jigawa', 'ebonyi',
+]);
+
+// Exact canonical name only ('Nigeria', 'Global') — what the bot stores when a user picks a country.
+function canonicalExact(input: string | null | undefined): string | null {
+  const t = (input || '').trim().toLowerCase();
+  if (!t) return null;
+  if (t === 'global') return 'Global';
+  return KNOWN_COUNTRIES.find((c) => c.toLowerCase() === t) || null;
+}
+
+// Free-text (typed input / profile location parts): also accepts aliases like "UK", "UAE", "Remote".
+function canonicalCountry(input: string | null | undefined): string | null {
+  const t = (input || '').trim().toLowerCase();
+  if (!t) return null;
+  return COUNTRY_ALIASES[t] || canonicalExact(t);
+}
+
+// One country per user: an explicit pick in preferred_locations wins; otherwise the country in
+// their JobMeter profile location ("Lagos, Nigeria" → Nigeria). null = unknown.
+function resolveCountry(o: { cv_location?: string | null; preferred_locations?: string[] | null }): string | null {
+  const prefs = o.preferred_locations || [];
+  for (let i = prefs.length - 1; i >= 0; i--) {
+    const c = canonicalExact(prefs[i]);
+    if (c) return c;
+  }
+  const parts = (o.cv_location || '').split(',').map((s) => s.trim()).filter(Boolean);
+  for (let i = parts.length - 1; i >= 0; i--) {
+    const c = canonicalCountry(parts[i]);
+    if (c) return c;
+  }
+  for (const p of [...parts, ...prefs]) {
+    if (NIGERIA_HINTS.has(p.trim().toLowerCase().replace(/\s+state$/, ''))) return 'Nigeria';
+  }
+  return null;
+}
+
+// PostgREST `or` filter on jobs.country for a resolved country.
+function countryOrFilter(country: string): string {
+  const parts = REGION_TAGS.map((t) => `country.cs.{${t}}`);
+  if (country !== 'Global') parts.unshift(`country.cs.{${country}}`);
+  return parts.join(',');
+}
+
+// Telegram DMs respect the user's country: their country's jobs, or global remote roles.
+function jobAllowedForCountry(job: { country?: string[] | null; job_type?: string | null }, country: string | null): boolean {
+  if (!country) return true;
+  const arr: string[] = Array.isArray(job.country) ? job.country : [];
+  const isRegional = arr.some((c) => REGION_TAGS.some((t) => t.toLowerCase() === c.toLowerCase()));
+  if (country === 'Global') return isRegional && /remote/i.test(job.job_type || '');
+  return isRegional || arr.some((c) => c.toLowerCase() === country.toLowerCase());
+}
+
 // Escape Telegram legacy-Markdown special characters in user/job-supplied text
 function escapeMd(text: string): string {
   return text.replace(/([_*`\[])/g, '\\$1');
@@ -495,7 +573,7 @@ serve(async (req) => {
       // Get the job (including application field for email checking)
       const { data: job, error: jobError } = await supabase
         .from('jobs')
-        .select('id, title, slug, company, country, role, related_roles, ai_enhanced_roles, skills_required, ai_enhanced_skills, location, experience_level, salary_range, employment_type, sector, posted_date, application, social')
+        .select('id, title, slug, company, country, role, related_roles, ai_enhanced_roles, skills_required, ai_enhanced_skills, location, experience_level, salary_range, employment_type, sector, posted_date, application, social, job_type')
         .eq('id', job_id)
         .single();
 
@@ -514,7 +592,7 @@ serve(async (req) => {
       // Get all users with onboarding data
       const { data: users, error: usersError } = await supabase
         .from('onboarding_data')
-        .select('user_id, target_roles, cv_skills, preferred_locations, experience_level, salary_min, salary_max, job_type, sector');
+        .select('user_id, target_roles, cv_skills, preferred_locations, cv_location, experience_level, salary_min, salary_max, job_type, sector');
 
       if (usersError) {
         console.error('Error fetching users:', usersError);
@@ -659,7 +737,10 @@ serve(async (req) => {
             // Fire-and-forget-ish but awaited so the function doesn't exit before it completes;
             // failures are swallowed (logged only) so they never block match saving above.
             try {
-              const sent = await sendTelegramMatchNotification(supabase, user.user_id, job, matchScore, user.target_roles || []);
+              const userCountry = resolveCountry({ cv_location: user.cv_location, preferred_locations: user.preferred_locations });
+              const sent = jobAllowedForCountry(job, userCountry)
+                ? await sendTelegramMatchNotification(supabase, user.user_id, job, matchScore, user.target_roles || [])
+                : false;
               if (sent) {
                 await supabase
                   .from('server_match_results')
