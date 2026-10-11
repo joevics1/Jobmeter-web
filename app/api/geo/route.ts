@@ -5,9 +5,7 @@ import { COUNTRY_CODE_TO_NAME } from '@/lib/countries';
 
 export async function GET(request: NextRequest) {
   // Vercel automatically injects geo data into request headers
-  // Site sits behind Cloudflare, which forwards the visitor's real country in
-  // cf-ipcountry; x-vercel-ip-country would just be Cloudflare's edge location.
-  const countryCode = request.headers.get('cf-ipcountry') || request.headers.get('x-vercel-ip-country') || '';
+  const countryCode = request.headers.get('x-vercel-ip-country') || '';
   const country = COUNTRY_CODE_TO_NAME[countryCode] || null;
 
   // Previously this defaulted every unrecognized country code to 'Nigeria',
@@ -20,10 +18,8 @@ export async function GET(request: NextRequest) {
     { country, countryCode },
     {
       headers: {
-        // Answer depends on who is asking, so it must NOT be shared by a CDN
-        // (a public cache would hand one visitor's country to everyone).
-        // The client also remembers it in localStorage, so this runs once per browser.
-        'Cache-Control': 'private, max-age=86400',
+        // Cache at CDN for 24hrs — country rarely changes per visitor
+        'Cache-Control': 'public, s-maxage=86400, stale-while-revalidate=3600',
       },
     }
   );
